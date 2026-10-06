@@ -2,7 +2,7 @@
 
 Data: 06/10/2026. Branch local: `codex/portal-administracao`. Base publicada: `e595f7ed` (PR #107).
 
-Estado: proposta técnica para revisão. O usuário autorizou preparar esta segunda entrega e escolheu **a mesma conta Mesiva, com sessões independentes**. A estratégia de infraestrutura e os contratos abaixo aguardam aprovação da especificação antes do plano de implementação. Nenhum código de produto, migration, DNS ou ambiente publicado foi alterado nesta etapa.
+Estado: especificação aprovada pelo usuário em 06/10/2026, incluindo **a mesma conta Mesiva, com sessões independentes**. O [plano de implementação](../plans/2026-10-06-admin-portal-separation.md) detalha a execução e aguarda revisão do usuário. Nenhum código de produto, migration, DNS ou ambiente publicado foi alterado nesta etapa.
 
 ## 1. Resultado esperado
 
@@ -30,7 +30,7 @@ A recomendação é a primeira alternativa, com entradas de frontend distintas e
 | Staging | `staging.mesiva.com.br` | `admin-staging.mesiva.com.br` | `sistema-para-delivery-staging`; D1 `amor-e-sabor-delivery-staging`; R2 `mesiva-business-assets-staging` |
 | Local | `http://127.0.0.1:4173` | `http://localhost:4174` | Worker local em 8787; dados fictícios e persistência explicitamente escolhida |
 
-O nome administrativo de staging é uma proposta desta especificação. Hosts locais distintos evitam colisão do cookie; cookies não são isolados pela porta. Nenhuma edição do arquivo hosts do Windows é necessária. O proxy mantém o host/origin do portal, como o `changeOrigin: false` atual.
+O endereço administrativo de staging integra a especificação aprovada. Hosts locais distintos evitam colisão do cookie; cookies não são isolados pela porta. Nenhuma edição do arquivo hosts do Windows é necessária. O proxy mantém o host/origin do portal, como o `changeOrigin: false` atual.
 
 `wrangler.jsonc` mantém os bindings e `AUTH_PUBLIC_ORIGIN` operacional existentes. Acrescenta `AUTH_ADMIN_ORIGIN` e `ADMIN_PORTAL_PHASE`, com valores `prepare` ou `enforced`. As duas origens canônicas são validadas: HTTPS em ambientes publicados, sem credenciais, caminhos, query ou fragmento. Desenvolvimento usa configuração local explícita; ela não fica habilitada em staging/produção.
 
@@ -160,4 +160,4 @@ Na entrega de código, atualizar README, operação multiempresa e runbook para 
 
 ## Revisão desta etapa
 
-Contexto e consumidores de auth, cookies, famílias, challenges, receipts, bootstrap, bindings e smokes foram inspecionados. A escolha de conta foi respondida pelo usuário; a arquitetura recomendada está explicitada com alternativas, transição e limites. Antes de implementar: aprovação deste documento, plano escrito e escolha do método de execução. Esta etapa altera somente documentação, mantendo a base e os servidores/bancos existentes.
+Contexto e consumidores de auth, cookies, famílias, challenges, receipts, bootstrap, bindings e smokes foram inspecionados. O usuário aprovou a arquitetura, a transição e os limites deste documento. O método preservado é implementação sequencial neste chat, com revisão independente ao final; falta revisar/aprovar o plano escrito antes da implementação. Esta etapa altera somente documentação, mantendo a base e os servidores/bancos existentes.
