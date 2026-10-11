@@ -6,6 +6,8 @@ on:
     branches:
       - master
       - feature/spec-b-settings-policies
+      # PR #108: validate every new feature-branch SHA without manual dispatch.
+      - feature/order-editing-and-financial-reconciliation
   workflow_dispatch:
 
 jobs:
