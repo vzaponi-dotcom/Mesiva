@@ -9,7 +9,7 @@ test('TV shows Editado badge and current items but no added/removed/modified his
     id: 'o1', orderNumber: 42, client: 'Ana', type: 'Entrega', status: 'Em preparo',
     createdAt: '2026-10-10T15:40:00Z',
     items: [{ name: 'Marmita atual', quantity: 2, note: 'Sem cebola' }],
-    editPending: false, operationalRevision: 3,
+    editPending: true, operationalRevision: 3,
     editSummary: { items: [
       { kind: 'removed', before: { name: 'Salada antiga', quantity: 1 }, after: null },
       { kind: 'added', before: null, after: { name: 'Bebida nova', quantity: 1 } },
@@ -26,7 +26,7 @@ test('TV shows Editado badge and current items but no added/removed/modified his
   assert.match(text, /Sem cebola/)
   assert.doesNotMatch(text, /Salada antiga|Bebida nova|Removido:|Adicionado:|Alterado:|Alterações:|Observação alterada:/)
   assert.doesNotMatch(text, /NOVO PEDIDO/)
-  assert.equal(render.root.findByType('article').props['data-edit-pending'], false)
+  assert.equal(render.root.findByType('article').props['data-edit-pending'], true)
 })
 
 test('TV does not show edit badge on orders that were never edited', async t => {
