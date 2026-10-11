@@ -53,65 +53,6 @@ export const normalizeKitchenItemNote = (item) => cleanSpaces(item?.note)
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
-// Presentation-only grouping: separate order lines remain in the immutable
-// revision history. Identical removals may share one readable TV line.
-export function getKitchenDisplayEditRows(editSummary) {
-  const changes = Array.isArray(editSummary?.items) ? editSummary.items : []
-  const grouped = []
-  const removedIndexes = new Map()
-  for (const change of changes) {
-    if (!change || !['added', 'removed', 'modified'].includes(change.kind)) continue
-    if (change.kind === 'removed' && change.before) {
-      const key = JSON.stringify([
-        cleanSpaces(change.before.name), cleanSpaces(change.before.note),
-        cleanSpaces(change.before.size),
-      ])
-      const previousIndex = removedIndexes.get(key)
-      if (previousIndex !== undefined) {
-        const previous = grouped[previousIndex]
-        grouped[previousIndex] = {
-          ...previous,
-          before: {
-            ...previous.before,
-            quantity: (Number(previous.before.quantity) || 1) + (Number(change.before.quantity) || 1),
-          },
-        }
-        continue
-      }
-      removedIndexes.set(key, grouped.length)
-    }
-    grouped.push(change)
-  }
-  return grouped
-}
-
-export function formatKitchenDisplayEditChange(change) {
-  const before = change.before, after = change.after
-  const current = after || before || {}
-  if (change.kind === 'removed') return `Removido: ${before?.quantity || 1}x ${current.name || 'Produto'}`
-  if (change.kind === 'added') return `Adicionado: ${after?.quantity || 1}x ${current.name || 'Produto'}`
-  const quantityChanged = Number(before?.quantity || 1) !== Number(after?.quantity || 1)
-  const noteChanged = (before?.note || '') !== (after?.note || '')
-  if (!quantityChanged && noteChanged) return `Observação alterada: ${current.name || 'Produto'}`
-  return `Alterado: ${current.name || 'Produto'}${quantityChanged ? ` · ${before?.quantity || 1}x → ${after?.quantity || 1}x` : ''}${noteChanged ? ' · observação alterada' : ''}`
-}
-
-const countKitchenEditVisualLines = (editSummary, { viewportWidth, profile }) => {
-  const changes = getKitchenDisplayEditRows(editSummary)
-  if (!changes.length) return 0
-  // The edit section occupies the complete card width, even when the live
-  // items are displayed in two columns. Include its heading and vertical
-  // spacing rather than treating the summary as free space.
-  const cardWidth = resolveEstimatedCardWidth(viewportWidth, profile) || 340
-  const charsPerLine = Math.max(20, Math.floor((cardWidth - 64) / 7))
-  return 1.5 + changes.reduce((total, change) => {
-    const copy = formatKitchenDisplayEditChange(change)
-      + (change.after?.note ? ` · Obs: ${change.after.note}` : '')
-    return total + Math.max(1, Math.ceil(copy.length / charsPerLine))
-  }, 0)
-}
-
-
 const resolveEstimatedCardWidth = (viewportWidth, profile) => {
   const width = Number(viewportWidth)
   if (!Number.isFinite(width) || width <= 0) return undefined
@@ -413,16 +354,15 @@ const resolveGridSpan = ({
   return Math.min(profile.gridRows, proportionalSpan)
 }
 
-export function getKitchenCardContentMetrics(items = [], { viewportWidth, viewportHeight, boardProfile, editSummary } = {}) {
+export function getKitchenCardContentMetrics(items = [], { viewportWidth, viewportHeight, boardProfile } = {}) {
   const safeItems = Array.isArray(items) ? items : []
   const profile = normalizeBoardProfile(boardProfile)
   const oneColumnLimits = resolveLineLimits({ viewportWidth, profile, columnCount: 1 })
   const twoColumnLimits = resolveLineLimits({ viewportWidth, profile, columnCount: 2 })
   const oneColumnLineHeights = safeItems.map((item) => countVisualLines(item, oneColumnLimits))
   const twoColumnLineHeights = safeItems.map((item) => countVisualLines(item, twoColumnLimits))
-  const editVisualLines = countKitchenEditVisualLines(editSummary, { viewportWidth, profile })
-  const visualLines = oneColumnLineHeights.reduce((total, lines) => total + lines, 0) + editVisualLines
-  const twoColumnVisualLines = countTwoColumnVisualLines(twoColumnLineHeights) + editVisualLines
+  const visualLines = oneColumnLineHeights.reduce((total, lines) => total + lines, 0)
+  const twoColumnVisualLines = countTwoColumnVisualLines(twoColumnLineHeights)
   const itemCount = safeItems.length
   const hasNotes = safeItems.some((item) => Boolean(normalizeKitchenItemNote(item)))
   const density = visualLines >= 10 || itemCount >= 8
@@ -463,7 +403,6 @@ export function getKitchenCardContentMetrics(items = [], { viewportWidth, viewpo
     itemCount,
     visualLines,
     twoColumnVisualLines,
-    editVisualLines,
     density,
     viewportProfile,
     boardProfile: fit.profile.id,
@@ -555,8 +494,7 @@ export function packKitchenDisplaySlots(entries = [], { maxSlots, viewportWidth,
   let usedSlots = 0
 
   for (const entry of source) {
-    const editSummary = Number(entry?.order?.operationalRevision) > 0 ? entry.order.editSummary : null
-    const metrics = getKitchenCardContentMetrics(entry?.order?.items, { viewportWidth, viewportHeight, boardProfile, editSummary })
+    const metrics = getKitchenCardContentMetrics(entry?.order?.items, { viewportWidth, viewportHeight, boardProfile })
     if (hasBoardProfile && metrics.overflowRisk) continue
     const slotCost = hasBoardProfile ? metrics.gridSpan : metrics.rowSpan
     if (usedSlots + slotCost > slotCeiling) {

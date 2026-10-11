@@ -771,7 +771,3 @@ button { font: inherit; }
 }
 
 .kds-card__meta .order-edited-badge { font-size: .72em; padding: 2px 5px; }
-.kds-card__edit-details { margin: 3px 0; padding: 4px 7px; border-left: 2px solid var(--warning, #d97706); background: rgba(245, 158, 11, .08); border-radius: 4px; font-size: .72em; line-height: 1.25; }
-.kds-card__edit-details > strong { font-weight: 800; }
-.kds-card__edit-items { margin: 2px 0 0; padding-left: 1.15em; }
-.kds-card__edit-items li { margin: 2px 0; }
