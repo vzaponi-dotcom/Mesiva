@@ -20,5 +20,5 @@ test('previously acknowledged edits remain visible as history',()=>{
   const tv=read('../../../kitchen-display/KitchenDisplayCard.jsx')
   assert.match(tv,/const edited = Number\(order\.operationalRevision\) > 0/)
   assert.match(tv,/edited && <OrderEditedBadge/)
-  assert.match(tv,/edited && editItems\.length > 0/)
+  assert.doesNotMatch(tv,/editItems|kds-card__edit-details|Alterações:/)
 })
