@@ -683,7 +683,7 @@ test('board-profile packing skips one oversized blocked card and still fills lat
   assert.equal(result.overflow, 1)
 })
 
-test('edited cards reserve additional height for the visible change summary without changing ordinary cards', () => {
+test('edited orders use exactly the same original item-only card layout as ordinary orders', () => {
   const profile = resolveKitchenBoardCandidates({ viewportWidth: 1280, viewportHeight: 720 })
     .find(({ id, columns }) => id === 'focus' && columns === 2)
   const items = [
@@ -700,12 +700,11 @@ test('edited cards reserve additional height for the visible change summary with
   const options = { viewportWidth: 1280, viewportHeight: 720, boardProfile: profile }
   const ordinary = getKitchenCardContentMetrics(items, options)
   const edited = getKitchenCardContentMetrics(items, { ...options, editSummary })
-  assert.ok(edited.gridSpan > ordinary.gridSpan, 'edited changes must consume additional grid tracks')
-  assert.ok(edited.editVisualLines > 0)
+  assert.deepEqual(edited, ordinary, 'revision history must not resize TV cards')
 
   const packed = packKitchenDisplaySlots([
     { order: { id: 'normal', items } },
     { order: { id: 'edited', items, operationalRevision: 2, editSummary } },
   ], options)
-  assert.ok(packed.cards.find(({ order }) => order.id === 'edited')?.gridSpan > ordinary.gridSpan)
+  assert.deepEqual(packed.cards.map(card => card.contentMetrics), [ordinary, ordinary])
 })

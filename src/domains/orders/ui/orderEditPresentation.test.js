@@ -30,11 +30,12 @@ test('kitchen order edit uses a persistent edit icon instead of confirm-read act
   assert.match(read('../../../shared/ui/OrderEditedBadge.jsx'), /<Icon name="edit"/)
 })
 
-test('TV keeps showing edited order icon and item-level diff even after an older acknowledgement', () => {
+test('TV keeps only its edited-order icon, even after an older acknowledgement', () => {
   const tv = read('../../../kitchen-display/KitchenDisplayCard.jsx')
   assert.match(tv, /Number\(order\.operationalRevision\) > 0/)
   assert.match(tv, /<OrderEditedBadge/)
-  assert.match(tv, /getKitchenDisplayEditRows\(order\.editSummary\)/)
+  assert.doesNotMatch(tv, /getKitchenDisplayEditRows|kds-card__edit-details|editItems\.map/)
+  assert.match(tv, /getKitchenCardContentMetrics\(items\)/)
   assert.doesNotMatch(tv, /order\.editPending \&\& editItems/)
   const controls = read('../../../app/surfaces/kitchen-tv-control/KitchenTvControlSurface.jsx')
   assert.match(controls, /Number\(entry\.order\.operationalRevision\) > 0/)
