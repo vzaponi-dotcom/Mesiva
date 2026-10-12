@@ -1,4 +1,5 @@
 import { businessDateRangeUtc } from './businessDate.js'
+import {orderGrossReceivedSql,orderRefundedSql,orderDueSql,orderRefundDueSql} from './settlementSql.js'
 import { buildOrderFilters } from './orderFilters.js'
 import { getBusinessDate } from '../../shared/finance.js'
 import { getOperationalDurationMinutes, getOrderLateAt } from '../../shared/orderTiming.js'
@@ -13,13 +14,22 @@ const enrichDetail = (row) => {
   const durationMinutes = terminal.has(row.status) && !row.is_backdated ? getOperationalDurationMinutes(order) : null
   const lateAt = durationMinutes === null ? null : getOrderLateAt(order)
   const onTime = lateAt ? new Date(row.finished_at) <= lateAt : null
-  const paidCents = Number(row.paid_cents || 0)
+  const grossReceivedCents = Number(row.gross_received_cents ?? row.paid_cents ?? 0)
+  const refundedCents = Number(row.refunded_cents || 0)
+  const netReceivedCents = grossReceivedCents - refundedCents
+  const dueCents = Math.max(0,Number(row.total_cents || 0) - netReceivedCents)
+  const refundDueCents = Math.max(0,netReceivedCents - Number(row.total_cents || 0))
   const pendingCents = row.status !== 'Cancelado'
     && !row.table_reservation_id
-    && !(row.customer_identity_type === 'table' && row.table_tab_id)
-    ? Math.max(0, Number(row.total_cents || 0) - paidCents) : 0
+    && !(row.customer_identity_type === 'table' && row.table_tab_id) ? dueCents : 0
+  const paymentStatus = refundDueCents > 0 ? 'Devolução pendente'
+    : dueCents > 0 ? (grossReceivedCents ? 'Parcialmente pago' : 'Pendente')
+    : grossReceivedCents ? 'Pago' : 'Pendente'
   const created = new Date(row.created_at)
-  return { ...row, durationMinutes, onTime, paidCents, pendingCents, businessDate: Number.isNaN(created.getTime()) ? null : getBusinessDate(created) }
+  return { ...row, durationMinutes, onTime, paymentStatus,
+    paidCents:grossReceivedCents,grossReceivedCents,refundedCents,netReceivedCents,
+    dueCents,refundDueCents,pendingCents,
+    businessDate:Number.isNaN(created.getTime()) ? null : getBusinessDate(created) }
 }
 
 const compareDetail = (sort) => (left, right) => {
