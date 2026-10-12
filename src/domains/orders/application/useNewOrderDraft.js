@@ -97,7 +97,7 @@ export function useNewOrderDraft({
     return next
   }, [clearPending])
 
-  const submit = useCallback(async (payload) => {
+  const submit = useCallback(async (payload, { intent = 'save' } = {}) => {
     const accessOwner = accessOwnerRef.current()
     const token = controllerRef.current.beginSubmit()
     const ownsSubmit = () => accessOwner === accessOwnerRef.current() && controllerRef.current.isCurrent(token)
@@ -127,9 +127,9 @@ export function useNewOrderDraft({
 
       if (!ownsSubmit()) return false
       if (commitOfficialEffectsRef.current(result) === false) return false
-      await onCommittedRef.current(result, token.context)
+      await onCommittedRef.current(result, token.context, intent)
       if (!ownsSubmit()) return false
-      onSuccessRef.current(result.order, token.context)
+      onSuccessRef.current(result.order, token.context, intent)
       pendingRef.current = false
       setCheckoutPending(false)
       controllerRef.current.complete(token)
