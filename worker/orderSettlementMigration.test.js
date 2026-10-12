@@ -164,7 +164,7 @@ test('mutation, kind, actor and cross-tenant references are constrained and entr
   assert.throws(()=>add(db,{id:'wrong-company-actor',orderId:'local',kind:'supplemental_payment',receiptId:'actor-check-receipt',amountCents:100,actorUserId:remoteActor}),/FOREIGN KEY/)
   assert.throws(()=>add(db,{id:'bad-kind',orderId:'local',kind:'arbitrary',receiptId:'local-receipt',amountCents:100}),/CHECK/)
   assert.throws(()=>add(db,{id:'zero',orderId:'local',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:0}),/CHECK/)
-  assert.throws(()=>add(db,{id:'bad-shape',orderId:'local',kind:'refund',receiptId:'local-receipt',amountCents:100}),/CHECK/)
+  assert.throws(()=>add(db,{id:'bad-shape',orderId:'local',kind:'refund',receiptId:'local-receipt',amountCents:100}),/CHECK|ORDER_SETTLEMENT_REFUND_MISMATCH/)
   assert.throws(()=>db.prepare("UPDATE order_settlement_entries SET amount_cents=999 WHERE id='first'").run(),/IMMUTABLE/)
   assert.throws(()=>db.prepare("DELETE FROM order_settlement_entries WHERE id='first'").run(),/IMMUTABLE/)
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[])
