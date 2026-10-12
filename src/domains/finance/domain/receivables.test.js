@@ -402,3 +402,21 @@ test('future delivery and pickup remain forecast receivables by future orderDate
   assert.deepEqual(forecast.days[5], { date: '2026-09-12', amount: 45, count: 1 })
   assert.equal(forecast.days.reduce((sum, day) => sum + day.amount, 0), 105)
 })
+
+test('Task 13 receivables include only outstanding cents and omit refund-only balances', async () => {
+  const {getPendingAmount,isOrderPaid}=await import('../../orders/domain/orderPaymentEligibility.js')
+  const rules={
+    isOrderCancelled: o=>o.status==='Cancelado',
+    isOrderPaid,
+    getPendingAmount,
+  }
+  const partial=order('partial',{total:95,paymentId:'p1',paymentStatus:'Parcialmente pago',dueCents:1500})
+  const unpaid=order('unpaid',{total:30,paymentStatus:'Pendente',dueCents:3000})
+  const overpaid=order('overpaid',{total:65,paymentId:'p2',paymentStatus:'Devolução pendente',dueCents:0,refundDueCents:1500})
+  const pending=getPendingReceivableOrders([partial,unpaid,overpaid],rules)
+  assert.deepEqual(pending.map(o=>o.id),['partial','unpaid'])
+  const entries=buildPendingReceivableEntries([partial,unpaid,overpaid],'2026-10-12',rules)
+  assert.deepEqual(entries.map(e=>e.total),[15,30])
+  assert.equal(calculateReceivableSummary([partial,unpaid,overpaid],'2026-10-12',rules).today.amount,45)
+  assert.equal(groupPendingOrders([partial,unpaid,overpaid],rules)[0].total,45)
+})
