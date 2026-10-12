@@ -71,6 +71,8 @@ function NewOrder({
   canCreateClients = true,
   canAdjustOrders = true,
   canBackdateOrders = true,
+  canReceivePayments = false,
+  canRefundPayments = false,
   renderPaymentComposition,
   modalityOptions,
   defaultModality,
@@ -409,7 +411,7 @@ function NewOrder({
     updateQuickClient(patch.phone === undefined ? patch : { ...patch, phone: formatPhone(patch.phone) })
   }
 
-  const save = async (paymentAllocations, bypassManualPrintWarning = false) => {
+  const save = async (paymentAllocations, bypassManualPrintWarning = false, intent = 'save') => {
     if (disabled || !canSubmit) return false
     if (editReservationMode
       && reservationContext?.hasManualPrintHistory
@@ -420,7 +422,7 @@ function NewOrder({
 
     setCheckoutError('')
     const result = editOrderMode
-      ? await onSubmit(buildOrderEditPayload(numericDraft))
+      ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
       : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations))
     if (result?.code === 'POLICY_CHANGED') {
       setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
@@ -603,8 +605,12 @@ function NewOrder({
               onDeliveryFeeChange: setDeliveryFee,
               onAdjustmentChange: handleAdjustmentChange,
               editOrderMode,
+              orderContext,
+              canReceivePayments,
+              canRefundPayments,
               onSavePending: () => save(),
-              onSavePaid: (paymentAllocations) => save(paymentAllocations),
+              onSavePaid: (paymentAllocations) => editOrderMode ? save(undefined, false, 'receive') : save(paymentAllocations),
+              onSaveRefund: () => save(undefined, false, 'refund'),
                allowImmediatePayment: !editOrderMode && type !== 'Local',
                renderPaymentComposition,
              }}
