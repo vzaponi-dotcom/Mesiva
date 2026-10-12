@@ -53,3 +53,20 @@ test('Financeiro removes Relatórios from mobile area navigation', async (t) => 
   const labels = renderer.root.findAllByType('button').map((button) => button.children.join(''))
   assert.deepEqual(labels, ['Visão geral', 'A receber', 'Movimentações'])
 })
+
+test('Movimentações shows the pending refund badge in Financeiro area navigation', async t => {
+  const h = await workspaceHarness(t)
+  const { NavigationProvider } = await h.load('/src/app/navigation/NavigationContext.jsx')
+  const { default: AreaNavigation } = await h.load('/src/app/navigation/AreaNavigation.jsx')
+  const renderer = await h.render(NavigationProvider, {
+    activeTab: 'dashboard',
+    granted: new Set(['finance.overview', 'finance.movements']),
+    implemented: new Set(['dashboard', 'finance']),
+    navigationBadges: { finance: 2 },
+    requestNavigation() {}, openMore() {}, closeMore() {},
+    children: React.createElement(AreaNavigation, { area: 'finance' }),
+  })
+  const matching = renderer.root.findAll(node => node.type === 'button' && node.props['aria-label'] === 'Movimentações, 2 devoluções ou estornos pendentes')
+  assert.equal(matching.length, 1)
+  assert.ok(matching[0].findAll(node => node.props?.className === 'area-navigation-badge' && node.children.includes('2')).length)
+})
