@@ -10,7 +10,7 @@ const amount = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency
 // Post-save phase. The order was already committed: closing this dialog must
 // never undo edits or imply that a payment/refund was completed.
 export default function OrderEditSettlementDialog({
-  order,stage='offer',onStageChange,onClose,onReceive,onRefund,
+  order,stage='offer',source='edit',onStageChange,onClose,onReceive,onRefund,
   paymentOptions=[],defaultPaymentMethod='',canReceivePayments=false,
   canRefundPayments=false,submitting=false,writesBlocked=false,error='',
 }) {
@@ -33,7 +33,9 @@ export default function OrderEditSettlementDialog({
 
   return <Modal title="Pedido atualizado — situação financeira" onClose={busy ? ()=>{} : onClose}>
     <div className="form-stack order-edit-settlement-dialog">
-      <p role="status"><strong>As alterações do pedido foram salvas.</strong> O pagamento e a devolução são operações separadas.</p>
+      <p role="status"><strong>{source === 'finance'
+        ? 'Devolução pendente após edição anterior.'
+        : 'As alterações do pedido foram salvas.'}</strong> O pagamento e a devolução são operações separadas.</p>
       <div className="payment-summary-card">
         <div><span>Pedido atualizado</span><strong>{amount(order.totalCents)}</strong></div>
         <div><span>Recebido líquido</span><strong>{amount(order.netReceivedCents)}</strong></div>

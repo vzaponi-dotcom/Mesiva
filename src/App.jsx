@@ -770,7 +770,12 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     return true
   }
 
-  const pendingRefundOrders = useMemo(() => orders.filter((order) => getOrderRefundState(order) === 'pending'), [orders])
+  const pendingRefundOrders = useMemo(() => orders.filter((order) =>
+    getOrderRefundState(order) === 'pending' || (
+      ['Em preparo','Finalizado'].includes(order.status)
+      && Boolean(order.paymentId)
+      && Number.isSafeInteger(order.refundDueCents) && order.refundDueCents > 0
+    )), [orders])
   const handleNewOrder = ({ tableId = '', expectedTableTabId = '', returnTab = 'orders', clientId = '' } = {}) => {
     if (!canCreateOrders || writesBlocked) return false
     let currentTableId = tableId
@@ -914,7 +919,17 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         <CatalogWorkspace visible={activeTab === 'products'} products={products} search={query.products.search} queryState={query.products} onSearchChange={(search) => patchQuery('products', { search })} onQueryChange={(patch) => patchQuery('products', patch)} currency={currency} writesBlocked={writesBlocked} canManageProducts={canManageProducts} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />
         {activeTab === 'print-queue' && <PrintQueue orders={orders} printing={printing} reviewJobId={printQueueReviewJobId} onReviewJobConsumed={() => setPrintQueueReviewJobId(null)} onOpenPrintingSettings={canOpenPrintingSettings ? () => requestNavigation('settings-printing') : undefined} onToast={setToastMessage} queryState={query.printQueue} onQueryChange={(patch) => patchQuery('printQueue', patch)} canExecutePrinting={canExecutePrinting} canForcePrinting={canForcePrinting} canDiscardPrinting={canDiscardPrinting} isOnline={isOnline} />}
         {activeTab === 'receivables' && <ReceivablesSurface orders={orders} movements={movements} currency={currency} disabled={writesBlocked} onRegisterPayment={orderPayment.open} onRegisterClientOrdersPayment={clientOrdersPayment.open} onOpenClient={canViewClients ? (client) => { patchQuery('clients', { search: client?.name || '' }); requestNavigation('clients') } : null} queryState={query.receivables} onQueryChange={(patch) => patchQuery('receivables', patch)} canReceivePayments={canReceivePayments} canManagePaymentPromises={canManagePaymentPromises} canExecutePrinting={canExecutePrinting} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />}
-        {activeTab === 'finance' && <FinanceWorkspace movements={movements} financeSettings={financeSettings} today={todayValue} currency={currency} pendingRefundOrders={pendingRefundOrders} paymentOptions={paymentOptions} categoryOptions={financeCategoryOptions} categoryRevision={financeCategoryRevision} writesBlocked={writesBlocked} canManageMovements={canManageMovements} canRefundPayments={canRefundPayments} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} formatCancellationDate={formatCancellationDate} onRequestRefund={refund.request} />}
+        {activeTab === 'finance' && <FinanceWorkspace movements={movements} financeSettings={financeSettings} today={todayValue} currency={currency} pendingRefundOrders={pendingRefundOrders} paymentOptions={paymentOptions} categoryOptions={financeCategoryOptions} categoryRevision={financeCategoryRevision} writesBlocked={writesBlocked} canManageMovements={canManageMovements} canRefundPayments={canRefundPayments} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} formatCancellationDate={formatCancellationDate} onRequestRefund={order => {
+            if (order?.status !== 'Cancelado' && Number(order?.refundDueCents) > 0) {
+              if (!canRefundPayments || writesBlocked) return false
+              setEditSettlement({owner:accessContextId,guard:getSyncGuard(),
+                order,stage:'refund',source:'finance',print:null})
+              setEditSettlementError('')
+              editSettlementAttemptRef.current=null
+              return true
+            }
+            return refund.request(order)
+          }} />}
         {activeTab === 'tables' && <Tables tables={tables} disabled={writesBlocked} canOpenComanda={canOpenComanda} onCreate={tableServiceCommands.createTable} onRename={tableServiceCommands.renameTable} onSetActive={tableServiceCommands.setTableActive} onReorder={tableServiceCommands.reorderTables} onOpenComanda={handleOpenComanda} canManageTables={canManageTables} />}
         {activeTab === 'comandas' && (
           <TableServiceExternalActions
@@ -983,7 +998,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
 
 
         {editSettlement && editSettlement.owner === accessContextId && <OrderEditSettlementDialog
-          order={editSettlement.order} stage={editSettlement.stage}
+          order={editSettlement.order} stage={editSettlement.stage} source={editSettlement.source}
           canReceivePayments={canReceivePayments} canRefundPayments={canRefundPayments}
           paymentOptions={paymentOptions} defaultPaymentMethod={defaultPaymentMethod}
           submitting={editSettlementBusy} writesBlocked={writesBlocked}

@@ -38,9 +38,14 @@ function Finance({ totals, movements, currency, onAddMovement, onEditMovement, o
           <div className="pending-refund-list">
             {pendingRefundOrders.map((order) => (
               <article className="pending-refund-row" key={order.id}>
-                <div className="pending-refund-main"><strong>{formatOrderDisplayNumber(order)} · {order.client}</strong><span>Cancelado em {formatCancellationDate(order.cancelledAt)}</span></div>
-                <strong className="pending-refund-value">{currency(order.paidAmount || order.total || 0)}</strong>
-                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>Registrar estorno</Button>}
+                <div className="pending-refund-main"><strong>{formatOrderDisplayNumber(order)} · {order.client}</strong>
+                  <span>{order.status === 'Cancelado'
+                    ? `Cancelado em ${formatCancellationDate(order.cancelledAt)}`
+                    : 'Devolução pendente após edição'}</span></div>
+                <strong className="pending-refund-value">{currency(order.status !== 'Cancelado'
+                  ? Number(order.refundDueCents || 0) / 100
+                  : Number.isSafeInteger(order.netReceivedCents) ? order.netReceivedCents / 100 : (order.paidAmount || order.total || 0))}</strong>
+                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>{order.status === 'Cancelado' ? 'Registrar estorno' : 'Registrar devolução'}</Button>
               </article>
             ))}
           </div>
