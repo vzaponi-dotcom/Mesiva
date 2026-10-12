@@ -404,11 +404,14 @@ test('future delivery and pickup remain forecast receivables by future orderDate
 })
 
 test('Task 13 receivables include only outstanding cents and omit refund-only balances', async () => {
-  const {getPendingAmount,isOrderPaid}=await import('../../orders/domain/orderPaymentEligibility.js')
+  // Finance receives an injected Orders rule contract; the domain must not
+  // import Orders directly, including from tests.
   const rules={
     isOrderCancelled: o=>o.status==='Cancelado',
-    isOrderPaid,
-    getPendingAmount,
+    isOrderPaid: o=>o.paymentStatus==='Pago',
+    getPendingAmount: o=>Number.isSafeInteger(o.dueCents)
+      ? Math.max(0,o.dueCents)/100
+      : o.paymentStatus==='Pago' ? 0 : Math.max(0,Number(o.total)||0),
   }
   const partial=order('partial',{total:95,paymentId:'p1',paymentStatus:'Parcialmente pago',dueCents:1500})
   const unpaid=order('unpaid',{total:30,paymentStatus:'Pendente',dueCents:3000})
