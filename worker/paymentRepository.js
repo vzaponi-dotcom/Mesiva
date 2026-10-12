@@ -40,6 +40,7 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
   if (!orderRow) throw repositoryError(404, 'ORDER_NOT_FOUND', 'Pedido não encontrado.')
   if (orderRow.status === 'Cancelado') throw repositoryError(409, 'ORDER_ALREADY_CANCELLED', 'Pedido cancelado não pode receber pagamento.')
   if (orderRow.payment_id) throw repositoryError(409, 'ORDER_ALREADY_PAID', 'Este pedido já foi pago.')
+  if (orderRow.table_tab_id) throw repositoryError(409, 'TABLE_TAB_PAYMENT_REQUIRED', 'Pedidos de comanda devem ser recebidos pela comanda.')
 
   const allocations = assertPaymentAllocationTotal(rawAllocations, orderRow.total_cents)
   const paymentExpectation = await readPaymentMethodExpectations(db, businessId, allocations.map(({ methodCode }) => methodCode))
@@ -176,7 +177,7 @@ export async function registerClientOrdersPayment(
   for (const idChunk of chunkReceivableOrders(orderIds)) {
     const placeholders = idChunk.map(() => '?').join(', ')
     const selectedResult = await db.prepare(`SELECT o.id, o.client_id, o.customer_identity_type, o.table_tab_id,
-        o.status, o.total_cents, o.created_at, p.id AS payment_id
+        o.status, o.total_cents, o.content_revision, o.created_at, p.id AS payment_id
       FROM orders o
       LEFT JOIN payments p ON p.order_id = o.id AND p.business_id = o.business_id
       WHERE o.business_id = ? AND o.id IN (${placeholders})`)
@@ -273,9 +274,10 @@ export async function registerClientOrdersPayment(
           AND current_order.table_tab_id IS NULL
           AND current_order.status <> 'Cancelado'
           AND current_order.total_cents = ?
+          AND current_order.content_revision = ?
           AND current_payment.id IS NULL
       )`)
-      stateBindings.push(order.id, businessId, normalizedClientId, Number(order.total_cents))
+      stateBindings.push(order.id, businessId, normalizedClientId, Number(order.total_cents), Number(order.content_revision || 0))
     }
     return prepareSettingsAssertion(
       db,
@@ -392,7 +394,7 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
   if (!tabRow) throw repositoryError(404, 'TABLE_TAB_NOT_FOUND', 'Comanda não encontrada.')
   if (tabRow.status !== 'open') throw repositoryError(409, 'TABLE_TAB_ALREADY_CLOSED', 'Esta comanda já foi encerrada.')
 
-  const pendingResult = await db.prepare(`SELECT o.id, o.order_number, o.client_name_snapshot, o.total_cents
+  const pendingResult = await db.prepare(`SELECT o.id, o.order_number, o.client_name_snapshot, o.total_cents, o.content_revision
     FROM orders o
     LEFT JOIN payments p ON p.order_id = o.id AND p.business_id = o.business_id
     WHERE o.business_id = ? AND o.table_tab_id = ? AND o.status <> 'Cancelado' AND p.id IS NULL
@@ -454,8 +456,26 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
     payment_allocation_id: allocation.id,
   }))
 
+  const tabSnapshotGuard = prepareSettingsAssertion(db,policyTxId,'table-member-count',
+    `EXISTS(SELECT 1 FROM table_tabs WHERE id=? AND business_id=? AND status='open')
+      AND (SELECT COUNT(*) FROM orders o LEFT JOIN payments p
+        ON p.business_id=o.business_id AND p.order_id=o.id
+        WHERE o.business_id=? AND o.table_tab_id=? AND o.status<>'Cancelado'
+          AND p.id IS NULL)=?`,
+    [tableTabId,businessId,businessId,tableTabId,pending.length])
+  const orderRevisionGuards = pending.map((order,index)=>prepareSettingsAssertion(
+    db,policyTxId,'table-order-'+index,
+    `EXISTS(SELECT 1 FROM orders o LEFT JOIN payments p
+      ON p.business_id=o.business_id AND p.order_id=o.id
+      WHERE o.business_id=? AND o.id=? AND o.table_tab_id=?
+        AND o.status<>'Cancelado' AND p.id IS NULL
+        AND o.total_cents=? AND o.content_revision=?)`,
+    [businessId,order.id,tableTabId,Number(order.total_cents),Number(order.content_revision||0)],
+  ))
   const statements = [
     ...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, policyTxId),
+    tabSnapshotGuard,
+    ...orderRevisionGuards,
     db.prepare(`INSERT INTO payment_receipts
       (id, business_id, table_tab_id, total_cents, paid_at, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, tableTabId, authoritativeTotalCents, paidAt, paidAt),
@@ -538,7 +558,7 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
     batchResults = await db.batch([...statements,...paymentRows.map(payment=>businessEvent(db,businessId,{action:'payment.received',resourceType:'order',resourceId:payment.order_id,now}))])
   } catch (error) {
     const message = String(error?.message || '')
-    if (/TABLE_TAB_HAS_UNPAID_ORDERS|TABLE_TAB_PAYMENT_INVALID|UNIQUE constraint failed:\s*payments\.order_id/i.test(message)) {
+    if (/TABLE_TAB_HAS_UNPAID_ORDERS|TABLE_TAB_PAYMENT_INVALID|SETTINGS_INVALID|UNIQUE constraint failed:\s*payments\.order_id/i.test(message)) {
       throw repositoryError(409, 'TABLE_TAB_PAYMENT_CONFLICT', 'A comanda foi alterada durante o pagamento. Atualize os dados e tente novamente.')
     }
     if (message.includes('POLICY_CHANGED')) rethrowPolicyChange(error)
