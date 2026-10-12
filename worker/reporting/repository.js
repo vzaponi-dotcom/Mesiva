@@ -68,10 +68,8 @@ export function createReportingRepository(db) {
         SELECT o.id, o.order_date, o.type, o.status, o.total_cents, o.table_tab_id,
           o.customer_identity_type, o.promised_payment_date, o.adjustment_type, o.adjustment_amount_cents,
           ${orderGrossReceivedSql('o')} AS gross_received_cents,
-        ${orderRefundedSql('o')} AS refunded_cents,
-        ${orderGrossReceivedSql('o')} AS gross_received_cents,
-        ${orderRefundedSql('o')} AS refunded_cents,
-        tr.id AS table_reservation_id
+          ${orderRefundedSql('o')} AS refunded_cents,
+          tr.id AS table_reservation_id
         FROM orders o
         LEFT JOIN table_reservations tr
           ON tr.business_id = o.business_id AND tr.order_id = o.id
@@ -108,6 +106,8 @@ export function createReportingRepository(db) {
       const { sql, values } = buildOrderFilters(businessId, query)
       const { results: orders } = await db.prepare(`SELECT o.id, o.order_date, o.status, o.total_cents, o.delivery_fee_cents,
         o.table_tab_id, o.customer_identity_type, o.promised_payment_date, o.adjustment_type, o.adjustment_amount_cents,
+        ${orderGrossReceivedSql('o')} AS gross_received_cents,
+        ${orderRefundedSql('o')} AS refunded_cents,
         tr.id AS table_reservation_id
         FROM orders o
         LEFT JOIN table_reservations tr
