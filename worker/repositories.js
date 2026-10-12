@@ -710,7 +710,8 @@ export const updateOrderStatus = async (db, businessId, id, now = new Date()) =>
     'coalesce((SELECT revision FROM business_operation_settings WHERE business_id = ?), 0) = ?',
     [businessId, operations.revision])
   const stateGuard = prepareSettingsAssertion(db, txId, 'state',
-    "EXISTS (SELECT 1 FROM orders WHERE id = ? AND business_id = ? AND status = 'Em preparo')", [id, businessId])
+    "EXISTS (SELECT 1 FROM orders WHERE id = ? AND business_id = ? AND status = 'Em preparo' AND content_revision = ? AND total_cents = ?)",
+    [id,businessId,Number(order.contentRevision||0),Math.round(Number(order.total||0)*100)])
   const update = db.prepare(`UPDATE orders SET status = 'Finalizado', finished_at = COALESCE(finished_at, ?),
     timing_policy_snapshot_json = COALESCE(timing_policy_snapshot_json, ?)
     WHERE id = ? AND business_id = ? AND status = 'Em preparo'`).bind(
