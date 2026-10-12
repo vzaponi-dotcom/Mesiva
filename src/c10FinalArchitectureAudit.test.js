@@ -8,6 +8,7 @@ test('C10 exposes only Orders contracts consumed outside the Orders domain', asy
     'createOrdersApi', 'createOperationsPolicy', 'createCancellationReasonsPolicy',
     'NewOrderRoute',
     'OrderDetail',
+    'OrderEditChanges',
     'OrderHistory',
     'Orders',
     'buildKitchenQueueModel',
