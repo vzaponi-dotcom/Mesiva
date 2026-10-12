@@ -22,12 +22,12 @@ test('Task 14 editor shows safe settlement actions and only receives after saved
  const draft=source('../application/useNewOrderDraft.js')
  const app=source('../../../App.jsx')
  assert.match(checkout,/Salvar e receber/)
- assert.match(checkout,/Registrar devolução/)
+ assert.match(checkout,/registrar devolução/)
  assert.match(checkout,/refundDueCents/)
  assert.match(checkout,/dueCents/)
  assert.match(checkout,/canReceivePayments/)
  assert.match(checkout,/canRefundPayments/)
- assert.match(form,/intent: 'receive'/)
+ assert.match(form,/save\(undefined, false, 'receive'\)/)
  assert.match(draft,/onCommittedRef\.current\(result, token\.context, intent\)/)
  assert.match(app,/editSettlement/)
  assert.match(app,/CheckoutPaymentComposition/)
@@ -48,8 +48,8 @@ test('Task 14 financial endpoints require capability and explicit mutation ident
 
 test('Task 14 order edit review renders only authorized due/refund actions on mobile and desktop',async t=>{
  const {workspaceHarness,nodeText,buttonNamed}=await import('../../../test-support/renderWorkspace.js')
- const {default:Checkout}=await (await workspaceHarness(t)).load('/src/domains/orders/ui/components/OrderCheckoutSummary.jsx')
  const h=await workspaceHarness(t)
+ const {default:Checkout}=await h.load('/src/domains/orders/ui/components/OrderCheckoutSummary.jsx')
  const currency=n=>'R$ '+Number(n).toFixed(2)
  const base={draft:{type:'Entrega',adjustment:{type:'none',mode:'fixed',value:0,reason:''}},
    preview:{subtotal:95,deliveryFee:0,total:95,adjustmentAmount:0},currency,disabled:false,canSubmit:true,
