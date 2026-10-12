@@ -59,14 +59,14 @@ test('Task 15 finalization vs edited content must not accept an obsolete snapsho
 test('Task 15 cancellation without refund vs concurrent edit aborts and keeps the order open',async t=>{
   const db=fixture(t)
   intercept(db,s=>s.prepare("UPDATE orders SET content_revision=1,total_cents=6400,subtotal_cents=6400 WHERE id='o1'").run())
-  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',refundNow:false,expectedRevision:0},NOW),{status:409})
+  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',refundNow:false},NOW),{status:409,code:'ORDER_CANCEL_CONFLICT'})
   assert.equal(db.sqlite.prepare("SELECT status FROM orders WHERE id='o1'").get().status,'Em preparo')
 })
 test('Task 15 cancellation with refund vs concurrent edit refuses stale content even if received net is unchanged',async t=>{
   const db=fixture(t)
   await registerOrderPayment(db,B,'o1',pix,NOW)
   intercept(db,s=>s.prepare("UPDATE orders SET content_revision=1,total_cents=6400,subtotal_cents=6400 WHERE id='o1'").run())
-  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',refundNow:true,refundMethod:'Pix',expectedRevision:0},NOW),{status:409})
+  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',refundNow:true,refundMethod:'Pix'},NOW),{status:409,code:'ORDER_CANCEL_CONFLICT'})
   assert.equal(db.sqlite.prepare("SELECT status FROM orders WHERE id='o1'").get().status,'Em preparo')
   assert.equal(db.sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-refund'").get().n,0)
 })
@@ -102,7 +102,7 @@ test('Task 15 order edit vs first receipt rejects an edited financial snapshot, 
 test('Task 15 deferred cancellation cannot overlook a receipt committed while it was preparing',async t=>{
   const db=fixture(t)
   intercept(db,s=>injectOriginalPayment(s))
-  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',expectedRevision:0,refundNow:false},NOW),
+  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',refundNow:false},NOW),
     {status:409,code:'ORDER_CANCEL_CONFLICT'})
   assert.equal(db.sqlite.prepare("SELECT status FROM orders WHERE id='o1'").get().status,'Em preparo')
   assert.equal(count(db,'payments'),1)
