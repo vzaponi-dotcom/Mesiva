@@ -1,9 +1,68 @@
 import { apiError } from '../http.js'
+import { APPLICATION_CAPABILITIES, SETTINGS_MANAGE_TO_VIEW } from '../../shared/settingsAccess.js'
+import { clearSettingsAssertions, prepareSettingsAssertion } from '../settingsTransactions.js'
+
+const knownCapabilities=new Set(APPLICATION_CAPABILITIES)
+const contextExpired=()=>apiError(409,'SESSION_CONTEXT_CHANGED','Sua sessão ou permissão mudou. Atualize antes de continuar.')
+const sameGrants=(expected,rows)=>{
+  const active=new Set(rows.map(row=>row.capability).filter(capability=>knownCapabilities.has(capability)))
+  for(const [manage,view] of Object.entries(SETTINGS_MANAGE_TO_VIEW))
+    if(active.has(manage))active.add(view)
+  return expected instanceof Set &&
+    JSON.stringify([...expected].sort())===JSON.stringify([...active].sort())
+}
 
 // A fresh facade per request; never mutate the shared environment or D1 binding.
+// Multi-company sessions are protected by withBusinessSessionGuard before this
+// facade. Personal/legacy sessions also require an atomic snapshot assertion at
+// the commit boundary, rather than checking permissions only on HTTP entry/exit.
 export function withAuditContext(db, context) {
-  return { prepare: db.prepare.bind(db), batch: db.batch.bind(db),
-    auditContext: Object.freeze({ ...context }) }
+  const actor=Object.freeze({...context})
+  const prepare=db.prepare.bind(db)
+  const batch=async(statements)=>{
+    if(!actor.sessionId || !['legacy','enrollment','user_only'].includes(actor.authMode))
+      return db.batch(statements)
+    const transactionId=crypto.randomUUID()
+    const at=new Date().toISOString()
+    let predicate,bindings
+    if(actor.userId){
+      if(!actor.roleId)throw contextExpired()
+      const roleGrants=await db.prepare(`SELECT capability FROM role_capabilities
+        WHERE business_id=? AND role_id=? ORDER BY capability`)
+        .bind(actor.businessId,actor.roleId).all()
+      const raw=roleGrants.results||[]
+      if(!sameGrants(actor.granted,raw))throw contextExpired()
+      predicate=`EXISTS(SELECT 1 FROM sessions s
+        JOIN users u ON u.id=s.user_id AND u.business_id=s.business_id
+        JOIN roles r ON r.id=u.role_id AND r.business_id=u.business_id AND r.active=1
+        JOIN business_auth_state a ON a.business_id=s.business_id
+        WHERE s.id=? AND s.business_id=? AND s.user_id=?
+          AND s.revoked_at IS NULL AND s.expires_at>?
+          AND u.active=1 AND u.role_id=? AND a.mode=?
+          AND (SELECT COALESCE(json_group_array(capability),'[]') FROM (
+            SELECT capability FROM role_capabilities
+              WHERE business_id=s.business_id AND role_id=r.id ORDER BY capability
+          ))=?)`
+      bindings=[actor.sessionId,actor.businessId,actor.userId,at,actor.roleId,
+        actor.authMode,JSON.stringify(raw.map(row=>row.capability))]
+    }else{
+      predicate=`EXISTS(SELECT 1 FROM sessions s
+        JOIN business_auth_state a ON a.business_id=s.business_id
+        WHERE s.id=? AND s.business_id=? AND s.user_id IS NULL
+          AND s.revoked_at IS NULL AND s.expires_at>?
+          AND a.mode=? AND a.mode IN ('legacy','enrollment'))`
+      bindings=[actor.sessionId,actor.businessId,at,actor.authMode]
+    }
+    const guard=prepareSettingsAssertion(db,transactionId,'authorized-session',predicate,bindings)
+    try{
+      const result=await db.batch([guard,...statements,clearSettingsAssertions(db,transactionId)])
+      return result.slice(1,-1)
+    }catch(error){
+      if(/SETTINGS_INVALID|SETTINGS_REVISION_CONFLICT/.test(String(error?.message||'')))throw contextExpired()
+      throw error
+    }
+  }
+  return {prepare,batch,auditContext:actor}
 }
 
 // Direct internal repository calls predate individual access. They explicitly
