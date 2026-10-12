@@ -6,6 +6,7 @@ import Button from '../../../shared/ui/Button.jsx'
 import BottomSheet from '../../../shared/ui/BottomSheet.jsx'
 import Icon from '../../../shared/ui/Icon.jsx'
 import OrderEditedBadge from '../../../shared/ui/OrderEditedBadge.jsx'
+import OrderEditChanges from '../../../domains/orders/ui/components/OrderEditChanges.jsx'
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import {
   countKitchenTvModalities,
@@ -509,12 +510,9 @@ function KitchenTvControlSurface({
           </div>}
         </section>
 
-        {selectedEdit && <section className="kitchen-tv-control-edit-review" aria-label="Revisão do pedido">
-          <strong><OrderEditedBadge /> Últimas alterações</strong>
-          <ul>{(selectedEdit.editSummary?.items || []).map((item,index)=><li key={index}>
-            {item.kind==='removed'?'Removido':item.kind==='added'?'Adicionado':'Alterado'}: {(item.after||item.before)?.name || 'Produto'}
-          </li>)}</ul>
-        </section>}
+        {selectedEdit?.editSummary?.items?.length > 0 && (
+          <OrderEditChanges changes={selectedEdit.editSummary.items} defaultOpen className="kitchen-tv-control-edit-review" />
+        )}
         <p className="kitchen-tv-control-action-explainer">Remove apenas do painel da TV. O pedido continua em preparo no sistema.</p>
         {!canControl && <p className="kitchen-tv-control-action-note">Somente leitura. Você não tem permissão para alterar a TV.</p>}
         {canControl && (!isOnline || !controlState?.paired || !telemetryFresh) && <p className="kitchen-tv-control-action-note">A TV precisa estar conectada e com sinal recente para alterar a visibilidade.</p>}

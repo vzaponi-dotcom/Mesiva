@@ -1,4 +1,4 @@
-.order-detail-redesigned .order-detail-edit-history {
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history {
   margin: 2px 0 0;
   padding: 0;
   border: 1px solid var(--border);
@@ -6,7 +6,7 @@
   background: var(--surface);
   color: var(--text);
 }
-.order-detail-redesigned .order-detail-edit-history > summary {
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -15,8 +15,8 @@
   list-style: none;
   cursor: pointer;
 }
-.order-detail-redesigned .order-detail-edit-history > summary::-webkit-details-marker { display: none; }
-.order-detail-redesigned .order-detail-edit-history > summary:focus-visible {
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary::-webkit-details-marker { display: none; }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: -3px;
   border-radius: 10px;
@@ -32,9 +32,9 @@
 }
 .order-edit-history-heading svg { flex: 0 0 auto; color: var(--warning); }
 .order-edit-history-count { flex-shrink: 0; color: var(--muted); font-size: .75rem; font-weight: 400; }
-.order-detail-redesigned .order-detail-edit-history > summary > svg:last-child { flex-shrink: 0; color: var(--muted); }
-.order-detail-redesigned .order-detail-edit-history[open] > summary { margin-bottom: 0; border-bottom: 1px solid var(--border); }
-.order-detail-redesigned .order-detail-edit-history[open] > summary > svg:last-child { transform: rotate(180deg); }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary > svg:last-child { flex-shrink: 0; color: var(--muted); }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history[open] > summary { margin-bottom: 0; border-bottom: 1px solid var(--border); }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history[open] > summary > svg:last-child { transform: rotate(180deg); }
 .order-edit-history-content { padding: 12px; }
 .order-edit-history-hint { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.4; }
 .order-edit-change-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -86,7 +86,7 @@
 @media (max-width: 640px) {
   .order-edit-history-content { padding: 9px; }
   .order-edit-change-row { padding: 10px; }
-  .order-detail-redesigned .order-detail-edit-history > summary { flex-wrap: wrap; gap: 8px; }
+  :is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary { flex-wrap: wrap; gap: 8px; }
   .order-edit-history-heading { flex: 1 1 auto; }
   .order-edit-change-heading { align-items: flex-start; gap: 6px 8px; }
 }

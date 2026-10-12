@@ -4,9 +4,9 @@ import './order-edit-changes.css'
 const quantity = item => Number.isSafeInteger(Number(item?.quantity)) ? Math.max(0,Number(item.quantity)) : 0
 const note = item => String(item?.note || '').trim()
 
-export default function OrderEditChanges({ changes = [] }) {
+export default function OrderEditChanges({ changes = [], defaultOpen = false, className = '' }) {
   if (!Array.isArray(changes) || changes.length === 0) return null
-  return <details className="order-detail-edit-history">
+  return <details className={['order-detail-edit-history', className].filter(Boolean).join(' ')} open={defaultOpen} aria-label="Revisão do pedido">
     <summary>
       <span className="order-edit-history-heading"><Icon name="edit" size={16}/>Últimas alterações</span>
       <span className="order-edit-history-count">{changes.length} {changes.length === 1 ? 'alteração' : 'alterações'}</span>

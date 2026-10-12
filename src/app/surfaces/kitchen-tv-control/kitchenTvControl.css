@@ -984,6 +984,19 @@
   font-size: .7rem;
 }
 
-.kitchen-tv-control-edit-review { border: 1px solid #d97706; border-radius: 10px; padding: 12px; margin: 10px 0; }
-.kitchen-tv-control-edit-review > strong { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 6px; }
-.kitchen-tv-control-edit-review ul { padding-left: 20px; margin: 6px 0 12px; }
+/* O histórico da TV reutiliza o mesmo painel do detalhe do pedido.
+   Somente o limite de rolagem precisa ser específico do modal da TV. */
+.kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review {
+  min-width: 0;
+  margin: 0;
+}
+.kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review .order-edit-history-content {
+  max-height: min(44vh, 340px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 420px) {
+  .kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review .order-edit-history-content {
+    max-height: min(38vh, 270px);
+  }
+}
