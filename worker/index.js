@@ -2,6 +2,7 @@ import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSIO
 import { authenticateHumanRequest, loadAuthMode } from './access/sessions.js'
 import { handleEmailAuthApi, loginWithEmail } from './access/emailAuthApi.js'
 import { recordSecurityEvent, withAuditContext } from './access/audit.js'
+import { withFinanceMutationGuard } from './access/financeMutationGuard.js'
 import { attachOperationalAttributions } from './access/attribution.js'
 import { createManualMovement, softDeleteManualMovement, updateManualMovement, upsertFinanceSettings } from './financeRepository.js'
 import { parseFinanceSettingsInput, parseManualMovementInput } from './financeValidation.js'
@@ -170,6 +171,7 @@ const authenticatedApi = async (request, env) => {
 const dispatchAuthenticatedApi = async (request, env, session, context, url) => {
   env = { ...env, DB: withAuditContext(multiCompanyEnabled(env) ? withBusinessSessionGuard(env.DB, session) : env.DB, context) }
   const effectsJson = (payload, init) => json(projectMutationEffects(payload, context.granted), init)
+  const financeDb = withFinanceMutationGuard(env.DB, context)
 
   const accessResponse = await handleAccessApi(request, env, context, url)
   if (accessResponse) return accessResponse
@@ -276,7 +278,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const { orderIds, allocations } = await readJson(request)
     const result = await registerClientOrdersPayment(
-      env.DB,
+      financeDb,
       session.businessId,
       decodeURIComponent(clientReceivablesPaymentMatch[1]),
       validateReceivableOrderIds(orderIds),
@@ -314,7 +316,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'orders.edit')
     assertSameOriginMutation(request)
     const body = validateOrderEditInput(await readJson(request))
-    const result = await updateExistingOrder(env.DB, session.businessId,
+    const result = await updateExistingOrder(financeDb, session.businessId,
       decodeURIComponent(editOrderMatch[1]), body,
       {allowAdjustment:context.granted.has('orders.discount')})
     return effectsJson({order:result.order})
@@ -325,7 +327,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const body = await readJson(request)
     if (body.status !== 'Finalizado') throw apiError(400, 'INVALID_STATUS', 'Transição de status inválida.')
-    const order = await updateOrderStatus(env.DB, session.businessId, decodeURIComponent(statusMatch[1]))
+    const order = await updateOrderStatus(financeDb, session.businessId, decodeURIComponent(statusMatch[1]))
     if (!order) throw apiError(404, 'ORDER_NOT_FOUND', 'Pedido não encontrado.')
     return effectsJson({ order })
   }
@@ -334,14 +336,14 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'payments.receive')
     assertSameOriginMutation(request)
     const { allocations } = await readJson(request)
-    const result = await registerOrderPayment(env.DB, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
+    const result = await registerOrderPayment(financeDb, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
     return effectsJson(result, { status: 201 })
   }
   const supplementMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/supplemental-payment$/)
   if(supplementMatch && request.method==='POST'){
     requireCapability(context,'payments.receive')
     assertSameOriginMutation(request)
-    const result=await registerOrderSupplementalPayment(env.DB,session.businessId,
+    const result=await registerOrderSupplementalPayment(financeDb,session.businessId,
       decodeURIComponent(supplementMatch[1]),await readJson(request))
     return effectsJson(result,{status:201})
   }
@@ -349,7 +351,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if(partialRefundMatch && request.method==='POST'){
     requireCapability(context,'payments.refund')
     assertSameOriginMutation(request)
-    const result=await registerOrderPartialRefund(env.DB,session.businessId,
+    const result=await registerOrderPartialRefund(financeDb,session.businessId,
       decodeURIComponent(partialRefundMatch[1]),await readJson(request))
     return effectsJson(result,{status:201})
   }
@@ -367,14 +369,14 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const body = await readJson(request)
     if (body.refundNow) requireCapability(context, 'payments.refund')
-    const result = await cancelOrder(env.DB, session.businessId, decodeURIComponent(cancelMatch[1]), body)
+    const result = await cancelOrder(financeDb, session.businessId, decodeURIComponent(cancelMatch[1]), body)
     return effectsJson(result)
   }
   const refundMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/refund$/)
   if (refundMatch && request.method === 'POST') {
     requireCapability(context, 'payments.refund')
     assertSameOriginMutation(request)
-    const result = await registerOrderRefund(env.DB, session.businessId, decodeURIComponent(refundMatch[1]), await readJson(request))
+    const result = await registerOrderRefund(financeDb, session.businessId, decodeURIComponent(refundMatch[1]), await readJson(request))
     return effectsJson(result, { status: 201 })
   }
   const tableTabPrintMatch = url.pathname.match(/^\/api\/table-tabs\/([^/]+)\/print-document$/)
@@ -416,7 +418,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const { allocations } = await readJson(request)
     const result = await registerTableTabPayment(
-      env.DB,
+      financeDb,
       session.businessId,
       decodeURIComponent(tableTabPaymentMatch[1]),
       validatePaymentAllocations(allocations),
