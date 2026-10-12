@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createSettingsDb } from '../test-support/settingsDb.js'
 import { recordSecurityEvent } from './audit.js'
 import * as audit from './audit.js'
+import { withFinanceMutationGuard } from './financeMutationGuard.js'
 
 test('official business mutation and safe resource-linked audit roll back together', async t => {
   const {db,sqlite,close}=createSettingsDb();t.after(close)
@@ -38,7 +39,7 @@ test('Task 15 revoked role grant or session cannot commit a previously authorize
   sqlite.prepare("UPDATE business_auth_state SET mode='user_only' WHERE business_id=?").run(b)
   const auth={businessId:b,sessionId:'s-t15',userId:'u-t15',roleId:'role-t15',
     granted:new Set(['payments.receive']),authMode:'user_only',legacy:false}
-  const sessionDb=audit.withAuditContext(db,auth)
+  const sessionDb=withFinanceMutationGuard(audit.withAuditContext(db,auth),auth)
   const statement=()=>db.prepare("INSERT INTO clients(id,business_id,name,created_at,updated_at) VALUES('stale-write','amor-e-sabor','Stale','2026-10-12','2026-10-12')")
   sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id='role-t15'").run(b)
   await assert.rejects(sessionDb.batch([statement()]),error=>error?.code==='SESSION_CONTEXT_CHANGED')
