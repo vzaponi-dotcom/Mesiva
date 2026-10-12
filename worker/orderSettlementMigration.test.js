@@ -169,3 +169,12 @@ test('mutation, kind, actor and cross-tenant references are constrained and entr
   assert.throws(()=>db.prepare("DELETE FROM order_settlement_entries WHERE id='first'").run(),/IMMUTABLE/)
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[])
 })
+
+// D1 remote migrations use a trigger-aware SQL splitter that can mistake an
+// unparenthesized CASE..END for the end of the surrounding trigger body.
+test('0043 remote D1 migration keeps trigger CASE expressions parenthesized and LF-only', () => {
+  const sql = readFileSync(new URL(migration, migrations), 'utf8')
+  assert.equal(sql.includes('\r'), false, 'Remote D1 migration triggers must use LF line endings')
+  assert.doesNotMatch(sql, /\bSELECT\s+CASE\s+WHEN\b/i)
+  assert.equal((sql.match(/\bSELECT\s+\(CASE\s+WHEN\b/g) || []).length, 3)
+})

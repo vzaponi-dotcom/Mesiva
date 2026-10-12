@@ -79,7 +79,7 @@ CREATE TRIGGER order_settlement_receipt_integrity_insert
 BEFORE INSERT ON order_settlement_entries
 WHEN NEW.kind = 'supplemental_payment'
 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT (CASE WHEN NOT EXISTS (
     SELECT 1
     FROM payment_receipts r
     WHERE r.id = NEW.receipt_id
@@ -89,9 +89,9 @@ BEGIN
         FROM payment_allocations a
         WHERE a.business_id = r.business_id AND a.receipt_id = r.id
       )
-  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_RECEIPT_INVALID') END;
+  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_RECEIPT_INVALID') END);
 
-  SELECT CASE WHEN (
+  SELECT (CASE WHEN (
     SELECT
       NEW.amount_cents
       + (SELECT COALESCE(SUM(e.amount_cents),0)
@@ -106,7 +106,7 @@ BEGIN
   ) > (
     SELECT r.total_cents FROM payment_receipts r
     WHERE r.id = NEW.receipt_id AND r.business_id = NEW.business_id
-  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_RECEIPT_OVERALLOCATED') END;
+  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_RECEIPT_OVERALLOCATED') END);
 END;
 
 -- The refund must represent an existing, non-deleted cash outflow for exactly
@@ -115,7 +115,7 @@ CREATE TRIGGER order_settlement_refund_integrity_insert
 BEFORE INSERT ON order_settlement_entries
 WHEN NEW.kind = 'refund'
 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT (CASE WHEN NOT EXISTS (
     SELECT 1 FROM movements m
     WHERE m.business_id = NEW.business_id
       AND m.id = NEW.movement_id
@@ -124,7 +124,7 @@ BEGIN
       AND m.source = 'order-edit-refund'
       AND m.value_cents = NEW.amount_cents
       AND m.deleted_at IS NULL
-  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_REFUND_MISMATCH') END;
+  ) THEN RAISE(ABORT, 'ORDER_SETTLEMENT_REFUND_MISMATCH') END);
 END;
 
 -- A linked refund movement cannot silently change amount, ownership, source,
