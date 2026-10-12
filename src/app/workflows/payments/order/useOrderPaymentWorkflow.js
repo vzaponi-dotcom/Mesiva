@@ -2,6 +2,7 @@ import { useMutationOwner } from '../../../runtime/session/useMutationOwner.js'
 import { useCallback, useRef, useState } from 'react'
 import {
   canReceiveStandaloneOrder,
+  getPendingAmount,
   isOrderCancelled,
 } from '../../../../domains/orders/index.js'
 import {
@@ -45,7 +46,11 @@ export function useOrderPaymentWorkflow({
   const isEligible = useCallback((order, source) => {
     if (!order || !canReceivePayments) return false
     if (operationalSources.has(source)) return canReceiveStandaloneOrder(order, granted, source)
-    return order.paymentStatus !== 'Pago' && !isOrderCancelled(order)
+    // Partial balances are settled by the Task 10 supplemental writer (Task 14
+    // workflow), never by the legacy full-payment endpoint.
+    return order.paymentStatus === 'Pendente'
+      && !order.paymentId && getPendingAmount(order) > 0
+      && !isOrderCancelled(order)
   }, [canReceivePayments, granted])
 
   const clearRequestKey = useCallback((owner) => {
