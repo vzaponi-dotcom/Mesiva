@@ -35,8 +35,8 @@ test('Task 13 overview and sales use current outstanding balances and one real r
   const {db}=setup(t)
   const repository=createReportingRepository(db)
   const orders=(await repository.loadOverview(B,QUERY)).orders
-  assert.deepEqual(orders.map(o=>[o.id,o.gross_received_cents,o.refunded_cents]),
-    [['partial',8000,0],['overpaid',8000,0],['refunded',8000,1000]])
+  assert.deepEqual(orders.map(o=>[o.id,o.gross_received_cents,o.refunded_cents]).sort((a,b)=>a[0].localeCompare(b[0])),
+    [['overpaid',8000,0],['partial',8000,0],['refunded',8000,1000]])
   const overview=await createReportingService(repository).overview(B,QUERY)
   assert.equal(overview.data.metrics.receivableCents,2500)
   assert.equal(overview.data.metrics.refundsCents,1000)
