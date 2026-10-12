@@ -458,3 +458,30 @@ test('selected-order cancellation race rolls back the complete client payment ba
   assert.equal(db.sqlite.prepare("SELECT count(*) AS n FROM payments WHERE order_id = 'o2'").get().n, 0)
   assert.equal(db.sqlite.prepare('SELECT count(*) AS n FROM settings_tx_assertions').get().n, 0)
 })
+
+test('Task 12 group receipt refuses a stale content revision even with unchanged totals', async () => {
+  const db = new ClientReceivablesDb()
+  const batch=db.batch.bind(db)
+  db.batch=async statements=>{
+    db.sqlite.prepare("UPDATE orders SET content_revision=content_revision+1 WHERE id='o2'").run()
+    return batch(statements)
+  }
+  await assert.rejects(registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],pix69,NOW),
+    {status:409,code:'CLIENT_RECEIVABLES_PAYMENT_CONFLICT'})
+  assert.deepEqual(counts(db),{receipts:0,allocations:0,payments:0,movements:0})
+})
+
+test('Task 12 shared client receipt keeps distinct order credits without multiplying revenue', async () => {
+  const db=new ClientReceivablesDb()
+  const receipt=await registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],split69,NOW)
+  const {listOrders}=await import('./orderReadRepository.js')
+  const orders=await listOrders(db,BUSINESS)
+  const first=orders.find(order=>order.id==='o1')
+  const second=orders.find(order=>order.id==='o2')
+  assert.equal(first.grossReceivedCents,4900)
+  assert.equal(second.grossReceivedCents,2000)
+  assert.equal(first.dueCents+second.dueCents,0)
+  assert.equal(db.sqlite.prepare('SELECT SUM(value_cents) n FROM movements WHERE receipt_id=?').get(receipt.receipt.id).n,6900)
+  assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payments WHERE order_id IN ('o1','o2')").get().n,2)
+  assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payment_receipts WHERE id=?").get(receipt.receipt.id).n,1)
+})
