@@ -35,12 +35,58 @@ export const parsePaymentAllocations = (row = {}) => {
   }
 }
 
+
+export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
+    COALESCE(p.amount_cents, 0) +
+    COALESCE((SELECT SUM(e.amount_cents)
+      FROM order_settlement_entries e
+      WHERE e.business_id = o.business_id AND e.order_id = o.id
+        AND e.kind = 'supplemental_payment'), 0)
+  ) AS gross_received_cents,
+  (
+    COALESCE((SELECT SUM(e.amount_cents)
+      FROM order_settlement_entries e
+      WHERE e.business_id = o.business_id AND e.order_id = o.id
+        AND e.kind = 'refund'), 0) +
+    COALESCE((SELECT SUM(m.value_cents)
+      FROM movements m
+      WHERE m.business_id = o.business_id AND m.order_id = o.id
+        AND m.source = 'order-refund' AND m.type = 'saida'
+        AND m.deleted_at IS NULL), 0)
+  ) AS refunded_cents`
+
+export const deriveOrderSettlementBalance = ({ totalCents, grossReceivedCents, refundedCents }) => {
+  for (const [key, value] of Object.entries({ totalCents, grossReceivedCents, refundedCents })) {
+    if (!Number.isSafeInteger(value) || value < 0) throw new RangeError('ORDER_BALANCE_INVALID_' + key)
+  }
+  if (refundedCents > grossReceivedCents) throw new RangeError('ORDER_BALANCE_INVALID_REFUND')
+  const netReceivedCents = grossReceivedCents - refundedCents
+  return {
+    totalCents, grossReceivedCents, refundedCents, netReceivedCents,
+    dueCents: Math.max(totalCents - netReceivedCents, 0),
+    refundDueCents: Math.max(netReceivedCents - totalCents, 0),
+  }
+}
+
+const settlementStatus = (balance, paid) => {
+  if (balance.refundDueCents) return 'Devolução pendente'
+  if (balance.dueCents) return balance.grossReceivedCents ? 'Parcialmente pago' : 'Pendente'
+  return paid || balance.grossReceivedCents ? 'Pago' : 'Pendente'
+}
+
 export const mapOrderPaymentFields = (row = {}) => {
   const paid = Boolean(row.payment_id)
   const structured = row.receipt_id != null || Object.hasOwn(row, 'payment_allocations_json')
   const paymentAllocations = parsePaymentAllocations(row)
+  const balance = Number.isSafeInteger(row.total_cents)
+    ? deriveOrderSettlementBalance({
+      totalCents: row.total_cents,
+      grossReceivedCents: row.gross_received_cents ?? (paid ? Number(row.paid_amount_cents || 0) : 0),
+      refundedCents: row.refunded_cents ?? (row.refund_movement_id ? Number(row.paid_amount_cents || 0) : 0),
+    })
+    : null
   return {
-    paymentStatus: paid ? 'Pago' : 'Pendente',
+    paymentStatus: balance ? settlementStatus(balance, paid) : paid ? 'Pago' : 'Pendente',
     paymentId: paid ? row.payment_id : null,
     paymentReceiptId: paid ? row.receipt_id ?? null : null,
     paymentMethod: paid
@@ -48,5 +94,6 @@ export const mapOrderPaymentFields = (row = {}) => {
       : null,
     paymentAllocations,
     paidAt: paid ? row.paid_at : null,
+    ...(balance || {}),
   }
 }
