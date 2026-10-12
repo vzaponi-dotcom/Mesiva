@@ -784,6 +784,13 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
       && Boolean(order.paymentId)
       && Number.isSafeInteger(order.refundDueCents) && order.refundDueCents > 0
     )), [orders])
+  const canViewFinanceMovements = hasCapability(granted, 'finance.movements')
+  const navigationBadges = {
+    orders: operationalOrderCount,
+    comandas: openComandaCount,
+    'print-queue': printing.activeJobCount,
+    finance: canViewFinanceMovements ? pendingRefundOrders.length : 0,
+  }
   const handleNewOrder = ({ tableId = '', expectedTableTabId = '', returnTab = 'orders', clientId = '' } = {}) => {
     if (!canCreateOrders || writesBlocked) return false
     let currentTableId = tableId
@@ -913,8 +920,8 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
           if (policyId === 'businessProfile') void refreshBootstrapSilently()
         }}
       >
-      <NavigationProvider authenticated={authState === 'authenticated' && Boolean(sessionContext?.user?.id)} activeTab={activeTab} activeMobileEntry={activeMobileEntry} granted={granted} implemented={IMPLEMENTED_DESTINATIONS} moreOpen={moreOpen} requestNavigation={requestNavigation} openMore={openMore} closeMore={closeMore}>
-      <AppShell user={sessionContext?.user} onSwitchUser={handleSwitchUser} onSwitchCompany={globalSession && sessionContext?.eligibleBusinessCount > 1 ? handleSwitchCompany : undefined} onPlatform={globalSession && sessionContext.platformCapabilities?.includes('platform.businesses.view') ? handlePlatform : undefined} businessId={sessionContext?.businessId} businessName={business?.name} businessHasLogo={business?.hasLogo} businessLogoVersion={business?.logoVersion} navigationBadges={{ orders: operationalOrderCount, comandas: openComandaCount, 'print-queue': printing.activeJobCount }} onLogout={handleLogout} logoutDisabled={writesBlocked}>
+      <NavigationProvider authenticated={authState === 'authenticated' && Boolean(sessionContext?.user?.id)} activeTab={activeTab} activeMobileEntry={activeMobileEntry} granted={granted} implemented={IMPLEMENTED_DESTINATIONS} navigationBadges={navigationBadges} moreOpen={moreOpen} requestNavigation={requestNavigation} openMore={openMore} closeMore={closeMore}>
+      <AppShell user={sessionContext?.user} onSwitchUser={handleSwitchUser} onSwitchCompany={globalSession && sessionContext?.eligibleBusinessCount > 1 ? handleSwitchCompany : undefined} onPlatform={globalSession && sessionContext.platformCapabilities?.includes('platform.businesses.view') ? handlePlatform : undefined} businessId={sessionContext?.businessId} businessName={business?.name} businessHasLogo={business?.hasLogo} businessLogoVersion={business?.logoVersion} navigationBadges={navigationBadges} onLogout={handleLogout} logoutDisabled={writesBlocked}>
         {['my-account', 'access-team', 'access-activity'].includes(activeTab) && renderAccessSurface(accessProps)}
         {activityOrder && <OrderDetail order={activityOrder} currency={currency} onClose={() => setActivityDetail(null)} canExecutePrinting={false} canCancelOrders={false} />}
         {activeTab === 'dashboard' && <DashboardSurface orders={orders} movements={movements} currency={currency} queryState={query.dashboard} onQueryChange={(patch) => patchQuery('dashboard', patch)} />}
