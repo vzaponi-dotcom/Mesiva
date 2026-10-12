@@ -1,5 +1,25 @@
 const cleanText = (value) => typeof value === 'string' ? value.trim() : ''
 
+export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
+    COALESCE(p.amount_cents, 0) +
+    COALESCE((SELECT SUM(e.amount_cents)
+      FROM order_settlement_entries e
+      WHERE e.business_id = o.business_id AND e.order_id = o.id
+        AND e.kind = 'supplemental_payment'), 0)
+  ) AS gross_received_cents,
+  (
+    COALESCE((SELECT SUM(e.amount_cents)
+      FROM order_settlement_entries e
+      WHERE e.business_id = o.business_id AND e.order_id = o.id
+        AND e.kind = 'refund'), 0) +
+    COALESCE((SELECT SUM(m.value_cents)
+      FROM movements m
+      WHERE m.business_id = o.business_id AND m.order_id = o.id
+        AND m.source = 'order-refund' AND m.type = 'saida'
+        AND m.deleted_at IS NULL), 0)
+  ) AS refunded_cents`
+
+// Shared by list, bootstrap, detail and legacy cancellation readers.
 export const PAYMENT_ALLOCATIONS_JSON_SELECT = `p.receipt_id AS receipt_id,
   (SELECT COALESCE(json_group_array(json_object(
     'methodCode', allocation.method_code,
@@ -11,7 +31,7 @@ export const PAYMENT_ALLOCATIONS_JSON_SELECT = `p.receipt_id AS receipt_id,
      FROM payment_allocations pa
      WHERE pa.business_id = o.business_id AND pa.receipt_id = p.receipt_id
      ORDER BY pa.created_at ASC, pa.id ASC
-   ) allocation) AS payment_allocations_json`
+   ) allocation) AS payment_allocations_json, ${PAYMENT_SETTLEMENT_SQL_SELECT}`
 
 export const parsePaymentAllocations = (row = {}) => {
   if (!row.payment_id) return []
@@ -35,25 +55,6 @@ export const parsePaymentAllocations = (row = {}) => {
   }
 }
 
-
-export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
-    COALESCE(p.amount_cents, 0) +
-    COALESCE((SELECT SUM(e.amount_cents)
-      FROM order_settlement_entries e
-      WHERE e.business_id = o.business_id AND e.order_id = o.id
-        AND e.kind = 'supplemental_payment'), 0)
-  ) AS gross_received_cents,
-  (
-    COALESCE((SELECT SUM(e.amount_cents)
-      FROM order_settlement_entries e
-      WHERE e.business_id = o.business_id AND e.order_id = o.id
-        AND e.kind = 'refund'), 0) +
-    COALESCE((SELECT SUM(m.value_cents)
-      FROM movements m
-      WHERE m.business_id = o.business_id AND m.order_id = o.id
-        AND m.source = 'order-refund' AND m.type = 'saida'
-        AND m.deleted_at IS NULL), 0)
-  ) AS refunded_cents`
 
 export const deriveOrderSettlementBalance = ({ totalCents, grossReceivedCents, refundedCents }) => {
   for (const [key, value] of Object.entries({ totalCents, grossReceivedCents, refundedCents })) {
