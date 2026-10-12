@@ -8,6 +8,7 @@ import PaymentBadge from '../PaymentBadge.jsx'
 import OrderPaymentStatus from './OrderPaymentStatus.jsx'
 import Icon from '../../../../shared/ui/Icon.jsx'
 import OrderEditedBadge from '../../../../shared/ui/OrderEditedBadge.jsx'
+import OrderEditChanges from './OrderEditChanges.jsx'
 import './order-detail-redesigned.css'
 import { actorLabel } from '../../../../shared/actorLabel.js'
 import StatusBadge from '../../../../shared/ui/StatusBadge'
@@ -157,20 +158,7 @@ function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCa
                 {printJob && <PrintStatusBadge job={printJob} />}
               </div>
             {Number(order.operationalRevision) > 0 && latestItemChanges.length > 0 && (
-              <details className="order-detail-edit-history">
-                <summary><Icon name="edit" size={15} /> Ver últimas alterações do pedido</summary>
-                <ul>
-                  {latestItemChanges.map((change, index) => {
-                    const item = change.after || change.before || {}
-                    const label = change.kind === 'removed' ? 'Removido' : change.kind === 'added' ? 'Adicionado' : 'Alterado'
-                    const amount = change.kind === 'removed' ? change.before?.quantity : change.after?.quantity
-                    return <li key={`${change.kind}-${index}`}>
-                      <strong>{label}:</strong> {amount || 1}× {item.name || 'Produto'}
-                      {change.before?.note !== change.after?.note && <span> · Observação alterada</span>}
-                    </li>
-                  })}
-                </ul>
-              </details>
+              <OrderEditChanges changes={latestItemChanges} />
             )}
             <div className="order-detail-meta">
               <div><span>Criado em</span><strong>{formatPrintTimestamp(order.createdAt)}</strong></div>

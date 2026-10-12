@@ -1,37 +1,19 @@
-
-.order-edited-badge {
+.status-badge.order-edited-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   max-width: 100%;
-  padding: 3px 7px;
-  border: 1px solid rgba(245, 158, 11, .44);
-  border-radius: 999px;
-  background: rgba(245, 158, 11, .12);
-  color: var(--warning, #d97706);
-  font-size: .72rem;
-  font-weight: 800;
+  min-height: 26px;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+  border-radius: var(--badge-radius);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: .7rem;
+  font-weight: var(--badge-font-weight);
   line-height: 1.25;
   white-space: nowrap;
   vertical-align: middle;
 }
 .order-edited-badge svg { flex: 0 0 auto; }
-
-.order-detail-edit-history {
-  padding: 9px 11px;
-  border: 1px solid rgba(245, 158, 11, .32);
-  border-radius: 9px;
-  background: rgba(245, 158, 11, .06);
-  font-size: .8125rem;
-  color: var(--text);
-}
-.order-detail-edit-history summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 750;
-}
-.order-detail-edit-history summary svg { color: var(--warning, #d97706); }
-.order-detail-edit-history ul { margin: 8px 0 0; padding-left: 21px; line-height: 1.55; }
