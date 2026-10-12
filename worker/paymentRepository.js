@@ -33,7 +33,7 @@ const mapReceipt = (row, allocations) => ({
 
 export async function registerOrderPayment(db, businessId, orderId, rawAllocations, now = new Date()) {
   const orderRow = await db.prepare(`SELECT o.id, o.order_number, o.status, o.client_name_snapshot,
-    o.table_tab_id, o.total_cents, p.id AS payment_id
+    o.table_tab_id, o.total_cents, o.content_revision, p.id AS payment_id
     FROM orders o
     LEFT JOIN payments p ON p.order_id = o.id AND p.business_id = o.business_id
     WHERE o.id = ? AND o.business_id = ? LIMIT 1`).bind(orderId, businessId).first()
@@ -85,8 +85,16 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
     payment_allocation_id: allocation.id,
   }))
 
+  const stateGuard=prepareSettingsAssertion(db,policyTxId,'standalone-order-state',
+    `EXISTS(SELECT 1 FROM orders o LEFT JOIN payments p
+      ON p.business_id=o.business_id AND p.order_id=o.id
+      WHERE o.id=? AND o.business_id=?
+        AND o.status=? AND o.content_revision=? AND o.total_cents=?
+        AND o.table_tab_id IS NULL AND p.id IS NULL)`,
+    [orderId,businessId,orderRow.status,Number(orderRow.content_revision||0),Number(orderRow.total_cents)])
   const statements = [
     ...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, policyTxId),
+    stateGuard,
     db.prepare(`INSERT INTO payment_receipts
       (id, business_id, table_tab_id, total_cents, paid_at, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, null, orderRow.total_cents, paidAt, paidAt),
@@ -126,6 +134,8 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
       .bind(orderId, businessId).first()
     if (existingPayment) throw repositoryError(409, 'ORDER_ALREADY_PAID', 'Este pedido já foi pago.')
     if (String(error?.message || '').includes('POLICY_CHANGED')) rethrowPolicyChange(error)
+    if (/SETTINGS_INVALID|UNIQUE constraint failed/.test(String(error?.message||'')))
+      throw repositoryError(409,'ORDER_PAYMENT_CONFLICT','O pedido mudou durante a cobrança. Atualize e confira o saldo.')
     throw error
   }
 
