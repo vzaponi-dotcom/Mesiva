@@ -113,3 +113,37 @@ test('table-tab payment rejects an open tab without payable orders', async () =>
   )
   assert.equal(db.sqlite.prepare("SELECT status FROM table_tabs WHERE id = 'tab-1'").get().status, 'open')
 })
+
+test('Task 12 table-tab payment aborts on an edit revision even when the total is unchanged', async () => {
+  const db = new TableTabPaymentDb()
+  const batch = db.batch.bind(db)
+  db.batch = async statements => {
+    db.sqlite.prepare("UPDATE orders SET content_revision = content_revision + 1 WHERE id = 'order-1'").run()
+    return batch(statements)
+  }
+  await assert.rejects(registerTableTabPayment(db,BUSINESS,'tab-1',pix,NOW),
+    {status:409,code:'TABLE_TAB_PAYMENT_CONFLICT'})
+  assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payments").get().n,0)
+  assert.equal(db.sqlite.prepare("SELECT count(*) n FROM movements").get().n,0)
+  assert.equal(db.sqlite.prepare("SELECT status FROM table_tabs WHERE id='tab-1'").get().status,'open')
+})
+
+test('Task 12 edited open-tab totals are authoritative without extra occupation changes', async () => {
+  const db = new TableTabPaymentDb()
+  db.sqlite.prepare("UPDATE orders SET total_cents=3500,subtotal_cents=3500,content_revision=1 WHERE id='order-1'").run()
+  const result = await registerTableTabPayment(db,BUSINESS,'tab-1',[{methodCode:'pix',amountCents:3500}],NOW)
+  assert.equal(result.receipt.totalCents,3500)
+  assert.equal(result.payments.length,1)
+  assert.equal(result.tableTab.status,'closed')
+  assert.equal((await listTables(db,BUSINESS)).find(table=>table.id==='table-1').occupancy,'free')
+  assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payments WHERE order_id='order-1'").get().n,1)
+})
+
+test('Task 12 standalone payment cannot bypass an open table tab', async () => {
+  const db = new TableTabPaymentDb()
+  const { registerOrderPayment } = await import('./paymentRepository.js')
+  await assert.rejects(registerOrderPayment(db,BUSINESS,'order-1',pix,NOW),
+    {status:409,code:'TABLE_TAB_PAYMENT_REQUIRED'})
+  assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payments').get().n,0)
+  assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payment_receipts').get().n,0)
+})
