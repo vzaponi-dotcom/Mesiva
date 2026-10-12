@@ -49,7 +49,7 @@ const normalizeRefundMethod = (value) => {
 }
 
 const orderContextSql = `SELECT o.id, o.order_number, o.status, o.table_tab_id, o.client_name_snapshot,
-  o.cancelled_at, o.cancel_reason, o.cancel_reason_note, o.timing_policy_snapshot_json,
+  o.cancelled_at, o.cancel_reason, o.cancel_reason_note, o.timing_policy_snapshot_json, o.total_cents,
   cr.label AS cancel_reason_label,
   p.id AS payment_id, p.method AS payment_method, p.amount_cents AS paid_amount_cents, p.paid_at, ${PAYMENT_ALLOCATIONS_JSON_SELECT},
   r.id AS refund_movement_id, r.created_at AS refund_created_at
@@ -85,10 +85,11 @@ const mapContext = (row) => {
 
 export const getOrderRefundState = (order) => {
   if (order?.status !== 'Cancelado' || !order?.paymentId) return 'none'
+  if (Number.isSafeInteger(order.netReceivedCents)) return order.netReceivedCents === 0 ? 'refunded' : 'pending'
   return order?.refundMovementId ? 'refunded' : 'pending'
 }
 
-const createRefundStatement = (db, businessId, row, refundMethod, now) => {
+const createRefundStatement = (db, businessId, row, refundMethod, now, amountCents = Number(row.paid_amount_cents)) => {
   const id = crypto.randomUUID()
   const createdAt = now.toISOString()
   const movementDate = getBusinessDate(now)
@@ -99,7 +100,7 @@ const createRefundStatement = (db, businessId, row, refundMethod, now) => {
     'saida',
     'Estornos',
     `${description} · ${refundMethod}`,
-    row.paid_amount_cents,
+    amountCents,
     'order-refund',
     row.id,
     row.payment_id,
@@ -115,7 +116,7 @@ const createRefundStatement = (db, businessId, row, refundMethod, now) => {
       type: 'saida',
       category: 'Estornos',
       description: `${description} · ${refundMethod}`,
-      value_cents: row.paid_amount_cents,
+      value_cents: amountCents,
       source: 'order-refund',
       order_id: row.id,
       payment_id: row.payment_id,
@@ -244,12 +245,12 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
   }
 
   let refund = null
-  if (existing.payment_id && input.refundNow) {
+  if (existing.payment_id && input.refundNow && (existing.netReceivedCents ?? Number(existing.paid_amount_cents)) > 0) {
     const refundMethod = normalizeRefundMethod(input.refundMethod)
     const paymentExpectation = await readPaymentMethodExpectation(db, businessId, refundMethod)
     const paymentTxId = crypto.randomUUID()
-    if (existing.refund_movement_id) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
-    refund = createRefundStatement(db, businessId, existing, refundMethod, now)
+    if (existing.refund_movement_id || (existing.netReceivedCents != null && existing.netReceivedCents <= 0)) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
+    refund = createRefundStatement(db, businessId, existing, refundMethod, now, existing.netReceivedCents ?? Number(existing.paid_amount_cents))
     try {
       await db.batch([...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, paymentTxId),
         ...timingGuards, ...cancellationPolicyStatements, orderGuard,
@@ -298,7 +299,7 @@ export const registerOrderRefund = async (db, businessId, orderId, input = {}, n
 
   const paymentExpectation = await readPaymentMethodExpectation(db, businessId, refundMethod)
   const paymentTxId = crypto.randomUUID()
-  const refund = createRefundStatement(db, businessId, existing, refundMethod, now)
+  const refund = createRefundStatement(db, businessId, existing, refundMethod, now, existing.netReceivedCents ?? Number(existing.paid_amount_cents))
   try {
     await db.batch([...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, paymentTxId),
       refund.statement, clearSettingsAssertions(db, paymentTxId),businessEvent(db,businessId,{action:'payment.refunded',resourceType:'order',resourceId:orderId,now})])
