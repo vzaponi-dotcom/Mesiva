@@ -39,9 +39,9 @@ const groupKey = (order) => {
 }
 
 export const getPendingReceivableOrders = (orders = [], orderRules) => {
-  const { isOrderCancelled, isOrderPaid } = requireOrderRules(orderRules)
+  const { isOrderCancelled, getPendingAmount } = requireOrderRules(orderRules)
   return (Array.isArray(orders) ? orders : [])
-    .filter((order) => !isOrderCancelled(order) && !isOrderPaid(order) && !isReservationOrder(order))
+    .filter((order) => !isOrderCancelled(order) && getPendingAmount(order) > 0 && !isReservationOrder(order))
 }
 
 export const getPaidReceivableOrders = (orders = [], orderRules) => {
