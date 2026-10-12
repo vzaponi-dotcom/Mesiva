@@ -10,10 +10,10 @@ const QUERY={from:DATE,to:DATE,page:1,pageSize:30}
 function setup(t) {
   const f=createSettingsDb();t.after(f.close)
   const s=f.sqlite
-  for(const [id,total] of [['partial',9500],['overpaid',6500],['refunded',8000]]) {
+  for(const [index,[id,total]] of [['partial',9500],['overpaid',6500],['refunded',8000]].entries()) {
     s.prepare(`INSERT INTO orders(id,business_id,order_number,client_name_snapshot,type,order_date,status,
-      subtotal_cents,total_cents,created_at) VALUES(?,?,1,'Cliente','Entrega',?,'Finalizado',?,?,?)`)
-      .run(id,B,DATE,total,total,AT)
+      subtotal_cents,total_cents,created_at) VALUES(?,?,?,'Cliente','Entrega',?,'Finalizado',?,?,?)`)
+      .run(id,B,index+1,DATE,total,total,AT)
     const r=id+'-receipt'
     s.prepare('INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES(?,?,?,?,?)')
       .run(r,B,8000,AT,AT)
