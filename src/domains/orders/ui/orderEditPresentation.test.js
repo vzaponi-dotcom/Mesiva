@@ -55,3 +55,25 @@ test('edited badge is non-interactive, legible in dark/light mode and does not m
   const status = read('../../../kitchen-display/KitchenDisplayCard.jsx')
   assert.match(status, /data-highlighted=\{state === 'new'\}/)
 })
+
+test('edited badge reuses the rectangular system status badge with regular-weight text', () => {
+  const badge = read('../../../shared/ui/OrderEditedBadge.jsx')
+  const css = read('../../../shared/ui/orderEditedBadge.css')
+  assert.match(badge, /status-badge order-edited-badge/)
+  assert.match(css, /border-radius:\s*var\(--badge-radius\)/)
+  assert.match(css, /font-weight:\s*var\(--badge-font-weight\)/)
+  assert.doesNotMatch(css, /border-radius:\s*999px/)
+})
+
+test('latest order edit panel displays individual changes instead of unstructured bullets', () => {
+  const detail = read('./components/OrderDetail.jsx')
+  const panel = read('./components/OrderEditChanges.jsx')
+  const css = read('./components/order-edit-changes.css')
+  assert.match(detail, /<OrderEditChanges changes={latestItemChanges}/)
+  assert.doesNotMatch(detail, /<ul>[\s\S]*latestItemChanges\.map/)
+  assert.match(panel, /order-edit-change-row/)
+  assert.match(panel, /order-edit-change-notes/)
+  assert.match(panel, /<details/)
+  assert.match(css, /@media\s*\(max-width:\s*640px\)/)
+  assert.match(css, /var\(--surface/)
+})
