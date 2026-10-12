@@ -77,3 +77,6 @@ jobs:
 
       - name: Validate company management D1 clean install and upgrade
         run: node scripts/infra/company-management-d1-gate.mjs
+
+      - name: Validate order editing D1 upgrade from 0041
+        run: node scripts/infra/order-editing-d1-gate.mjs
