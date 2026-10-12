@@ -335,3 +335,40 @@ test('Task 13 prevents old full-payment workflow from charging partially paid or
   assert.equal(probe.getLatest().dialog.composition.totalCents,3000)
   probe.unmount()
 })
+
+test('Task 16: saved partial order can later receive only the due balance from Receivables',async()=>{
+ const source=order('partial-later',{paymentId:'original',paymentStatus:'Parcialmente pago',
+   total:95,totalCents:9500,netReceivedCents:8000,dueCents:1500,contentRevision:3})
+ const calls=[]
+ const probe=await mountWorkflow({orders:[source],granted:new Set(['payments.receive']),
+   api:{
+     registerOrderPayment:()=>{throw Error('legacy full-payment endpoint must not run')},
+     registerSupplementalPayment:async(id,payload)=>{calls.push({id,payload});return paidEffects(source,payload.allocations)},
+   }})
+ await act(async()=>assert.equal(probe.getLatest().open(source.id),true))
+ assert.equal(probe.getLatest().dialog.totalCents,1500)
+ assert.deepEqual(probe.getLatest().dialog.allocations,[{methodCode:'pix',amountCents:1500}])
+ await act(async()=>assert.equal(await probe.getLatest().dialog.submit(),true))
+ assert.equal(calls.length,1)
+ assert.equal(calls[0].id,source.id)
+ assert.equal(calls[0].payload.expectedContentRevision,3)
+ assert.equal(calls[0].payload.expectedTotalCents,9500)
+ assert.equal(calls[0].payload.expectedNetReceivedCents,8000)
+ assert.deepEqual(calls[0].payload.allocations,[{methodCode:'pix',amountCents:1500}])
+ assert.equal(typeof calls[0].payload.mutationId,'string')
+ assert.deepEqual(probe.errors,[])
+ probe.unmount()
+})
+test('Task 16: refund-due is never offered as a collection and partial stays outside legacy Orders payment shortcut',async()=>{
+ const partial=order('partial',{paymentId:'p1',paymentStatus:'Parcialmente pago',
+   total:95,totalCents:9500,netReceivedCents:8000,dueCents:1500,contentRevision:2})
+ const refund=order('refund',{paymentId:'p2',paymentStatus:'Devolução pendente',
+   total:65,totalCents:6500,netReceivedCents:8000,dueCents:0})
+ const probe=await mountWorkflow({orders:[partial,refund]})
+ await act(async()=>{
+   assert.equal(probe.getLatest().open('partial','orders'),false)
+   assert.equal(probe.getLatest().open('refund'),false)
+   assert.equal(probe.getLatest().open('partial'),true)
+ })
+ probe.unmount()
+})

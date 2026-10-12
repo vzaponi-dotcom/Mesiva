@@ -136,3 +136,14 @@ test('Task 10 unfinished order with no payment must continue through the origina
   assert.equal(count(s,'order_settlement_entries'),0)
   assert.equal(count(s,'payment_receipts'),1)
 })
+
+test('Task 16: a finalized order with an outstanding edit balance can be settled later without re-opening its lifecycle',async t=>{
+ const {s,db}=fixture(t)
+ s.prepare("UPDATE orders SET status='Finalizado' WHERE id='order-1'").run()
+ const result=await registerOrderSupplementalPayment(db,BIZ,'order-1',request('after-finalization'),NOW)
+ assert.equal(result.order.status,'Finalizado')
+ assert.equal(result.order.dueCents,0)
+ assert.equal(result.order.paymentStatus,'Pago')
+ assert.equal(count(s,'payments'),1)
+ assert.equal(count(s,'order_settlement_entries'),1)
+})
