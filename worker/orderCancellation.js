@@ -222,10 +222,10 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
       FROM orders o LEFT JOIN payments p
         ON p.business_id=o.business_id AND p.order_id=o.id
       WHERE o.id=? AND o.business_id=?
-    ) snapshot WHERE snapshot.status=?
+    ) snapshot WHERE snapshot.status IN ('Em preparo','Finalizado')
       AND snapshot.content_revision=? AND snapshot.total_cents=?
       AND snapshot.gross_received_cents=? AND snapshot.refunded_cents=?)`,
-    [orderId,businessId,existing.status,Number(existing.content_revision||0),Number(existing.total_cents||0),
+    [orderId,businessId,Number(existing.content_revision||0),Number(existing.total_cents||0),
       Number(existing.gross_received_cents??existing.paid_amount_cents??0),
       Number(existing.refunded_cents||0)])
   const reservationMutation = reservation?.status === 'reserved'
