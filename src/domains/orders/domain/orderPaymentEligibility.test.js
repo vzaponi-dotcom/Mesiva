@@ -69,3 +69,15 @@ test('reservation identity blocks standalone receiving even if another field is 
 
   assert.equal(canReceiveStandaloneOrder(reservation, granted, 'orders'), false)
 })
+
+test('Task 13 partial and overpaid orders use remaining cents, but legacy initial collection cannot re-charge paid orders', async () => {
+  const {getPendingAmount,isOrderPaid}=await import('./orderPaymentEligibility.js')
+  const incomplete=pending({total:95,paymentId:'existing',paymentStatus:'Parcialmente pago',dueCents:1500})
+  assert.equal(getPendingAmount(incomplete),15)
+  assert.equal(isOrderPaid(incomplete),false)
+  assert.equal(canReceiveStandaloneOrder(incomplete,new Set(['orders.view','payments.receive']),'orders'),false)
+  const refund=pending({total:65,paymentId:'existing',paymentStatus:'Devolução pendente',dueCents:0,refundDueCents:1500})
+  assert.equal(getPendingAmount(refund),0)
+  assert.equal(canReceiveStandaloneOrder(refund,new Set(['orders.view','payments.receive']),'orders'),false)
+  assert.equal(getPendingAmount(pending({total:35,paymentStatus:'Pendente'})),35)
+})
