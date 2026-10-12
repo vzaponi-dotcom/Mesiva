@@ -31,7 +31,7 @@ test('ordinary payment flow keeps the shared modal composition and select archit
   const dialog = await read('../../../app/workflows/payments/order/OrderPaymentDialog.jsx')
   const editor = await read('../../../app/workflows/payments/PaymentCompositionEditor.jsx')
 
-  assert.match(dialog, /<Modal title="Registrar pagamento"[\s\S]*<PaymentCompositionEditor/)
+  assert.match(dialog, /<Modal title=\{dialog\.supplemental \? 'Receber saldo complementar' : 'Registrar pagamento'\}[\s\S]*<PaymentCompositionEditor/)
   assert.match(editor, /<SystemSelect[\s\S]*label=\{label\}/)
 })
 
