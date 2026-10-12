@@ -59,7 +59,7 @@ test('edited badge is non-interactive, legible in dark/light mode and does not m
 test('edited badge reuses the rectangular system status badge with regular-weight text', () => {
   const badge = read('../../../shared/ui/OrderEditedBadge.jsx')
   const css = read('../../../shared/ui/orderEditedBadge.css')
-  assert.match(badge, /status-badge order-edited-badge/)
+  assert.match(badge, /'status-badge',\s*'order-edited-badge'/)
   assert.match(css, /border-radius:\s*var\(--badge-radius\)/)
   assert.match(css, /font-weight:\s*var\(--badge-font-weight\)/)
   assert.doesNotMatch(css, /border-radius:\s*999px/)
