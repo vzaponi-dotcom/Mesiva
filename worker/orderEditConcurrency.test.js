@@ -80,3 +80,31 @@ test('Task 15 stale edit after payment and no second settlement on retry',async 
   assert.equal(count(db,'order_edit_mutation_receipts'),0)
   assert.equal(db.sqlite.prepare("SELECT content_revision FROM orders WHERE id='o1'").get().content_revision,1)
 })
+
+const injectOriginalPayment=(s,id='p1')=>{
+  const iso=NOW.toISOString()
+  s.prepare('INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES(?,?,?,?,?)')
+    .run(id+'-receipt',B,3200,iso,iso)
+  s.prepare('INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES(?,?,?,?,?,?,?)')
+    .run(id+'-allocation',B,id+'-receipt','pix','Pix',3200,iso)
+  s.prepare('INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,method,paid_at,created_at) VALUES(?,?,?,?,?,NULL,?,?)')
+    .run(id,B,'o1',id+'-receipt',3200,iso,iso)
+}
+test('Task 15 order edit vs first receipt rejects an edited financial snapshot, leaving the historic receipt untouched',async t=>{
+  const db=fixture(t)
+  intercept(db,s=>injectOriginalPayment(s))
+  await assert.rejects(updateExistingOrder(db,B,'o1',edit('edit-versus-payment'),{},NOW),{status:409,code:'ORDER_EDIT_CONFLICT'})
+  assert.equal(count(db,'order_edit_revisions'),0)
+  assert.equal(count(db,'order_edit_mutation_receipts'),0)
+  assert.equal(count(db,'payments'),1)
+  assert.equal(db.sqlite.prepare("SELECT total_cents FROM orders WHERE id='o1'").get().total_cents,3200)
+})
+test('Task 15 deferred cancellation cannot overlook a receipt committed while it was preparing',async t=>{
+  const db=fixture(t)
+  intercept(db,s=>injectOriginalPayment(s))
+  await assert.rejects(cancelOrder(db,B,'o1',{reason:'entry_error',expectedRevision:0,refundNow:false},NOW),
+    {status:409,code:'ORDER_CANCEL_CONFLICT'})
+  assert.equal(db.sqlite.prepare("SELECT status FROM orders WHERE id='o1'").get().status,'Em preparo')
+  assert.equal(count(db,'payments'),1)
+  assert.equal(count(db,'movements'),0)
+})
