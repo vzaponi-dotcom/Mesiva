@@ -78,7 +78,8 @@ export const mapOrderPaymentFields = (row = {}) => {
   const paid = Boolean(row.payment_id)
   const structured = row.receipt_id != null || Object.hasOwn(row, 'payment_allocations_json')
   const paymentAllocations = parsePaymentAllocations(row)
-  const balance = Number.isSafeInteger(row.total_cents)
+  const hasReceivedData = !paid || row.gross_received_cents != null || row.paid_amount_cents != null
+  const balance = Number.isSafeInteger(row.total_cents) && hasReceivedData
     ? deriveOrderSettlementBalance({
       totalCents: row.total_cents,
       grossReceivedCents: row.gross_received_cents ?? (paid ? Number(row.paid_amount_cents || 0) : 0),
