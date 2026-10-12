@@ -10,6 +10,8 @@ import { cancelOrder, registerOrderRefund } from './orderCancellation.js'
 import { validateCheckoutInput } from './orderCheckout.js'
 import { validateOrderEditInput } from './orderEditValidation.js'
 import { updateExistingOrder } from './orderEditRepository.js'
+import { registerOrderSupplementalPayment } from './orderSupplementalPayment.js'
+import { registerOrderPartialRefund } from './orderPartialRefund.js'
 import { handlePrintingApi } from './orderPrintingApi.js'
 import { handleSettingsApi } from './settingsApi.js'
 import { resolveSettingsAccess } from './settingsAccess.js'
@@ -334,6 +336,22 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     const { allocations } = await readJson(request)
     const result = await registerOrderPayment(env.DB, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
     return effectsJson(result, { status: 201 })
+  }
+  const supplementMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/supplemental-payment$/)
+  if(supplementMatch && request.method==='POST'){
+    requireCapability(context,'payments.receive')
+    assertSameOriginMutation(request)
+    const result=await registerOrderSupplementalPayment(env.DB,session.businessId,
+      decodeURIComponent(supplementMatch[1]),await readJson(request))
+    return effectsJson(result,{status:201})
+  }
+  const partialRefundMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/partial-refund$/)
+  if(partialRefundMatch && request.method==='POST'){
+    requireCapability(context,'payments.refund')
+    assertSameOriginMutation(request)
+    const result=await registerOrderPartialRefund(env.DB,session.businessId,
+      decodeURIComponent(partialRefundMatch[1]),await readJson(request))
+    return effectsJson(result,{status:201})
   }
   const paymentPromiseMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/payment-promise$/)
   if (paymentPromiseMatch && request.method === 'PATCH') {
