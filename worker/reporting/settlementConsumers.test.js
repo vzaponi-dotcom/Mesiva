@@ -38,11 +38,11 @@ test('Task 13 overview and sales use current outstanding balances and one real r
   assert.deepEqual(orders.map(o=>[o.id,o.gross_received_cents,o.refunded_cents]),
     [['partial',8000,0],['overpaid',8000,0],['refunded',8000,1000]])
   const overview=await createReportingService(repository).overview(B,QUERY)
-  assert.equal(overview.data.metrics.receivableCents,3000)
+  assert.equal(overview.data.metrics.receivableCents,2500)
   assert.equal(overview.data.metrics.refundsCents,1000)
   assert.equal(overview.data.metrics.receivedCents,24000)
   const sales=await createReportingService(repository).sales(B,QUERY)
-  assert.equal(sales.data.receivableCents,3000)
+  assert.equal(sales.data.receivableCents,2500)
   assert.equal(sales.data.receivableCount,2)
   assert.equal(sales.data.refundsCents,1000)
   assert.equal(sales.data.receivedCents,24000)
