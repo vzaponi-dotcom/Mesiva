@@ -51,7 +51,8 @@ test('Task 10 mixed Pix/cash payment generates one receipt and precisely two cas
   const {s,db}=fixture(t)
   const result=await registerOrderSupplementalPayment(db,BIZ,'order-1',request('mixed',split),NOW)
   assert.equal(result.allocations.length,2)
-  assert.deepEqual(s.prepare("SELECT method_code,amount_cents FROM payment_allocations WHERE receipt_id=? ORDER BY method_code").all(result.receipt.id),
+  assert.deepEqual(s.prepare("SELECT method_code,amount_cents FROM payment_allocations WHERE receipt_id=? ORDER BY method_code").all(result.receipt.id)
+      .map(({method_code,amount_cents})=>({method_code,amount_cents})),
     [{method_code:'cash',amount_cents:500},{method_code:'pix',amount_cents:1000}])
   const movements=s.prepare("SELECT value_cents,payment_id,receipt_id,payment_allocation_id FROM movements WHERE type='entrada' ORDER BY value_cents").all()
   assert.deepEqual(movements.map(m=>m.value_cents),[500,1000])
