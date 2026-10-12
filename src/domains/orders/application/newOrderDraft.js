@@ -33,7 +33,11 @@ export const createOrderEditDraftContext = (order, {returnDestination='orders'}=
       id:order.id,orderNumber:Number(order.orderNumber),
       expectedContentRevision:Number(order.contentRevision || 0),
       originalTotal:Number(order.total || 0),
-      paid:order.paymentStatus === 'Pago',
+      totalCents:Number.isSafeInteger(order.totalCents) ? order.totalCents : Math.round(Number(order.total || 0)*100),
+      netReceivedCents:Number.isSafeInteger(order.netReceivedCents) ? order.netReceivedCents : Math.round(Number(order.paidAmount || 0)*100),
+      paid:Boolean(order.paymentId),
+      paymentId:order.paymentId || null,
+      tableTabId:order.tableTabId || null,
       customerLabel:order.client || 'Cliente',
     },
     initialDraft:{
