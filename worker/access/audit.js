@@ -58,7 +58,14 @@ export function withAuditContext(db, context) {
       const result=await db.batch([guard,...statements,clearSettingsAssertions(db,transactionId)])
       return result.slice(1,-1)
     }catch(error){
-      if(/SETTINGS_INVALID|SETTINGS_REVISION_CONFLICT/.test(String(error?.message||'')))throw contextExpired()
+      // Another repository assertion may have failed in the same batch.
+      // Only identify an authorization conflict when the session snapshot
+      // really changed; preserve the original domain-specific 409 otherwise.
+      if(/SETTINGS_INVALID|SETTINGS_REVISION_CONFLICT/.test(String(error?.message||''))){
+        const verified=await db.prepare(`SELECT CASE WHEN (${predicate}) THEN 1 ELSE 0 END AS allowed`)
+          .bind(...bindings).first()
+        if(!verified?.allowed)throw contextExpired()
+      }
       throw error
     }
   }
