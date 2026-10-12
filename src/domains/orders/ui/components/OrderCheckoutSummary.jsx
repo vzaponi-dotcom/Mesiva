@@ -114,6 +114,10 @@ function OrderCheckoutSummary({
   canAdjustOrders = true,
   allowImmediatePayment = true,
   editOrderMode = false,
+  orderContext = null,
+  canReceivePayments = false,
+  canRefundPayments = false,
+  onSaveRefund,
   onDeliveryFeeChange,
   onAdjustmentChange,
   onSavePending,
@@ -122,6 +126,14 @@ function OrderCheckoutSummary({
 }) {
   const [showPayment, setShowPayment] = useState(false)
   const adjustment = draft.adjustment
+  const totalCents = Math.round(Number(preview.total || 0) * 100)
+  const netReceivedCents = orderContext?.netReceivedCents || 0
+  const dueCents = Math.max(0, totalCents - netReceivedCents)
+  const refundDueCents = Math.max(0, netReceivedCents - totalCents)
+  // A payment against an open tab belongs to the comanda, not this order.
+  const canReceiveEdit = editOrderMode && canReceivePayments && dueCents > 0
+    && (!orderContext?.tableTabId || orderContext?.paid)
+  const canRefundEdit = editOrderMode && canRefundPayments && refundDueCents > 0
   return (
     <section className="surface-card new-order-checkout">
       <div className="section-heading">
@@ -143,6 +155,12 @@ function OrderCheckoutSummary({
           </div>
         )}
         <div className="new-order-total-final"><span>Total</span><strong>{currency(preview.total)}</strong></div>
+        {editOrderMode && <div className="new-order-settlement-preview" aria-label="Resumo financeiro da edição">
+          <div><span>Total anterior</span><strong>{currency(Number(orderContext?.originalTotal || 0))}</strong></div>
+          <div><span>Recebido líquido</span><strong>{currency(netReceivedCents / 100)}</strong></div>
+          {dueCents > 0 && <div><span>Saldo a receber</span><strong>{currency(dueCents / 100)}</strong></div>}
+          {refundDueCents > 0 && <div><span>Devolução pendente</span><strong>{currency(refundDueCents / 100)}</strong></div>}
+        </div>}
       </div>
 
       {allowImmediatePayment && showPayment && (
@@ -154,11 +172,15 @@ function OrderCheckoutSummary({
         })
       )}
 
-      <p className="new-order-payment-hint">{editOrderMode ? 'A edição preserva pagamentos anteriores. Nesta fase, alterações de valor em pedidos pagos não são permitidas.' : allowImmediatePayment ? 'Salvar pedido mantém o pagamento pendente.' : 'O pagamento é registrado pela comanda.'}</p>
+      <p className="new-order-payment-hint">{editOrderMode
+        ? 'Salvar mantém os recebimentos anteriores. Uma diferença a receber ou devolver só será movimentada após sua confirmação.'
+        : allowImmediatePayment ? 'Salvar pedido mantém o pagamento pendente.' : 'O pagamento é registrado pela comanda.'}</p>
       {!showPayment && (
         <div className="new-order-checkout-actions">
           <Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button>
-          {allowImmediatePayment && renderPaymentComposition && <Button type="button" variant="secondary" onClick={() => setShowPayment(true)} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
+          {canReceiveEdit && <Button type="button" variant="secondary" onClick={() => onSavePaid?.()} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
+          {canRefundEdit && <Button type="button" variant="secondary" onClick={onSaveRefund} disabled={disabled || !canSubmit}>Salvar e registrar devolução</Button>}
+          {!editOrderMode && {allowImmediatePayment && renderPaymentComposition && <Button type="button" variant="secondary" onClick={() => setShowPayment(true)} disabled={disabled || !canSubmit}>Salvar e receber</Button>}}
         </div>
       )}
       {!showPayment && <div className="new-order-mobile-checkout"><div><small>Total da venda</small><strong>{currency(preview.total)}</strong></div><Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button></div>}
