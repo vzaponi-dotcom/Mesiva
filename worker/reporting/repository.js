@@ -1,5 +1,5 @@
 import { businessDateRangeUtc } from './businessDate.js'
-import {orderGrossReceivedSql,orderRefundedSql,orderDueSql,orderRefundDueSql} from './settlementSql.js'
+import {orderGrossReceivedSql,orderRefundedSql,orderDueSql} from './settlementSql.js'
 import { buildOrderFilters } from './orderFilters.js'
 import { getBusinessDate } from '../../shared/finance.js'
 import { getOperationalDurationMinutes, getOrderLateAt } from '../../shared/orderTiming.js'
@@ -155,9 +155,15 @@ export function createReportingRepository(db) {
         ${orderGrossReceivedSql('o')} AS paid_cents,
         ${orderRefundedSql('o')} AS refunded_cents,
         (SELECT GROUP_CONCAT(DISTINCT COALESCE(pa.method_label, pa.method_code))
-          FROM payments pay2 JOIN payment_allocations pa
-            ON pa.business_id = pay2.business_id AND pa.receipt_id = pay2.receipt_id
-          WHERE pay2.business_id = o.business_id AND pay2.order_id = o.id) AS payment_label
+          FROM payment_allocations pa
+          WHERE pa.business_id = o.business_id AND pa.receipt_id IN (
+            SELECT pay2.receipt_id FROM payments pay2
+            WHERE pay2.business_id = o.business_id AND pay2.order_id = o.id
+            UNION
+            SELECT e.receipt_id FROM order_settlement_entries e
+            WHERE e.business_id = o.business_id AND e.order_id = o.id
+              AND e.kind = 'supplemental_payment'
+          )) AS payment_label
         FROM orders o
         LEFT JOIN table_reservations tr
           ON tr.business_id = o.business_id AND tr.order_id = o.id
