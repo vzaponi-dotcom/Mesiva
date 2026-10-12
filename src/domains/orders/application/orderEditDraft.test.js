@@ -15,7 +15,8 @@ test('editing context uses authoritative order identity, content revision and im
  assert.equal(result.mode,'edit-order')
  assert.deepEqual(result.orderContext,{
    id:'order-42',orderNumber:42,expectedContentRevision:4,
-   originalTotal:80,paid:false,customerLabel:'Joana',
+   originalTotal:80,totalCents:8000,netReceivedCents:0,
+   paid:false,paymentId:null,tableTabId:null,customerLabel:'Joana',
  })
  assert.equal(result.initialDraft.type,'Entrega')
  assert.equal(result.initialDraft.items[0].persistedItemId,'i-a')
