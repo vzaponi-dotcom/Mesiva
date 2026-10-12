@@ -111,6 +111,13 @@ test('Task 9 real SQL reads shared receipts only once per order and keeps cardin
   assert.equal(two.paymentStatus,'Devolução pendente')
   assert.deepEqual([three.grossReceivedCents,three.dueCents],[0,6500])
   assert.deepEqual([unpaid.grossReceivedCents,unpaid.dueCents,unpaid.paymentStatus],[0,8000,'Pendente'])
+  const bootstrap=await loadBootstrap(db,BIZ)
+  assert.equal(bootstrap.orders.length,4,'bootstrap must use the same canonical balance data')
+  const bootstrapTwo=bootstrap.orders.find(o=>o.id==='two')
+  assert.deepEqual(
+    [bootstrapTwo.grossReceivedCents,bootstrapTwo.refundedCents,bootstrapTwo.refundDueCents],
+    [two.grossReceivedCents,two.refundedCents,two.refundDueCents],
+  )
   const detailed=await loadOrderById(db,BIZ,'two')
   assert.equal(detailed.netReceivedCents,8000)
   assert.equal(detailed.refundDueCents,1500)
