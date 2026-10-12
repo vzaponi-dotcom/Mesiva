@@ -77,7 +77,7 @@ function upgrade(t) {
 
 test('0043 clean installation adds only an empty immutable settlement ledger and keeps the legacy unique payment contract',t=>{
   const db=clean(t)
-  assert.equal(files().at(-1),migration)
+  assert.ok(files().includes(migration), '0043 must remain installed after later additive migrations')
   assert.ok(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='order_settlement_entries'").get())
   assert.equal(db.prepare('SELECT COUNT(*) n FROM order_settlement_entries').get().n,0)
   const paymentIndexes=db.prepare('PRAGMA index_list(payments)').all()
