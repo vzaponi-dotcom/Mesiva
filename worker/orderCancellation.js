@@ -10,7 +10,7 @@ import { preparePolicyGuards, readPaymentMethodExpectation, rethrowPolicyChange 
 import { loadOperations } from './operationSettingsRepository.js'
 import { parseOrderTimingPolicySnapshot, serializeOrderTimingPolicySnapshot } from '../shared/orderTiming.js'
 import { nativeCancellationReasons } from '../shared/settingsCatalogs.js'
-import { mapOrderPaymentFields, PAYMENT_ALLOCATIONS_JSON_SELECT } from './orderPaymentReadModel.js'
+import { mapOrderPaymentFields, PAYMENT_ALLOCATIONS_JSON_SELECT, PAYMENT_SETTLEMENT_SQL_SELECT } from './orderPaymentReadModel.js'
 import { loadTableReservationByOrderId } from './tableReservationRepository.js'
 
 const DEFAULT_CANCELLATION_REASONS = new Map(nativeCancellationReasons().items.map((item) => [item.id, item]))
@@ -89,6 +89,30 @@ export const getOrderRefundState = (order) => {
   return order?.refundMovementId ? 'refunded' : 'pending'
 }
 
+const receivedNet = row => {
+  const balance = mapOrderPaymentFields(row)
+  return Number.isSafeInteger(balance.netReceivedCents)
+    ? balance.netReceivedCents : Number(row.paid_amount_cents || 0)
+}
+
+// Assert the monetary snapshot under D1's transaction lock. This prevents a
+// concurrent settlement (supplement/refund) from changing the refund amount.
+const refundAmountGuard = (db, txId, businessId, orderId, originalPaymentId, expectedNet, statuses) =>
+  prepareSettingsAssertion(db, txId, 'refund-net',
+    `EXISTS(SELECT 1 FROM (
+      SELECT o.id,o.business_id,o.status,p.id AS payment_id,
+        ${PAYMENT_SETTLEMENT_SQL_SELECT}
+      FROM orders o LEFT JOIN payments p ON p.business_id=o.business_id AND p.order_id=o.id
+      WHERE o.business_id=? AND o.id=?
+    ) snapshot
+    WHERE snapshot.payment_id=?
+      AND snapshot.status IN (${statuses === 'cancelled' ? "'Cancelado'" : "'Em preparo','Finalizado'"})
+      AND snapshot.gross_received_cents>=snapshot.refunded_cents
+      AND snapshot.gross_received_cents-snapshot.refunded_cents=?
+      AND NOT EXISTS (SELECT 1 FROM movements m WHERE m.business_id=snapshot.business_id
+        AND m.order_id=snapshot.id AND m.source='order-refund' AND m.deleted_at IS NULL)
+    )`,[businessId,orderId,originalPaymentId,expectedNet])
+
 const createRefundStatement = (db, businessId, row, refundMethod, now, amountCents = Number(row.paid_amount_cents)) => {
   const id = crypto.randomUUID()
   const createdAt = now.toISOString()
@@ -146,6 +170,7 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
   const note = normalizeNote(policy.requires_note === 1, input.note)
   const existing = await readContext(db, businessId, orderId)
   if (!existing) throw domainError(404, 'ORDER_NOT_FOUND', 'Pedido não encontrado.')
+  const remainingReceived = receivedNet(existing)
   const reservation = await loadTableReservationByOrderId(db, businessId, orderId)
   const requireActiveReservation = Boolean(options.requireActiveReservation)
   const expectedReservationRevision = options.expectedReservationRevision
@@ -245,14 +270,15 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
   }
 
   let refund = null
-  if (existing.payment_id && input.refundNow && (existing.netReceivedCents ?? Number(existing.paid_amount_cents)) > 0) {
+  if (existing.payment_id && input.refundNow && remainingReceived > 0) {
     const refundMethod = normalizeRefundMethod(input.refundMethod)
     const paymentExpectation = await readPaymentMethodExpectation(db, businessId, refundMethod)
     const paymentTxId = crypto.randomUUID()
-    if (existing.refund_movement_id || (existing.netReceivedCents != null && existing.netReceivedCents <= 0)) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
-    refund = createRefundStatement(db, businessId, existing, refundMethod, now, existing.netReceivedCents ?? Number(existing.paid_amount_cents))
+    if (existing.refund_movement_id) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
+    refund = createRefundStatement(db, businessId, existing, refundMethod, now, remainingReceived)
     try {
       await db.batch([...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, paymentTxId),
+        refundAmountGuard(db,paymentTxId,businessId,orderId,existing.payment_id,remainingReceived,'active'),
         ...timingGuards, ...cancellationPolicyStatements, orderGuard,
         ...(reservationGuard ? [reservationGuard] : []),
         update,
@@ -294,14 +320,16 @@ export const registerOrderRefund = async (db, businessId, orderId, input = {}, n
   if (existing.status !== 'Cancelado' || !existing.payment_id) {
     throw domainError(409, 'ORDER_REFUND_NOT_ALLOWED', 'O estorno só pode ser registrado para um pedido cancelado e pago.')
   }
-  if (existing.refund_movement_id) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
+  const remainingReceived = receivedNet(existing)
+  if (existing.refund_movement_id || remainingReceived <= 0) throw domainError(409, 'ORDER_ALREADY_REFUNDED', 'Este pedido já foi estornado.')
   parseOrderTimingPolicySnapshot(existing.timing_policy_snapshot_json)
 
   const paymentExpectation = await readPaymentMethodExpectation(db, businessId, refundMethod)
   const paymentTxId = crypto.randomUUID()
-  const refund = createRefundStatement(db, businessId, existing, refundMethod, now, existing.netReceivedCents ?? Number(existing.paid_amount_cents))
+  const refund = createRefundStatement(db, businessId, existing, refundMethod, now, remainingReceived)
   try {
     await db.batch([...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, paymentTxId),
+      refundAmountGuard(db,paymentTxId,businessId,orderId,existing.payment_id,remainingReceived,'cancelled'),
       refund.statement, clearSettingsAssertions(db, paymentTxId),businessEvent(db,businessId,{action:'payment.refunded',resourceType:'order',resourceId:orderId,now})])
   } catch (error) {
     const refreshed = await readContext(db, businessId, orderId)
