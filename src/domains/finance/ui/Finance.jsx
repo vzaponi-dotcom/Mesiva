@@ -45,7 +45,7 @@ function Finance({ totals, movements, currency, onAddMovement, onEditMovement, o
                 <strong className="pending-refund-value">{currency(order.status !== 'Cancelado'
                   ? Number(order.refundDueCents || 0) / 100
                   : Number.isSafeInteger(order.netReceivedCents) ? order.netReceivedCents / 100 : (order.paidAmount || order.total || 0))}</strong>
-                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>{order.status === 'Cancelado' ? 'Registrar estorno' : 'Registrar devolução'}</Button>
+                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>{order.status === 'Cancelado' ? 'Registrar estorno' : 'Registrar devolução'}</Button>}
               </article>
             ))}
           </div>
