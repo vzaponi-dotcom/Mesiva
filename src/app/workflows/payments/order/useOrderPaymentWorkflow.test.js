@@ -319,3 +319,19 @@ test('Receivables opens the same workflow with the latest default and without op
   assert.deepEqual(probe.getLatest().dialog.allocations, [{ methodCode: 'pix', amountCents: 4000 }])
   probe.unmount()
 })
+
+test('Task 13 prevents old full-payment workflow from charging partially paid or refund-due orders', async () => {
+  const probe=await mountWorkflow({orders:[
+    order('partial',{paymentId:'pay-partial',paymentStatus:'Parcialmente pago',dueCents:1500,total:95}),
+    order('refund',{paymentId:'pay-refund',paymentStatus:'Devolução pendente',dueCents:0,total:65}),
+    order('unpaid',{paymentStatus:'Pendente',dueCents:3000,total:30}),
+  ]})
+  await act(async()=>{
+    assert.equal(probe.getLatest().open('partial','orders'),false)
+    assert.equal(probe.getLatest().open('partial',null),false)
+    assert.equal(probe.getLatest().open('refund',null),false)
+    assert.equal(probe.getLatest().open('unpaid',null),true)
+  })
+  assert.equal(probe.getLatest().dialog.composition.totalCents,3000)
+  probe.unmount()
+})
