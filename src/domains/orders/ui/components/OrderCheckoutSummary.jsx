@@ -180,7 +180,7 @@ function OrderCheckoutSummary({
           <Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button>
           {canReceiveEdit && <Button type="button" variant="secondary" onClick={() => onSavePaid?.()} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
           {canRefundEdit && <Button type="button" variant="secondary" onClick={onSaveRefund} disabled={disabled || !canSubmit}>Salvar e registrar devolução</Button>}
-          {!editOrderMode && {allowImmediatePayment && renderPaymentComposition && <Button type="button" variant="secondary" onClick={() => setShowPayment(true)} disabled={disabled || !canSubmit}>Salvar e receber</Button>}}
+          {!editOrderMode && allowImmediatePayment && renderPaymentComposition && <Button type="button" variant="secondary" onClick={() => setShowPayment(true)} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
         </div>
       )}
       {!showPayment && <div className="new-order-mobile-checkout"><div><small>Total da venda</small><strong>{currency(preview.total)}</strong></div><Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button></div>}
