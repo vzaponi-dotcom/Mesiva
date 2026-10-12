@@ -13,7 +13,7 @@ class FinanceBootstrapDb {
             return null
           },
           async all() {
-            if (sql.includes('FROM movements m')) {
+            if (sql.includes('LEFT JOIN business_finance_categories fc')) {
               assert.match(sql, /CASE WHEN m\.source = 'order-payment' THEN COALESCE\(m\.payment_method, p\.method\)/)
               assert.match(sql, /m\.deleted_at IS NULL/)
               assert.match(sql, /LEFT JOIN payments p/)
