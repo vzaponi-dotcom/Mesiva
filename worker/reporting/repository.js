@@ -265,10 +265,13 @@ export function createReportingRepository(db) {
         JOIN (
           SELECT DISTINCT receipt_id FROM payments
           WHERE business_id = ? AND order_id = ? AND receipt_id IS NOT NULL
+          UNION
+          SELECT DISTINCT receipt_id FROM order_settlement_entries
+          WHERE business_id = ? AND order_id = ? AND kind='supplemental_payment' AND receipt_id IS NOT NULL
         ) receipts ON receipts.receipt_id = pa.receipt_id
         WHERE pa.business_id = ?
         ORDER BY r.paid_at, pa.id
-      `).bind(businessId, id, businessId).all()
+      `).bind(businessId, id, businessId, id, businessId).all()
 
       let clientContext = null
       if (row.client_id) {
@@ -291,22 +294,9 @@ export function createReportingRepository(db) {
                   AND NOT (o.customer_identity_type = 'table' AND o.table_tab_id IS NOT NULL)
                   AND NOT EXISTS (
                     SELECT 1 FROM table_reservations pending_reservation
-                    WHERE pending_reservation.business_id = o.business_id
-                      AND pending_reservation.order_id = o.id
+                    WHERE pending_reservation.business_id=o.business_id AND pending_reservation.order_id=o.id
                   )
-                THEN CASE
-                  WHEN o.total_cents - COALESCE((
-                    SELECT SUM(pay.amount_cents)
-                    FROM payments pay
-                    WHERE pay.business_id = o.business_id AND pay.order_id = o.id
-                  ), 0) > 0
-                  THEN o.total_cents - COALESCE((
-                    SELECT SUM(pay.amount_cents)
-                    FROM payments pay
-                    WHERE pay.business_id = o.business_id AND pay.order_id = o.id
-                  ), 0)
-                  ELSE 0
-                END
+                THEN ${orderDueSql('o')}
                 ELSE 0
               END) AS pending_cents
             FROM orders o
