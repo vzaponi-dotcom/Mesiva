@@ -32,3 +32,5 @@ export { createOrdersApi } from './infrastructure/ordersApi.js'
 export { createOperationsPolicy } from './infrastructure/operationsPolicy.js'
 
 export { createCancellationReasonsPolicy } from './infrastructure/cancellationReasonsPolicy.js'
+
+export { default as OrderEditChanges } from './ui/components/OrderEditChanges.jsx'

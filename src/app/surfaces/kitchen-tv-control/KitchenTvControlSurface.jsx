@@ -1,12 +1,12 @@
 import { useContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AreaNavigation from '../../navigation/AreaNavigation.jsx'
-import { buildKitchenQueueModel } from '../../../domains/orders/index.js'
+import { buildKitchenQueueModel, OrderEditChanges } from '../../../domains/orders/index.js'
 import Button from '../../../shared/ui/Button.jsx'
 import BottomSheet from '../../../shared/ui/BottomSheet.jsx'
 import Icon from '../../../shared/ui/Icon.jsx'
 import OrderEditedBadge from '../../../shared/ui/OrderEditedBadge.jsx'
-import OrderEditChanges from '../../../domains/orders/ui/components/OrderEditChanges.jsx'
+
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import {
   countKitchenTvModalities,
