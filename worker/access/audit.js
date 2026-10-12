@@ -20,7 +20,7 @@ export function withAuditContext(db, context) {
   const actor=Object.freeze({...context})
   const prepare=db.prepare.bind(db)
   const batch=async(statements)=>{
-    if(!actor.sessionId || !['legacy','enrollment','user_only'].includes(actor.authMode))
+    if(actor.identitySessionId || !actor.sessionId || !['legacy','enrollment','user_only'].includes(actor.authMode))
       return db.batch(statements)
     const transactionId=crypto.randomUUID()
     const at=new Date().toISOString()
