@@ -150,7 +150,8 @@ const clientReceivablesConflict = () => repositoryError(
   'Os pedidos selecionados foram alterados. Atualize os dados e tente novamente.',
 )
 
-const CLIENT_RECEIVABLES_QUERY_CHUNK_SIZE = 20
+// 18 * 5 order guard params + 4 assertion params stays below D1's 100-parameter ceiling.
+const CLIENT_RECEIVABLES_QUERY_CHUNK_SIZE = 18
 const chunkReceivableOrders = (items, size = CLIENT_RECEIVABLES_QUERY_CHUNK_SIZE) => {
   const chunks = []
   for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size))
