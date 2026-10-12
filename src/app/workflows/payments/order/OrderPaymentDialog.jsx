@@ -7,7 +7,7 @@ export default function OrderPaymentDialog({ dialog, currency }) {
   if (!dialog?.order) return null
 
   return (
-    <Modal title="Registrar pagamento" onClose={dialog.onClose}>
+    <Modal title={dialog.supplemental ? 'Receber saldo complementar' : 'Registrar pagamento'} onClose={dialog.onClose}>
       <form
         className="form-stack"
         onSubmit={(event) => {
@@ -17,8 +17,8 @@ export default function OrderPaymentDialog({ dialog, currency }) {
       >
         <div className="payment-summary-card">
           <span>{dialog.order.client} · {formatOrderDisplayNumber(dialog.order)}</span>
-          <strong>{currency(dialog.order.total)}</strong>
-          <small>O pagamento será lançado automaticamente como entrada no Financeiro.</small>
+          <strong>{currency(dialog.totalCents / 100)}</strong>
+          <small>{dialog.supplemental ? 'Será recebido somente o saldo pendente, sem alterar o pagamento anterior.' : 'O pagamento será lançado automaticamente como entrada no Financeiro.'}</small>
         </div>
         <PaymentCompositionEditor
           totalCents={dialog.totalCents}

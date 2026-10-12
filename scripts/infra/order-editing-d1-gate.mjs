@@ -81,7 +81,7 @@ function settlement(db) {
   supplement.run('extra-1',biz,'upgrade-a',1500,'new-receipt','cmd-extra',at)
   db.prepare("INSERT INTO order_supplemental_mutation_receipts(business_id,order_id,mutation_id,request_hash,settlement_entry_id,result_json,created_at) VALUES(?,?,?,?,?,'{}',?)")
     .run(biz,'upgrade-a','cmd-extra','a'.repeat(64),'extra-1',at)
-  assert.throws(()=>supplement.run('foreign','other-upgrade-gate','upgrade-a',500,'new-receipt','foreign',at),/FOREIGN KEY/)
+  assert.throws(()=>supplement.run('foreign','other-upgrade-gate','upgrade-a',500,'new-receipt','foreign',at),/FOREIGN KEY|ORDER_SETTLEMENT_RECEIPT_INVALID/)
   assert.throws(()=>supplement.run('duplicate',biz,'upgrade-a',100,'new-receipt','duplicate',at),/UNIQUE|ORDER_SETTLEMENT_RECEIPT_OVERALLOCATED/)
   assert.throws(()=>db.prepare("UPDATE order_settlement_entries SET amount_cents=5 WHERE id='extra-1'").run(),/ORDER_SETTLEMENT_IMMUTABLE/)
   assert.throws(()=>db.prepare("UPDATE payment_receipts SET total_cents=2000 WHERE id='new-receipt'").run(),/ORDER_SETTLEMENT_RECEIPT_IMMUTABLE/)

@@ -320,7 +320,7 @@ test('Receivables opens the same workflow with the latest default and without op
   probe.unmount()
 })
 
-test('Task 13 prevents old full-payment workflow from charging partially paid or refund-due orders', async () => {
+test('Task 13/16 legacy full-payment is blocked for partial, while its due is collected only by supplement', async () => {
   const probe=await mountWorkflow({orders:[
     order('partial',{paymentId:'pay-partial',paymentStatus:'Parcialmente pago',dueCents:1500,total:95}),
     order('refund',{paymentId:'pay-refund',paymentStatus:'Devolução pendente',dueCents:0,total:65}),

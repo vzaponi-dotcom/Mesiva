@@ -77,9 +77,9 @@ async function replay(db,businessId,orderId,record,hash) {
   }
 }
 
-// Task 10 internal command. No HTTP route/UI is exposed until the financial
-// workflows are integrated and homologated (Tasks 11-15).
-// All writes, guards and audit evidence commit in one D1 batch.
+// Financial settlement writer. HTTP routes are capability-gated; the UI can
+// invoke this after saving an edit or later from A receber. No automatic bank
+// transfer or reprint is performed. Commit all money/audit evidence atomically.
 export async function registerOrderSupplementalPayment(db,businessId,orderId,raw,now=new Date()) {
   const input=validateInput(raw)
   const requestHash=await hashSettingsPayload(input)
@@ -88,7 +88,7 @@ export async function registerOrderSupplementalPayment(db,businessId,orderId,raw
   const previous=await storedMutation(db,businessId,orderId,input.mutationId)
   if(previous)return replay(db,businessId,orderId,previous,requestHash)
 
-  if(row.status!=='Em preparo' || !row.payment_id
+  if(!['Em preparo','Finalizado'].includes(row.status) || !row.payment_id
     || row.content_revision!==input.expectedContentRevision
     || row.total_cents!==input.expectedTotalCents)throw conflict()
   let balance
@@ -120,7 +120,7 @@ export async function registerOrderSupplementalPayment(db,businessId,orderId,raw
       FROM orders o LEFT JOIN payments p
         ON p.business_id=o.business_id AND p.order_id=o.id
       WHERE o.business_id=? AND o.id=?
-    ) snapshot WHERE snapshot.status='Em preparo'
+    ) snapshot WHERE snapshot.status IN ('Em preparo','Finalizado')
       AND snapshot.content_revision=? AND snapshot.total_cents=?
       AND snapshot.payment_id=?
       AND snapshot.gross_received_cents>=snapshot.refunded_cents

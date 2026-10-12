@@ -14,7 +14,17 @@ import {
 import { paymentApi } from '../paymentApi.js'
 
 const operationalSources = new Set(['orders', 'history'])
-const orderTotalCents = (order) => Math.max(0, Math.round((Number(order?.total) || 0) * 100))
+const isSupplementalDue = (order) => Boolean(order?.paymentId)
+  && order.paymentStatus === 'Parcialmente pago'
+  && Number.isSafeInteger(order.dueCents) && order.dueCents > 0
+  && Number.isSafeInteger(order.totalCents) && order.totalCents > 0
+  && Number.isSafeInteger(order.netReceivedCents)
+  && Number.isSafeInteger(order.contentRevision)
+  && !isOrderCancelled(order)
+  && ['Em preparo','Finalizado'].includes(order.status)
+  && order.tableReservationStatus !== 'reserved'
+const orderTotalCents = (order) => isSupplementalDue(order)
+  ? order.dueCents : Math.max(0, Math.round((Number(order?.total) || 0) * 100))
 
 export function useOrderPaymentWorkflow({
   api = paymentApi,
@@ -46,8 +56,9 @@ export function useOrderPaymentWorkflow({
   const isEligible = useCallback((order, source) => {
     if (!order || !canReceivePayments) return false
     if (operationalSources.has(source)) return canReceiveStandaloneOrder(order, granted, source)
-    // Partial balances are settled by the Task 10 supplemental writer (Task 14
-    // workflow), never by the legacy full-payment endpoint.
+    // An edited, partially paid order can be settled later from A receber.
+    // The legacy writer is reserved for originally unpaid orders.
+    if (isSupplementalDue(order)) return true
     return order.paymentStatus === 'Pendente'
       && !order.paymentId && getPendingAmount(order) > 0
       && !isOrderCancelled(order)
@@ -81,6 +92,11 @@ export function useOrderPaymentWorkflow({
       submitting: false,
       requestKey: null,
       allocations: null,
+      supplemental: isSupplementalDue(order),
+      mutationId: crypto.randomUUID(),
+      expectedContentRevision: order.contentRevision,
+      expectedTotalCents: order.totalCents,
+      expectedNetReceivedCents: order.netReceivedCents,
     }
     dialogOwnerRef.current = owner
     setDialogOwner(owner)
@@ -113,7 +129,15 @@ export function useOrderPaymentWorkflow({
     forceRender((value) => value + 1)
 
     try {
-      const result = await api.registerOrderPayment(owner.orderId, owner.allocations)
+      const result = owner.supplemental
+        ? await api.registerSupplementalPayment(owner.orderId,{
+          mutationId:owner.mutationId,
+          expectedContentRevision:owner.expectedContentRevision,
+          expectedTotalCents:owner.expectedTotalCents,
+          expectedNetReceivedCents:owner.expectedNetReceivedCents,
+          allocations:owner.allocations,
+        })
+        : await api.registerOrderPayment(owner.orderId, owner.allocations)
       if (!ownsMutation() || owner.guard !== getSyncGuard()) return false
 
       if (applyOfficialEffects(result) === false) return false
@@ -124,7 +148,7 @@ export function useOrderPaymentWorkflow({
           ? `Pagamento recebido via ${paymentMethodLabel(paymentOptions, accepted[0].methodCode)}`
           : `Pagamento recebido em ${accepted.length} formas`
         close(owner)
-        onSuccess(message)
+        onSuccess(owner.supplemental ? message.replace('Pagamento recebido','Saldo complementar recebido') : message)
       }
       return true
     } catch (error) {
@@ -168,6 +192,7 @@ export function useOrderPaymentWorkflow({
   const dialog = dialogOwner && eligible ? {
     order,
     totalCents,
+    supplemental:Boolean(dialogOwner.supplemental),
     allocations,
     setAllocations,
     paymentOptions,
