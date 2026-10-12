@@ -423,3 +423,18 @@ test('Task 13 receivables include only outstanding cents and omit refund-only ba
   assert.equal(calculateReceivableSummary([partial,unpaid,overpaid],'2026-10-12',rules).today.amount,45)
   assert.equal(groupPendingOrders([partial,unpaid,overpaid],rules)[0].total,45)
 })
+
+test('Task 16 paid closed-comanda order with an edited amount owes an actionable individual due',()=>{
+ const rules={
+   isOrderCancelled:o=>o.status==='Cancelado',
+   isOrderPaid:o=>o.paymentStatus==='Pago',
+   getPendingAmount:o=>Number.isSafeInteger(o.dueCents)?o.dueCents/100:Math.max(0,Number(o.total)||0),
+ }
+ const openTab=order('open-tab',{customerIdentityType:'table',clientId:null,tableTabId:'tab-open',
+   paymentStatus:'Pendente',dueCents:5000,total:50})
+ const paidTab=order('closed-tab-edit',{customerIdentityType:'table',clientId:null,tableTabId:'tab-closed',
+   paymentId:'paid-shared',paymentStatus:'Parcialmente pago',dueCents:1500,total:95})
+ const other=order('ordinary',{customerIdentityType:'registered_client',dueCents:3000,total:30})
+ const entries=buildPendingReceivableEntries([openTab,paidTab,other],'2026-10-12',rules)
+ assert.deepEqual(entries.map(e=>[e.order.id,e.total]),[['closed-tab-edit',15],['ordinary',30]])
+})
