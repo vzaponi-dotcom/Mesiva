@@ -52,8 +52,8 @@ async function replay(db,businessId,orderId,receipt,hash) {
   }
 }
 
-// Internal-only command. No HTTP/public UI until financial staging acceptance.
-// The actual cash exit is manually confirmed; this is accounting evidence,
+// Capability-gated financial command. The actual cash exit must be manually
+// confirmed before recording it; this is accounting evidence,
 // not a bank transfer.
 export async function registerOrderPartialRefund(db,businessId,orderId,raw,now=new Date()) {
   const input=validate(raw)

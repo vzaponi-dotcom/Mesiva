@@ -123,7 +123,7 @@ test('summary and forecast partition pending amounts by expected payment date', 
   assert.deepEqual(forecast.later, { amount: 70, count: 1 })
 })
 
-test('pending receivable entries omit every table-tab order', () => {
+test('pending receivable entries omit unpaid open table-tab orders', () => {
   const entries = buildPendingReceivableEntries([
     datedPending({ id: 'delivery', customerIdentityType: 'registered_client' }),
     datedPending({ id: 'tab-1', client: 'Mesa 04', clientId: null, customerIdentityType: 'table', tableTabId: 'tab-1' }),
