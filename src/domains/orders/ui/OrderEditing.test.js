@@ -69,3 +69,28 @@ test('Task 14 order edit review renders only authorized due/refund actions on mo
  assert.ok(buttonNamed(refund.root,'Salvar e registrar devolução'))
  assert.equal(refund.root.findAll(n=>n.type==='button'&&nodeText(n)==='Salvar e receber').length,0)
 })
+
+test('Task 17 UX: saving and receiving defers success feedback until the financial operation confirms', () => {
+  const app = source('../../../App.jsx')
+  const start = app.indexOf('onSuccess: (order, context')
+  const end = app.indexOf('onConflict:', start)
+  assert.ok(start > -1 && end > start)
+  const editFeedback = app.slice(start, end)
+  assert.match(editFeedback, /onSuccess:\s*\(order,\s*context,\s*intent\b/)
+  assert.match(editFeedback, /if\s*\(\s*intent\s*===\s*'receive'\s*\|\|\s*intent\s*===\s*'refund'\s*\)\s*return/)
+  assert.match(editFeedback, /showSuccessMessage\('Pedido atualizado com sucesso'\)/)
+  const settlement = app.slice(app.indexOf('const submitEditSettlement='), app.indexOf('operationalRuntimeTargetsRef.current.onUnauthorized'))
+  assert.ok(settlement.indexOf('await clientsForContext.payments.registerSupplementalPayment') < settlement.indexOf("showSuccessMessage('Saldo complementar recebido com sucesso')"))
+  assert.match(app, /Pedido atualizado\. (?:O pagamento|A operação financeira).*pendente/)
+})
+
+test('Task 17 UX: successful Financeiro refund closes the settlement modal, including partial refunds', () => {
+  const app = source('../../../App.jsx')
+  const start = app.indexOf("if(type==='receive')")
+  const end = app.indexOf('return true', start)
+  assert.ok(start > -1 && end > start)
+  const result = app.slice(start, end)
+  assert.match(result, /showSuccessMessage\('Devolução registrada com sucesso'\)/)
+  assert.match(result, /else\s*\{[\s\S]*setEditSettlement\(null\)/)
+  assert.doesNotMatch(result, /setEditSettlement\(prev\s*=>\s*prev\?\.owner/)
+})
