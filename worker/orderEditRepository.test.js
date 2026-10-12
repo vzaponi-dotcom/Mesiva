@@ -83,14 +83,23 @@ test('rollback on batch failure does not change any order, line or receipt',asyn
  assert.deepEqual(persist(db),before)
 })
 
-test('paid orders cannot change total in phase A but can edit notes at the same total',async()=>{
- const db=fixture()
- await registerOrderPayment(db,B,'o1',[{methodCode:'pix',amountCents:3200}],NOW)
- await assert.rejects(updateExistingOrder(db,B,'o1',edit(),{},NOW),{status:409,code:'ORDER_EDIT_PAYMENT_CONFLICT'})
- assert.equal(persist(db).order.total_cents,3200)
- const result=await updateExistingOrder(db,B,'o1',edit({mutationId:'note-only',items:[{id:'i1',quantity:1,note:'sem cebola'}]}),{},NOW)
- assert.equal(result.order.total,32)
- assert.equal(persist(db).revisions,1)
+test('Task 14 edited paid order preserves original receipt and derives due or refund without a cash movement',async()=>{
+ const higher=fixture()
+ await registerOrderPayment(higher,B,'o1',[{methodCode:'pix',amountCents:3200}],NOW)
+ const increased=await updateExistingOrder(higher,B,'o1',edit(),{},NOW)
+ assert.equal(increased.order.total,64)
+ assert.equal(increased.order.grossReceivedCents,3200)
+ assert.equal(increased.order.dueCents,3200)
+ assert.equal(increased.order.paymentStatus,'Parcialmente pago')
+ assert.equal(higher.sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-edit-refund'").get().n,0)
+ assert.equal(higher.sqlite.prepare("SELECT COUNT(*) n FROM payments WHERE order_id='o1'").get().n,1)
+ const lower=fixture()
+ await registerOrderPayment(lower,B,'o1',[{methodCode:'pix',amountCents:3200}],NOW)
+ const decreased=await updateExistingOrder(lower,B,'o1',edit({items:[{id:'i1',quantity:1,note:''}],deliveryFee:0, adjustment:{type:'discount',mode:'fixed',value:10,reason:'ajuste'}}),{allowAdjustment:true},NOW)
+ assert.equal(decreased.order.total,22)
+ assert.equal(decreased.order.refundDueCents,1000)
+ assert.equal(decreased.order.paymentStatus,'Devolução pendente')
+ assert.equal(lower.sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-edit-refund'").get().n,0)
 })
 
 test('cross-tenant IDs, finalized and cancelled orders are rejected without mutations',async()=>{
@@ -144,12 +153,13 @@ test('phase A edits existing products after catalog deactivation without silentl
  },{},NOW),{status:404,code:'PRODUCT_NOT_FOUND'})
  assert.equal(persist(db).revisions,1)
 })
-test('phase A edit after payment cannot change price even when offsetting fee/discount',async()=>{
+test('Task 14 paid edit with delivery fee updates due without editing historical receipts',async()=>{
  const db=fixture()
  await registerOrderPayment(db,B,'o1',[{methodCode:'pix',amountCents:3200}],NOW)
- await assert.rejects(updateExistingOrder(db,B,'o1',edit({mutationId:'paid-extra',deliveryFee:4}),{},NOW),{
-   status:409,code:'ORDER_EDIT_PAYMENT_CONFLICT',
- })
- assert.equal(persist(db).revisions,0)
- assert.equal(persist(db).receipts,0)
+ const edited=await updateExistingOrder(db,B,'o1',edit({mutationId:'paid-extra',deliveryFee:4}),{},NOW)
+ assert.equal(edited.order.total,68)
+ assert.equal(edited.order.dueCents,3600)
+ assert.equal(persist(db).revisions,1)
+ assert.equal(persist(db).receipts,1)
+ assert.equal(db.sqlite.prepare("SELECT amount_cents FROM payments WHERE order_id='o1'").get().amount_cents,3200)
 })
