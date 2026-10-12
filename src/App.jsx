@@ -219,7 +219,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     canSubmit: (payload, context) => newOrderDraftTargetsRef.current.canSubmit(payload, context),
     commitOfficialEffects: (result) => newOrderDraftTargetsRef.current.commitOfficialEffects(result),
     onCommitted: (result, context, intent) => newOrderDraftTargetsRef.current.onCommitted(result, context, intent),
-    onSuccess: (order, context) => newOrderDraftTargetsRef.current.onSuccess(order, context),
+    onSuccess: (order, context, intent) => newOrderDraftTargetsRef.current.onSuccess(order, context, intent),
     onError: (error) => newOrderDraftTargetsRef.current.onError(error),
     onConflict: (context, error) => newOrderDraftTargetsRef.current.onConflict(context, error),
   })
@@ -581,7 +581,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         const canOfferMoney = changedTotal && ((order.dueCents || 0)>0 || (order.refundDueCents || 0)>0)
         if ((intent!=='save' || canOfferMoney) && order.totalCents != null) {
           setEditSettlement({
-            owner:accessContextId,guard:getSyncGuard(),order,print,
+            owner:accessContextId,guard:getSyncGuard(),order,print,intent,source:'edit',
             stage:intent==='receive' && (order.dueCents || 0)>0 && canReceivePayments ? 'receive'
               :intent==='refund' && (order.refundDueCents || 0)>0 && canRefundPayments ? 'refund' : 'offer',
           })
@@ -593,8 +593,11 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
       }
       completeNavigation(context.returnDestination)
     },
-    onSuccess: (order, context) => {
+    onSuccess: (order, context, intent = 'save') => {
       if (context?.mode === 'edit-order') {
+        // A edição já foi confirmada, mas a cobrança/devolução ainda não.
+        // Não mostrar confirmação final antes da operação financeira.
+        if (intent === 'receive' || intent === 'refund') return
         showSuccessMessage('Pedido atualizado com sucesso')
         return
       }
@@ -612,6 +615,9 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
   const finishEditSettlement=()=>{
     if(!editSettlement || editSettlementBusy)return false
     const pendingPrint=editSettlement.print
+    if(editSettlement.source!=='finance' && (editSettlement.intent==='receive' || editSettlement.intent==='refund')) {
+      showSuccessMessage('Pedido atualizado. A operação financeira continua pendente.')
+    }
     setEditSettlement(null)
     setEditSettlementError('')
     editSettlementAttemptRef.current=null
@@ -664,9 +670,11 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         setEditSettlement(null)
         if(target.print)setEditedPrintPrompt(target.print)
       }else{
-        showSuccessMessage('Devolução registrada no Financeiro')
-        setEditSettlement(prev=>prev?.owner===target.owner
-          ? {...prev,order:result.order,stage:'offer'} : prev)
+        // Inclusive em devolução parcial: o restante permanece no Financeiro,
+        // sem reabrir um modal com a operação anterior já concluída.
+        showSuccessMessage('Devolução registrada com sucesso')
+        setEditSettlement(null)
+        if(target.print)setEditedPrintPrompt(target.print)
       }
       return true
     }catch(error){

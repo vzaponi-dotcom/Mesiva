@@ -72,7 +72,9 @@ test('Task 14 order edit review renders only authorized due/refund actions on mo
 
 test('Task 17 UX: saving and receiving defers success feedback until the financial operation confirms', () => {
   const app = source('../../../App.jsx')
-  const start = app.indexOf('onSuccess: (order, context')
+  // O hook precisa encaminhar a intenção, não apenas o pedido e o contexto.
+  assert.match(app, /onSuccess:\s*\(order,\s*context,\s*intent\)\s*=>\s*newOrderDraftTargetsRef\.current\.onSuccess\(order,\s*context,\s*intent\)/)
+  const start = app.lastIndexOf('onSuccess: (order, context')
   const end = app.indexOf('onConflict:', start)
   assert.ok(start > -1 && end > start)
   const editFeedback = app.slice(start, end)
