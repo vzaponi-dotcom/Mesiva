@@ -125,6 +125,9 @@ test('shared receipts attribute value once per order and cannot be assigned beyo
   assert.throws(()=>add(db,{id:'over',orderId:'three',kind:'supplemental_payment',receiptId:'shared',amountCents:1}),/OVERALLOCATED|CHECK/)
   assert.throws(()=>add(db,{id:'duplicate-order-credit',orderId:'one',kind:'supplemental_payment',receiptId:'shared',amountCents:1}),/UNIQUE|OVERALLOCATED/)
   assert.equal(db.prepare("SELECT SUM(amount_cents) n FROM payment_allocations WHERE receipt_id='shared'").get().n,3000)
+  assert.throws(()=>db.prepare("UPDATE payment_receipts SET total_cents=4000 WHERE id='shared'").run(),/IMMUTABLE/)
+  assert.throws(()=>db.prepare("UPDATE payment_allocations SET amount_cents=2500 WHERE receipt_id='shared'").run(),/IMMUTABLE/)
+  assert.throws(()=>db.prepare("DELETE FROM payment_allocations WHERE receipt_id='shared'").run(),/IMMUTABLE/)
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[])
 })
 
@@ -156,7 +159,7 @@ test('mutation, kind, actor and cross-tenant references are constrained and entr
   add(db,{id:'first',orderId:'local',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:1000,actorUserId:localActor,mutationId:'same'})
   assert.throws(()=>add(db,{id:'duplicate-mutation',orderId:'local',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:500,mutationId:'same'}),/UNIQUE/)
   assert.throws(()=>add(db,{id:'wrong-company-order',orderId:'foreign',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:100}),/FOREIGN KEY/)
-  assert.throws(()=>add(db,{id:'wrong-company-receipt',orderId:'local',kind:'supplemental_payment',receiptId:'foreign-receipt',amountCents:100}),/FOREIGN KEY/)
+  assert.throws(()=>add(db,{id:'wrong-company-receipt',orderId:'local',kind:'supplemental_payment',receiptId:'foreign-receipt',amountCents:100}),/FOREIGN KEY|ORDER_SETTLEMENT_RECEIPT_INVALID/)
   assert.throws(()=>add(db,{id:'wrong-company-actor',orderId:'local',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:100,actorUserId:remoteActor}),/FOREIGN KEY/)
   assert.throws(()=>add(db,{id:'bad-kind',orderId:'local',kind:'arbitrary',receiptId:'local-receipt',amountCents:100}),/CHECK/)
   assert.throws(()=>add(db,{id:'zero',orderId:'local',kind:'supplemental_payment',receiptId:'local-receipt',amountCents:0}),/CHECK/)

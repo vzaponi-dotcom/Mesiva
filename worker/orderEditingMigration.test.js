@@ -72,7 +72,7 @@ test('0042 clean install adds revision, history, mutation receipt and kitchen ac
 test('0042 upgrade preserves orders and grants existing builtin roles without touching custom roles', t => {
   const names=files()
   const migration='0042_order_editing_foundation.sql'
-  assert.equal(names.at(-1),migration)
+  assert.ok(names.includes(migration), '0042 must remain available after newer additive migrations')
   const sqlite=new DatabaseSync(':memory:')
   t.after(()=>sqlite.close())
   apply(sqlite,names.filter(name=>name<migration))
