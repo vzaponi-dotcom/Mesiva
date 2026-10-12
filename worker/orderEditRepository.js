@@ -1,11 +1,11 @@
 import { auditContext, businessEvent } from './access/audit.js'
 import { buildOrderEdit, validateOrderEditInput } from './orderEditValidation.js'
 import { loadOrderById } from './repositories.js'
+import { PAYMENT_SETTLEMENT_SQL_SELECT } from './orderPaymentReadModel.js'
 import { clearSettingsAssertions, hashSettingsPayload, prepareSettingsAssertion } from './settingsTransactions.js'
 
 const failure = (status,code,message) => Object.assign(new Error(message),{status,code})
 const changedConflict = () => failure(409,'ORDER_EDIT_CONFLICT','O pedido mudou. Atualize e confira os itens antes de salvar.')
-const paymentConflict = () => failure(409,'ORDER_EDIT_PAYMENT_CONFLICT','A alteração de valor de um pedido pago estará disponível na fase financeira.')
 const rows = result => Array.isArray(result?.results) ? result.results : []
 const getReceipt = (db,businessId,orderId,mutationId) => db.prepare(
   'SELECT request_hash,result_revision,changed,result_json FROM order_edit_mutation_receipts WHERE business_id=? AND order_id=? AND mutation_id=?'
@@ -55,7 +55,14 @@ export async function updateExistingOrder(db,businessId,orderId,raw,options={},n
   const payment=await db.prepare(
     'SELECT amount_cents FROM payments WHERE business_id=? AND order_id=? LIMIT 1'
   ).bind(businessId,orderId).first()
-  if(payment && plan.totals.totalCents!==Number(order.total_cents))throw paymentConflict()
+  // Financial balances are read before saving so a concurrent settlement
+  // cannot be silently merged into an order-content edit.
+  const financial=await db.prepare(`SELECT ${PAYMENT_SETTLEMENT_SQL_SELECT}
+    FROM orders o LEFT JOIN payments p
+      ON p.business_id=o.business_id AND p.order_id=o.id
+    WHERE o.business_id=? AND o.id=? LIMIT 1`).bind(businessId,orderId).first()
+  if (!financial || Number(financial.gross_received_cents) < Number(financial.refunded_cents)) throw changedConflict()
+
 
   // Preserve printed/claimed evidence. Only an untouched, zero-copy pending
   // automatic job is eligible for a snapshot change with the same transaction.
@@ -91,11 +98,23 @@ export async function updateExistingOrder(db,businessId,orderId,raw,options={},n
   const at=now.toISOString(),revision=Number(order.content_revision)+(plan.changed?1:0)
   const transactionId=crypto.randomUUID()
   const guard=prepareSettingsAssertion(db,transactionId,'revision',
-    'EXISTS(SELECT 1 FROM orders o WHERE o.business_id=? AND o.id=? '+
-    "AND o.status='Em preparo' AND o.content_revision=? AND o.total_cents=? "+
-    'AND COALESCE((SELECT p.amount_cents FROM payments p WHERE p.business_id=o.business_id AND p.order_id=o.id),0)=? '+
-    "AND NOT EXISTS(SELECT 1 FROM table_reservations tr WHERE tr.business_id=o.business_id AND tr.order_id=o.id AND tr.status='reserved'))",
-    [businessId,orderId,input.expectedContentRevision,Number(order.total_cents),Number(payment?.amount_cents||0)])
+    `EXISTS(SELECT 1 FROM (
+      SELECT o.business_id,o.id,o.status,o.content_revision,o.total_cents,
+        p.amount_cents AS paid_amount_cents,
+        ${PAYMENT_SETTLEMENT_SQL_SELECT}
+      FROM orders o LEFT JOIN payments p ON p.business_id=o.business_id AND p.order_id=o.id
+      WHERE o.business_id=? AND o.id=?
+    ) snapshot
+      WHERE snapshot.status='Em preparo'
+        AND snapshot.content_revision=? AND snapshot.total_cents=?
+        AND COALESCE(snapshot.paid_amount_cents,0)=?
+        AND snapshot.gross_received_cents=?
+        AND snapshot.refunded_cents=?
+        AND NOT EXISTS(SELECT 1 FROM table_reservations tr
+          WHERE tr.business_id=snapshot.business_id AND tr.order_id=snapshot.id AND tr.status='reserved')
+    )`,
+    [businessId,orderId,input.expectedContentRevision,Number(order.total_cents),
+      Number(payment?.amount_cents||0),Number(financial.gross_received_cents),Number(financial.refunded_cents)])
   const statements=[guard]
   for(const [index,productId] of [...new Set(input.items.filter(x=>!x.id).map(x=>x.productId))].entries()){
     const item=products.get(productId)
