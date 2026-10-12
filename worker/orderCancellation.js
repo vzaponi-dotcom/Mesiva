@@ -49,7 +49,7 @@ const normalizeRefundMethod = (value) => {
 }
 
 const orderContextSql = `SELECT o.id, o.order_number, o.status, o.table_tab_id, o.client_name_snapshot,
-  o.cancelled_at, o.cancel_reason, o.cancel_reason_note, o.timing_policy_snapshot_json, o.total_cents,
+  o.cancelled_at, o.cancel_reason, o.cancel_reason_note, o.timing_policy_snapshot_json, o.total_cents, o.content_revision,
   cr.label AS cancel_reason_label,
   p.id AS payment_id, p.method AS payment_method, p.amount_cents AS paid_amount_cents, p.paid_at, ${PAYMENT_ALLOCATIONS_JSON_SELECT},
   r.id AS refund_movement_id, r.created_at AS refund_created_at
@@ -213,9 +213,21 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
     WHERE business_id = ? AND order_id = ? AND trigger = 'automatic' AND status = 'pending'`).bind(businessId, orderId)
   const txId = crypto.randomUUID()
   const cancellationPolicyStatements = prepareCancellationUse(db, businessId, reason, expectedRevision, txId, now)
+  // An edit or settlement concurrent with cancellation must not silently
+  // change the order version or refund obligation while we are deciding.
   const orderGuard = prepareSettingsAssertion(db, txId, 'state',
-    "EXISTS (SELECT 1 FROM orders WHERE id = ? AND business_id = ? AND status IN ('Em preparo', 'Finalizado'))",
-    [orderId, businessId])
+    `EXISTS(SELECT 1 FROM (
+      SELECT o.status,o.content_revision,o.total_cents,
+        ${PAYMENT_SETTLEMENT_SQL_SELECT}
+      FROM orders o LEFT JOIN payments p
+        ON p.business_id=o.business_id AND p.order_id=o.id
+      WHERE o.id=? AND o.business_id=?
+    ) snapshot WHERE snapshot.status=?
+      AND snapshot.content_revision=? AND snapshot.total_cents=?
+      AND snapshot.gross_received_cents=? AND snapshot.refunded_cents=?)`,
+    [orderId,businessId,existing.status,Number(existing.content_revision||0),Number(existing.total_cents||0),
+      Number(existing.gross_received_cents??existing.paid_amount_cents??0),
+      Number(existing.refunded_cents||0)])
   const reservationMutation = reservation?.status === 'reserved'
     ? {
         id: reservation.id,
@@ -265,6 +277,7 @@ export const cancelOrder = async (db, businessId, orderId, input = {}, now = new
       if (refreshed && !['Em preparo', 'Finalizado'].includes(refreshed.status)) {
         throw domainError(409, 'ORDER_CANCEL_NOT_ALLOWED', 'Este pedido não pode ser cancelado.')
       }
+      throw domainError(409,'ORDER_CANCEL_CONFLICT','O pedido ou o saldo mudou. Atualize antes de cancelar.')
     }
     throw error
   }
