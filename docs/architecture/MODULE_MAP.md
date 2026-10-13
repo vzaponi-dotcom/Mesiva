@@ -6,7 +6,7 @@
 - **Escopo verificado:** árvore do repositório, os **10 `src/domains/*/index.js` públicos**, adaptadores de API, composição da aplicação, testes de contratos selecionados e checker de imports.
 - **Limite:** este é um mapa de **primeira leitura**, não uma lista completa de todos os exports/funções/rotas nem um grafo de dependências calculado sobre todos os arquivos. Os caminhos são da baseline indicada; uma nova branch precisa reconferi-los.
 
-Use este documento para saber **onde começar e o que não mover**. A [arquitetura](ARCHITECTURE.md) explica o desenho geral e as fronteiras de confiança; o [PRD](../product/PRD.md) explica as capacidades; as [regras de negócio](../product/BUSINESS_RULES.md) registram invariantes; o [AGENTS.md](../../AGENTS.md) define o processo de desenvolvimento. Specs antigas são histórico, não ownership atual.
+Use este documento para saber **onde começar e o que não mover**. A [arquitetura](ARCHITECTURE.md) explica o desenho geral e as fronteiras de confiança; o [PRD](../product/PRD.md) explica as capacidades; as [regras de negócio](../product/BUSINESS_RULES.md) registram invariantes; o [Design System](../design/DESIGN_SYSTEM.md) orienta a interface; o [AGENTS.md](../../AGENTS.md) define o processo de desenvolvimento. Specs antigas são histórico, não ownership atual.
 
 ## 1. Busca rápida: tarefa → ponto de entrada
 
