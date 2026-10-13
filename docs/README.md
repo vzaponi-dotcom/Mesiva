@@ -23,7 +23,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 
 - **Produto:** [PRD](product/PRD.md) — o que a Mesiva oferece conforme a baseline identificada; não é roadmap comercial.
 - **Regras de negócio consolidadas:** [Business Rules](product/BUSINESS_RULES.md) — invariantes funcionais com IDs estáveis, referências a código e pendências explícitas; verificar sempre a branch/SHA da tarefa.
-- **Arquitetura geral:** `docs/architecture/ARCHITECTURE.md` — **a criar**. Ponto de partida atual: [README](../README.md#arquitetura-e-organização), [AGENTS.md](../AGENTS.md#arquitetura) e checker `scripts/architecture/check-import-boundaries.mjs`.
+- **Arquitetura geral:** [Architecture](architecture/ARCHITECTURE.md) — visão atual de camadas, fluxos, limites de confiança, ambientes e CI; conferir a baseline e os contratos de código citados.
 - **Mapa de módulos:** `docs/architecture/MODULE_MAP.md` — **a criar**. Ponto de partida: [localização rápida do AGENTS.md](../AGENTS.md#localização-rápida) e `src/app/navigation/registry.js`.
 - **Design System da interface:** `docs/design/DESIGN_SYSTEM.md` — **a criar após conciliar as fontes visuais**. Consulte as referências abaixo.
 - **Procedimentos em vigor:** os runbooks vinculados acima. São detalhamentos operacionais; o PRD não os substitui.
@@ -61,4 +61,4 @@ O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositó
 
 ## Escopo desta primeira entrega
 
-Esta PR iniciou o índice e o [PRD](product/PRD.md) e foi ampliada, com autorização posterior, para incluir [regras de negócio consolidadas](product/BUSINESS_RULES.md). Arquitetura geral, mapa de módulos e Design System continuam em etapas futuras. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
+Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md) e a [visão geral da arquitetura](architecture/ARCHITECTURE.md), criados em entregas sequenciais. Mapa de módulos e Design System continuam em etapas futuras. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
