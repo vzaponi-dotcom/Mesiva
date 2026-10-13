@@ -22,7 +22,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 ## Documentação viva
 
 - **Produto:** [PRD](product/PRD.md) — o que a Mesiva oferece conforme a baseline identificada; não é roadmap comercial.
-- **Regras de negócio consolidadas:** `docs/product/BUSINESS_RULES.md` — **a criar em etapa posterior**. Até lá, verificar regras no código/testes e nas fontes atuais, sem presumir que specs históricas descrevem a versão vigente.
+- **Regras de negócio consolidadas:** [Business Rules](product/BUSINESS_RULES.md) — invariantes funcionais com IDs estáveis, referências a código e pendências explícitas; verificar sempre a branch/SHA da tarefa.
 - **Arquitetura geral:** `docs/architecture/ARCHITECTURE.md` — **a criar**. Ponto de partida atual: [README](../README.md#arquitetura-e-organização), [AGENTS.md](../AGENTS.md#arquitetura) e checker `scripts/architecture/check-import-boundaries.mjs`.
 - **Mapa de módulos:** `docs/architecture/MODULE_MAP.md` — **a criar**. Ponto de partida: [localização rápida do AGENTS.md](../AGENTS.md#localização-rápida) e `src/app/navigation/registry.js`.
 - **Design System da interface:** `docs/design/DESIGN_SYSTEM.md` — **a criar após conciliar as fontes visuais**. Consulte as referências abaixo.
@@ -61,4 +61,4 @@ O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositó
 
 ## Escopo desta primeira entrega
 
-Esta etapa adiciona apenas este índice e o [PRD](product/PRD.md). Não cria ainda as demais referências planejadas, não altera módulos, permissões, UI, bancos ou o processo de publicação.
+Esta PR iniciou o índice e o [PRD](product/PRD.md) e foi ampliada, com autorização posterior, para incluir [regras de negócio consolidadas](product/BUSINESS_RULES.md). Arquitetura geral, mapa de módulos e Design System continuam em etapas futuras. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
