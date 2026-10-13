@@ -1,7 +1,7 @@
 # PRD — Mesiva | Visão do produto e escopo implementado
 
 **Tipo:** documento vivo de produto (Product Requirements Document).  
-**Edição inicial:** v0.1 — 12/10/2026.  
+**Versão:** v0.2 — revisão em 13/10/2026 (edição inicial: 12/10/2026).  
 **Baseline conferida:** `master@e595f7ed2a801fde6ffab231194788430cc53316`.  
 **Status:** consolidação inicial baseada em [README](../../README.md), [AGENTS.md](../../AGENTS.md), navegação e módulos do repositório. Não é homologação funcional completa de cada tela.  
 **Idioma:** português do Brasil.
@@ -14,7 +14,14 @@ A **Mesiva** é uma aplicação web de apoio à operação de restaurantes. Reú
 
 O produto atende à necessidade de manter informações operacionais coerentes entre pessoas/dispositivos, com regras de acesso, registro financeiro e rastreabilidade. Seu objetivo funcional é facilitar a operação diária sem depender do navegador como fonte definitiva dos dados de negócio.
 
-Esta edição **não** estabelece posicionamento comercial, preços de assinatura, personas pesquisadas, metas numéricas, SLAs ou compromissos de roadmap; esses assuntos exigem decisões e evidências específicas.
+### Resultados funcionais que a aplicação procura entregar
+
+- **Operação:** registrar e consultar o ciclo de pedidos, atendimentos locais e recebimentos nos fluxos autorizados, sem perder a ligação entre os registros.
+- **Cozinha:** acompanhar filas e prioridades operacionais, inclusive em TV, sem confundir filtros de exibição com a situação oficial do pedido.
+- **Gestão:** consultar informações financeiras e relatórios por meio dos dados oficiais do estabelecimento.
+- **Administração Mesiva:** gerir empresas e acessos administrativos sem adquirir automaticamente permissão operacional sobre os restaurantes.
+
+São objetivos funcionais inferidos dos módulos implementados e de seus fluxos, **não indicadores de sucesso validados com usuários**. Esta edição **não** estabelece posicionamento comercial, preços de assinatura, personas pesquisadas, metas numéricas, SLAs ou compromissos de roadmap; esses assuntos exigem decisões e evidências específicas.
 
 ## 2. Pessoas e contextos de uso
 
@@ -45,7 +52,17 @@ Esses são **contextos funcionais**, não uma matriz de cargos/perfis ou permiss
 
 **Rotas principais:** a navegação operacional e seus requisitos de capability estão em [`src/app/navigation/registry.js`](../../src/app/navigation/registry.js). Nem toda rota é visível a toda conta; o registro de navegação não substitui a autorização do Worker.
 
-### 3.1 Pedidos, preparo e recebimento — distinções essenciais
+### 3.1 Modalidades e terminologia oficial
+
+| Uso | Valor de negócio no código | Nome na interface do controle da TV |
+| --- | --- | --- |
+| Entrega | `Entrega` | **Entrega** |
+| Retirada | `Retirada` | **Retira** |
+| Consumo no local | `Local` | **Mesa** |
+
+O domínio dos pedidos define essas modalidades em [`orderTypeOptions.js`](../../src/domains/orders/domain/orderTypeOptions.js); o filtro da TV mapeia seus rótulos em [`shared/kitchenTvModality.js`](../../shared/kitchenTvModality.js) e [`KitchenTvControlSurface.jsx`](../../src/app/surfaces/kitchen-tv-control/KitchenTvControlSurface.jsx). **Mesa** é o nome de exibição nesse filtro, não um quarto valor de `order.type`. Não presumir que qualquer pedido `Local` esteja necessariamente vinculado a uma comanda; o vínculo é verificado separadamente.
+
+### 3.2 Pedidos, preparo e recebimento — distinções essenciais
 
 - O checkout contempla múltiplos itens, quantidades, observações por item, taxa de entrega e ajustes. O Worker recalcula valores oficiais.
 - **Salvar pedido** preserva o recebimento pendente; **Salvar e receber** registra pagamento conforme elegibilidade e permissão.
@@ -55,17 +72,34 @@ Esses são **contextos funcionais**, não uma matriz de cargos/perfis ou permiss
 
 Esta seção resume comportamentos explicitamente documentados nas fontes atuais; suas condições e exceções devem ser detalhadas no futuro `BUSINESS_RULES.md`, após conferência dos testes e regras de domínio.
 
-### 3.2 Administração multiempresa
+### 3.3 Administração multiempresa
 
 O login compartilhado por PIN é legado e **não** representa a autenticação corrente. Contas Mesiva, associação a empresas e administração global são conceitos distintos. A operação multiempresa em produção e seu processo de recuperação encontram-se no [runbook corrente](../operations/multi-company-production.md).
 
 A gestão administrativa de empresas foi identificada na `master` desta baseline. Sua presença no repositório **não certifica** implantação em produção na mesma versão; verificar releases e homologação antes de declarar status de publicação.
 
-### 3.3 Impressão
+### 3.4 Impressão
 
 O caminho operacional é **dispositivo solicitante → fila central → estação principal Windows → QZ Tray → spooler Windows → impressora USB**. Solicitar/imprimir no transporte não comprova entrega física: a confirmação e a recuperação seguem regras próprias. Não assumir reenvio automático seguro em falhas incertas.
 
 Consulte o [runbook Windows/QZ](../operations/windows-qz-tray-printing.md) para configuração, estados, vias, falhas e aceitação física; não reintroduzir Web Serial/RawBT como arquitetura atual.
+
+### 3.5 Requisitos funcionais de referência (baseline)
+
+Estes requisitos expressam **capacidades já identificadas**, não novas solicitações nem critérios de homologação aprovados. A implementação específica e as exceções estão nos contratos e testes vinculados.
+
+| ID | Capacidade exigida no fluxo atual | Evidência principal |
+| --- | --- | --- |
+| RF-01 | Restringir operações à conta, empresa e capacidades efetivas do contexto autenticado. | `worker/access/authorization.js`; `src/app/access.js` |
+| RF-02 | Persistir pedidos e calcular valores oficiais no backend, sem depender do total calculado pelo navegador. | `worker/orderCheckout.js`; `src/domains/orders/` |
+| RF-03 | Controlar os filtros/páginas da TV e a ocultação da exibição sem finalizar ou cancelar pedidos oficiais. | `shared/kitchenTvModality.js`; `worker/kitchenTvControlRepository.js` |
+| RF-04 | Encaminhar recebimentos de pedidos vinculados à mesa/comanda pelo fluxo próprio da comanda, e não como recebimento avulso do pedido. | `worker/orderCheckout.js`; `src/domains/orders/domain/orderPaymentEligibility.js` |
+| RF-05 | Respeitar permissões e elegibilidade ao compor ou registrar pagamentos; manter recebimento distinto do preparo. | `src/app/workflows/payments/paymentComposition.js`; `src/domains/orders/domain/orderPaymentEligibility.js` |
+| RF-06 | Oferecer consulta de relatórios e exportação CSV/XLSX/PDF a quem possuir a capacidade correspondente. | `src/domains/reporting/ui/ReportingExportMenu.jsx` |
+| RF-07 | Distinguir job de impressão confirmado, falho ou de resultado incerto, preservando tratamento de atenção. | `src/domains/printing/application/printJobRunner.js`; runbook Windows/QZ |
+| RF-08 | Separar administração global Mesiva das capacidades concedidas nas empresas. | `src/domains/platform/ui/PlatformRoutes.jsx`; runbook multiempresa |
+
+A próxima etapa, `BUSINESS_RULES.md`, deverá detalhar transições, exceções, dados e validações por módulo. **Não** replicar integralmente essa lógica no PRD.
 
 ## 4. Jornadas principais
 
@@ -106,7 +140,16 @@ Este arquivo **não** aprova novas funcionalidades, alterações de código, reg
 
 Não classificar uma funcionalidade como “planejada” apenas por existir uma spec histórica. Para backlog e futuros compromissos, consultar as issues/PRs atuais e obter decisão específica do proprietário.
 
-## 7. Pontos a aprofundar nas próximas etapas
+## 7. Evidências, pendências e evolução
+
+### 7.1 Níveis de evidência
+
+- **Identificado na baseline:** recurso confirmado na `master` pelas implementações e/ou documentação corrente citadas neste documento.
+- **Validado em staging:** exige referência específica à homologação e ao SHA; este PRD não fornece essa garantia automaticamente.
+- **Publicado em produção:** exige identificação do release implantado e evidência do ambiente, não apenas presença na `master`.
+- **Proposto:** depende de especificação/decisão separada; não deve aparecer nas tabelas de funcionalidades atuais sem indicação explícita.
+
+### 7.2 Pontos a aprofundar nas próximas etapas
 
 - **Regras de negócio:** matriz vigente de modalidades, ciclo de pedidos, reservas/comandas, composição de pagamentos, pendências/estornos, impressão e suas exceções.
 - **Mapa de módulos:** ownership, APIs, contratos frontend–Worker e fluxos entre domínios.
@@ -123,4 +166,4 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 - [Refinamento da marca](../operations/2026-10-02-mesiva-logo-refinement.md).
 - [Fluxo de release](../release-and-migration-runbook.md).
 
-**Manutenção:** atualizar se uma entrega mudar o produto implementado; registrar PR/commit e rever a baseline. Não reescrever specs históricas como se fossem documentação viva. O índice de navegação fica em [`docs/README.md`](../README.md).
+**Manutenção:** atualizar se uma entrega mudar o produto implementado; registrar PR/commit e rever a baseline. Em revisões posteriores, reconferir os vínculos entre requisitos RF, código, testes e operação. Não reescrever specs históricas como se fossem documentação viva. O índice de navegação fica em [`docs/README.md`](../README.md).
