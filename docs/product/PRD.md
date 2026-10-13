@@ -152,7 +152,7 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 ### 7.2 Pontos a aprofundar nas próximas etapas
 
 - **Regras de negócio:** [consolidação inicial disponível](BUSINESS_RULES.md). Ampliar cobertura e validar exceções sempre que um domínio for alterado.
-- **Arquitetura:** [visão geral documentada](../architecture/ARCHITECTURE.md). **Mapa de módulos** detalhado ainda pendente: ownership, exports públicos, APIs e contratos entre domínios.
+- **Arquitetura e ownership:** [Architecture](../architecture/ARCHITECTURE.md) e [Module Map](../architecture/MODULE_MAP.md) disponíveis, com responsabilidades por módulo, contratos públicos e integração entre domínios.
 - **Design System:** tokens/componentes implementados, temas, telas operacionais e versão normativa da identidade visual.
 - **Produto/negócio:** posicionamento, segmentos atendidos, indicadores de sucesso e roadmap, **somente após definição com o proprietário**.
 - **Status de publicação:** relacionar capacidades a releases quando for necessária uma afirmação sobre produção, em vez de inferi-la da `master`.
