@@ -1,10 +1,10 @@
 # PRD — Mesiva | Visão do produto e escopo implementado
 
-**Tipo:** documento vivo de produto (Product Requirements Document).  
-**Versão:** v0.2 — revisão em 13/10/2026 (edição inicial: 12/10/2026).  
-**Baseline conferida:** `master@e595f7ed2a801fde6ffab231194788430cc53316`.  
-**Status:** consolidação inicial baseada em [README](../../README.md), [AGENTS.md](../../AGENTS.md), navegação e módulos do repositório. Não é homologação funcional completa de cada tela.  
-**Idioma:** português do Brasil.
+- **Tipo:** documento vivo de produto (Product Requirements Document).
+- **Versão:** v0.2 — revisão em 13/10/2026 (edição inicial: 12/10/2026).
+- **Baseline conferida:** `master@e595f7ed2a801fde6ffab231194788430cc53316`.
+- **Status:** consolidação inicial baseada em [README](../../README.md), [AGENTS.md](../../AGENTS.md), navegação e módulos do repositório; não é homologação funcional completa de cada tela.
+- **Idioma:** português do Brasil.
 
 > **Como ler o status:** “Disponível na baseline” significa que o recurso foi identificado no código e/ou nas instruções atuais da `master`, não que um deploy de produção no mesmo SHA tenha sido verificado. Uma spec aprovada, isoladamente, não torna um recurso implementado. Confirmar diferenças entre `master`, staging e produção por release e evidências do ambiente.
 
