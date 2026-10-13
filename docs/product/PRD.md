@@ -152,7 +152,7 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 ### 7.2 Pontos a aprofundar nas próximas etapas
 
 - **Regras de negócio:** [consolidação inicial disponível](BUSINESS_RULES.md). Ampliar cobertura e validar exceções sempre que um domínio for alterado.
-- **Mapa de módulos:** ownership, APIs, contratos frontend–Worker e fluxos entre domínios.
+- **Arquitetura:** [visão geral documentada](../architecture/ARCHITECTURE.md). **Mapa de módulos** detalhado ainda pendente: ownership, exports públicos, APIs e contratos entre domínios.
 - **Design System:** tokens/componentes implementados, temas, telas operacionais e versão normativa da identidade visual.
 - **Produto/negócio:** posicionamento, segmentos atendidos, indicadores de sucesso e roadmap, **somente após definição com o proprietário**.
 - **Status de publicação:** relacionar capacidades a releases quando for necessária uma afirmação sobre produção, em vez de inferi-la da `master`.
@@ -164,6 +164,6 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 - [Domínios de frontend](../../src/domains/), [workflows de pagamento](../../src/app/workflows/payments/) e [entrada da API](../../worker/entry.js).
 - [Operação multiempresa](../operations/multi-company-production.md), [políticas de configuração](../operations/spec-b-settings.md) e [impressão física](../operations/windows-qz-tray-printing.md).
 - [Refinamento da marca](../operations/2026-10-02-mesiva-logo-refinement.md).
-- [Fluxo de release](../release-and-migration-runbook.md).
+- [Arquitetura atual](../architecture/ARCHITECTURE.md) e [fluxo de release](../release-and-migration-runbook.md).
 
 **Manutenção:** atualizar se uma entrega mudar o produto implementado; registrar PR/commit e rever a baseline. Em revisões posteriores, reconferir os vínculos entre requisitos RF, código, testes e operação. Não reescrever specs históricas como se fossem documentação viva. O índice de navegação fica em [`docs/README.md`](../README.md).
