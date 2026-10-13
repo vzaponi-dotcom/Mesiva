@@ -268,7 +268,7 @@ Esta é uma **visão de alto nível**, baseada no código do SHA indicado; não 
 Próximos desdobramentos planejados:
 
 - **[Module Map](MODULE_MAP.md):** ownership por domínio, exports públicos, contratos entre módulos e pontos de teste; criado na mesma PR documental.
-- **`docs/design/DESIGN_SYSTEM.md`:** componentes/tokens/temas e conciliação do guia visual Mesiva com assets aprovados mais recentes; a criar.
+- **[Design System](../design/DESIGN_SYSTEM.md):** componentes/tokens/temas, fontes da marca e divergências documentadas; **revisão formal do guia no Drive ainda pendente**.
 - **Documentação de decisões arquiteturais (ADRs):** registrar novas decisões significativas e sua substituição, se isso for adotado como processo; **não** afirmar que ADRs existem hoje.
 - **Verificação de status de deploy por release:** quando necessário, conferir o SHA implantado diretamente nas evidências do ambiente.
 
