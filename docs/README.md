@@ -25,7 +25,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 - **Regras de negócio consolidadas:** [Business Rules](product/BUSINESS_RULES.md) — invariantes funcionais com IDs estáveis, referências a código e pendências explícitas; verificar sempre a branch/SHA da tarefa.
 - **Arquitetura geral:** [Architecture](architecture/ARCHITECTURE.md) — visão atual de camadas, fluxos, limites de confiança, ambientes e CI; conferir a baseline e os contratos de código citados.
 - **Mapa de módulos:** [Module Map](architecture/MODULE_MAP.md) — dez domínios, contratos públicos, workflows transversais, correspondências do Worker e testes para começar pela área certa.
-- **Design System da interface:** `docs/design/DESIGN_SYSTEM.md` — **a criar após conciliar as fontes visuais**. Consulte as referências abaixo.
+- **Design System da interface:** [Design System](design/DESIGN_SYSTEM.md) — identidade aplicada, fontes cronológicas, tokens, temas, componentes e **divergências explícitas ainda pendentes de conciliação formal no guia oficial**.
 - **Procedimentos em vigor:** os runbooks vinculados acima. São detalhamentos operacionais; o PRD não os substitui.
 
 ### Identidade visual: referências e conciliação pendente
@@ -35,7 +35,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 - [Ícones e publicações](operations/2026-10-02-github-releases-and-mesiva-icons.md) e [referência visual de Cozinha/Comandas](mesiva-kitchen-visual.md) — mudanças e contexto adicionais.
 - Ativos da aplicação: `public/brand/`. **Não** reconstruir/recolorir a marca por aproximação.
 
-O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositório contém versões posteriores. Não declarar essas fontes reconciliadas nem alterar a marca sem revisão e aprovação. O futuro Design System deverá explicitar a edição vigente e registrar a conciliação.
+O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositório contém versões posteriores. O [Design System](design/DESIGN_SYSTEM.md) documenta as duas situações e cinco divergências, **sem declarar reconciliação formal concluída**. Não alterar o logo nem substituir o guia no Drive sem revisão e aprovação.
 
 ## Documentação histórica e evidências
 
@@ -61,4 +61,4 @@ O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositó
 
 ## Escopo desta primeira entrega
 
-Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md) e a [visão geral da arquitetura](architecture/ARCHITECTURE.md), criados em entregas sequenciais. Design System continua em etapa futura. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
+Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md) e o [Design System](design/DESIGN_SYSTEM.md), criados em entregas sequenciais. A integração final no `AGENTS.md` e a revisão formal do guia visual no Drive permanecem separadas. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
