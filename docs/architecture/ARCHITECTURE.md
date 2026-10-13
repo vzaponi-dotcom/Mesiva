@@ -5,7 +5,7 @@
 - **Baseline verificada:** `master@e595f7ed2a801fde6ffab231194788430cc53316`; mesma base dos documentos iniciais da [PR #109](https://github.com/vzaponi-dotcom/Mesiva/pull/109).
 - **Estado da evidência:** inspeção de código, configuração de build/ambientes, checker e workflows. **Não** representa auditoria de cada módulo, execução de testes, inspeção de recursos Cloudflare remotos ou confirmação do SHA publicado em produção.
 
-Este documento responde **como** a Mesiva está organizada e por onde os dados passam. [PRD](../product/PRD.md) responde **o que** ela faz; [Business Rules](../product/BUSINESS_RULES.md) registra **invariantes de negócio**; [AGENTS.md](../../AGENTS.md) rege **como trabalhar**. Para atribuição detalhada de proprietários e mapas de imports, criar posteriormente `MODULE_MAP.md` sem duplicar esta visão geral.
+Este documento responde **como** a Mesiva está organizada e por onde os dados passam. [PRD](../product/PRD.md) responde **o que** ela faz; [Business Rules](../product/BUSINESS_RULES.md) registra **invariantes de negócio**; [AGENTS.md](../../AGENTS.md) rege **como trabalhar**. Para atribuição detalhada de responsáveis e pontos de entrada, consulte o [Module Map](MODULE_MAP.md), sem duplicar esta visão geral.
 
 ## 1. Visão geral e limites da solução
 
@@ -267,14 +267,14 @@ Esta é uma **visão de alto nível**, baseada no código do SHA indicado; não 
 
 Próximos desdobramentos planejados:
 
-- **`docs/architecture/MODULE_MAP.md`:** ownership por domínio, exports públicos, contratos entre módulos e pontos de teste; a criar.
+- **[Module Map](MODULE_MAP.md):** ownership por domínio, exports públicos, contratos entre módulos e pontos de teste; criado na mesma PR documental.
 - **`docs/design/DESIGN_SYSTEM.md`:** componentes/tokens/temas e conciliação do guia visual Mesiva com assets aprovados mais recentes; a criar.
 - **Documentação de decisões arquiteturais (ADRs):** registrar novas decisões significativas e sua substituição, se isso for adotado como processo; **não** afirmar que ADRs existem hoje.
 - **Verificação de status de deploy por release:** quando necessário, conferir o SHA implantado diretamente nas evidências do ambiente.
 
 ### Referências normativas e operacionais
 
-- [Índice documental](../README.md), [PRD](../product/PRD.md), [Business Rules](../product/BUSINESS_RULES.md).
+- [Índice documental](../README.md), [PRD](../product/PRD.md), [Business Rules](../product/BUSINESS_RULES.md) e [Module Map](MODULE_MAP.md).
 - [AGENTS.md](../../AGENTS.md), [README.md](../../README.md).
 - [Runbook de release e migrations](../release-and-migration-runbook.md), [operação multiempresa](../operations/multi-company-production.md), [impressão Windows/QZ](../operations/windows-qz-tray-printing.md).
 - [Checker de arquitetura](../../scripts/architecture/check-import-boundaries.mjs) e [Validate application](../../.github/workflows/validate.yml).
