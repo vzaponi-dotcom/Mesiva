@@ -70,7 +70,7 @@ O domínio dos pedidos define essas modalidades em [`orderTypeOptions.js`](../..
 - Pedidos associados a comanda seguem o fluxo de recebimento da comanda. Regras de elegibilidade excluem pedidos já pagos ou cancelados dos fluxos inadequados.
 - A TV e seu controle podem mudar a **exibição** dos pedidos sem, por isso, cancelar ou finalizar o pedido oficial.
 
-Esta seção resume comportamentos explicitamente documentados nas fontes atuais; suas condições e exceções devem ser detalhadas no futuro `BUSINESS_RULES.md`, após conferência dos testes e regras de domínio.
+Este resumo não substitui o catálogo detalhado de [regras de negócio vigentes](BUSINESS_RULES.md), com fontes e condições de exceção. Antes de uma implementação, reconferir também código e testes da branch/SHA.
 
 ### 3.3 Administração multiempresa
 
@@ -99,7 +99,7 @@ Estes requisitos expressam **capacidades já identificadas**, não novas solicit
 | RF-07 | Distinguir job de impressão confirmado, falho ou de resultado incerto, preservando tratamento de atenção. | `src/domains/printing/application/printJobRunner.js`; runbook Windows/QZ |
 | RF-08 | Separar administração global Mesiva das capacidades concedidas nas empresas. | `src/domains/platform/ui/PlatformRoutes.jsx`; runbook multiempresa |
 
-A próxima etapa, `BUSINESS_RULES.md`, deverá detalhar transições, exceções, dados e validações por módulo. **Não** replicar integralmente essa lógica no PRD.
+As restrições, exceções e invariantes ficam no [BUSINESS_RULES.md](BUSINESS_RULES.md). **Não** replicar integralmente essa lógica no PRD.
 
 ## 4. Jornadas principais
 
@@ -151,7 +151,7 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 
 ### 7.2 Pontos a aprofundar nas próximas etapas
 
-- **Regras de negócio:** matriz vigente de modalidades, ciclo de pedidos, reservas/comandas, composição de pagamentos, pendências/estornos, impressão e suas exceções.
+- **Regras de negócio:** [consolidação inicial disponível](BUSINESS_RULES.md). Ampliar cobertura e validar exceções sempre que um domínio for alterado.
 - **Mapa de módulos:** ownership, APIs, contratos frontend–Worker e fluxos entre domínios.
 - **Design System:** tokens/componentes implementados, temas, telas operacionais e versão normativa da identidade visual.
 - **Produto/negócio:** posicionamento, segmentos atendidos, indicadores de sucesso e roadmap, **somente após definição com o proprietário**.
