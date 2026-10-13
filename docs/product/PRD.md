@@ -126,7 +126,7 @@ As jornadas abaixo conectam módulos existentes; **não** substituem testes de c
 - Aplicação administrativa web com superfícies desktop e mobile; TV da Cozinha possui entrada própria em `/cozinha-tv`.
 - Estados de loading, erro, desabilitado, foco, filtros e leitura operacional devem permanecer distinguíveis.
 - Interfaces devem respeitar permissões efetivas e comportamentos de navegação/recarregamento.
-- O repositório possui ativos Mesiva em `public/brand/`. O [guia visual v1.0](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) e o [refinamento de 02/10](../operations/2026-10-02-mesiva-logo-refinement.md) exigem conciliação formal antes do Design System consolidado.
+- O repositório possui ativos Mesiva em `public/brand/`. O [Design System](../design/DESIGN_SYSTEM.md) documenta o [guia visual v1.0](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) e o [refinamento aprovado em 02/10](../operations/2026-10-02-mesiva-logo-refinement.md), incluindo divergências cujo fechamento formal no guia do Drive ainda está pendente.
 
 ### 5.3 Segurança e publicação
 
@@ -153,7 +153,7 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 
 - **Regras de negócio:** [consolidação inicial disponível](BUSINESS_RULES.md). Ampliar cobertura e validar exceções sempre que um domínio for alterado.
 - **Arquitetura e ownership:** [Architecture](../architecture/ARCHITECTURE.md) e [Module Map](../architecture/MODULE_MAP.md) disponíveis, com responsabilidades por módulo, contratos públicos e integração entre domínios.
-- **Design System:** tokens/componentes implementados, temas, telas operacionais e versão normativa da identidade visual.
+- **Design System:** [consolidação inicial disponível](../design/DESIGN_SYSTEM.md), com tokens/componentes, temas e checklist; **atualização normativa do guia oficial do Drive ainda pendente**.
 - **Produto/negócio:** posicionamento, segmentos atendidos, indicadores de sucesso e roadmap, **somente após definição com o proprietário**.
 - **Status de publicação:** relacionar capacidades a releases quando for necessária uma afirmação sobre produção, em vez de inferi-la da `master`.
 
