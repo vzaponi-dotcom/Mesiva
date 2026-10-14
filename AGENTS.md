@@ -3,7 +3,23 @@
 ## Contexto e fontes
 - Mesiva opera restaurantes: pedidos/cozinha, mesas/comandas, clientes, catálogo, financeiro, relatórios e impressão. Converse e documente em português, preservando os nomes do código.
 - Estado atual: React/React Router/Vite, Worker/D1/R2, login por e-mail e senha multiempresa e impressão central Windows/QZ. PIN, Web Serial e RawBT não são os fluxos atuais.
-- Consulte documentos conforme a tarefa: [README](README.md) para instalação/comandos; [release](docs/release-and-migration-runbook.md) para deploy/migrations; [produção multiempresa](docs/operations/multi-company-production.md) para acesso/administração; [Windows/QZ](docs/operations/windows-qz-tray-printing.md) para impressão. Registros datados podem ser históricos.
+- Comece pelo [índice da base de conhecimento](docs/README.md) e selecione apenas as fontes da tarefa. [README](README.md) cobre instalação/comandos; [release](docs/release-and-migration-runbook.md) cobre deploy/migrations; [produção multiempresa](docs/operations/multi-company-production.md) cobre acesso/administração; [Windows/QZ](docs/operations/windows-qz-tray-printing.md) cobre impressão. Registros datados podem ser históricos.
+
+## Consulta seletiva à documentação viva
+Os documentos abaixo **orientam a leitura**, mas não dispensam confirmar código, testes, migrations e configurações na **branch/SHA efetivamente trabalhada**. Não carregue todos por padrão.
+
+| Necessidade | Documento inicial | Complemento quando necessário |
+| --- | --- | --- |
+| Entender o produto, jornadas e escopo existente | [PRD](docs/product/PRD.md) | Código do módulo e decisões aprovadas |
+| Conferir regras, exceções, permissões ou impactos entre fluxos | [Business Rules](docs/product/BUSINESS_RULES.md) | Testes, contratos e implementação do Worker |
+| Entender camadas, dados, isolamento multiempresa e deploy | [Architecture](docs/architecture/ARCHITECTURE.md) | Configuração e runbook operacional pertinente |
+| Descobrir owner, `index.js` público, fluxo ou teste a editar | [Module Map](docs/architecture/MODULE_MAP.md) | Imports, consumidores, checker e testes afetados |
+| Alterar tela, tema, tokens, componentes ou marca | [Design System](docs/design/DESIGN_SYSTEM.md) | Guia oficial e registros de aprovação citados no documento |
+| Saber qual fonte é atual, qual é histórica e o que falta documentar | [Índice documental](docs/README.md) | Spec, plano ou QA específico **somente quando o contexto exigir** |
+
+- **Conflitos e evidências:** documento vivo registra a baseline que foi auditada, **não** prova comportamento de qualquer branch posterior nem deploy em produção. Diante de divergência entre documentação, implementação e intenção aprovada, investigar, registrar e pedir decisão quando necessário; não corrigir silenciosamente regras de negócio para combinar com uma spec antiga.
+- **Identidade visual:** o Design System explica as divergências ainda abertas entre o guia v1.0 e os vetores aprovados depois. Não recolorir/recriar logos nem apresentar a atualização formal do guia no Drive como concluída.
+- **Histórico:** specs, planos, QA e releases preservam decisões e evidências de seus próprios SHAs; consultar pontualmente. Mudança funcional/visual deve atualizar **somente os documentos vivos afetados**, na mesma PR, com fonte verificável. Nenhum desses documentos autoriza merge, migration remota ou produção.
 
 ## Localização rápida
 Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadores e testes da área; confirme os consumidores antes de mudar um componente compartilhado.
@@ -37,7 +53,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 ## Trabalho e economia de contexto
 - Confira branch e `git status`; preserve alterações de outros chats/usuário. Para nova entrega independente, prefira worktree e branch `codex/<tarefa>` da `master` remota atualizada; reutilize um ambiente adequado existente.
 - Mantenha um objetivo por PR e o escopo solicitado. Não edite o mesmo checkout em paralelo; separe portas e persistência para testes simultâneos.
-- Comece pelo mapa e por buscas específicas com `rg --files`/`rg -n`, limitadas à área. No PowerShell, passe globs de arquivos por `-g` (ex.: `rg -n texto scripts/infra -g '*gate*'`), sem usar um caminho literal com `*`. Leia trechos relevantes antes de arquivos inteiros; siga dependências e amplie a busca quando a evidência exigir.
+- Comece pelo [Module Map](docs/architecture/MODULE_MAP.md) **quando precisar localizar o owner**, e por buscas específicas com `rg --files`/`rg -n`, limitadas à área. No PowerShell, passe globs de arquivos por `-g` (ex.: `rg -n texto scripts/infra -g '*gate*'`), sem usar um caminho literal com `*`. Leia trechos relevantes antes de arquivos inteiros; siga dependências e amplie a busca quando a evidência exigir.
 - Consulte apenas documentos pertinentes; não carregue todos os runbooks, planos ou arquivos do repositório para uma tarefa localizada. Evite reler conteúdo já compreendido sem mudança ou dúvida.
 - Filtre saídas extensas para os erros, trechos e resumos necessários, mantendo contexto suficiente para diagnóstico. Não imprima bundles, lockfiles, base64 ou logs completos sem necessidade.
 - Agrupe leituras/buscas independentes; mantenha edições e operações dependentes em sequência. Não repita comandos ou verificações aprovados no mesmo estado sem mudança relevante, falha ou dúvida nova.
@@ -52,7 +68,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 - Preserve servidores/bancos existentes. Ao encerrar testes, termine somente processos criados pela tarefa.
 
 ## Interface, permissões e operação
-- Reutilize `src/shared/ui/` e os componentes dos domínios. Use tokens/temas existentes; badges seguem `--badge-radius`/`--badge-font-weight`. Preserve peso de títulos/valores e hierarquia aprovada; sem glow nos botões, com foco visível.
+- Reutilize `src/shared/ui/` e os componentes dos domínios. Em alterações visuais, consulte o [Design System](docs/design/DESIGN_SYSTEM.md), preservando guia/ativos aprovados e divergências registradas. Use tokens/temas existentes; badges seguem `--badge-radius`/`--badge-font-weight`. Preserve peso de títulos/valores e hierarquia aprovada; sem glow nos botões, com foco visível.
 - Confira desktop/mobile, teclado, foco/scroll de modais e estados vazios/loading/erro. Seleções devem ficar acessíveis; menus fecham ao clicar fora e por Escape. Atalhos executam a ação anunciada.
 - Alterações em `OrderDetail` exigem conferir consumidores da cozinha, histórico e clientes, além do drawer de relatórios.
 - Configuração auth canônica em `wrangler.jsonc`: e-mail e multiempresa ativos, preparação desativada. Preserve a separação entre administração Mesiva e vínculos operacionais.
@@ -70,10 +86,10 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 - Entregue resumo conciso do resultado, validação e riscos materiais; indique documentos e legados revisados quando pertinente.
 
 ## Documentação e aprendizado contínuo
-- Ao concluir cada tarefa, confira README, AGENTS e documentos da área. Atualize na mesma entrega/PR quando a mudança tornar instruções incorretas/incompletas; não altere apenas para registrar atividade.
-- README descreve instalação, funcionalidades e operação atual; AGENTS registra regras duradouras e mapa do código; runbooks guardam procedimentos detalhados. PRs/issues/QA preservam histórico e evidências. Evite duplicar instruções entre documentos.
+- Ao concluir cada tarefa, confira [README](README.md), AGENTS e os **documentos vivos afetados** indicados no [índice](docs/README.md). Atualize na mesma entrega/PR quando a mudança tornar instruções incorretas/incompletas; não altere apenas para registrar atividade.
+- README descreve instalação, funcionalidades e operação atual; AGENTS registra **regras duradouras e caminhos de consulta**. PRD, Business Rules, Architecture, Module Map e Design System guardam os detalhes vivos por assunto; runbooks guardam procedimentos. PRs/issues/QA preservam histórico e evidências. Evite duplicar instruções entre documentos.
 - Durante o uso, identifique atritos: buscas repetidas, entrada de código difícil de localizar, comando incorreto, verificação redundante ou procedimento confuso. Quando a melhoria estiver comprovada pelo código, execução ou decisão do usuário, atualize diretamente este guia ou o documento responsável, sem exigir um pedido separado para essa manutenção.
-- Registre apenas aprendizados reutilizáveis, com instrução concreta e curta. Consolide/corrija regras existentes antes de acrescentar novas; mantenha os caminhos do mapa atualizados e detalhes específicos na área correspondente.
+- Registre apenas aprendizados reutilizáveis, com instrução concreta e curta. Consolide/corrija regras existentes antes de acrescentar novas; mantenha links e a baseline do Module Map atualizados e detalhes específicos na área correspondente.
 - Hipóteses e preferências não aprovadas devem ser apresentadas como sugestões, não convertidas em regras. Melhorar o guia não autoriza mudar produto, workflows, permissões, gates ou ampliar escopo; essas alterações seguem a autorização da tarefa.
 - Informe a melhoria documental e sua razão na entrega/PR. Isso é orientação para as próximas tarefas, não uma automação ou garantia de autoatualização fora de uma sessão de trabalho.
 
