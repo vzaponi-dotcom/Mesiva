@@ -44,7 +44,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | API / contexto e autorização | `worker/entry.js`; `worker/index.js`; `worker/access/authorization.js` |
 
 ## Arquitetura
-- `src/app/` compõe shell, rotas, runtime, superfícies e workflows. `src/domains/<domínio>/` separa `domain/` (regras puras), `application/` (coordenação), `infrastructure/` (adaptadores) e `ui/`.
+- `src/app/` compõe shell, rotas, runtime, superfícies e workflows. Nos domínios, **quando existirem**, `domain/` guarda regras, `application/` coordenação, `infrastructure/` adaptadores e `ui/` interfaces. Nem todos os dez domínios possuem as quatro pastas; consulte o [Module Map](docs/architecture/MODULE_MAP.md).
 - Consumidores externos entram pelo `index.js` de cada domínio, sem imports profundos. Regras de domínio não dependem de React, DOM, HTTP ou infraestrutura.
 - `src/shared/` é genérico do frontend e não importa domínios; `shared/` na raiz contém contratos/regras entre frontend e Worker. `src/infrastructure/` concentra HTTP/auth/storage/QZ.
 - Preserve os clientes HTTP/contexto, a propriedade das mutations e os bloqueios ao trocar sessão/empresa ou perder conexão. D1/Worker são a autoridade de dados e preços.
