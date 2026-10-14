@@ -283,30 +283,40 @@ const agePrintJobs = async (db, businessId, now = new Date()) => {
       AND a.resolution IS NULL
       AND a.status <> 'complete'
   )`
+  // Keep each status branch indexable; an outer OR previously walked the
+  // entire tenant history and repeated a business-wide attempt lookup per job.
   const safeStaleCandidates = `SELECT print_jobs.id FROM print_jobs
-    WHERE print_jobs.business_id = ?
-      AND (
-        (print_jobs.status = 'processing' AND print_jobs.processing_started_at <= ?)
-        OR (print_jobs.status = 'requires_attention' AND print_jobs.last_error_code = 'PRINT_OUTCOME_UNKNOWN')
-      )
+    WHERE print_jobs.business_id = ? AND print_jobs.status = 'processing'
+      AND print_jobs.processing_started_at <= ? AND NOT ${unresolvedSubmittedAttempt}
+    UNION
+    SELECT print_jobs.id FROM print_jobs
+    WHERE print_jobs.business_id = ? AND print_jobs.status = 'requires_attention'
+      AND print_jobs.last_error_code = 'PRINT_OUTCOME_UNKNOWN'
       AND NOT ${unresolvedSubmittedAttempt}`
-  const safeBindings = [businessId, processingCutoff]
+  const safeBindings = [businessId, processingCutoff, businessId]
 
   const expiredAttempt = `a.business_id = ? AND a.status IN ('submitting', 'spooling', 'printing')
     AND a.resolution IS NULL AND a.submission_started_at <= ?`
-  const timeoutCandidates = `SELECT print_jobs.id,
+  // Drive the selection from unresolved attempts, rather than probing attempts
+  // for every historical job. DISTINCT emits one audit event per matching job.
+  // The unknown branch remains valid after the preceding attempt UPDATE.
+  const timeoutCandidates = `SELECT DISTINCT print_jobs.id,
     (SELECT s.id FROM print_stations s WHERE s.business_id=print_jobs.business_id
       AND s.id=COALESCE((SELECT a.station_id FROM print_job_attempts a
         WHERE a.business_id=print_jobs.business_id AND a.job_id=print_jobs.id
           AND a.resolution IS NULL AND a.submission_started_at IS NOT NULL
         ORDER BY a.attempt_number DESC LIMIT 1),print_jobs.station_id)) AS station_id
-    FROM print_jobs WHERE print_jobs.business_id = ? AND (
-      EXISTS (SELECT 1 FROM print_job_attempts a WHERE a.job_id=print_jobs.id AND ${expiredAttempt})
-      OR (status IN ('awaiting_confirmation','processing') AND EXISTS (
-        SELECT 1 FROM print_job_attempts a WHERE a.business_id=print_jobs.business_id
-          AND a.job_id=print_jobs.id AND a.status='unknown' AND a.resolution IS NULL))
-    )`
-  const candidateBindings = [businessId,businessId,processingCutoff]
+    FROM (
+      SELECT a.job_id FROM print_job_attempts a WHERE ${expiredAttempt}
+      UNION ALL
+      SELECT a.job_id FROM print_job_attempts a
+      JOIN print_jobs j ON j.id=a.job_id AND j.business_id=a.business_id
+      WHERE a.business_id=? AND a.status='unknown' AND a.resolution IS NULL
+        AND j.status IN ('awaiting_confirmation','processing')
+    ) candidates
+    CROSS JOIN print_jobs
+    WHERE print_jobs.id=candidates.job_id AND print_jobs.business_id=?`
+  const candidateBindings = [businessId,processingCutoff,businessId,businessId]
   // Polling is not human execution. Stored station associations are validated
   // by the tenant join above, without requiring the timed-out station online.
   const systemDb=withAuditContext(db,{businessId,actorType:'system'})

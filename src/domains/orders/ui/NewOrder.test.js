@@ -331,6 +331,7 @@ test('edit-reservation wizard starts clean from the official snapshot and does n
 })
 
 test('reservation conflict renders the specific server guidance instead of a generic checkout error', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-10T12:00:00.000Z') })
   const harness = await workspaceHarness(t)
   const { default: NewOrder } = await harness.load('/src/domains/orders/ui/NewOrder.jsx')
   const renderer = await harness.render(NewOrder, {

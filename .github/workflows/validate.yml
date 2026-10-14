@@ -70,6 +70,9 @@ jobs:
       - name: Validate Spec B D1 clean install and upgrade
         run: node scripts/infra/spec-b-d1-gate.mjs
 
+      - name: Validate printing recovery D1 read budget
+        run: node scripts/infra/print-recovery-d1-benchmark.mjs
+
       - name: Validate operation profile D1 clean install and upgrade
         run: node scripts/infra/operation-profile-d1-gate.mjs
 
