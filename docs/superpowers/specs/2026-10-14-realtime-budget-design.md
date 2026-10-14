@@ -1,6 +1,6 @@
 # Atualização por eventos dentro do orçamento do Mesiva
 
-Data: 14/10/2026. Estado: desenho escrito para revisão humana; implementação ainda não iniciada.
+Data: 14/10/2026. Estado: base para planejamento solicitado pelo usuário após revisão da direção arquitetural; implementação ainda não iniciada. Os documentos de execução permanecem sujeitos à revisão humana.
 
 ## Objetivo e limites
 
@@ -22,17 +22,17 @@ Alternativas consideradas:
 2. **Somente ampliar os intervalos atuais:** exige menos código, mas aumenta permanentemente a demora entre dispositivos e continua relendo o histórico.
 3. **Journal durável de todas as alterações e API de deltas com cursor:** oferece recuperação detalhada de eventos, mas exige novas escritas transacionais e retenção. Não é necessário para cinco dispositivos quando a reconciliação consegue restaurar o estado completo.
 
-A escolha é a primeira. Não haverá journal D1 de eventos nem migração de históricos.
+A escolha é a primeira. Não haverá journal D1 de eventos nem migração de históricos. O roteiro divide implementação em duas entregas independentes: leituras limitadas com índices/benchmark e canal de avisos com clientes. A separação do bootstrap operacional e histórico será uma terceira entrega, com política de escopo por consumidor aprovada antes de implementá-la; até lá, os snapshots completos descritos abaixo permanecem por compatibilidade.
 
 ## Canal e contrato
 
 Um Durable Object com armazenamento SQLite por empresa e ambiente distribui avisos. Staging e produção usam namespaces próprios. O Worker deriva a empresa do contexto autenticado, nunca de um parâmetro escolhido pelo cliente. O objeto aceita sockets pela API de hibernação (`ctx.acceptWebSocket`), restaura attachments após despertar e não mantém intervalos ou tarefas permanentes que impeçam hibernação.
 
-O canal humano usa a sessão atual; a TV usa sua credencial de pareamento atual. Não se passa token pela URL. O upgrade exige origem permitida, sessão válida e permissões correspondentes. Assinaturas e mensagens são filtradas pelo Worker e pelo tipo de cliente. O navegador não pode publicar eventos nem escolher outra empresa.
+O canal humano usa a sessão atual; a TV usa sua credencial de pareamento atual. Não se passa token pela URL. Como WebSocket nativo não envia `X-Mesiva-Context` ou o header legado da TV, a preparação ocorre por HTTP com os clientes autenticados atuais. Ela emite um ticket opaco de uso único, válido por 60 segundos, vinculado ao principal, empresa, contexto e permissões. O ticket passa pelo subprotocolo do upgrade, nunca pela URL, não é refletido na resposta nem registrado em logs. O upgrade exige origem permitida, consume atomicamente o ticket e revalida sessão/pareamento e permissões antes de aceitar; não flexibiliza `requireBusinessContext` nas demais rotas. Assinaturas e mensagens são filtradas pelo Worker e pelo tipo de cliente. O navegador não pode publicar eventos nem escolher outra empresa.
 
 Cada aviso contém versão do protocolo, revisão monotônica persistida no objeto, tópicos e, quando aplicável, IDs de pedidos alterados. Não contém clientes, valores, pagamentos, conteúdo de impressão ou credenciais. Tópicos previstos: pedidos, mesas/reservas, catálogo/clientes/financeiro, configurações/TV e fila de impressão. IDs são fornecidos somente a assinantes autorizados ao tópico.
 
-Avisos não concedem autoridade: todas as leituras e mutations continuam passando pelas capabilities e pelas verificações de contexto antes/depois da execução. A conexão é renovada por HTTP autenticado a cada minuto. Troca de empresa/sessão fecha a conexão, invalida leituras pendentes e cria uma nova geração. Revogação de acesso e despareamento fecham os sockets correspondentes; expiração impede novos avisos e leituras.
+Avisos não concedem autoridade: todas as leituras e mutations continuam passando pelas capabilities e pelas verificações de contexto antes/depois da execução. A conexão tem lease de 75 segundos e é renovada por HTTP autenticado a cada minuto. Na falha de um aviso de revogação, o lease limita o período de avisos antigos; todas as leituras HTTP continuam revalidando a autorização imediatamente. Troca de empresa/sessão fecha a conexão, invalida leituras pendentes e cria uma nova geração. Revogação de acesso e despareamento fecham os sockets correspondentes; expiração impede novos avisos e leituras.
 
 ## Publicação de alterações
 
@@ -66,7 +66,7 @@ A migração não remove verificações temporais que hoje executam regras do se
 
 Modelo conservador para validação: cinco dispositivos, 12 horas por dia, 31 dias e até 5.000 alterações operacionais por dia. Esses números de atividade são hipóteses de ensaio, não volume real informado pelo restaurante.
 
-Nesse modelo, 155.000 publicações por mês, 111.600 renovações e até 5.000 conexões/reconexões resultam em aproximadamente 271.600 solicitações ao Durable Object. Mensagens enviadas pelo servidor não são cobradas como requests. Cada handler deverá terminar rapidamente e permitir hibernação. A duração efetiva será medida; o número de requests sozinho não demonstra custo zero.
+Nesse modelo, 155.000 publicações por mês, 111.600 renovações e até 5.000 conexões/reconexões resultam em aproximadamente 281.600 solicitações ao Durable Object, contando emissão, consumo e abertura para cada conexão. Mensagens enviadas pelo servidor não são cobradas como requests. Cada handler deverá terminar rapidamente e permitir hibernação. A duração efetiva será medida; o número de requests sozinho não demonstra custo zero.
 
 Há aproximadamente 22.320 reconciliações mensais para cinco dispositivos. No fallback contínuo de 30 segundos, há 223.200 leituras de sincronização. Exemplo: 60.000 linhas por sincronização resultariam em 1,34 bilhão e 13,39 bilhões de linhas, respectivamente, antes de somar impressão, identidade e demais rotas. Essa conta demonstra por que também é necessário medir o tamanho das consultas e o cenário degradado.
 
