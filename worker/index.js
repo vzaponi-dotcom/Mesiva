@@ -16,7 +16,7 @@ import { projectMutationEffects, projectOrderList } from './access/projections.j
 import { printingActor } from './access/printingAuthorization.js'
 import { loadEffectiveBusinessConfig } from './effectiveBusinessConfig.js'
 import { createManualTableTabPrintJob, loadAutomaticPrintJobForOrder } from './orderPrintingRepository.js'
-import { listOrders } from './orderReadRepository.js'
+import { listOrders, listOrdersByIds } from './orderReadRepository.js'
 import { loadMovementsByOrderSource, loadTableTabById } from './orderWriteEffects.js'
 import { loadOpenTableTabDetail } from './tableTabDetailRepository.js'
 import { updateOrderPaymentPromise } from './orderPaymentPromise.js'
@@ -281,6 +281,16 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     return effectsJson(result, { status: 201 })
   }
 
+  if (url.pathname === '/api/orders/by-ids' && request.method === 'GET') {
+    requireAnyCapability(context, ['orders.view', 'orders.history'])
+    let ids
+    try { ids = JSON.parse(url.searchParams.get('ids')) } catch {
+      throw apiError(400, 'INVALID_ORDER_IDS', 'Informe uma lista válida de pedidos.')
+    }
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim() || id.length > 200)
+      || new Set(ids).size > 99) throw apiError(400, 'INVALID_ORDER_IDS', 'Informe até 99 pedidos válidos.')
+    return json({ orders: projectOrderList(await listOrdersByIds(env.DB, session.businessId, ids), context.granted) })
+  }
   if (url.pathname === '/api/orders' && request.method === 'GET') {
     requireAnyCapability(context, ['orders.view', 'orders.history'])
     return json({ orders: projectOrderList(await listOrders(env.DB, session.businessId), context.granted) })
