@@ -38,7 +38,7 @@ export async function emailAccessFixture(t, { credential = true, verified = cred
   const token = 's'.repeat(43)
   if (credential) {
     for (const [id,hash] of [['session',await sha256Hex(token)],['second-session','second-hash']]) sqlite.prepare('INSERT INTO sessions(id,business_id,token_hash,user_id,device_mode,created_at,expires_at,last_seen_at) VALUES(?,?,?,?,?,?,?,?)')
-      .run(id,EMAIL_BUSINESS,hash,'u1','personal',EMAIL_NOW.toISOString(),'2026-10-09T12:00:00.000Z',EMAIL_NOW.toISOString())
+      .run(id,EMAIL_BUSINESS,hash,'u1','personal',EMAIL_NOW.toISOString(),new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),EMAIL_NOW.toISOString())
   }
   const context = {businessId:EMAIL_BUSINESS,userId:'u1',roleId:`${EMAIL_BUSINESS}:manager`,displayName:'u1',sessionId:credential ? 'session' : null,deviceMode:'personal',granted:new Set(BUILTIN_ROLES.find(role => role.code==='manager').capabilities)}
   return {...fixture,context,token,verifier}
