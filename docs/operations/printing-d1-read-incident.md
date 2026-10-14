@@ -24,7 +24,7 @@ Reproduzir com `node scripts/infra/print-recovery-d1-benchmark.mjs` após dispon
 
 | Cenário | Antes | Depois | Escritas da seleção |
 | --- | ---: | ---: | ---: |
-| Fila sem histórico | 0 | 0 | 0 |
+| Fila sem histórico | 0 | 4 | 0 |
 | 1.000 trabalhos e 1.000 tentativas completos, nenhum candidato | 1.002.000 | 8 | 0 |
 
 Redução do segundo cenário: 99,9992%, 125.250 vezes menos leituras. Mede as duas seleções auditadas de recuperação, não o custo total de toda a API. Listagem, resumo e retenção continuam tendo seus próprios custos.
@@ -33,7 +33,7 @@ Regressões: fila vazia; histórico volumoso preservado; múltiplas tentativas e
 
 ## Publicação e acompanhamento
 
-Estado: correção em validação na branch codex/d1-print-recovery; produção ainda usa e595f7ed. Não afirmar redução efetiva em produção antes de publicar e medir.
+Registro da preparação: correção na branch codex/d1-print-recovery, com produção em e595f7ed. O estado atual da publicação e os runs de CI/staging/produção constam no [PR #110](https://github.com/vzaponi-dotcom/Mesiva/pull/110). Não afirmar redução efetiva em produção antes de publicar e medir.
 
 Seguir PR/CI → staging da branch com PR aberto → aceitação humana → merge → CI/staging do SHA master → Deploy production manual. Conferir versão ativa via deployments/versions e workflow, e repetir EXPLAIN/seleção somente leitura. Observar Insights/metrics por janela anterior/posterior ao deploy e por execução; não usar apenas o acumulado do ciclo, que inclui a carga antiga e tem atraso. Não criar dados fictícios em produção.
 
