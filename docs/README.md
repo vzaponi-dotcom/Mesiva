@@ -61,4 +61,4 @@ O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositó
 
 ## Escopo desta primeira entrega
 
-Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md) e o [Design System](design/DESIGN_SYSTEM.md), criados em entregas sequenciais. A integração final no `AGENTS.md` e a revisão formal do guia visual no Drive permanecem separadas. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
+Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md), o [Design System](design/DESIGN_SYSTEM.md) e a integração da consulta seletiva ao [AGENTS.md](../AGENTS.md), criados em entregas sequenciais. A revisão formal do guia visual no Drive **permanece pendente e separada**. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
