@@ -119,3 +119,28 @@ test('Kitchen TV state exposes only revision and requested page, never administr
   assert.equal(Object.hasOwn(state.control, 'telemetry'), false)
   assert.equal(JSON.stringify(state).includes('visibleOrderIds'), false)
 })
+
+test('TV reads active candidates before items even with large terminal history',async t=>{
+  const {seedOperationalReadFixture}=await import('./test-support/operationalReadFixture.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  const {activeIds}=await seedOperationalReadFixture(db,{historicalOrders:1000,activeOrders:5,itemsPerOrder:2})
+  sqlite.prepare("UPDATE orders SET status='Estado desconhecido' WHERE id=?").run(activeIds[1])
+  sqlite.prepare("UPDATE orders SET status='Agendado',scheduled_for='2026-10-15T15:00:00.000Z' WHERE id=?").run(activeIds[2])
+  sqlite.prepare("UPDATE orders SET finished_at='2026-10-13T13:00:00.000Z' WHERE id=?").run(activeIds[3])
+  sqlite.prepare('INSERT INTO kitchen_tv_hidden_orders(business_id,order_id,hidden_at) VALUES(?,?,?)').run(BUSINESS,activeIds[4],'2026-10-13T13:00:00.000Z')
+  assert.throws(()=>sqlite.prepare('UPDATE orders SET status=NULL WHERE id=?').run(activeIds[0]),/NOT NULL/)
+  const plans=[]
+  const recording={...db,prepare(sql){const statement=db.prepare(sql);return {...statement,bind(...values){
+    if(sql.includes('FROM orders') || sql.includes('FROM order_items'))plans.push({sql,details:sqlite.prepare('EXPLAIN QUERY PLAN '+sql).all(...values).map(r=>r.detail)})
+    return statement.bind(...values)
+  }}}}
+  const state=await (await repositoryPromise).loadKitchenTvState(recording,BUSINESS)
+  assert.deepEqual(state.orders.map(o=>o.id),activeIds.slice(0,3))
+  assert.ok(state.orders.every(o=>o.items.length===2))
+  assert.equal(state.orders[1].status,'Estado desconhecido')
+  assert.equal(state.orders[2].scheduledFor,'2026-10-15T15:00:00.000Z')
+  assert.equal(plans.length,2)
+  for(const plan of plans)assert.ok(plan.details.some(detail=>detail.includes('orders_business_active_created_idx')),'missing active candidate index: '+plan.details.join('; '))
+  const items=plans.find(plan=>plan.sql.includes('i.order_id'))
+  assert.ok(items.details.some(detail=>detail.includes('order_items_business_order_created_idx') && detail.includes('order_id=?')),'items must be constrained to one candidate order: '+items.details.join('; '))
+})

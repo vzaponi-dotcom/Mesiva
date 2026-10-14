@@ -17,10 +17,11 @@ const ACTIVE_ORDERS_SELECT = `SELECT id, order_number, client_name_snapshot, typ
     )
   ORDER BY created_at ASC, id ASC`
 
+// Keep active orders as the outer loop: an ordinary join can scan all historical items.
 const ACTIVE_ITEMS_SELECT = `SELECT i.order_id, i.quantity, i.name_snapshot, i.size_snapshot, i.note
-  FROM order_items i
-  INNER JOIN orders o ON o.id = i.order_id AND o.business_id = i.business_id
-  WHERE i.business_id = ?
+  FROM orders o
+  CROSS JOIN order_items i ON i.order_id = o.id AND i.business_id = o.business_id
+  WHERE o.business_id = ?
     AND o.status NOT IN ('Finalizado', 'Cancelado', 'Entregue', 'Despachado')
     AND o.finished_at IS NULL
     AND o.cancelled_at IS NULL
