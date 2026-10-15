@@ -1,4 +1,5 @@
-import { handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
+import { withCommittedEffects, publishCommittedEffect } from './realtime/committedEffects.js'
+import { realtimeEnabled, handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
 import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSION_MAX_AGE, verifyPin } from './auth.js'
 import { authenticateHumanRequest, loadAuthMode } from './access/sessions.js'
 import { handleEmailAuthApi, loginWithEmail } from './access/emailAuthApi.js'
@@ -463,6 +464,10 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 }
 
 export const handleRequest = async (request, env, executionContext) => {
+  if(realtimeEnabled(env) && env.BUSINESS_REALTIME) {
+    const originalEnv=env
+    env={...env,DB:withCommittedEffects(env.DB,{onCommitted:effect=>publishCommittedEffect(originalEnv,effect.businessId,effect,executionContext)})}
+  }
   try {
     const url = new URL(request.url)
     if(url.pathname==='/api/realtime/socket' && request.method==='GET')return await handleRealtimeUpgrade(request,env)

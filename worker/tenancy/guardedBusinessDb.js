@@ -1,3 +1,4 @@
+import { linkCommittedStatement, inheritCommittedEffect } from '../realtime/committedEffects.js'
 import { loadAccountSessionRow, prepareSessionSnapshotAssertion, contextChanged, getRoleGrantsSnapshot } from '../identity/sessions.js'
 
 // A request-owned facade. Use the original binding for guards, never itself.
@@ -21,13 +22,13 @@ export function withBusinessSessionGuard(db, context, { now = new Date(), monoto
   }
   const wrap = statement => {
     const facade = {
-      bind: (...values) => wrap(statement.bind(...values)),
+      bind: (...values) => inheritCommittedEffect(facade,wrap(statement.bind(...values))),
       async first(column) { const row = (await execute([statement]))[0]?.results?.[0]; return row ? column === undefined ? row : row[column] : null },
       async all() { return (await execute([statement]))[0] },
       async run() { return (await execute([statement]))[0] },
     }
     originals.set(facade,statement)
-    return facade
+    return linkCommittedStatement(facade,statement)
   }
   return { prepare: sql => wrap(db.prepare(sql)), batch: execute }
 }

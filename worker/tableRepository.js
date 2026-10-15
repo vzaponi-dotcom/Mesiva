@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
 import { listNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
 
@@ -195,7 +196,7 @@ export const getOrCreateOpenTableTabByTableId = async (db, businessId, tableId, 
   const id = crypto.randomUUID()
   const timestamp = now.toISOString()
   const tabNumber = await reserveNextTableTabNumber(db, businessId, now)
-  await db.prepare(`INSERT OR IGNORE INTO table_tabs (
+  await registerCommittedEffect(db.prepare(`INSERT OR IGNORE INTO table_tabs (
     id, business_id, table_id, table_identifier, tab_number, status, opened_at, closed_at, created_at, updated_at
   ) VALUES (?, ?, ?, ?, ?, 'open', ?, NULL, ?, ?)`).bind(
     id,
@@ -206,7 +207,7 @@ export const getOrCreateOpenTableTabByTableId = async (db, businessId, tableId, 
     timestamp,
     timestamp,
     timestamp,
-  ).run()
+  ),{businessId,topics:['tables'],orderIds:[]}).run()
 
   row = await selectOpen()
   if (!row) throw domainError(500, 'TABLE_TAB_CREATE_FAILED', 'Não foi possível abrir a comanda da mesa.')

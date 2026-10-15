@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation, prepareAuditSelection, withAuditContext, auditContext } from './access/audit.js'
 import { printingActor } from './access/printingAuthorization.js'
 import { createTestPrintDocument } from '../shared/orderPrintDocument.js'
@@ -604,8 +605,10 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
   const becameReady = wasUnavailable && resolvePrintStationHealth({
     ...previous, lastSeenAt: at, qzReady, printerReady, physicalState,
   }, now).ready
+  const healthChanged=previous.qzReady!==qzReady || previous.printerReady!==printerReady || previous.physicalState!==physicalState || !previous.health.online
+  const markHealth=statement=>registerCommittedEffect(statement,healthChanged?{businessId,topics:['printing'],orderIds:[]}:null)
   const row = hasPhysicalState
-    ? await db.prepare(`UPDATE print_stations SET
+    ? await markHealth(db.prepare(`UPDATE print_stations SET
         last_seen_at = ?, qz_ready = ?, printer_ready = ?,
         physical_state = ?, physical_status_text = ?, physical_status_code = ?, physical_status_at = ?,
         last_offline_at = CASE WHEN ? = 'printer_offline' THEN ? ELSE last_offline_at END,
@@ -614,20 +617,20 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
       WHERE id = ? AND business_id = ?
       RETURNING *`)
       .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, physicalStatusText, physicalStatusCode, at,
-        physicalState, at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, at, at, stationId, businessId)
+        physicalState, at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, at, at, stationId, businessId))
       .first()
-    : await db.prepare(`UPDATE print_stations SET
+    : await markHealth(db.prepare(`UPDATE print_stations SET
         last_seen_at = ?, qz_ready = ?, printer_ready = ?,
         last_ready_at = CASE WHEN ? = 1 AND ? = 1 THEN ? ELSE last_ready_at END,
         updated_at = ?
       WHERE id = ? AND business_id = ?
       RETURNING *`)
-      .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, qzReady ? 1 : 0, printerReady ? 1 : 0, at, at, stationId, businessId)
+      .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, qzReady ? 1 : 0, printerReady ? 1 : 0, at, at, stationId, businessId))
       .first()
   if (!row) throw repositoryError(404, 'PRINT_STATION_NOT_FOUND', 'Estação de impressão não encontrada.')
   const station = mapStationRow(row, now)
   if (!hasPhysicalState || !becameReady || station.recoveryState !== 'normal') return station
-  const recovered = await db.prepare(`UPDATE print_stations SET recovery_state = 'pending', updated_at = ?
+  const recovered = await registerCommittedEffect(db.prepare(`UPDATE print_stations SET recovery_state = 'pending', updated_at = ?
     WHERE id = ? AND business_id = ? AND recovery_state = 'normal'
       AND EXISTS (
         SELECT 1 FROM print_jobs
@@ -640,7 +643,7 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
               AND print_job_attempts.submission_started_at IS NOT NULL
           )
       )
-    RETURNING *`).bind(at, stationId, businessId).first()
+    RETURNING *`).bind(at, stationId, businessId),{businessId,topics:['printing'],orderIds:[]}).first()
   return mapStationRow(recovered || row, now)
 }
 

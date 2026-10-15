@@ -1,3 +1,5 @@
+import { registerCommittedEffect } from '../realtime/committedEffects.js'
+import { sessionRevocationEffects } from '../realtime/effectCatalog.js'
 import { cookieValue, sha256Hex } from '../auth.js'
 import { apiError } from '../http.js'
 import { APPLICATION_CAPABILITIES } from '../../shared/settingsAccess.js'
@@ -133,7 +135,7 @@ export function prepareBrowserFamilyRevocation(db, context, now = new Date()) {
   const timestamp = now.toISOString()
   return [
     db.prepare('UPDATE identity_session_families SET revoked_at = COALESCE(revoked_at,?) WHERE id = ? AND account_id = ?').bind(timestamp, context.familyId, context.accountId),
-    db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE family_id = ? AND account_id = ?').bind(timestamp, context.familyId, context.accountId),
+    registerCommittedEffect(db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE family_id = ? AND account_id = ? AND revoked_at IS NULL RETURNING id,business_id').bind(timestamp, context.familyId, context.accountId),sessionRevocationEffects),
     db.prepare(`UPDATE sessions SET revoked_at = COALESCE(revoked_at,?) WHERE id IN
       (SELECT business_session_id FROM identity_sessions WHERE family_id = ? AND account_id = ? AND business_session_id IS NOT NULL)`).bind(timestamp, context.familyId, context.accountId),
   ]
