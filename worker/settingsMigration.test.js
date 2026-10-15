@@ -135,14 +135,18 @@ test('upgrade seeds each business and retains overrides, earliest usage and ever
     assert.deepEqual(rows(sqlite, `SELECT ${columns} FROM ${table} ${table === 'business_print_settings' ? "WHERE business_id = 'amor-e-sabor'" : ''} ORDER BY rowid`), historical[table], table)
   }
   const recoveryIndexNames = ['print_job_attempts_unresolved_status_idx', 'print_job_attempts_job_lookup_idx']
+  const summaryIndexNames = ['print_jobs_terminal_expiry_idx', 'print_jobs_printed_time_idx', 'print_jobs_nonterminal_idx']
+  const reviewedIndexNames = [...recoveryIndexNames,...summaryIndexNames]
   const schemaAfter = rows(sqlite, "SELECT * FROM sqlite_master WHERE tbl_name IN ('print_jobs', 'print_job_attempts') ORDER BY name")
-  assert.deepEqual(normalizedSchema(schemaAfter.filter(({ name }) => name !== 'print_jobs' && !name.startsWith('tenant_') && !recoveryIndexNames.includes(name))),
+  assert.deepEqual(normalizedSchema(schemaAfter.filter(({ name }) => name !== 'print_jobs' && !name.startsWith('tenant_') && !reviewedIndexNames.includes(name))),
     normalizedSchema(jobSchema.filter(({ name }) => name !== 'print_jobs')))
   const recoverySql = readFileSync(new URL('0042_print_recovery_candidate_indexes.sql', migrations), 'utf8')
-  for (const name of recoveryIndexNames) {
+  const summarySql = readFileSync(new URL('0044_print_summary_retention_indexes.sql', migrations), 'utf8')
+  for (const name of reviewedIndexNames) {
+    const reviewedSql=summaryIndexNames.includes(name)?summarySql:recoverySql
     const index = schemaAfter.find(row => row.name === name)
     assert.equal(index?.type, 'index')
-    const expected = recoverySql.match(new RegExp(`CREATE INDEX ${name}\\b[\\s\\S]*?;`))?.[0]
+    const expected = reviewedSql.match(new RegExp(`CREATE INDEX ${name}\\b[\\s\\S]*?;`))?.[0]
     assert.ok(expected)
     assert.equal(index.sql.trim().replace(/;$/, '').replace(/\s+/g, ' '), expected.trim().replace(/;$/, '').replace(/\s+/g, ' '))
   }

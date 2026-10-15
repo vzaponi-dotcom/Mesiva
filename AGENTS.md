@@ -21,6 +21,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Mesas e comandas | `src/domains/table-service/ui/` |
 | Financeiro / a receber | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx` |
 | Recebimentos: pedido, comanda, lote de clientes | `src/app/workflows/payments/` |
+| Sincronização / WebSocket e fallback | `src/infrastructure/realtime/`; `src/app/runtime/data/useOperationalDataRuntime.js`; `worker/realtime/`; [operação](docs/operations/realtime-sync.md) |
 | Fila de impressão / transporte QZ | `src/domains/printing/ui/PrintQueue.jsx`; `src/infrastructure/qz/` |
 | Configurações / conta e equipe | `src/app/surfaces/settings/SettingsSurface.jsx`; `src/domains/access/ui/AccessSurface.jsx` |
 | Administração Mesiva / empresas e convites | `src/domains/platform/ui/PlatformRoutes.jsx`; `worker/platform/businessesApi.js` |

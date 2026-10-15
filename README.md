@@ -12,6 +12,8 @@ O acesso atual é por **e-mail e senha**, com contas Mesiva e vínculos por empr
 | Staging | https://staging.mesiva.com.br | D1 e recursos exclusivos de homologação |
 | Produção | https://app.mesiva.com.br | D1 e recursos com dados reais |
 
+A sincronização por avisos WebSocket, fallback HTTP e os temporizadores preservados de impressão/TV estão descritos em [operação realtime e orçamento](docs/operations/realtime-sync.md). A ativação em produção depende da flag e dos gates de release/orçamento.
+
 D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O navegador mantém preferências locais, mas não é a autoridade dos dados de negócio. Escritas não são enfileiradas offline.
 
 ## Requisitos
@@ -186,6 +188,7 @@ node scripts/infra/spec-b-d1-gate.mjs
 node scripts/infra/operation-profile-d1-gate.mjs
 node scripts/infra/print-recovery-d1-benchmark.mjs
 node scripts/infra/operational-read-d1-benchmark.mjs
+node scripts/infra/realtime-runtime-gate.mjs .wrangler/realtime-runtime-gate-report.json
 ```
 
 A aprovação completa do CI é necessária para integração/publicação. Informe falhas, travamentos ou limitações de verificações locais; não substitua testes por uma declaração de sucesso. Mudanças somente de documentação requerem conferir links, comandos e coerência, sem repetir a suíte da aplicação desnecessariamente.

@@ -111,20 +111,16 @@ LEFT JOIN (
     orders.business_id,
     orders.table_tab_id,
     COUNT(*) AS order_count,
-    COALESCE(SUM(order_item_totals.item_count), 0) AS item_count,
+    COALESCE(SUM((SELECT SUM(quantity) FROM order_items
+      WHERE order_items.business_id = orders.business_id AND order_items.order_id = orders.id)), 0) AS item_count,
     COALESCE(SUM(orders.total_cents), 0) AS total_cents
-  FROM orders
+  FROM table_tabs candidate_tabs
+  CROSS JOIN orders
+    ON orders.business_id = candidate_tabs.business_id AND orders.table_tab_id = candidate_tabs.id
   LEFT JOIN payments
-    ON payments.order_id = orders.id
-   AND payments.business_id = orders.business_id
-  LEFT JOIN (
-    SELECT business_id, order_id, COALESCE(SUM(quantity), 0) AS item_count
-    FROM order_items
-    GROUP BY business_id, order_id
-  ) order_item_totals
-    ON order_item_totals.business_id = orders.business_id
-   AND order_item_totals.order_id = orders.id
-  WHERE orders.status <> 'Cancelado' AND payments.id IS NULL
+    ON payments.order_id = orders.id AND payments.business_id = orders.business_id
+  WHERE candidate_tabs.business_id = ? AND candidate_tabs.status = 'open'
+    AND orders.status <> 'Cancelado' AND payments.id IS NULL
   GROUP BY orders.business_id, orders.table_tab_id
 ) tab_summary
   ON tab_summary.business_id = open_tabs.business_id
@@ -133,7 +129,7 @@ LEFT JOIN (
 export const listTables = async (db, businessId) => {
   const result = await db.prepare(`${tableSelect}
     WHERE tables.business_id = ?
-    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId).all()
+    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId).all()
   const tables = (result.results || []).map(mapTableRow)
   const nextReservations = await listNextTableReservations(db, businessId)
   const reservationByTableId = new Map(nextReservations.map((reservation) => [reservation.tableId, reservation]))
@@ -143,7 +139,7 @@ export const listTables = async (db, businessId) => {
 export const loadTableById = async (db, businessId, tableId) => {
   const row = await db.prepare(`${tableSelect}
     WHERE tables.business_id = ? AND tables.id = ?
-    LIMIT 1`).bind(businessId, tableId).first()
+    LIMIT 1`).bind(businessId, businessId, tableId).first()
   const table = mapTableRow(row)
   if (!table) return null
   return {

@@ -30,3 +30,27 @@ test('printing attribution uses accepted event order when observations share a c
     requestedBy:{type:'legacy',userId:null,displayName:'Acesso legado'},lastActionBy:{type:'system',userId:null,displayName:'Sistema'},
   })
 })
+
+test('attribution starts from the requested resources even with extensive order and printing audit history',async t=>{
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  const {loadOrderAttributions,loadPrintAttributions}=await import('./attribution.js')
+  for(const [kind,action] of [['order','order.created'],['print-job','printing.requested']])sqlite.prepare(`WITH RECURSIVE n(x) AS(SELECT 0 UNION ALL SELECT x+1 FROM n WHERE x<9999)
+    INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_name,action,resource_type,resource_id,result)
+    SELECT ?||x,'amor-e-sabor','2026-10-14T12:00:00Z','system','Sistema',?,?,?||x,'success' FROM n`).run(kind+':audit:',action,kind,kind+':history:')
+  sqlite.exec(`INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_name,action,resource_type,resource_id,result) VALUES
+    ('z-order','amor-e-sabor','2026-10-14T12:00:00Z','legacy','Acesso legado','order.created','order','target','success'),
+    ('a-order','amor-e-sabor','2026-10-14T12:00:00Z','system','Sistema','order.created','order','target','success'),
+    ('z-job','amor-e-sabor','2026-10-14T12:00:00Z','legacy','Acesso legado','printing.requested','print-job','target','success'),
+    ('a-job','amor-e-sabor','2026-10-14T12:00:00Z','system','Sistema','printing.outcome.observed','print-job','target','unknown')`)
+  const plans=[],prepare=db.prepare
+  db.prepare=sql=>({bind:(...values)=>{
+    plans.push(...sqlite.prepare('EXPLAIN QUERY PLAN '+sql).all(...values).map(row=>row.detail))
+    return prepare(sql).bind(...values)
+  }})
+  const order=(await loadOrderAttributions(db,'amor-e-sabor',['target'])).get('target')
+  const job=(await loadPrintAttributions(db,'amor-e-sabor',['target'])).get('target')
+  assert.equal(order.createdBy.type,'system')
+  assert.equal(job.requestedBy.type,'legacy');assert.equal(job.lastActionBy.type,'system')
+  assert.equal(plans.filter(detail=>detail.includes('audit_events_resource_time_idx') && detail.includes('resource_id=?')).length,3)
+  assert.equal(plans.some(detail=>detail.includes('audit_events_action_time_idx')),false)
+})

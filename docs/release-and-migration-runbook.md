@@ -46,7 +46,7 @@ node scripts/infra/spec-b-d1-gate.mjs
 
 The repository `Validate application` workflow runs this gate after local migrations while Spec B is being closed. A node:sqlite-only test is not a substitute for this Wrangler/D1 gate.
 
-O CI também verifica os orçamentos de recuperação de impressão e leituras operacionais no D1 real, após as migrations locais. Consulte [as consultas, limites e reprodução do gate operacional](operations/operational-data-read-budget.md); preserve esses gates ao alterar queries ou índices.
+O CI também verifica os orçamentos de recuperação de impressão e leituras operacionais no D1 real, após as migrations locais. Consulte [as consultas, limites e reprodução do gate operacional](operations/operational-data-read-budget.md); preserve esses gates ao alterar queries ou índices. A sincronização WebSocket também exige o [gate real e orçamento agregado](operations/realtime-sync.md), com métricas externas para CPU/duração e baseline da conta. Flag de produção desabilitada enquanto orçamento/aceite não estiverem completos.
 
 Any red validation check blocks the release. Fix the root cause on the branch; do not merge around a failing check.
 

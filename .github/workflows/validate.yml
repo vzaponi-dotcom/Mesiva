@@ -80,3 +80,17 @@ jobs:
 
       - name: Validate company management D1 clean install and upgrade
         run: node scripts/infra/company-management-d1-gate.mjs
+
+      - name: Validate real WebSocket runtime and authenticated D1 metering
+        env:
+          REALTIME_GATE_REPORT: .wrangler/realtime-runtime-gate-report.json
+          REALTIME_GATE_PROGRESS: '1'
+        run: node scripts/infra/realtime-runtime-gate.mjs
+
+      - name: Upload sanitized realtime runtime report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-runtime-report
+          path: .wrangler/realtime-runtime-gate-report.json
+          if-no-files-found: ignore

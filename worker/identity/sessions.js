@@ -36,13 +36,23 @@ const eligibility = `a.active = 1 AND a.email_verified_at IS NOT NULL AND c.vers
 
 export const loadAccountSessionRow = (db, id, now = new Date()) => db.prepare(`${sessionSelect} WHERE ${eligibility} AND s.id = ?`).bind(now.toISOString(), id).first()
 
-export function prepareSessionSnapshotAssertion(db, row, now = new Date()) {
-  return prepareIdentityAssertion(db, crypto.randomUUID(), `SELECT EXISTS(SELECT 1 FROM
+// Reads and mutations share the exact eligibility/grants predicate. Mutations
+// retain the CHECK assertion for rollback; read-only batches expose no data on failure.
+function sessionSnapshot(row, now) {
+  return {sql: `SELECT EXISTS(SELECT 1 FROM
     (${sessionSelect} WHERE ${eligibility} AND s.id = ?) current WHERE current.context_id = ?
     AND current.account_id = ? AND current.family_id = ? AND current.credential_revision = ?
     AND current.role_id IS ? AND current.role_version IS ? AND current.role_grants_json = ? AND current.platform_grants_json = ?)`,
-  [now.toISOString(), row.id, row.context_id, row.account_id, row.family_id, row.credential_revision,
-    row.role_id, row.role_version, row.role_grants_json, row.platform_grants_json])
+    values: [now.toISOString(), row.id, row.context_id, row.account_id, row.family_id, row.credential_revision,
+      row.role_id, row.role_version, row.role_grants_json, row.platform_grants_json]}
+}
+export function prepareSessionSnapshotAssertion(db, row, now = new Date()) {
+  const {sql,values}=sessionSnapshot(row,now)
+  return prepareIdentityAssertion(db,crypto.randomUUID(),sql,values)
+}
+export function prepareSessionSnapshotCheck(db, row, now = new Date()) {
+  const {sql,values}=sessionSnapshot(row,now)
+  return db.prepare(`SELECT (${sql}) AS ok`).bind(...values)
 }
 
 export async function prepareAccountSession(db, {

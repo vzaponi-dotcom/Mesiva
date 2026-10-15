@@ -403,14 +403,15 @@ export const getPrintQueueSummary = async (db, businessId, now = new Date()) => 
             AND print_job_attempts.resolution IS NULL
             AND print_job_attempts.status <> 'complete'
         ) THEN 1 ELSE 0 END) AS discardable,
-      SUM(CASE WHEN status = 'printed' AND COALESCE(processed_at, created_at) >= ? THEN 1 ELSE 0 END) AS completed_today,
+      (SELECT COUNT(*) FROM print_jobs completed WHERE completed.business_id = ?
+        AND completed.status = 'printed' AND COALESCE(completed.processed_at, completed.created_at) >= ?) AS completed_today,
       SUM(CASE WHEN status = 'pending' AND copies_printed = 0 AND NOT EXISTS (
         SELECT 1 FROM print_job_attempts
         WHERE print_job_attempts.business_id = print_jobs.business_id
           AND print_job_attempts.job_id = print_jobs.id
           AND print_job_attempts.submission_started_at IS NOT NULL
       ) THEN 1 ELSE 0 END) AS safe_backlog
-    FROM print_jobs WHERE business_id = ?`).bind(startOfToday, businessId).first()
+    FROM print_jobs WHERE business_id = ? AND status NOT IN ('printed', 'discarded')`).bind(businessId, startOfToday, businessId).first()
   return {
     active: Number(row?.active || 0),
     pending: Number(row?.pending || 0),
