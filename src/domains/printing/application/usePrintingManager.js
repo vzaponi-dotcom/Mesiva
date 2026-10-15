@@ -1,3 +1,4 @@
+import { createRefreshQueue } from '../../../infrastructure/realtime/refreshQueue.js'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPrintingApi } from '../infrastructure/printingApi.js'
 import { createPrintExecutionTicker } from '../infrastructure/printExecutionTicker.js'
@@ -132,7 +133,7 @@ export const buildPrintStationHeartbeatHealth = ({
   }
 }
 
-export const usePrintingManager = ({ api = legacyPrintingApi, businessId, authenticated = false, accessContextId = null, isOnline = true, onPhysicalJobFailure } = {}) => {
+export const usePrintingManager = ({ api = legacyPrintingApi, businessId, authenticated = false, accessContextId = null, isOnline = true, onPhysicalJobFailure, realtime } = {}) => {
 
   const platform = detectPrintStationPlatform()
   const transportKind = getPrintingTransportKind(platform)
@@ -1010,24 +1011,26 @@ export const usePrintingManager = ({ api = legacyPrintingApi, businessId, authen
     return () => { cancelled = true }
   }, [authenticated, isOnline, isQz, platform, refresh, reportError, resolveConfiguredQzPrinter, supported, updateBlocked, updateBusyJob, updateConfiguredPrinterName, updateLocalStation, updatePrinterHealth, updatePrinterQueueFound, updateQzConnected, updateTransportReady, api, qzTransport])
 
+  const subscribeRealtime=realtime?.subscribeInvalidations
+  const primaryQzExecutor=isQz && Boolean(localStation?.isPrimary)
   useEffect(() => {
     if (!authenticated || !isOnline) return undefined
-    const sync = () => {
-      const ownsPoll = captureAccess()
-      if (!ownsPoll() || !visiblePage()) return
-      void refresh().catch((error) => { if (ownsPoll()) reportError(error) })
-    }
-    const timer = globalThis.setInterval?.(sync, PRINT_STATE_POLL_MS)
-    const handleVisibility = () => { if (visiblePage()) sync() }
-    const handleFocus = () => sync()
-    document?.addEventListener?.('visibilitychange', handleVisibility)
-    globalThis.addEventListener?.('focus', handleFocus)
-    return () => {
-      if (timer) globalThis.clearInterval?.(timer)
-      document?.removeEventListener?.('visibilitychange', handleVisibility)
-      globalThis.removeEventListener?.('focus', handleFocus)
-    }
-  }, [authenticated, captureAccess, isOnline, refresh, reportError, api, qzTransport])
+    const ownsPoll=captureAccess()
+    const queue=createRefreshQueue({run:()=>refresh(),isCurrent:ownsPoll,onError:reportError})
+    const sync=()=>{if(ownsPoll() && (visiblePage() || primaryQzExecutor))return queue.refresh()}
+    const unsubscribe=subscribeRealtime?.(event=>{if(event.topics.includes('printing'))return sync()})
+    // GET jobs performs timeout/recovery transitions. Keep a timed owner even
+    // with a healthy channel; the primary QZ station also checks while hidden.
+    const intervalMs=subscribeRealtime && !primaryQzExecutor?30_000:PRINT_STATE_POLL_MS
+    const timer=globalThis.setInterval?.(sync,intervalMs)
+    const handleVisibility=()=>{if(visiblePage())void sync()}
+    const handleFocus=()=>{void sync()}
+    document?.addEventListener?.('visibilitychange',handleVisibility)
+    globalThis.addEventListener?.('focus',handleFocus)
+    return()=>{queue.stop();unsubscribe?.();if(timer)globalThis.clearInterval?.(timer)
+      document?.removeEventListener?.('visibilitychange',handleVisibility)
+      globalThis.removeEventListener?.('focus',handleFocus)}
+  },[authenticated,captureAccess,isOnline,primaryQzExecutor,refresh,reportError,subscribeRealtime])
 
   useEffect(() => {
     if (!authenticated || !isOnline || !supported || !isQz) return undefined

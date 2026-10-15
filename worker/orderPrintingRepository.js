@@ -377,10 +377,10 @@ const normalizePageSize = (value) => Math.min(10, Math.max(1, Math.floor(Number(
 export const purgeExpiredTerminalPrintJobs = async (db, businessId, now = new Date()) => {
   const at = now instanceof Date ? now : new Date(now)
   const cutoff = new Date(at.getTime() - PRINT_JOB_RETENTION_MS).toISOString()
-  const result = await db.prepare(`DELETE FROM print_jobs
+  const result = await registerCommittedEffect(db.prepare(`DELETE FROM print_jobs
     WHERE business_id = ? AND status IN ('printed', 'discarded')
       AND COALESCE(processed_at, discarded_at, created_at) <= ?`)
-    .bind(businessId, cutoff).run()
+    .bind(businessId, cutoff),{businessId,topics:['printing'],orderIds:[]}).run()
   return Number(result?.meta?.changes || 0)
 }
 

@@ -1,3 +1,4 @@
+import { reportKitchenTvDisplay } from '../kitchenTvControlRepository.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createSettingsDb } from '../test-support/settingsDb.js'
@@ -6,7 +7,7 @@ import { createOrder, closeTableTabIfSettled } from '../repositories.js'
 import { registerClientOrdersPayment, registerTableTabPayment, registerOrderPayment } from '../paymentRepository.js'
 import { cancelOrder } from '../orderCancellation.js'
 import { getOrCreateOpenTableTabByTableId } from '../tableRepository.js'
-import { upsertPrintStation, setPrimaryPrintStation, heartbeatPrintStation, discardPendingPrintJobs } from '../orderPrintingRepository.js'
+import { upsertPrintStation, setPrimaryPrintStation, heartbeatPrintStation, discardPendingPrintJobs, getPrintQueueSummary } from '../orderPrintingRepository.js'
 const business='amor-e-sabor',now=new Date('2026-10-14T15:00:00Z')
 function fixture(t){
   const f=createSettingsDb();t.after(f.close)
@@ -87,4 +88,24 @@ test('ordinary order creation emits narrow hints; table totals retain their own 
   f.events.length=0
   await f.order('table-two',{customerIdentity:{type:'table',tableId:'t'},type:'Local',expectedTableTabId:first.tableTabId})
   assert.ok(f.events.some(e=>e.topics.includes('tables')))
+})
+
+test('unchanged TV heartbeat is silent while changed visible projection notifies control',async t=>{
+  const f=fixture(t),report={appliedRevision:1,currentPage:1,pageCount:1,viewportWidth:1280,viewportHeight:720,visibleOrderIds:[]}
+  await reportKitchenTvDisplay(f.db,business,report,now)
+  assert.ok(f.events.some(e=>e.topics.includes('kitchen-tv')))
+  f.events.length=0
+  await reportKitchenTvDisplay(f.db,business,report,new Date(+now+5000))
+  assert.deepEqual(f.events,[])
+  await reportKitchenTvDisplay(f.db,business,{...report,visibleOrderIds:['visible-order']},new Date(+now+10000))
+  assert.equal(f.events.length,1);assert.deepEqual(f.events[0].topics,['kitchen-tv'])
+})
+test('existing terminal print retention notifies presentation without changing order or audit history',async t=>{
+  const f=fixture(t),order=await f.order('retained-history')
+  f.sqlite.prepare("UPDATE print_jobs SET status='printed',processed_at='2020-01-01T00:00:00.000Z' WHERE order_id=?").run(order.id)
+  const auditCount=f.sqlite.prepare('SELECT count(*) n FROM audit_events').get().n;f.events.length=0
+  await getPrintQueueSummary(f.db,business,now)
+  assert.ok(f.events.some(e=>e.topics.includes('printing')))
+  assert.equal(f.sqlite.prepare('SELECT count(*) n FROM orders').get().n,1)
+  assert.equal(f.sqlite.prepare('SELECT count(*) n FROM audit_events').get().n,auditCount)
 })

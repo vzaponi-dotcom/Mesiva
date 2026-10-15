@@ -1,7 +1,8 @@
 import { parseRealtimeMessage, REALTIME_PROTOCOL, REALTIME_TOPICS, REALTIME_MAX_IDS } from '../../../shared/realtimeProtocol.js'
+const defaultCreateSocket=(url,protocols)=>new WebSocket(url,protocols)
 const defaultClock={now:()=>Date.now(),setTimeout:(fn,ms)=>globalThis.setTimeout(fn,ms),clearTimeout:id=>globalThis.clearTimeout(id)}
 const permanentAuth=error=>[401,403,409].includes(error?.status)
-export function createRealtimeClient({api,createSocket=(url,protocols)=>new WebSocket(url,protocols),clock=defaultClock,random=Math.random,onUnauthorized=()=>{}}) {
+export function createRealtimeClient({api,createSocket=defaultCreateSocket,clock=defaultClock,random=Math.random,onUnauthorized=()=>{}}) {
   const consumers=new Set(),states=new Set(),timers=new Map()
   let state='stopped',running=false,generation=0,epoch=0,socket=null,connectionId=null,controller=null,retries=0,disabled=false
   let visible=true,operational=false,pending=null,flushing=false,revision=null
@@ -55,6 +56,7 @@ export function createRealtimeClient({api,createSocket=(url,protocols)=>new WebS
   }
   async function connect(){
     if(!running || !visible && !operational)return
+    if(typeof AbortController!=='function' || typeof TextEncoder!=='function' || typeof BigInt!=='function' || typeof URL!=='function' || createSocket===defaultCreateSocket && typeof WebSocket!=='function'){disabled=true;fallback();return}
     const g=generation,e=++epoch
     controller=new AbortController()
     timer('connect',10_000,()=>{if(valid(g,e))fallback()})

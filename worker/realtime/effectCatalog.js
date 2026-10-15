@@ -40,8 +40,11 @@ export function effectForCommittedEvent(businessId,event) {
 //   orderPrintingRepository.prepareAutomaticPrintJobStatement: actual job INSERT.
 // - tableRepository.getOrCreateOpenTableTabByTableId and repositories.closeTableTabIfSettled:
 //   actual open/close writes; sequence reservation is not a visible tab.
-// - orderPrintingRepository.heartbeatPrintStation: health/recovery transitions only.
-// Excluded: unchanged heartbeats, session last_seen, TV display telemetry, security
+// - orderPrintingRepository.heartbeatPrintStation: health/recovery transitions only;
+//   purgeExpiredTerminalPrintJobs: existing terminal retention, no new deletion rule.
+// - kitchenTvControlRepository.reportKitchenTvDisplay: only changed projection
+//   fields (one indexed previous-control read); identical presence heartbeat silent.
+// Excluded: unchanged heartbeats, session last_seen, unchanged TV display heartbeat, security
 // and identity audit/assertions, email delivery telemetry and empty print claims.
 // Business-wide access invalidation deliberately reauthenticates valid peers too:
 // access userId differs from realtime principal accountId; never confuse the IDs.

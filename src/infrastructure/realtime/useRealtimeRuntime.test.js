@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import React from 'react'
 import { act,create } from 'react-test-renderer'
 import { useRealtimeRuntime } from './useRealtimeRuntime.js'
-import { clientFixture } from '../../../infrastructure/realtime/test-support/clientFixture.js'
+import { clientFixture } from './test-support/clientFixture.js'
 
 test('runtime keeps one contextual transport and rejects old owner callbacks at render',async t=>{
   const f=clientFixture(),events=[],transport={clock:null};let current

@@ -93,3 +93,13 @@ test('one slow refresh keeps later invalidations dirty and bounded until it fini
   resolve();remove();await settle();await f.clock.tick(250)
   assert.equal(f.events.length,2);assert.deepEqual(f.events.at(-1).orderIds,['second'])
 })
+
+test('unsupported TV browser falls back without preparing tickets or throwing',async t=>{
+  const original=globalThis.AbortController;t.after(()=>globalThis.AbortController=original);globalThis.AbortController=undefined
+  let prepares=0
+  const f=await setup(t,{api:{prepare:async()=>{prepares++;return {enabled:false}}}})
+  await f.clock.tick(30_250)
+  assert.equal(f.states.at(-1),'fallback');assert.equal(prepares,0);assert.equal(f.events.length,2)
+  f.client.setActivity({visible:false});f.client.setActivity({visible:true});await settle()
+  assert.equal(f.states.at(-1),'fallback');assert.equal(prepares,0)
+})

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createRealtimeClient } from '../../../infrastructure/realtime/realtimeClient.js'
+import { createRealtimeClient } from './realtimeClient.js'
 const NO_TRANSPORT_OPTIONS=Object.freeze({})
 export function useRealtimeRuntime({accessContextId,enabled=false,api,visible,operational=false,onUnauthorized=()=>{},transport=NO_TRANSPORT_OPTIONS}={}) {
   const [pageVisible,setPageVisible]=useState(()=>globalThis.document?.visibilityState!=='hidden')
