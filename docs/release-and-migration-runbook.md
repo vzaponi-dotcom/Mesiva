@@ -46,6 +46,8 @@ node scripts/infra/spec-b-d1-gate.mjs
 
 The repository `Validate application` workflow runs this gate after local migrations while Spec B is being closed. A node:sqlite-only test is not a substitute for this Wrangler/D1 gate.
 
+O CI também verifica os orçamentos de recuperação de impressão e leituras operacionais no D1 real, após as migrations locais. Consulte [as consultas, limites e reprodução do gate operacional](operations/operational-data-read-budget.md); preserve esses gates ao alterar queries ou índices.
+
 Any red validation check blocks the release. Fix the root cause on the branch; do not merge around a failing check.
 
 The complete suite runs in `Validate application`, split into eight shards. Deployments do not repeat `npm test`: before dependency installation or remote writes, `deploy-validation-gate.mjs` requires a successful validation run for the exact deployment SHA. Master requires its push validation, not the earlier PR commit. Feature staging retains its existing branch/open-PR restrictions and requires validation of that branch head. The gate checks workflow identity, repository, branch, event, SHA and the latest applicable run/attempt.

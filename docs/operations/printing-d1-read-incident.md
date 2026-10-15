@@ -38,3 +38,7 @@ Registro da preparação: correção na branch codex/d1-print-recovery, com prod
 Seguir PR/CI → staging da branch com PR aberto → aceitação humana → merge → CI/staging do SHA master → Deploy production manual. Conferir versão ativa via deployments/versions e workflow, e repetir EXPLAIN/seleção somente leitura. Observar Insights/metrics por janela anterior/posterior ao deploy e por execução; não usar apenas o acumulado do ciclo, que inclui a carga antiga e tem atraso. Não criar dados fictícios em produção.
 
 Painel do incidente: [D1 produção](https://dash.cloudflare.com/a1680026dac037c5e1bc997fbf3b48bb/workers/d1/databases/baa83769-4637-43f6-bf77-711f4f2ed069/metrics).
+
+## Continuação: leituras operacionais
+
+A investigação posterior encontrou leituras recorrentes da TV e coleções completas de pedidos. A entrega seguinte limita os candidatos da TV e acrescenta uma leitura autenticada por IDs, com [gate D1 e procedimento próprios](operational-data-read-budget.md). A sincronização por eventos e a separação entre operação/histórico pertencem à issue #75; não tratar essa primeira otimização como conclusão de todo o escopo.
