@@ -1,7 +1,7 @@
 import './page-skeleton.css'
 
 export default function PageSkeleton({ layout = 'list', label = 'Carregando conteúdo da tela', heading = true }) {
-  return <section className={`page-skeleton page-skeleton-${layout}`} role="status" aria-label={label}>
+  return <section className={`page-skeleton page-skeleton-layout-${layout}`} role="status" aria-label={label}>
     <span className="page-skeleton-announcement">{label}…</span>
     <div aria-hidden="true">
       {heading && <div className="page-skeleton-heading"><span className="skeleton-block skeleton-title" /><span className="skeleton-block skeleton-subtitle" /></div>}

@@ -55,3 +55,5 @@ Validação local final:3.884testes aprovados, zero falhas; arquitetura/lint/bui
 ## Carregamento por superfície
 
 O teste de navegação com bootstrap pendente reproduziu a desmontagem do shell antes da correção. Após o ajuste, o mesmo shell permanece montado, o conteúdo aguarda o snapshot, e a navegação executa um bootstrap e uma consulta dedicada de clientes, sem chamadas adicionais do skeleton. Falha de superfície e retry mantêm a navegação; verificação de sessão/bootstrap inicial continuam cobertos pelos testes de AppRoot. Suíte local: 3.886 testes aprovados, arquitetura/lint/build aprovados, com os avisos preexistentes. A revisão estática do ajuste não encontrou pendências. Conferência visual e CI/staging continuam vinculados ao SHA da publicação.
+
+Prévia visual com os componentes reais de shell/skeleton, sem API/banco: desktop 1440×960 e celular 390×844, temas claro/escuro, sem overflow horizontal; `prefers-reduced-motion` confirmou animação `none` e shimmer oculto. Um conflito entre a classe de variante e a grade interna foi identificado e corrigido na conferência visual. A prévia e seus processos temporários foram removidos ao concluir.
