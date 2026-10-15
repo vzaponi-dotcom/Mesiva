@@ -79,3 +79,18 @@ test('revocation during a streamed history read rejects the response before expo
   const payload=await response.json()
   assert.equal(Object.hasOwn(payload,'orders'),false)
 })
+
+test('customer and financial read routes are isolated, gated and reject denied capabilities',async t=>{
+  const f=await setup(t)
+  for(const path of ['/api/reads/customers','/api/reads/finance/receivables','/api/reads/finance/overview','/api/reads/finance/movements']){
+    const response=await handleRequest(f.request(path+'?businessId='+f.businesses.B),f.env)
+    assert.equal(response.status,200,path)
+    assert.equal((await handleRequest(new Request('https://example.test'+path),f.env)).status,401,path)
+  }
+  f.sqlite.prepare("INSERT INTO clients(id,business_id,name,phone,address,created_at,updated_at) VALUES('read-client',?,'Fictício','11999998888','','2020','2020')").run(f.businesses.A)
+  const profile=await handleRequest(f.request('/api/reads/customers/read-client/relationship'),f.env)
+  assert.equal(profile.status,200);assert.equal((await profile.json()).profile.orderCount,0)
+  assert.equal((await handleRequest(f.request('/api/reads/customers?sort=constructor'),f.env)).status,400)
+  f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability IN ('clients.view','finance.receivables','finance.movements','finance.movements.manage','finance.overview')").run(f.businesses.A,f.businesses.A+':manager')
+  for(const path of ['/api/reads/customers','/api/reads/customers/read-client/relationship','/api/reads/finance/receivables','/api/reads/finance/overview','/api/reads/finance/movements'])assert.equal((await handleRequest(f.request(path),f.env)).status,403,path)
+})

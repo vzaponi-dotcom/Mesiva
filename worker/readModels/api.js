@@ -1,3 +1,5 @@
+import {readCustomers,readCustomerRelationship} from './customerReadRepository.js'
+import {readReceivables,readFinanceOverview,readFinanceMovements} from './financeReadRepository.js'
 import {readOrderHistory} from './orderHistoryRepository.js'
 import {json} from '../http.js'
 import {requireCapability} from '../access/authorization.js'
@@ -13,6 +15,20 @@ export async function handleReadModelsApi(request,env,context,url){
   if(url.pathname==='/api/reads/orders/active'){
     requireCapability(context,'orders.view')
     return json({orders:projectOrderList(await listActiveOrders(env.DB,context.businessId),context.granted)})
+  }
+  const endpoints={
+    '/api/reads/customers':readCustomers,
+    '/api/reads/finance/receivables':readReceivables,
+    '/api/reads/finance/overview':readFinanceOverview,
+    '/api/reads/finance/movements':readFinanceMovements,
+  }
+  const relationship=/^\/api\/reads\/customers\/([^/]+)\/relationship$/.exec(url.pathname)
+  const endpoint=Object.hasOwn(endpoints,url.pathname)?endpoints[url.pathname]:null
+  if(endpoint || relationship){
+    const allowed=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','timing','groupKey','exactDateFilter','type','category','paymentMethod']
+    const query=Object.fromEntries(allowed.filter(key=>url.searchParams.has(key)).map(key=>[key,url.searchParams.get(key)]))
+    const options={...query,granted:context.granted}
+    return json(endpoint?await endpoint(env.DB,context.businessId,options):await readCustomerRelationship(env.DB,context.businessId,decodeURIComponent(relationship[1]),options))
   }
   return null
 }

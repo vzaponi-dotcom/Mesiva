@@ -13,7 +13,7 @@ const television = new Map([
 ])
 export const multiCompanyEnabled = env => env.AUTH_MULTI_COMPANY_ENABLED === true || env.AUTH_MULTI_COMPANY_ENABLED === 'true'
 export function classifyApiRoute(method, path) {
-  if (method === 'GET' && /^\/api\/reads\/orders\/(active|history)$/.test(path)) return 'business'
+  if (method === 'GET' && (/^\/api\/reads\/orders\/(active|history)$/.test(path) || /^\/api\/reads\/customers(?:\/[^/]+\/relationship)?$/.test(path) || /^\/api\/reads\/finance\/(receivables|overview|movements)$/.test(path))) return 'business'
   if (path === '/api/realtime/socket' && method === 'GET') return 'realtime-upgrade'
   if (/^\/api\/realtime\/(prepare|renew)$/.test(path) && method === 'POST') return 'business'
   if (identity.get(path)?.includes(method)) return 'public-identity'

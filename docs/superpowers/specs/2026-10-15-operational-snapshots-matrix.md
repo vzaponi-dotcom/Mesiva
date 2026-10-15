@@ -46,3 +46,10 @@ As capacidades abaixo são as entradas atuais; não substituem a projeção espe
 ## Sequência aprovada
 
 Especificação detalhada/índices e plano executável; APIs aditivas com testes de equivalência; migração por domínio; runtime por escopo; gate agregado; homologação e publicação. A implementação deve permanecer em entrega própria ou replanejar explicitamente o PR de realtime se a integração for necessária para aprovar seu orçamento. Nenhuma ativação de produção fica implícita nesta proposta.
+
+
+## Decisões técnicas da execução
+
+Em15/10, o levantamento do financeiro mostrou que um anti-join de pedidos com pagamentos examina também o histórico pago para descobrir pendências de qualquer idade. A implementação usará `order_financial_candidates`, projeção privada só de chaves/tipo (`unpaid` ou `refund`), com FK por empresa/pedido e atualização por triggers na mesma transação dos registros oficiais. Uma view canônica define a elegibilidade e permite verificar a projeção; as leituras revalidam essa fonte e buscam valores/detalhes oficiais. Pedidos, pagamentos, movimentos, fila e auditoria mantêm seu conteúdo e autoridade. Não é um novo journal de eventos.
+
+Essa escolha técnica pertence à implementação da matriz aprovada, com migrations aditivas e testes de backfill/rollback/concorrência/isolamento/`changes()` e compatibilidade do bundle anterior. Produção continua sujeita aos gates e à homologação própria. Estatísticas globais/favoritos podem examinar o conjunto solicitado; suas leituras e CPU entram na medição, sem prometer custo constante para qualquer consulta histórica.

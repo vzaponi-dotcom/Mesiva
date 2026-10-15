@@ -39,6 +39,7 @@ export function assertRealtimeRuntimeGate(report){
   assert.equal(r.concurrentClaimWinners,1,'claim admitted multiple winners')
   assert.ok(report.pointReadHistoryGrowth<=32,'history multiplied point reads')
   assert.ok(report.scopedBootstrapHistoryGrowth<=32,'history multiplied scoped bootstrap reads')
+  assert.ok(report.financialCandidateHistoryGrowth<=64,'paid history multiplied fixed financial candidate reads')
   if(report.fixture?.historicalOrders>=1000)assert.ok(report.operations.historySearch.rowsRead<=report.fixture.historicalOrders*35+5000,'historical search repeatedly scanned the timeline prefix')
   assert.equal(report.historyPreserved,true,'historical orders were dropped')
   for(const op of Object.values(report.operations))for(const field of metrics)assert.ok(Number.isFinite(op[field]) && op[field]>=0,`invalid ${field}`)
@@ -94,6 +95,8 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const pointPath='/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([ids.activeIds[0]]))
     await json('byIdsSmall',pointPath)
     await json('bootstrapScopedSmall','/api/bootstrap?surface=orders')
+    await json('receivablesSmall','/api/reads/finance/receivables?mode=orders')
+    await json('financeOverviewSmall','/api/reads/finance/overview?period=30d')
     await seedOperationalReadFixture(db,{businessId,historicalOrders,itemsPerOrder:5,historicalOffset:100000})
     await db.prepare(`WITH RECURSIVE n(x) AS(SELECT 0 UNION ALL SELECT x+1 FROM n WHERE x+1<?)
       INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_name,action,resource_type,resource_id,result,metadata_json)
@@ -102,9 +105,23 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
       INSERT INTO print_jobs(id,business_id,order_id,type,trigger,status,copies_requested,copies_printed,snapshot_json,created_at,processed_at)
       SELECT 'gate-terminal:'||x,?,?||CAST((x%?)+100000 AS INTEGER),'order','automatic','printed',1,1,'{}',?,? FROM n`).bind(businessId,`${businessId}:history:`,historicalOrders,at,at).run()
     await db.prepare('INSERT INTO order_sequences(business_id,last_order_number) SELECT ?,COALESCE(MAX(order_number),0) FROM orders WHERE business_id=? ON CONFLICT(business_id) DO UPDATE SET last_order_number=excluded.last_order_number').bind(businessId,businessId).run()
+    // Historical completed sales are paid; current unpaid candidates remain fixed.
+    await db.batch([
+      db.prepare("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES('gate-history-receipt',?,?,?,?)").bind(businessId,historicalOrders*5000,at,at),
+      db.prepare("INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES('gate-history-allocation',?,'gate-history-receipt','Pix',?,?)").bind(businessId,historicalOrders*5000,at),
+      db.prepare("INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) SELECT 'gate-paid:'||id,business_id,id,'gate-history-receipt',5000,?,? FROM orders WHERE business_id=? AND status='Finalizado'").bind(at,at,businessId),
+    ])
     progress('history-seeded')
     await json('byIdsHistory',pointPath)
     await json('bootstrapScopedHistory','/api/bootstrap?surface=orders')
+    await json('receivablesHistory','/api/reads/finance/receivables?mode=orders')
+    await json('financeOverview','/api/reads/finance/overview?period=30d')
+    await db.prepare("UPDATE orders SET order_date='2020-01-01' WHERE business_id=? AND status='Finalizado'").bind(businessId).run()
+    await json('financeOverviewRetainedHistory','/api/reads/finance/overview?period=30d')
+    await db.prepare("UPDATE orders SET order_date='2026-10-13' WHERE business_id=? AND status='Finalizado'").bind(businessId).run()
+    await json('financeMovements','/api/reads/finance/movements?limit=50')
+    await json('customersPage','/api/reads/customers?limit=50')
+    await json('customerRelationship','/api/reads/customers/gate-client/relationship?limit=50')
     await json('historyPage','/api/reads/orders/history?limit=50')
     await json('historySearch','/api/reads/orders/history?limit=50&search=prato%20ficticio')
     const attributionPlans=[]
@@ -216,7 +233,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const nextClaim=await json('printClaim','/api/printing/jobs/claim-next',{method:'POST',body:{stationId:'gate-station'}})
     const historyPreserved=states.slice(0,-1).every(state=>[...state.keys()].filter(id=>id.includes(':history:')).length===historicalOrders)
     const report={commit:process.env.GITHUB_SHA || null,workingTree:!process.env.GITHUB_SHA,runtime:'workerd/Wrangler4.128.0',fixture:{devices,historicalOrders,itemsPerOrder:5,terminalPrintJobs:3000},operations,
-      pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,scopedBootstrapHistoryGrowth:operations.bootstrapScopedHistory.rowsRead-operations.bootstrapScopedSmall.rowsRead,historyPreserved,attributionPlans,
+      financialCandidateHistoryGrowth:operations.receivablesHistory.rowsRead-operations.receivablesSmall.rowsRead,pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,scopedBootstrapHistoryGrowth:operations.bootstrapScopedHistory.rowsRead-operations.bootstrapScopedSmall.rowsRead,historyPreserved,attributionPlans,
       invariants:{legacyGlobalPolls,hibernationRecovered,restartConnectedClients,lostEventConvergedClients,convergenceVirtualMs,publicationFailureMutationCount:mutationCount,unchangedHeartbeatNotifications,unknownClaimedAgain:Boolean(nextClaim.job),concurrentClaimWinners:claims.filter(value=>value.job).length},
       assumptions:['D1 metrics include real HTTP auth,session guards,audit and attributed payloads.','Client time compressed; real lease timestamps mapped to virtual clock.','Real workerd WebSocket101,SQLite DO hibernation/restart and D1. No physical printer output.','Local wall time is diagnostic; Cloudflare CPU/duration/account billing remain unknown.'],unknownDimensions:['workerCpuMs','durableDurationGbS','accountBaseline'],passed:false}
     const save=()=>{if(process.env.REALTIME_GATE_REPORT){const output=resolve(process.env.REALTIME_GATE_REPORT);mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n')}}

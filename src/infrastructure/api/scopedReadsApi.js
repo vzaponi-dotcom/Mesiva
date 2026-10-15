@@ -1,5 +1,5 @@
 import {apiRequest} from './httpClient.js'
-const queryKeys=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','clientId','groupBy','timing']
+const queryKeys=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','clientId','groupBy','timing','groupKey','exactDateFilter','type','category','paymentMethod']
 export function createScopedReadsApi({request=apiRequest}={}){
   const read=(path,query={},options={})=>{
     const params=new URLSearchParams()

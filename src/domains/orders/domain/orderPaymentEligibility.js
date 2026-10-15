@@ -1,10 +1,7 @@
 import { hasCapability } from '../../../app/access.js'
 
-export const isOrderPaid = (order) => order?.paymentStatus === 'Pago'
-
-export const getPendingAmount = (order) => isOrderPaid(order)
-  ? 0
-  : Math.max(0, Number(order?.total) || 0)
+import {isOrderPaid} from '../../../../shared/orderPaymentRead.js'
+export {isOrderPaid,getPendingAmount} from '../../../../shared/orderPaymentRead.js'
 
 const sourceCapability = Object.freeze({
   orders: 'orders.view',

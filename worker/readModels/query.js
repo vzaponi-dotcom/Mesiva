@@ -32,14 +32,38 @@ export function encodeReadCursor(queryKey,key){
   const text=JSON.stringify({v:1,q:queryKey,k:key})
   return btoa(String.fromCharCode(...new TextEncoder().encode(text))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
 }
-export function decodeReadCursor(value,queryKey){
+export function decodeReadCursor(value,queryKey,{text=false}={}){
   if(value===undefined || value===null || value==='')return null
   try{
     if(typeof value!=='string' || value.length>2048 || !/^[A-Za-z0-9_-]+$/.test(value))throw invalidCursor()
     const bytes=Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0))
     const parsed=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))
     if(parsed?.v!==1 || parsed.q!==queryKey || Object.keys(parsed).sort().join(',')!=='k,q,v' || !Array.isArray(parsed.k) || parsed.k.length!==2
-      || !Number.isSafeInteger(parsed.k[0]) || Math.abs(parsed.k[0])>8640000000000000 || typeof parsed.k[1]!=='string' || !parsed.k[1] || parsed.k[1].length>256)throw invalidCursor()
+      || (text?typeof parsed.k[0]!=='string' || parsed.k[0].length>256:!Number.isSafeInteger(parsed.k[0]) || Math.abs(parsed.k[0])>8640000000000000) || typeof parsed.k[1]!=='string' || !parsed.k[1] || parsed.k[1].length>256)throw invalidCursor()
     return parsed.k
   }catch{throw invalidCursor()}
+}
+
+export function readEnum(value,values,fallback){
+  const parsed=value===undefined || value===null || value===''?fallback:value
+  if(!values.includes(parsed))throw apiError(400,'INVALID_READ_QUERY','Filtro de consulta inválido.')
+  return parsed
+}
+export function readSearch(value=''){
+  if(typeof value!=='string' || value.length>500)throw apiError(400,'INVALID_READ_QUERY','Busca inválida.')
+  return value.trim()
+}
+// Rank is validated against the last selected identity before loading another page.
+// A concurrent reorder requires a fresh query rather than silently skipping records.
+export function rankPage(values,{cursor,queryKey,limit,key=value=>value.id}){
+  const decoded=decodeReadCursor(cursor,queryKey)
+  if(decoded && (decoded[0]<0 || key(values[decoded[0]] || {})!==decoded[1]))throw apiError(409,'READ_QUERY_CHANGED','A lista mudou. Atualize a consulta.')
+  const start=decoded?decoded[0]+1:0,page=values.slice(start,start+limit),last=start+page.length-1
+  return {page,nextCursor:last+1<values.length && page.length?encodeReadCursor(queryKey,[last,key(page.at(-1))]):null}
+}
+
+export function readCalendarDate(value){
+  if(value===undefined || value===null || value==='')return null
+  if(typeof value!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0,10)!==value)throw apiError(400,'INVALID_READ_QUERY','Data inválida.')
+  return value
 }
