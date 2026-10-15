@@ -26,6 +26,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Configurações / conta e equipe | `src/app/surfaces/settings/SettingsSurface.jsx`; `src/domains/access/ui/AccessSurface.jsx` |
 | Administração Mesiva / empresas e convites | `src/domains/platform/ui/PlatformRoutes.jsx`; `worker/platform/businessesApi.js` |
 | Botões, ícones, modais, selects e badges | `src/shared/ui/` |
+| Bootstrap por superfície / consultas históricas | `worker/readModels/`; contratos em `shared/scopedReads.js`; runtime em `src/app/runtime/data/` |
 | API / contexto e autorização | `worker/entry.js`; `worker/index.js`; `worker/access/authorization.js` |
 
 ## Arquitetura

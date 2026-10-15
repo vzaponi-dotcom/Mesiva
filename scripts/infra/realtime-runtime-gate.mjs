@@ -39,6 +39,7 @@ export function assertRealtimeRuntimeGate(report){
   assert.equal(r.concurrentClaimWinners,1,'claim admitted multiple winners')
   assert.ok(report.pointReadHistoryGrowth<=32,'history multiplied point reads')
   assert.ok(report.scopedBootstrapHistoryGrowth<=32,'history multiplied scoped bootstrap reads')
+  if(report.fixture?.historicalOrders>=1000)assert.ok(report.operations.historySearch.rowsRead<=report.fixture.historicalOrders*35+5000,'historical search repeatedly scanned the timeline prefix')
   assert.equal(report.historyPreserved,true,'historical orders were dropped')
   for(const op of Object.values(report.operations))for(const field of metrics)assert.ok(Number.isFinite(op[field]) && op[field]>=0,`invalid ${field}`)
   return true
@@ -104,6 +105,8 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     progress('history-seeded')
     await json('byIdsHistory',pointPath)
     await json('bootstrapScopedHistory','/api/bootstrap?surface=orders')
+    await json('historyPage','/api/reads/orders/history?limit=50')
+    await json('historySearch','/api/reads/orders/history?limit=50&search=prato%20ficticio')
     const attributionPlans=[]
     await loadOrderAttributions({prepare:sql=>({bind:(...values)=>({async all(){const result=await db.prepare(sql).bind(...values).all();attributionPlans.push({rowsRead:result.meta.rows_read,details:(await db.prepare('EXPLAIN QUERY PLAN '+sql).bind(...values).all()).results.map(row=>row.detail)});return result}})})},businessId,[ids.activeIds[0]])
     progress('point-reads:'+JSON.stringify({small:operations.byIdsSmall,large:operations.byIdsHistory,attributionPlans}))

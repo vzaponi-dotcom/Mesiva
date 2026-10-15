@@ -62,13 +62,14 @@ export const getMovementCategoryLabel = (movement = {}, categoryLabels = new Map
   return historicalLabel ?? categoryLabelByCode.get(normalized) ?? String(movement.category ?? '')
 }
 
+const businessDateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: FINANCE_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 export const getBusinessDate = (date = new Date()) => {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: FINANCE_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date)
+  const parts = businessDateFormatter.formatToParts(date)
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
   return `${values.year}-${values.month}-${values.day}`
 }

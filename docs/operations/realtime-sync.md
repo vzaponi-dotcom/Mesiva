@@ -97,3 +97,10 @@ A [matriz de consumidores](../superpowers/specs/2026-10-15-operational-snapshots
 No gate real local, bootstrap da cozinha com20pedidos ativos leu4.590linhas antes e4.610 após inserir10mil pedidos/50mil itens/10mil eventos históricos; o bootstrap integral leu195.117linhas no mesmo cenário. Todas as leituras incluem auth/guards/atribuição e duas escritas auxiliares HTTP. O teste de plano com100mil pedidos históricos manteve os três candidatos ativos, incluindo agendado futuro e registro antigo com timestamp legado de finalização. A migration0045 adiciona índice de status ativo sem alterar a elegibilidade mais restrita da TV.
 
 O ganho medido (97,6% para a consulta da cozinha) não representa uma publicação nem orçamento mensal já aprovado: consumidores, outros read models, CPU/duração/conta e homologação seguem pendentes.
+
+
+O histórico recebe `/api/reads/orders/history`, com limite50 (máximo100), cursor vinculado à consulta/empresa e contagens completas por filtro/dia. Detalhes continuam na API oficial por IDs; a tela aceita um readModel controlado e mantém compatibilidade com o modo legado. A composição do novo owner com App segue para a etapa de migração do runtime.
+
+A migration0046 adiciona índices de linha do tempo e subconjunto de timestamps legados, sem reescrever registros. Datas normalizadas usam faixas temporais; datas antigas/inválidas mantêm `Date.parse` em um fluxo separado. A busca conserva NFD/acentos, substring e conteúdo/notas dos itens: processa128candidatos por bloco e mantém somente a página selecionada em memória. Essa busca pode examinar todo o período solicitado e deve entrar no orçamento.
+
+Medição real local com10mil históricos: página de50pedidos32010leituras; busca em todo o período171257leituras (duas escritas HTTP em ambos). A primeira implementação da busca lia535598linhas; separar as faixas de horário empatado/IDs e limitar cada braço antes da ordenação eliminou a repetição do prefixo. O gate rejeita regressão desse custo. O teste de revogação durante a busca retorna409 sem expor registros; respostas de detalhe de contexto anterior são descartadas. Nenhuma dessas mudanças foi publicada nesta etapa.

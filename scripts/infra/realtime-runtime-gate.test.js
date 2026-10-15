@@ -18,3 +18,9 @@ test('runtime validator rejects scoped bootstrap reads growing with unrelated hi
   const report=valid();report.scopedBootstrapHistoryGrowth=33
   assert.throws(()=>assertRealtimeRuntimeGate(report))
 })
+
+test('runtime validator rejects historical search repeatedly walking the same timeline prefix',()=>{
+  const report=valid();report.fixture={historicalOrders:10000}
+  report.operations.historySearch={...report.operations.byIds,rowsRead:535598}
+  assert.throws(()=>assertRealtimeRuntimeGate(report))
+})

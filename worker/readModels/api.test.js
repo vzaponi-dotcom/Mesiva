@@ -46,3 +46,36 @@ test('surface capabilities and counters cannot reveal operational data to a hist
   assert.deepEqual(payload.readModel.counters,{orders:0,comandas:0})
   assert.equal(Object.hasOwn(payload,'orders'),false)
 })
+
+test('history pages remain tenant scoped and readable with history capability only',async t=>{
+  const f=await setup(t)
+  await seedOperationalReadFixture(f.db,{businessId:f.businesses.A,historicalOrders:2,activeOrders:1})
+  await seedOperationalReadFixture(f.db,{businessId:f.businesses.B,historicalOrders:2})
+  f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability='orders.view'").run(f.businesses.A,f.businesses.A+':manager')
+  const response=await handleRequest(f.request('/api/reads/orders/history?limit=1&businessId='+f.businesses.B),f.env)
+  assert.equal(response.status,200)
+  const data=await response.json()
+  assert.equal(data.orders.length,1);assert.equal(data.summary.all,2);assert.ok(data.nextCursor)
+  assert.ok(data.orders[0].id.startsWith(f.businesses.A+':history:'))
+  assert.ok(data.orders[0].attribution)
+  assert.equal((await handleRequest(new Request('https://example.test/api/reads/orders/history'),f.env)).status,401)
+})
+
+test('revocation during a streamed history read rejects the response before exposing any rows',async t=>{
+  const f=await setup(t)
+  await seedOperationalReadFixture(f.db,{businessId:f.businesses.A,historicalOrders:200,itemsPerOrder:2})
+  const prepare=f.db.prepare;let revoked=false
+  const wrap=(statement,sql)=>({...statement,bind:(...values)=>wrap(statement.bind(...values),sql),execute(){
+    const result=statement.execute()
+    if(!revoked && sql.includes('AS search_items')){
+      revoked=true
+      f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability='orders.history'").run(f.businesses.A,f.businesses.A+':manager')
+    }
+    return result
+  }})
+  f.db.prepare=sql=>wrap(prepare(sql),sql)
+  const response=await handleRequest(f.request('/api/reads/orders/history?search=prato'),f.env)
+  assert.equal(revoked,true);assert.equal(response.status,409)
+  const payload=await response.json()
+  assert.equal(Object.hasOwn(payload,'orders'),false)
+})
