@@ -12,7 +12,7 @@ test('company chooser opens from My Account and Back returns from account to the
   globalThis.fetch = async path => {
     const payload = path === '/api/auth/session' ? session
       : path === '/api/auth/businesses' ? { businesses: [{ businessId: 'b', name: 'Loja', roleName: 'Gerente' }, { businessId: 'other', name: 'Outra empresa', roleName: 'Operador' }] }
-      : path === '/api/bootstrap' ? bootstrap
+      : new URL(String(path),'https://example.test').pathname === '/api/bootstrap' ? bootstrap
       : path === '/api/orders' ? { orders: [] }
       : path === '/api/printing/stations' ? { stations: [] }
       : String(path).startsWith('/api/printing/jobs?') ? { jobs: [] }
@@ -45,7 +45,7 @@ test('account menu offers company switching only with more than one eligible com
     const session = { ...operationalSession, authMode: 'multi_company', scope: 'business', contextId: 'business-context', account: { id: 'account', displayName: 'Ana', email: 'ana@example.test' }, eligibleBusinessCount }
     globalThis.fetch = async path => {
       const payload = path === '/api/auth/session' ? session
-        : path === '/api/bootstrap' ? bootstrap
+        : new URL(String(path),'https://example.test').pathname === '/api/bootstrap' ? bootstrap
         : path === '/api/orders' ? { orders: [] }
         : path === '/api/printing/stations' ? { stations: [] }
         : String(path).startsWith('/api/printing/jobs?') ? { jobs: [] }
@@ -95,7 +95,7 @@ for (const userAgent of ['Windows NT 10.0', 'Android']) {
       if (path === '/api/auth/session') {
         sessionReads++
         payload = { ...operationalSession, authMode: 'multi_company', scope: 'business', account: { id: 'account' }, businessId: company, contextId: `context-${company}` }
-      } else if (path === '/api/bootstrap') payload = { ...bootstrap, business: { id: company, name: `Empresa ${company}` } }
+      } else if (new URL(String(path),'https://example.test').pathname === '/api/bootstrap') payload = { ...bootstrap, business: { id: company, name: `Empresa ${company}` } }
       else if (path === '/api/orders') payload = { orders: [] }
       else if (path === '/api/printing/stations') payload = { stations: [] }
       else if (String(path).startsWith('/api/printing/jobs?')) payload = { jobs: [] }
@@ -133,7 +133,7 @@ test('actual App blocks switch after account unmount until password response and
     }
     if (path === '/api/access/me/password') { writes++; return new Promise(resolve => { finishPassword = () => resolve({ ok: true, json: async () => ({ changed: true }) }) }) }
     if (path === '/api/auth/logout') { logouts++; return { ok: true, json: async () => ({}) } }
-    const data = path === '/api/bootstrap' ? bootstrap : path === '/api/orders' ? { orders: [] } : path === '/api/printing/stations' ? { stations: [] } : String(path).startsWith('/api/printing/jobs?') ? { jobs: [] } : path === '/api/printing/jobs/summary' ? { summary: {} } : null
+    const data = new URL(String(path),'https://example.test').pathname === '/api/bootstrap' ? bootstrap : path === '/api/orders' ? { orders: [] } : path === '/api/printing/stations' ? { stations: [] } : String(path).startsWith('/api/printing/jobs?') ? { jobs: [] } : path === '/api/printing/jobs/summary' ? { summary: {} } : null
     assert.ok(data, `Unexpected ${path}`)
     return { ok: true, json: async () => data }
   }
@@ -185,7 +185,7 @@ async function operation(t, jobs = []) {
   let revocations = 0
   globalThis.fetch = async (path) => {
     if (path === '/api/auth/logout') { revocations++; return { ok: true, json: async () => ({ authenticated: false }) } }
-    const payload = path === '/api/auth/session' ? (revocations ? { authenticated: false } : operationalSession) : path === '/api/bootstrap' ? bootstrap : path === '/api/orders' ? { orders: [] } : path === '/api/printing/stations' ? { stations: [{ id: 'test-station', platform: 'other', isPrimary: false, autoPrintEnabled: false }] } : String(path).startsWith('/api/printing/jobs?') ? { jobs } : path === '/api/printing/jobs/summary' ? { summary: {} } : null
+    const payload = path === '/api/auth/session' ? (revocations ? { authenticated: false } : operationalSession) : new URL(String(path),'https://example.test').pathname === '/api/bootstrap' ? bootstrap : path === '/api/orders' ? { orders: [] } : path === '/api/printing/stations' ? { stations: [{ id: 'test-station', platform: 'other', isPrimary: false, autoPrintEnabled: false }] } : String(path).startsWith('/api/printing/jobs?') ? { jobs } : path === '/api/printing/jobs/summary' ? { summary: {} } : null
     assert.ok(payload, `Unexpected ${path}`)
     return { ok: true, json: async () => payload?.jobs ? { ...payload, jobs: [...payload.jobs] } : payload }
   }
@@ -243,7 +243,7 @@ test('actual App switch cannot revoke while an accepted comanda payment still ne
   globalThis.fetch = async (path) => {
     let payload
     if (path === '/api/auth/session') payload = { ...operationalSession, capabilities: ['comandas.view', 'payments.receive', 'preferences.local'] }
-    else if (path === '/api/bootstrap') payload = { ...bootstrap, tables: [table], tableTabs: [{ id: 'tab-42', status: 'open' }] }
+    else if (new URL(String(path),'https://example.test').pathname === '/api/bootstrap') payload = { ...bootstrap, tables: [table], tableTabs: [{ id: 'tab-42', status: 'open' }] }
     else if (path === '/api/table-tabs/tab-42') payload = { tableTab: comandaDetail }
     else if (path === '/api/table-tabs/tab-42/payment') { payments++; payload = { orders: [], movements: [], tableTab: { id: 'tab-42', tableIdentifier: '7', status: 'closed' } } }
     else if (path === '/api/auth/logout') { revocations++; payload = {} }

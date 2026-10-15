@@ -33,6 +33,8 @@ function OrderHistory({ orders = [], readModel, currency = defaultCurrency, onCa
   const [detailOrderId, setDetailOrderId] = useState(null)
   const [cancelOrder, setCancelOrder] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [paymentPreparing,setPaymentPreparing]=useState(false)
+  const closeDetails=()=>{detailOwner.current=Symbol('closed');setDetailOrderId(null);setPaymentPreparing(false)}
   const [periodOpen, setPeriodOpen] = useState(false)
   const [menuOrderId, setMenuOrderId] = useState(null)
   const menuTrigger = useRef(null)
@@ -78,17 +80,21 @@ function OrderHistory({ orders = [], readModel, currency = defaultCurrency, onCa
     document.addEventListener('keydown', escape)
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
   }, [menuOrderId])
-  const openDetails = order => { closeMenu(); detailOwner.current=readOwner; if(readModel)setPointDetail({owner:readOwner,order}); setDetailOrderId(order.id) }
+  const openDetails = order => { closeMenu();setPaymentPreparing(false); detailOwner.current=readOwner; if(readModel)setPointDetail({owner:readOwner,order}); setDetailOrderId(order.id) }
   const selectCancellation=order=>{cancelOwner.current=readOwner;setCancelOrder(order)}
   const confirmCancellation = async payload => {
     if (cancelOwner.current!==readOwner || !canCancelOrders || (payload?.refundNow && !canRefundPayments) || !cancelOrder || submitting || !onCancelOrder) return false
     setSubmitting(true)
     try { const saved = await onCancelOrder(cancelOrder.id, payload); if (saved !== false) setCancelOrder(null) } finally { setSubmitting(false) }
   }
-  const registerPaymentFromDetail = () => {
-    if (!canReceiveStandaloneOrder(detailOrder, granted, 'history')) return
-    if (onRegisterPayment?.(detailOrder.id, 'history')) setDetailOrderId(null)
+  const registerPaymentFromDetail = async () => {
+    if(paymentPreparing || !canReceiveStandaloneOrder(detailOrder, granted, 'history'))return
+    const owner=readOwner,isCurrent=()=>detailOwner.current===owner
+    setPaymentPreparing(true)
+    try{if(await onRegisterPayment?.(detailOrder.id,'history',{isCurrent}) && isCurrent())closeDetails()}
+    finally{if(isCurrent())setPaymentPreparing(false)}
   }
+  useEffect(()=>()=>{detailOwner.current=Symbol('disposed')},[])
   const choosePeriod = value => {
     onQueryChange?.({ period: value, ...(value === 'custom' ? { startDate: queryState.startDate || getBusinessDate(now), endDate: queryState.endDate || getBusinessDate(now) } : {}) })
     setPeriodOpen(false)
@@ -143,7 +149,7 @@ function OrderHistory({ orders = [], readModel, currency = defaultCurrency, onCa
       </div>
     </section>
     {periodOpen && <Modal title="Filtrar período" className="history-period-modal" onClose={() => setPeriodOpen(false)}><div className="history-period-options">{periods.map(option => <button type="button" key={option.value} className={option.value === period ? 'history-period-option active' : 'history-period-option'} aria-pressed={option.value === period} onClick={() => choosePeriod(option.value)}>{option.label}{option.value === period && <Icon name="check" size={18} />}</button>)}</div></Modal>}
-    {detailOrder && <OrderDetail order={detailOrder} currency={currency} printing={printing} printJob={printing?.latestJobByOrderId?.get(detailOrder.id)} onClose={() => setDetailOrderId(null)} onRequestCancel={canCancelOrders && detailOrder.status === 'Finalizado' ? () => { if (!canCancelOrders) return; setDetailOrderId(null); selectCancellation(detailOrder) } : undefined} canCancelOrders={canCancelOrders} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} canRegisterPayment={canReceiveStandaloneOrder(detailOrder, granted, 'history')} registerPaymentDisabled={paymentDisabled || Boolean(actionKey) || submitting} onRegisterPayment={registerPaymentFromDetail} onToast={onToast} />}
+    {detailOrder && <OrderDetail order={detailOrder} currency={currency} printing={printing} printJob={printing?.latestJobByOrderId?.get(detailOrder.id)} onClose={closeDetails} onRequestCancel={canCancelOrders && detailOrder.status === 'Finalizado' ? () => { if (!canCancelOrders) return; closeDetails(); selectCancellation(detailOrder) } : undefined} canCancelOrders={canCancelOrders} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} canRegisterPayment={canReceiveStandaloneOrder(detailOrder, granted, 'history')} registerPaymentDisabled={paymentDisabled || Boolean(actionKey) || submitting || paymentPreparing} onRegisterPayment={registerPaymentFromDetail} onToast={onToast} />}
     {historyPrinting.confirmationDialog}
     <CancelOrderDialog open={canCancelOrders && cancelOwner.current===readOwner && Boolean(cancelOrder)} order={cancelOrder} paymentOptions={paymentOptions} reasonOptions={cancellationOptions} reasonRevision={cancellationRevision} onClose={() => setCancelOrder(null)} onConfirm={confirmCancellation} submitting={submitting} canRefundPayments={canRefundPayments} />
   </>

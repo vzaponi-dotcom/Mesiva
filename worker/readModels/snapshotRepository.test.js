@@ -29,7 +29,7 @@ test('active selection stays indexed at 10k and 100k terminal orders with old an
     await seedOperationalReadFixture({...db,prepare},{businessId,historicalOrders:count,historicalOffset:offset,itemsPerOrder:5})
     const snapshot=await load(db,businessId,{surface:'orders',granted:new Set(['orders.view','orders.history'])})
     assert.deepEqual(new Set(snapshot.orders.map(o=>o.id)),new Set(active.activeIds))
-    assert.equal(snapshot.readModel.counters.orders,3)
+    assert.equal(snapshot.readModel.counters.orders,2)
   }
   assert.equal(plans.some(p=>/^SCAN (orders|order_items|o)\b/.test(p)),false,plans.join('\n'))
   assert.ok(plans.some(p=>p.includes('orders_business_current_status_idx')),plans.join('\n'))
@@ -63,4 +63,14 @@ test('open tabs retain old finalized orders while unrelated and closed-tab histo
   assert.deepEqual(result.tableTabs.map(t=>t.id),['snapshot-open'])
   assert.deepEqual(result.orders.map(o=>o.id),[ids.historicalIds[0]])
   assert.equal(result.readModel.orderScope,'open-tabs')
+})
+
+test('shell counters preserve scheduled preparation eligibility and expose only minimal authorized active identities',async t=>{
+  const {db,sqlite}=setup(t),load=await read(),ids=await seedOperationalReadFixture(db,{businessId,activeOrders:2,historicalOrders:2})
+  sqlite.prepare("UPDATE orders SET status='Agendado',scheduled_for='2030-01-01T12:00:00.000Z' WHERE id=?").run(ids.activeIds[1])
+  const result=await load(db,businessId,{surface:'history',granted:new Set(['orders.view','orders.history']),now:new Date('2026-10-15T12:00:00Z')})
+  assert.equal(result.readModel.counters.orders,1)
+  assert.deepEqual(new Set(result.readModel.operationalOrders.map(o=>o.id)),new Set(ids.activeIds))
+  assert.ok(result.readModel.operationalOrders.every(o=>!Object.hasOwn(o,'items')&&!Object.hasOwn(o,'client')))
+  assert.equal(Object.hasOwn(result,'orders'),false)
 })

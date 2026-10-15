@@ -75,7 +75,7 @@
 
 ### Task 4: runtime e owner de consulta scoped
 
-**Files:** Create `src/infrastructure/realtime/useScopedQuery.js`/testes; Modify `useOperationalDataRuntime.js`/testes, `dataSync.js` se necessário, `src/App.jsx`, `bootstrapApi.js`/testes, `shared/scopedReads.js`.
+**Files:** Create `src/infrastructure/realtime/useScopedQuery.js`/testes; Modify `useOperationalDataRuntime.js`/testes, `dataSync.js` se necessário, `src/App.jsx`, `bootstrapApi.js`/testes, `shared/scopedReads.js`, wrappers puros de contagem operacional e os dois workflows de pagamento somente para o getter opcional do snapshot oficial; `OrderHistory` cobre cancelamento de preparação assíncrona.
 
 **Interfaces:** Runtime recebe `surface` (activeTab), retorna `readModelEnabled`, `operationalCounters`, métodos atuais e `getSyncGuard/getOfficialRevision`. `applyBootstrapCollections` só substitui completeCollections presentes no modo scoped; legado conserva todas as coleções. `refreshOrders` usa getActiveOrders quando scoped, jamais GETorders integral. Bootstrap de outra superfície não limpa caches de coleções não declaradas. `useScopedQuery({accessContextId,queryKey,load,realtime,topics,guard,collections,officialRevision,enabled})` usa token oficial e guarda query atual; concatena páginas por ID sem duplicar, nunca interpreta ausência como delete.
 

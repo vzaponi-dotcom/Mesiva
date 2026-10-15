@@ -51,3 +51,12 @@ test('point upserts keep created order, stable ties and historical members',asyn
   assert.deepEqual(sync.upsertManyInCreatedOrder(old,[{id:'history',createdAt:'2025-01-01',paid:true},{id:'new',createdAt:'2026-10-15'}]).map(e=>e.id),['new','b','a','history'])
   assert.equal(old[2].paid,undefined)
 })
+
+test('independent query reads share mutation protection without invalidating each other or global collection reads',async()=>{
+  const {createCollectionSyncGuard}=await loadSync(),guard=createCollectionSyncGuard(['orders'])
+  const collection=guard.beginRead(['orders']),first=guard.beginQueryRead(['orders']),second=guard.beginQueryRead(['orders'])
+  assert.equal(guard.canApply(collection,'orders'),true)
+  assert.equal(guard.canApply(first,'orders'),true);assert.equal(guard.canApply(second,'orders'),true)
+  guard.markMutation(['orders'])
+  assert.equal(guard.canApply(first,'orders'),false);assert.equal(guard.canApply(second,'orders'),false)
+})

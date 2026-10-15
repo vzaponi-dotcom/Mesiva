@@ -75,3 +75,11 @@ test('orders by IDs adapter encodes IDs and retains the owning HTTP context',asy
   assert.equal(calls[0].options.credentials,'same-origin')
   assert.deepEqual(payload,{orders:[{id:ids[0]}]})
 })
+
+test('point order reads propagate cancellation through the existing HTTP client',async()=>{
+  const controller=new AbortController(),calls=[]
+  const api=createOrdersApi({request:async(...args)=>{calls.push(args);return {orders:[]}}})
+  await api.getOrdersByIds(['order'],{signal:controller.signal})
+  assert.equal(calls[0][1].signal,controller.signal)
+  assert.deepEqual(JSON.parse(new URL(calls[0][0],'https://example.test').searchParams.get('ids')),['order'])
+})

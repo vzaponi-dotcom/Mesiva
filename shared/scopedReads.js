@@ -17,3 +17,16 @@ export function getScopedBootstrapCollections(payload){
   }
   return [...collections]
 }
+
+export function getScopedOperationalState(payload){
+  if(getScopedBootstrapCollections(payload)===null)return null
+  const descriptor=payload.readModel,counters=descriptor.counters || {orders:0,comandas:0}
+  const orders=descriptor.operationalOrders || [],tabs=descriptor.openTableTabIds ?? null
+  const validId=value=>typeof value==='string'&&value.length>0&&value.length<=256
+  if(![counters.orders,counters.comandas].every(value=>Number.isSafeInteger(value)&&value>=0)
+    || !Array.isArray(orders) || new Set(orders.map(order=>order?.id)).size!==orders.length
+    || orders.some(order=>!validId(order?.id)||!['Em preparo','Agendado'].includes(order.status)
+      || order.createdAt!==undefined&&typeof order.createdAt!=='string' || order.scheduledFor!==undefined&&order.scheduledFor!==null&&typeof order.scheduledFor!=='string')
+    || tabs!==null&&(!Array.isArray(tabs)||tabs.some(id=>!validId(id))||new Set(tabs).size!==tabs.length))throw new TypeError('Invalid scoped operational metadata')
+  return {counters,orders,tabs}
+}

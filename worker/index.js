@@ -201,7 +201,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     const effectiveBusinessConfig = await loadEffectiveBusinessConfig(env.DB, session.businessId, context.granted, context.userId)
     const knownVersion = url.searchParams.get('knownEffectiveConfigVersion')
     const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
-      ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,
+      ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,currentTiming:effectiveBusinessConfig.operations?.timing,
         effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
       : await loadBootstrap(
       env.DB,

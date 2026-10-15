@@ -319,3 +319,8 @@ test('Receivables opens the same workflow with the latest default and without op
   assert.deepEqual(probe.getLatest().dialog.allocations, [{ methodCode: 'pix', amountCents: 4000 }])
   probe.unmount()
 })
+
+test('canonical snapshot getter resolves a paged order even when the last render had no global order',async()=>{
+  const h=await mountWorkflow({orders:[],props:{getOfficialOrders:()=>[order('remote',{status:'Finalizado'})]}})
+  try{await act(async()=>assert.equal(h.getLatest().open('remote','history'),true));assert.equal(h.getLatest().dialog.order.id,'remote')}finally{h.unmount()}
+})

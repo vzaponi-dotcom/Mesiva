@@ -42,3 +42,17 @@ Painel do incidente: [D1 produção](https://dash.cloudflare.com/a1680026dac037c
 ## Continuação: leituras operacionais
 
 A investigação posterior encontrou leituras recorrentes da TV e coleções completas de pedidos. A entrega seguinte limita os candidatos da TV e acrescenta uma leitura autenticada por IDs, com [gate D1 e procedimento próprios](operational-data-read-budget.md). A sincronização por eventos e a separação entre operação/histórico pertencem à issue #75; não tratar essa primeira otimização como conclusão de todo o escopo.
+
+
+## Acompanhamento operacional — 15/10/2026, 15:43 UTC
+
+Consulta somente leitura por Wrangler4.128.0 confirmou a versão294a657d-7fcd-4443-8f96-d473195d5983 em100%, publicada pelo PR#111 em15/10 às01:17UTC. Essa versão sucede o deploy inicial do PR#110 e mantém sua correção. Insights da última hora apresentou as consultas novas com seleção `DISTINCT`/`UNION ALL`/`CROSS JOIN`:
+
+| Consulta de recuperação | Execuções | Média de linhas lidas | Total de linhas lidas | Total de linhas escritas |
+| --- | ---: | ---: | ---: | ---: |
+| INSERT de auditoria de timeout | 888 | 6 | 5.328 | 0 |
+| UPDATE para requires_attention | 531 | 3 | 1.593 | 0 |
+
+O hot path antigo do incidente não apareceu nas67formas SQL retornadas. O `NOT EXISTS` da liberação de processamento sem envio é outra regra de recuperação: sua auditoria leu2linhas em média e não deve ser classificada como regressão do timeout apenas pela sintaxe. As principais leituras restantes foram autoria/auditoria (5.526.783), carga integral de itens (3.248.548), resumo de mesas (2.419.529) e carga integral de pedidos (2.137.764), já contempladas na extensão em desenvolvimento.
+
+A amostra somou21.620.563leituras e71.306escritas nas consultas retornadas. Não representa necessariamente todo o consumo da conta, nem uma previsão garantida do mês. A comparação por execução usa uma janela posterior com carga própria; a medição controlada anterior continua sendo a referência antes/depois do SQL. Não foi executado SQL diagnóstico nem qualquer escrita D1 nesta coleta; cobrança acumulada e atraso de ingestão permanecem distintos do ganho operacional observado.

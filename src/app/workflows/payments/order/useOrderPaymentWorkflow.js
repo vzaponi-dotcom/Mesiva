@@ -18,6 +18,7 @@ const orderTotalCents = (order) => Math.max(0, Math.round((Number(order?.total) 
 export function useOrderPaymentWorkflow({
   api = paymentApi,
   orders = [],
+  getOfficialOrders,
   granted = new Set(),
   canReceivePayments = false,
   writesBlocked = false,
@@ -38,8 +39,8 @@ export function useOrderPaymentWorkflow({
   const [, forceRender] = useState(0)
 
   const getOrder = useCallback(
-    (orderId) => orders.find((order) => order.id === orderId) ?? null,
-    [orders],
+    (orderId) => (getOfficialOrders?.() ?? orders).find((order) => order.id === orderId) ?? null,
+    [orders,getOfficialOrders],
   )
 
   const isEligible = useCallback((order, source) => {

@@ -113,3 +113,12 @@ A migration0047 cria uma projeção derivada apenas de chaves de pendências (`u
 No gate D1 local com cinco clientes e10mil vendas históricas pagas, recebíveis com os mesmos candidatos passaram de1120para1141leituras, com duas escritas auxiliares HTTP. Dashboard com histórico retido fora do período passou de2136para2141leituras; com10mil pedidos dentro dos30dias, leu132138linhas para agregados e gráficos completos. Esse custo do período é real e deve entrar no dimensionamento. Movimentos sem registros leram616linhas. Grupos de recibo permanecem completos mesmo com limite1; o limite conta grupos, incluindo suas partes relacionadas na resposta.
 
 Essas medidas validam o backend da extensão. A integração dos owners/telas, orçamento com mix real, CPU/duração/baseline, revisão e homologação continuam pendentes. As flags permanecem desativadas em produção; não há nova publicação nesta etapa.
+
+
+O runtime reconhece `completeCollections` e substitui somente as coleções declaradas pelo snapshot da superfície atual. Uma resposta atrasada de outra superfície/empresa é descartada; loading com erro permite nova tentativa. O histórico já usa seu owner de consulta paginada no App. As demais telas serão migradas antes de ativar a flag scoped.
+
+`useScopedQuery` mantém singleflight/dirty por consulta e usa os avisos/foco/reconciliação/fallback do transporte, sem outro intervalo de polling. Tokens de consulta protegem contra mutations locais sem fazer consultas independentes invalidarem umas às outras. Mudança de cursor por concorrência recarrega a primeira página; mudança de acesso limpa o estado privado. Callbacks da empresa/consulta anterior não aplicam resultados.
+
+O shell inclui apenas IDs/status/horários dos candidatos ativos e IDs de comandas abertas para badges consistentes em qualquer tela. O badge da cozinha reutiliza a regra oficial de início do preparo, não conta agendados que ainda aguardam e avança com o relógio local, sem HTTP. A fila completa, clientes e itens não entram nesses metadados.
+
+Ações sobre pedidos fora do cache operacional preparam até100IDs em lotes de99 na API canônica antes de abrir os workflows de pagamento existentes. O snapshot síncrono continua pertencendo ao runtime; valores, elegibilidade, contexto e limites continuam revalidados pelos owners/Worker. Fechar o detalhe ou trocar de tela/empresa durante essa leitura impede a abertura tardia do pagamento. Essa preparação é leitura; não repete mutations.

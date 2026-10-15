@@ -21,6 +21,15 @@ export const createCollectionSyncGuard = (collections = []) => {
       return snapshot
     },
 
+    beginQueryRead(keys = []) {
+      const snapshot = {}
+      for (const key of keys) {
+        ensureCollection(key)
+        snapshot[key] = { independent: true, mutationVersion: mutationVersion[key] }
+      }
+      return snapshot
+    },
+
     markMutation(keys = []) {
       for (const key of keys) {
         ensureCollection(key)
@@ -31,7 +40,7 @@ export const createCollectionSyncGuard = (collections = []) => {
     canApply(token, key) {
       ensureCollection(key)
       return Boolean(token?.[key])
-        && token[key].readVersion === readVersion[key]
+        && (token[key].independent === true || token[key].readVersion === readVersion[key])
         && token[key].mutationVersion === mutationVersion[key]
     },
   }
