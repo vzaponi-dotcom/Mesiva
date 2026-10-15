@@ -23,3 +23,14 @@ test('TV adapter keeps legacy header and cookie transport on prepare and renew',
   assert.deepEqual(calls.map(call=>call.path),['/api/kitchen-tv/realtime/prepare','/api/kitchen-tv/realtime/renew'])
   assert.ok(calls.every(call=>call.options.credentials==='same-origin' && call.options.headers['x-kitchen-tv-session']==='fictional-tv-token'))
 })
+
+test('human and TV requests forward cancellation without changing credentials',async()=>{
+  const controller=new AbortController(),signals=[]
+  const fetchImpl=async(_path,options)=>{signals.push(options.signal);return Response.json({enabled:true})}
+  const api=module.createRealtimeApi(createContextHttpClient({context:{contextId:'A'},fetchImpl}))
+  const {createKitchenDisplayRealtimeApi}=await import('../../kitchen-display/kitchenDisplayApi.js')
+  const tv=createKitchenDisplayRealtimeApi('fictional',fetchImpl)
+  await api.prepare({signal:controller.signal});await api.renew('human',{signal:controller.signal})
+  await tv.prepare({signal:controller.signal});await tv.renew('tv',{signal:controller.signal})
+  assert.equal(signals.length,4);assert.ok(signals.every(signal=>signal===controller.signal))
+})

@@ -1,3 +1,5 @@
+import { useRealtimeRuntime } from './app/runtime/realtime/useRealtimeRuntime.js'
+import { createRealtimeApi } from './infrastructure/realtime/realtimeApi.js'
 import { PlatformRoutes, createProvisioningAttempts, createManagementAttempts } from './domains/platform/index.js'
 import { ACCOUNT_CONTEXT_PATHS } from './app/navigation/routes.js'
 import { CompanySelection, CompanyInvitationAccept, createCompaniesApi } from './domains/companies/index.js'
@@ -196,7 +198,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     if (contextOwnerRef.current === sessionContext?.contextId) void refreshSession({ requireContext: true })
   } }), [sessionContext, refreshSession])
   const clientsForContext = useMemo(() => ({
-    orders: createOrdersApi(contextClient), reservations: createTableReservationApi(contextClient),
+    realtime: createRealtimeApi(contextClient), orders: createOrdersApi(contextClient), reservations: createTableReservationApi(contextClient),
     tables: createTableServiceApi(contextClient), customers: createCustomersApi(contextClient),
     companies: createCompaniesApi(contextClient), printing: createPrintingApi(contextClient), bootstrap: createBootstrapApi(contextClient),
     effective: createEffectiveConfigApi(contextClient), payments: createPaymentApi(contextClient), refunds: createRefundApi(contextClient),
@@ -282,6 +284,13 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     checkoutPending: newOrderDraft.checkoutPending || platformPending || provisioningAttempts.hasUnresolved() || managementAttempts.hasUnresolved(),
   })
   const handleOperationalUnauthorized = useCallback((error) => operationalRuntimeTargetsRef.current.onUnauthorized?.(error), [])
+  const handleRealtimeUnauthorized = useCallback(error => {
+    if(error?.status===401)handleOperationalUnauthorized(error)
+    else void refreshSession({requireContext:true})
+  },[handleOperationalUnauthorized,refreshSession])
+  const realtime = useRealtimeRuntime({accessContextId,api:clientsForContext.realtime,
+    enabled:globalSession && operationalAccess && authState==='authenticated' && isOnline,
+    operational:operationalAccess && granted.has('printing.execute'),onUnauthorized:handleRealtimeUnauthorized})
   const getEffectiveConfigVersion = useCallback(() => effectiveConfigVersionRef.current, [])
   const {
     business,
@@ -304,6 +313,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
   } = useOperationalDataRuntime({
     api: { ...clientsForContext.bootstrap, getOrders: clientsForContext.orders.getOrders },
     onUnauthorized: handleOperationalUnauthorized,
+    realtime: globalSession ? realtime : undefined,
     globalSyncEnabled: operationalAccess && isOnline && authState === 'authenticated',
     ordersSyncEnabled: operationalAccess && (activeTab === 'orders' || activeTab === 'kitchen-tv-control') && isOnline && authState === 'authenticated',
     effectiveConfigVersion: getEffectiveConfigVersion,
