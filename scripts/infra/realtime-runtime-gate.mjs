@@ -38,6 +38,7 @@ export function assertRealtimeRuntimeGate(report){
   assert.equal(r.unknownClaimedAgain,false,'unknown outcome retried automatically')
   assert.equal(r.concurrentClaimWinners,1,'claim admitted multiple winners')
   assert.ok(report.pointReadHistoryGrowth<=32,'history multiplied point reads')
+  assert.ok(report.scopedBootstrapHistoryGrowth<=32,'history multiplied scoped bootstrap reads')
   assert.equal(report.historyPreserved,true,'historical orders were dropped')
   for(const op of Object.values(report.operations))for(const field of metrics)assert.ok(Number.isFinite(op[field]) && op[field]>=0,`invalid ${field}`)
   return true
@@ -57,7 +58,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
   fixture.sqlite.prepare('INSERT INTO kitchen_tv_access(business_id,session_token_hash,session_issued_at,created_at,updated_at) VALUES(?,?,?,?,?)').run(businessId,tv.tokenHash,at,at,at)
   fixture.sqlite.prepare("INSERT INTO products(id,business_id,category,size,name,price_cents,active,created_at,updated_at) VALUES('gate-product',?,'Meals','','Prato fictício',1000,1,?,?)").run(businessId,at,at)
   fixture.sqlite.prepare("INSERT INTO clients(id,business_id,name,created_at,updated_at) VALUES('gate-client',?,'Cliente fictício',?,?)").run(businessId,at,at)
-  const mf=new Miniflare((convertV4MiniflareOptions??(o=>o))({name:'mesiva-realtime-gate',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',d1Databases:{DB:'realtime-runtime-gate'},durableObjects:{BUSINESS_REALTIME:{className:'BusinessRealtimeHub',useSQLite:true}},bindings:{AUTH_MULTI_COMPANY_ENABLED:'true',AUTH_EMAIL_ENABLED:'true',AUTH_MULTI_COMPANY_PREPARE_ENABLED:'false',REALTIME_ENABLED:'true',AUTH_PUBLIC_ORIGIN:origin},log:new Log(LogLevel.ERROR)}))
+  const mf=new Miniflare((convertV4MiniflareOptions??(o=>o))({name:'mesiva-realtime-gate',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',d1Databases:{DB:'realtime-runtime-gate'},durableObjects:{BUSINESS_REALTIME:{className:'BusinessRealtimeHub',useSQLite:true}},bindings:{AUTH_MULTI_COMPANY_ENABLED:'true',AUTH_EMAIL_ENABLED:'true',AUTH_MULTI_COMPANY_PREPARE_ENABLED:'false',REALTIME_ENABLED:'true',OPERATIONAL_READ_MODELS_ENABLED:'true',AUTH_PUBLIC_ORIGIN:origin},log:new Log(LogLevel.ERROR)}))
   let activeHttp=0,activeJson=0
   const record=(name,response,elapsed)=>{
     assert.ok(response.headers.has('X-Mesiva-Gate-Metrics'),'real HTTP D1 metrics missing')
@@ -91,6 +92,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const ids=await seedOperationalReadFixture(db,{businessId,activeOrders:20,itemsPerOrder:5})
     const pointPath='/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([ids.activeIds[0]]))
     await json('byIdsSmall',pointPath)
+    await json('bootstrapScopedSmall','/api/bootstrap?surface=orders')
     await seedOperationalReadFixture(db,{businessId,historicalOrders,itemsPerOrder:5,historicalOffset:100000})
     await db.prepare(`WITH RECURSIVE n(x) AS(SELECT 0 UNION ALL SELECT x+1 FROM n WHERE x+1<?)
       INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_name,action,resource_type,resource_id,result,metadata_json)
@@ -101,6 +103,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     await db.prepare('INSERT INTO order_sequences(business_id,last_order_number) SELECT ?,COALESCE(MAX(order_number),0) FROM orders WHERE business_id=? ON CONFLICT(business_id) DO UPDATE SET last_order_number=excluded.last_order_number').bind(businessId,businessId).run()
     progress('history-seeded')
     await json('byIdsHistory',pointPath)
+    await json('bootstrapScopedHistory','/api/bootstrap?surface=orders')
     const attributionPlans=[]
     await loadOrderAttributions({prepare:sql=>({bind:(...values)=>({async all(){const result=await db.prepare(sql).bind(...values).all();attributionPlans.push({rowsRead:result.meta.rows_read,details:(await db.prepare('EXPLAIN QUERY PLAN '+sql).bind(...values).all()).results.map(row=>row.detail)});return result}})})},businessId,[ids.activeIds[0]])
     progress('point-reads:'+JSON.stringify({small:operations.byIdsSmall,large:operations.byIdsHistory,attributionPlans}))
@@ -210,7 +213,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const nextClaim=await json('printClaim','/api/printing/jobs/claim-next',{method:'POST',body:{stationId:'gate-station'}})
     const historyPreserved=states.slice(0,-1).every(state=>[...state.keys()].filter(id=>id.includes(':history:')).length===historicalOrders)
     const report={commit:process.env.GITHUB_SHA || null,workingTree:!process.env.GITHUB_SHA,runtime:'workerd/Wrangler4.128.0',fixture:{devices,historicalOrders,itemsPerOrder:5,terminalPrintJobs:3000},operations,
-      pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,historyPreserved,attributionPlans,
+      pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,scopedBootstrapHistoryGrowth:operations.bootstrapScopedHistory.rowsRead-operations.bootstrapScopedSmall.rowsRead,historyPreserved,attributionPlans,
       invariants:{legacyGlobalPolls,hibernationRecovered,restartConnectedClients,lostEventConvergedClients,convergenceVirtualMs,publicationFailureMutationCount:mutationCount,unchangedHeartbeatNotifications,unknownClaimedAgain:Boolean(nextClaim.job),concurrentClaimWinners:claims.filter(value=>value.job).length},
       assumptions:['D1 metrics include real HTTP auth,session guards,audit and attributed payloads.','Client time compressed; real lease timestamps mapped to virtual clock.','Real workerd WebSocket101,SQLite DO hibernation/restart and D1. No physical printer output.','Local wall time is diagnostic; Cloudflare CPU/duration/account billing remain unknown.'],unknownDimensions:['workerCpuMs','durableDurationGbS','accountBaseline'],passed:false}
     const save=()=>{if(process.env.REALTIME_GATE_REPORT){const output=resolve(process.env.REALTIME_GATE_REPORT);mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n')}}

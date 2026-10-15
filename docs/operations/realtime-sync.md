@@ -88,3 +88,12 @@ Consultas SELECT guardadas compartilham o mesmo predicado de autorização em se
 **O orçamento ainda não passou.** O modelo conservador padrão aponta 24,326 bilhões de leituras no normal e 39,489 bilhões no degradado, antes dos demais serviços da conta. Escritas caíram para26,986 e17,710 milhões, respectivamente. O bootstrap completo ainda lê195.110 linhas nesse histórico; separar carga operacional e histórico é necessário antes de afirmar escala dentro da franquia. CPU, duração e baseline também permanecem pendentes. Manter produção com `REALTIME_ENABLED=false`; não tratar o gate funcional verde como aprovação financeira.
 
 O CI executa o runtime real uma vez no job `validate`, após os dry-runs com Wrangler fixado; os oito shards executam os testes unitários do validador. O artifact `realtime-runtime-report` contém medidas/invariantes sanitizadas e marca dimensões desconhecidas, sem cookies, tickets ou tokens.
+
+
+## Extensão aprovada: snapshots por superfície
+
+A [matriz de consumidores](../superpowers/specs/2026-10-15-operational-snapshots-matrix.md) foi aprovada em15/10, com execução pelo [plano de read models](../superpowers/plans/2026-10-15-operational-read-models.md). A primeira etapa adiciona `surface` ao bootstrap e `/api/reads/orders/active`, sob `OPERATIONAL_READ_MODELS_ENABLED`. A flag permanecefalse em produção e staging até migrar os consumidores; requisições semsurface ou comflag desativada preservam o contrato integral.
+
+No gate real local, bootstrap da cozinha com20pedidos ativos leu4.590linhas antes e4.610 após inserir10mil pedidos/50mil itens/10mil eventos históricos; o bootstrap integral leu195.117linhas no mesmo cenário. Todas as leituras incluem auth/guards/atribuição e duas escritas auxiliares HTTP. O teste de plano com100mil pedidos históricos manteve os três candidatos ativos, incluindo agendado futuro e registro antigo com timestamp legado de finalização. A migration0045 adiciona índice de status ativo sem alterar a elegibilidade mais restrita da TV.
+
+O ganho medido (97,6% para a consulta da cozinha) não representa uma publicação nem orçamento mensal já aprovado: consumidores, outros read models, CPU/duração/conta e homologação seguem pendentes.

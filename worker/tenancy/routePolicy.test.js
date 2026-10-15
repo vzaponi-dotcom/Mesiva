@@ -24,3 +24,9 @@ test('realtime upgrade has its own ticket boundary while prepare and renew keep 
   }
   assert.equal(classifyApiRoute('POST','/api/realtime/socket'),'unknown')
 })
+
+test('operational read-model routes use the existing business boundary only for supported methods',()=>{
+  assert.equal(classifyApiRoute('GET','/api/reads/orders/active'),'business')
+  assert.equal(classifyApiRoute('POST','/api/reads/orders/active'),'unknown')
+  assert.equal(classifyApiRoute('GET','/api/reads/unknown'),'unknown')
+})

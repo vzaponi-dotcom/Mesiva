@@ -1,3 +1,5 @@
+import {readModelsEnabled,handleReadModelsApi} from './readModels/api.js'
+import {loadSurfaceSnapshot} from './readModels/snapshotRepository.js'
 import { withCommittedEffects, publishCommittedEffect } from './realtime/committedEffects.js'
 import { realtimeEnabled, handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
 import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSION_MAX_AGE, verifyPin } from './auth.js'
@@ -172,6 +174,8 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 
   const realtimeResponse=await handleHumanRealtimeApi(request,env,session,url)
   if(realtimeResponse)return realtimeResponse
+  const readModelsResponse=await handleReadModelsApi(request,env,context,url)
+  if(readModelsResponse)return readModelsResponse
   const accessResponse = await handleAccessApi(request, env, context, url)
   if (accessResponse) return accessResponse
 
@@ -196,7 +200,10 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
     const effectiveBusinessConfig = await loadEffectiveBusinessConfig(env.DB, session.businessId, context.granted, context.userId)
     const knownVersion = url.searchParams.get('knownEffectiveConfigVersion')
-    const bootstrap = await loadBootstrap(
+    const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
+      ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,
+        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
+      : await loadBootstrap(
       env.DB,
       session.businessId,
       knownVersion === effectiveBusinessConfig.version ? undefined : effectiveBusinessConfig,
