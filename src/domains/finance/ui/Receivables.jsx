@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import { useEffect, useMemo, useState } from 'react'
 import '../../../../shared/finance.js'
 import '../../../receivables.css'
@@ -332,7 +333,7 @@ function Receivables({
   const pendingHasActiveFilter = Boolean(normalizedSearch || timingFilter !== 'all' || exactDateFilter)
   const pendingVisibleCount = scoped?(displayMode==='client'?reads.main.data?.matchingGroupCount:reads.main.data?.matchingCount):(displayMode === 'client' ? visibleClientGroups.length : visiblePendingEntries.length)
 
-  if(scoped&&!reads.main.data)return <><AreaNavigation area="finance" /><PageHeader title="A receber" />{reads.main.error?<div role="alert">Não foi possível carregar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<p role="status">Carregando recebimentos…</p>}</>
+  if(scoped&&!reads.main.data)return <><AreaNavigation area="finance" /><PageHeader title="A receber" />{reads.main.error?<div role="alert">Não foi possível carregar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<PageSkeleton label="Carregando recebimentos" heading={false} />}</>
 
   const detail = selectedEntry ? (
     <ReceivableDetail

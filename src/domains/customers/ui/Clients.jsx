@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import {useCustomerReadModel} from '../application/useCustomerReadModel.js'
 import { useEffect,useMemo,useRef, useState } from 'react'
 import '../../../clients-phonebook.css'
@@ -78,7 +79,7 @@ function Clients({ readContext,clients = [], orders = [], search = '', sort = 'n
         })}
       </div>
       {!visible.length && !(scoped&&model.list.status==='loading') && !model.list.error && <div className="empty-state"><Icon name="clients" size={28} /><strong>Nenhum cliente encontrado</strong><span>Cadastre um cliente ou ajuste os filtros.</span></div>}
-      {scoped&&model.list.status==='loading'&&!model.list.data&&<p role="status">Carregando clientes…</p>}
+      {scoped&&model.list.status==='loading'&&!model.list.data&&<PageSkeleton label="Carregando clientes" heading={false} />}
       {scoped&&model.list.error&&<div role="alert"><p>Não foi possível carregar os clientes.</p><Button variant="secondary" onClick={model.list.reload}>Tentar novamente</Button></div>}
       {scoped&&model.list.hasMore&&<Button variant="secondary" disabled={model.list.status==='loading-next'} onClick={model.list.loadNext}>Carregar mais clientes</Button>}
     </section>

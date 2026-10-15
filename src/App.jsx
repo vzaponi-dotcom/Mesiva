@@ -23,6 +23,7 @@ import './App.css'
 import './central-data.css'
 import AppShell from './app/shell/AppShell.jsx'
 import AppRoot from './app/shell/AppRoot.jsx'
+import SurfaceContent from './app/shell/SurfaceContent.jsx'
 import { useLocation, useNavigate } from 'react-router'
 import { AccessSurface, InvitationAccept, PasswordRecovery } from './domains/access/index.js'
 import Button from './shared/ui/Button'
@@ -384,7 +385,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     : null, [authState, granted, operationalAccess, sessionContext, sessionGeneration])
   const effectiveConfig = useEffectiveBusinessConfig({ owner: effectiveConfigOwner, bootstrapConfig: bootstrapEffectiveConfig, load: clientsForContext.effective.getEffectiveConfig })
   // Mount operational consumers only after the supplied config initializes their confirmed defaults.
-  const operationalBootstrapState = readModelEnabled&&surfaceState!=='ready'?surfaceState==='error'?'error':'loading':bootstrapState === 'ready' && bootstrapEffectiveConfig && effectiveConfig.status === 'loading'
+  const operationalBootstrapState = bootstrapState === 'ready' && bootstrapEffectiveConfig && effectiveConfig.status === 'loading'
     ? 'loading' : bootstrapState
   const businessConfig = effectiveConfig.config
   const paymentOptions = useMemo(() => businessConfig ? paymentOptionsFromEffective(businessConfig) : [], [businessConfig])
@@ -856,6 +857,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
       >
       <NavigationProvider authenticated={authState === 'authenticated' && Boolean(sessionContext?.user?.id)} activeTab={activeTab} activeMobileEntry={activeMobileEntry} granted={granted} implemented={IMPLEMENTED_DESTINATIONS} moreOpen={moreOpen} requestNavigation={requestNavigation} openMore={openMore} closeMore={closeMore}>
       <AppShell user={sessionContext?.user} onSwitchUser={handleSwitchUser} onSwitchCompany={globalSession && sessionContext?.eligibleBusinessCount > 1 ? handleSwitchCompany : undefined} onPlatform={globalSession && sessionContext.platformCapabilities?.includes('platform.businesses.view') ? handlePlatform : undefined} businessId={sessionContext?.businessId} businessName={business?.name} businessHasLogo={business?.hasLogo} businessLogoVersion={business?.logoVersion} navigationBadges={{ orders: operationalOrderCount, comandas: openComandaCount, 'print-queue': printing.activeJobCount }} onLogout={handleLogout} logoutDisabled={writesBlocked}>
+        <SurfaceContent state={readModelEnabled ? surfaceState : 'ready'} surface={activeTab} onRetry={() => void refreshBootstrapSilently()} retryDisabled={!isOnline || requestKey !== null}>
         {['my-account', 'access-team', 'access-activity'].includes(activeTab) && renderAccessSurface(accessProps)}
         {activeTab==='access-activity'&&scopedActivityDetail.error&&<p role="alert">Não foi possível carregar o pedido.<button type="button" onClick={scopedActivityDetail.reload}>Tentar novamente</button></p>}
         {activityOrder && <OrderDetail order={activityOrder} currency={currency} onClose={() => setActivityDetail(null)} canExecutePrinting={false} canCancelOrders={false} />}
@@ -941,6 +943,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         {clientOrdersPayment.dialog && <ClientOrdersPaymentDialog dialog={clientOrdersPayment.dialog} currency={currency} />}
 
         <RegisterRefundDialog open={canRefundPayments && Boolean(refund.refundOrder)} order={refund.refundOrder} paymentOptions={paymentOptions} onClose={refund.close} onConfirm={refund.confirm} submitting={refund.submitting} />
+        </SurfaceContent>
       </AppShell>
       </NavigationProvider>
       </SettingsPolicyBoundary>}

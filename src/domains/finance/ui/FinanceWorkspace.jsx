@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import { useMemo } from 'react'
 import {useFinanceReadModel} from '../application/useFinanceReadModel.js'
 import './finance-mobile.css'
@@ -53,7 +54,7 @@ export default function FinanceWorkspace({
   const reads=useFinanceReadModel({...readContext,surface:'finance'})
   const totals=scoped?reads.main.data?.totals:legacyTotals
   const currentBalance=scoped?reads.main.data?.currentBalance:legacyCurrentBalance
-  if(scoped&&!reads.main.data)return reads.main.error?<div role="alert">Não foi possível carregar o fluxo de caixa.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<p role="status">Carregando fluxo de caixa…</p>
+  if(scoped&&!reads.main.data)return reads.main.error?<div role="alert">Não foi possível carregar o fluxo de caixa.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<PageSkeleton layout="dashboard" label="Carregando fluxo de caixa" />
   return (
     <>
       <Finance

@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import '../../../order-operations.css'
 import '../../../order-operations-compact.css'
@@ -142,7 +143,7 @@ function OrderHistory({ orders = [], readModel, currency = defaultCurrency, onCa
             })}
           </div>
         </section>)}
-        {readModel?.status==='loading' && !terminalOrders.length && <p role="status">Carregando histórico…</p>}
+        {readModel?.status==='loading' && !terminalOrders.length && <PageSkeleton label="Carregando histórico" heading={false} />}
         {readModel?.error && <div role="alert"><p>{readModel.error.message || 'Não foi possível carregar o histórico.'}</p><Button type="button" variant="secondary" onClick={()=>readModel.reload?.()}>Tentar novamente</Button></div>}
         {readModel?.hasMore && <Button type="button" variant="secondary" disabled={readModel.status==='loading'} onClick={()=>readModel.loadNext?.()}>Carregar mais pedidos</Button>}
         {!terminalOrders.length && !(readModel && (readModel.status==='loading' || readModel.error)) && <div className="empty-state history-empty"><Icon name="search" size={28} /><strong>Nenhum pedido encontrado</strong><span>Tente outra busca ou ajuste o período e o status.</span><Button type="button" variant="secondary" onClick={() => onQueryChange?.({ filter: 'all', search: '', period: 'all', startDate: '', endDate: '' })}>Limpar filtros</Button></div>}

@@ -102,3 +102,42 @@ test('audit detail loads its permitted historical order by ID without requiring 
  assert.ok(renderer.root.findAllByProps({role:'dialog'}).some(dialog=>nodeText(dialog).includes('Cliente fictício')))
  assert.equal(calls.includes('/api/orders'),false)
 })
+
+
+test('surface navigation preserves the shell and replaces only content while its existing bootstrap is pending',async t=>{
+ const {renderer,router,calls}=await mount(t,'/pedidos')
+ const shell=renderer.root.findByProps({className:'app-shell'})
+ const fetchReady=globalThis.fetch
+ let release
+ const pending=new Promise(resolve=>{release=resolve})
+ globalThis.fetch=async(path,...args)=>{
+  if(String(path).includes('/api/bootstrap')&&String(path).includes('surface=clients'))await pending
+  return fetchReady(path,...args)
+ }
+ const before=calls.filter(path=>path.startsWith('/api/bootstrap')).length
+ await act(async()=>{await router.navigate('/clientes')})
+ assert.equal(renderer.root.findByProps({className:'app-shell'}),shell,'navigation must retain the mounted shell')
+ assert.equal(renderer.root.findAllByProps({'aria-label':'Carregando Mesiva'}).length,0)
+ assert.equal(renderer.root.findAllByProps({'aria-label':'Carregando conteúdo da tela'}).length,1)
+ assert.equal(renderer.root.findAllByProps({'aria-label':'Criar cliente'}).length,0,'actions cannot mount with the previous surface snapshot')
+ await act(async()=>{release();await pending})
+ assert.match(nodeText(renderer.root),/201 clientes/)
+ assert.equal(renderer.root.findByProps({className:'app-shell'}),shell)
+ assert.equal(renderer.root.findAllByProps({'aria-label':'Carregando conteúdo da tela'}).length,0)
+ assert.equal(calls.filter(path=>path.startsWith('/api/bootstrap')).length-before,1,'skeleton must reuse the navigation request')
+ assert.equal(calls.filter(path=>path.startsWith('/api/reads/customers')).length,1)
+})
+
+test('a failed surface load keeps navigation available and retries without returning to startup',async t=>{
+ const {renderer,router,setBootstrapFailure}=await mount(t,'/pedidos')
+ const shell=renderer.root.findByProps({className:'app-shell'})
+ setBootstrapFailure(true)
+ await act(async()=>{await router.navigate('/clientes')})
+ assert.equal(renderer.root.findByProps({className:'app-shell'}),shell)
+ assert.match(nodeText(renderer.root),/Não foi possível carregar os dados/)
+ assert.equal(renderer.root.findAllByProps({'aria-label':'Carregando Mesiva'}).length,0)
+ setBootstrapFailure(false)
+ await act(async()=>buttonNamed(renderer.root,'Tentar novamente').props.onClick())
+ assert.equal(renderer.root.findByProps({className:'app-shell'}),shell)
+ assert.match(nodeText(renderer.root),/201 clientes/)
+})

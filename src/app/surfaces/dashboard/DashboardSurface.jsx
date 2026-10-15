@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import { useMemo } from 'react'
 import './dashboard.css'
 import DashboardBarChart from '../../../shared/ui/DashboardBarChart'
@@ -71,7 +72,7 @@ function DashboardSurface({ orders, movements, readContext, currency, queryState
 
   const scoped=Boolean(readContext?.enabled)
   const reads=useFinanceReadModel({...readContext,surface:'dashboard',queryState})
-  if(scoped&&!reads.main.data)return reads.main.error?<div role="alert">Não foi possível carregar os indicadores.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<p role="status">Carregando indicadores…</p>
+  if(scoped&&!reads.main.data)return reads.main.error?<div role="alert">Não foi possível carregar os indicadores.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<PageSkeleton layout="dashboard" label="Carregando indicadores" />
   const totals=scoped?reads.main.data.dashboard.totals:legacyTotals
   const analytics=scoped?reads.main.data.dashboard.analytics:legacyAnalytics
   const displayMoney = (value) => valuesVisible ? currency(value) : MONEY_MASK

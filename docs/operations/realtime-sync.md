@@ -22,6 +22,12 @@ Desabilitar a flag é o caminho de rollback do canal. O cliente passa ao fallbac
 
 Não registrar cookies, credenciais, tickets ou a lista completa de subprotocolos. Diagnósticos de publicação são estáticos e sem payload. Avisos são publicados depois do commit, inclusive quando a resposta final do autor falha. Falha de publicação não transforma uma gravação confirmada em erro nem reenvia a mutation.
 
+## Carregamento na navegação
+
+A abertura do Mesiva permanece reservada à verificação de sessão e ao bootstrap inicial do contexto autenticado. Com leituras por superfície habilitadas, a troca de tela mantém o shell e a navegação montados; somente o conteúdo aguarda o snapshot da superfície. Ações e dados da tela anterior não são apresentados enquanto esse snapshot estiver pendente. Falhas mostram uma tentativa explícita no conteúdo, preservando a navegação.
+
+O skeleton compartilhado acompanha os estados das requisições existentes: não executa HTTP, polling ou timers de dados, nem impõe espera artificial. Clientes, histórico e financeiro também o utilizam no primeiro carregamento das consultas específicas. Atualizações em segundo plano preservam dados já disponíveis para a mesma consulta/contexto. O shimmer usa os tokens do tema e respeita `prefers-reduced-motion`; a mudança de sessão/empresa continua invalidando as projeções anteriores.
+
 ## Leituras e temporizadores
 
 | Rotina | Canal saudável | Recuperação/compatibilidade |
