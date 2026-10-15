@@ -15,3 +15,12 @@ test('known entry points distinguish public identity, TV device authentication, 
 test('management reads and actions remain in platform scope',()=>{
   for (const suffix of ['suspend','resume','delete','restore','memberships','memberships/user/revoke','memberships/user/reactivate','invitations/invite/cancel','invitations/invite/resend','history','management-attempts/key']) assert.equal(classifyApiRoute('POST',`/api/platform/businesses/company/${suffix}`),'platform')
 })
+
+test('realtime upgrade has its own ticket boundary while prepare and renew keep scoped authentication',()=>{
+  assert.equal(classifyApiRoute('GET','/api/realtime/socket'),'realtime-upgrade')
+  for(const action of ['prepare','renew']) {
+    assert.equal(classifyApiRoute('POST',`/api/realtime/${action}`),'business')
+    assert.equal(classifyApiRoute('POST',`/api/kitchen-tv/realtime/${action}`),'public-tv')
+  }
+  assert.equal(classifyApiRoute('POST','/api/realtime/socket'),'unknown')
+})

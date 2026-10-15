@@ -1,3 +1,4 @@
+import { handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
 import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSION_MAX_AGE, verifyPin } from './auth.js'
 import { authenticateHumanRequest, loadAuthMode } from './access/sessions.js'
 import { handleEmailAuthApi, loginWithEmail } from './access/emailAuthApi.js'
@@ -168,6 +169,8 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   env = { ...env, DB: withAuditContext(multiCompanyEnabled(env) ? withBusinessSessionGuard(env.DB, session) : env.DB, context) }
   const effectsJson = (payload, init) => json(projectMutationEffects(payload, context.granted), init)
 
+  const realtimeResponse=await handleHumanRealtimeApi(request,env,session,url)
+  if(realtimeResponse)return realtimeResponse
   const accessResponse = await handleAccessApi(request, env, context, url)
   if (accessResponse) return accessResponse
 
@@ -462,6 +465,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 export const handleRequest = async (request, env, executionContext) => {
   try {
     const url = new URL(request.url)
+    if(url.pathname==='/api/realtime/socket' && request.method==='GET')return await handleRealtimeUpgrade(request,env)
     if (!multiCompanyEnabled(env) && [true, 'true'].includes(env.AUTH_MULTI_COMPANY_PREPARE_ENABLED)) {
       if (['/api/auth/email-challenges/inspect', '/api/auth/email-challenges/complete'].includes(url.pathname)) return await handleGlobalAuthApi(request, env)
       if (['/api/auth/company-invitations/inspect', '/api/auth/company-invitations/accept'].includes(url.pathname)) return await handleCompanyInvitationsApi(request, env)

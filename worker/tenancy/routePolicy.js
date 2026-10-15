@@ -8,10 +8,13 @@ const identity = new Map([
   ['/api/auth/company-invitations/inspect', ['POST']], ['/api/auth/company-invitations/accept', ['POST']], ['/api/access/me/password', ['POST']],
 ])
 const television = new Map([
+  ['/api/kitchen-tv/realtime/prepare', ['POST']], ['/api/kitchen-tv/realtime/renew', ['POST']],
   ['/api/kitchen-tv/pairing-request', ['POST']], ['/api/kitchen-tv/pairing-status', ['GET', 'POST']], ['/api/kitchen-tv/report', ['POST']], ['/api/kitchen-tv/state', ['GET']],
 ])
 export const multiCompanyEnabled = env => env.AUTH_MULTI_COMPANY_ENABLED === true || env.AUTH_MULTI_COMPANY_ENABLED === 'true'
 export function classifyApiRoute(method, path) {
+  if (path === '/api/realtime/socket' && method === 'GET') return 'realtime-upgrade'
+  if (/^\/api\/realtime\/(prepare|renew)$/.test(path) && method === 'POST') return 'business'
   if (identity.get(path)?.includes(method)) return 'public-identity'
   if (television.get(path)?.includes(method)) return 'public-tv'
   if (/^\/api\/platform\/businesses(?:\/[^/]+(?:\/(?:first-manager-invitation\/resend|suspend|resume|delete|restore|memberships|history|management-attempts\/[^/]+|memberships\/[^/]+\/(?:revoke|reactivate)|invitations\/[^/]+\/(?:cancel|resend)))?)?$/.test(path)) return 'platform'
