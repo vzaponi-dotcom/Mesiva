@@ -122,3 +122,9 @@ O runtime reconhece `completeCollections` e substitui somente as coleções decl
 O shell inclui apenas IDs/status/horários dos candidatos ativos e IDs de comandas abertas para badges consistentes em qualquer tela. O badge da cozinha reutiliza a regra oficial de início do preparo, não conta agendados que ainda aguardam e avança com o relógio local, sem HTTP. A fila completa, clientes e itens não entram nesses metadados.
 
 Ações sobre pedidos fora do cache operacional preparam até100IDs em lotes de99 na API canônica antes de abrir os workflows de pagamento existentes. O snapshot síncrono continua pertencendo ao runtime; valores, elegibilidade, contexto e limites continuam revalidados pelos owners/Worker. Fechar o detalhe ou trocar de tela/empresa durante essa leitura impede a abertura tardia do pagamento. Essa preparação é leitura; não repete mutations.
+
+### Integração de clientes e financeiro
+
+Clientes, relacionamento, A Receber, fluxo de caixa e dashboard usam owners de consulta por contexto quando o bootstrap anuncia o modo scoped. Totais, favoritos, contagens de filtros e saldo vêm do universo autorizado no servidor; páginas só fornecem as linhas exibidas. Recebimentos por cliente preservam IDs explícitos entre páginas, até100, e revalidam os selecionados por leitura canônica antes do owner de pagamento existente. Ausência numa página não remove uma seleção.
+
+A verificação de duplicidade de nome/telefone consulta identidades da empresa ao salvar; não depende da página de clientes carregada e não lê pedidos. Fechar o editor, trocar empresa ou perder permissão invalida a preparação pendente. As consultas não adicionam polling: recebem invalidações, reconciliação e fallback do transporte contextual. Loading, erro e retry não exibem totais parciais como globais. Flags de produção continuam desativadas até conclusão dos consumidores remanescentes, orçamento e homologação.

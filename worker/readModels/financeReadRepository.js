@@ -42,7 +42,7 @@ export async function readReceivables(db,businessId,{granted,now=new Date(),...i
   const queryKey=await sha256Hex(JSON.stringify([businessId,'receivables',view,mode,sort,timing,search,exactDateFilter || '',groupKey || '',today,[...granted].sort()]))
   if(mode==='client'&&view==='pending'&&!groupKey){
     const {page,nextCursor}=rankPage(groups,{queryKey,cursor:input.cursor,limit,key:g=>g.key})
-    return {entries:[],orders:[],groups:page.map(compactGroup),summary,forecast,receivedToday,queryKey,nextCursor,completeWithinScope:false,matchingCount:entries.length}
+    return {entries:[],orders:[],groups:page.map(compactGroup),summary,forecast,receivedToday,queryKey,nextCursor,completeWithinScope:false,matchingCount:entries.length,matchingGroupCount:groups.length}
   }
   const {page,nextCursor}=rankPage(entries,{queryKey,cursor:input.cursor,limit,key:e=>e.key})
   const official=new Map(projectOrderList(await listOrdersByIds(db,businessId,page.map(e=>e.order.id)),granted).map(o=>[o.id,o]))
@@ -50,7 +50,7 @@ export async function readReceivables(db,businessId,{granted,now=new Date(),...i
     const order=official.get(entry.order.id)
     return order && (view==='pending'?receivables.buildPendingReceivableEntries([order],today,orderRules).length===1: view==='paid'?order.status!=='Cancelado'&&isOrderPaid(order):order.status==='Cancelado'&&isOrderPaid(order)&&!order.refundMovementId)
   }).map(entry=>({...entry,order:official.get(entry.order.id),orders:[official.get(entry.order.id)]}))
-  return {entries:finalEntries,orders:finalEntries.map(e=>e.order),groups:[],group:group?compactGroup(group):null,summary,forecast,receivedToday,queryKey,nextCursor,completeWithinScope:false,matchingCount:entries.length}
+  return {entries:finalEntries,orders:finalEntries.map(e=>e.order),groups:[],group:group?compactGroup(group):null,summary,forecast,receivedToday,queryKey,nextCursor,completeWithinScope:false,matchingCount:entries.length,matchingGroupCount:groups.length}
 }
 
 export async function readFinanceMovements(db,businessId,{granted,now=new Date(),...input}={}){

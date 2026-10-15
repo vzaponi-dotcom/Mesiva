@@ -5,6 +5,7 @@ import DashboardPeriodSelector from '../../../shared/ui/DashboardPeriodSelector'
 import Icon from '../../../shared/ui/Icon'
 import PageHeader from '../../../shared/ui/PageHeader'
 import StatCard from '../../../shared/ui/StatCard'
+import {useFinanceReadModel} from '../../../domains/finance/index.js'
 import { calculateReceivedToday } from '../../../domains/finance/index.js'
 import {
   getPendingAmount,
@@ -39,13 +40,13 @@ const compactMoneyFormatter = new Intl.NumberFormat('pt-BR', {
 
 const formatCompactAxisValue = (value) => compactMoneyFormatter.format(Number(value) || 0)
 
-function DashboardSurface({ orders, movements, currency, queryState, onQueryChange }) {
+function DashboardSurface({ orders, movements, readContext, currency, queryState, onQueryChange }) {
   const period = queryState.period
   const valuesVisible = queryState.valuesVisible
   const setPeriod = (nextPeriod) => onQueryChange({ period: nextPeriod })
   const todayValue = toLocalDateValue()
 
-  const totals = useMemo(() => {
+  const legacyTotals = useMemo(() => {
     const validOrders = orders.filter((order) => !isOrderCancelled(order))
     const salesToday = validOrders
       .filter((order) => order.orderDate === todayValue)
@@ -57,7 +58,7 @@ function DashboardSurface({ orders, movements, currency, queryState, onQueryChan
     return { salesToday, receivedToday, receivables }
   }, [movements, orders, todayValue])
 
-  const analytics = useMemo(() => {
+  const legacyAnalytics = useMemo(() => {
     const now = new Date(`${todayValue}T12:00:00`)
     return {
       metrics: calculatePeriodMetrics(orders, period, now),
@@ -68,6 +69,11 @@ function DashboardSurface({ orders, movements, currency, queryState, onQueryChan
     }
   }, [movements, orders, period, todayValue])
 
+  const scoped=Boolean(readContext?.enabled)
+  const reads=useFinanceReadModel({...readContext,surface:'dashboard',queryState})
+  if(scoped&&!reads.main.data)return reads.main.error?<div role="alert">Não foi possível carregar os indicadores.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<p role="status">Carregando indicadores…</p>
+  const totals=scoped?reads.main.data.dashboard.totals:legacyTotals
+  const analytics=scoped?reads.main.data.dashboard.analytics:legacyAnalytics
   const displayMoney = (value) => valuesVisible ? currency(value) : MONEY_MASK
   const privacyLabel = valuesVisible ? 'Ocultar valores' : 'Mostrar valores'
   const { metrics, daily, topProducts, mealsSold, paymentMix } = analytics
@@ -75,6 +81,7 @@ function DashboardSurface({ orders, movements, currency, queryState, onQueryChan
   return (
     <>
       <AreaNavigation area="finance" />
+      {scoped&&reads.main.error&&<p role="alert">Não foi possível atualizar os indicadores.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></p>}
       <div className="dashboard-overview-header">
         <PageHeader
           eyebrow="Resumo do dia"

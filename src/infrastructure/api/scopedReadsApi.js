@@ -1,5 +1,5 @@
 import {apiRequest} from './httpClient.js'
-const queryKeys=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','clientId','groupBy','timing','groupKey','exactDateFilter','type','category','paymentMethod']
+const queryKeys=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','clientId','groupBy','timing','groupKey','exactDateFilter','type','category','paymentMethod','name','phone','excludeId']
 export function createScopedReadsApi({request=apiRequest}={}){
   const read=(path,query={},options={})=>{
     const params=new URLSearchParams()
@@ -11,6 +11,7 @@ export function createScopedReadsApi({request=apiRequest}={}){
     getActiveOrders:(options={})=>read('/api/reads/orders/active',{},options),
     getHistory:(query,options)=>read('/api/reads/orders/history',query,options),
     getCustomers:(query,options)=>read('/api/reads/customers',query,options),
+    getCustomerDuplicates:(query,options)=>read('/api/reads/customers/duplicates',query,options),
     getCustomerRelationship:(id,query,options)=>read(`/api/reads/customers/${encodeURIComponent(id)}/relationship`,query,options),
     getReceivables:(query,options)=>read('/api/reads/finance/receivables',query,options),
     getFinanceOverview:(query,options)=>read('/api/reads/finance/overview',query,options),

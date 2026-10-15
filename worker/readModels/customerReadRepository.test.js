@@ -72,3 +72,16 @@ test('an order moved to another customer between selection and hydration is not 
   assert.equal(moved,true);assert.ok(result.orders.every(o=>o.clientId==='customer-a'))
   assert.equal(result.orders.some(o=>o.id===f.ids.activeIds[0]),false)
 })
+
+test('customer filter counts describe the whole authorized registry and duplicate lookup reaches clients outside the page',async t=>{
+  const f=await financialReadFixture(t),{readCustomers,readCustomerDuplicates}=await reader()
+  const first=await readCustomers(f.db,businessId,{granted,now,limit:1,search:'Ana'})
+  assert.deepEqual(first.summary.filters,{all:3,pending:2,inactive:0,empty:1})
+  const duplicate=await readCustomerDuplicates(f.db,businessId,{granted,name:'  JOAO   FICTÍCIO ',phone:'(11) 99999-8888'})
+  assert.equal(duplicate.name.id,'customer-a');assert.equal(duplicate.phone.id,'customer-a')
+  const excluded=await readCustomerDuplicates(f.db,businessId,{granted,name:'João Fictício',excludeId:'customer-a'})
+  assert.equal(excluded.name,null)
+  await assert.rejects(readCustomerDuplicates(f.db,businessId,{granted:new Set(['clients.create']),name:'João Fictício'}),{status:403})
+  const noHistory=await readCustomers(f.db,businessId,{granted:new Set(['clients.view']),now})
+  assert.deepEqual(noHistory.summary.filters,{all:3})
+})

@@ -19,6 +19,10 @@ async function mount(t,path,{grants=capabilities,failOnce=false,failBootstrap=fa
     readModel:{version:1,surface,completeCollections:surface==='orders'?['orders']:surface==='new-order'?['products','clients']:surface==='products'?['products']:[],orderScope:surface==='orders'?'active':null,counters:{orders:0,comandas:0},operationalOrders:[],openTableTabIds:[]},
     ...(surface==='orders'?{orders:[]}:surface==='new-order'?{clients:[],products:[]}:surface==='products'?{products:[]}:{}),}
   }else if(url.pathname==='/api/reads/orders/history')data={orders:[order],summary:{all:200,finalized:200,cancelled:0,days:{'2026-10-15':200}},validRange:true,queryKey:'history',nextCursor:null}
+  else if(url.pathname==='/api/reads/customers')data={clients:[],summary:{count:201,filters:{all:201}},completeHistory:true,nextCursor:null}
+  else if(url.pathname==='/api/reads/finance/receivables')data={orders:[],entries:[],groups:[],summary:{today:{amount:4000,count:200},upcoming:{amount:0,count:0},overdue:{amount:0,count:0}},forecast:{days:[]},receivedToday:0,matchingCount:200,matchingGroupCount:100,nextCursor:null}
+  else if(url.pathname==='/api/reads/finance/movements')data={movements:[],totals:{entries:5000,exits:100,balance:4900},currentBalance:4900,financeSettings:null,summary:{count:201},nextCursor:null}
+  else if(url.pathname==='/api/reads/finance/overview')data={dashboard:{totals:{salesToday:2000,receivedToday:1000,receivables:500},analytics:{metrics:{sales:20000,orderCount:200,averageTicket:100},daily:[],topProducts:[],mealsSold:200,paymentMix:[]}}}
   else if(url.pathname==='/api/realtime/prepare')return{ok:false,status:404,json:async()=>({error:{code:'REALTIME_DISABLED',message:'disabled'}})}
   else if(url.pathname==='/api/orders/by-ids')data={orders:[order]}
   else if(url.pathname==='/api/reads/orders/active')data={orders:[]}
@@ -70,4 +74,14 @@ test('receiving from a scoped historical detail prepares the canonical order and
  assert.ok(buttonNamed(renderer.root,'Confirmar pagamento'))
  assert.ok(calls.some(path=>path.startsWith('/api/orders/by-ids?')))
  assert.equal(calls.includes('/api/orders'),false)
+})
+
+test('scoped customer and financial deep links show global server totals without loading integral orders or movements',async t=>{
+ for(const [path,expected,endpoint] of [['/clientes',/201 clientes/,'customers'],['/financeiro/a-receber',/200 pedido/,'finance/receivables'],['/financeiro/movimentacoes',/201 registro/,'finance/movements'],['/financeiro',/20\.000,00/,'finance/overview']])await t.test(path,async t=>{
+  const {renderer,calls}=await mount(t,path,{grants:[...capabilities,'finance.overview','finance.movements','finance.receivables']})
+  assert.match(nodeText(renderer.root),expected)
+  assert.ok(calls.some(p=>p.startsWith('/api/reads/'+endpoint)))
+  assert.equal(calls.includes('/api/orders'),false);assert.equal(calls.includes('/api/movements'),false)
+  assert.doesNotMatch(nodeText(renderer.root),/Não foi possível carregar|Carregando os dados/)
+ })
 })

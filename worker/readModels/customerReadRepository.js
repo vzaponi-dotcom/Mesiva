@@ -1,3 +1,4 @@
+import {findClientDuplicates} from '../../shared/clientDuplicates.js'
 import {apiError} from '../http.js'
 import {requireCapability} from '../access/authorization.js'
 import {projectOrderList} from '../access/projections.js'
@@ -18,7 +19,7 @@ export async function readCustomers(db,businessId,{granted,now=new Date(),...inp
   const selected=filterAndSortClients(clients,{search,sort,filter:complete?filter:'all',relationships:profiles})
   const queryKey=await sha256Hex(JSON.stringify([businessId,'clients',search,sort,filter,[...granted].sort()]))
   const {page,nextCursor}=rankPage(selected,{queryKey,cursor:input.cursor,limit:parseReadLimit(input.limit)})
-  return {clients:page.map(client=>({...client,profile:withoutOrders(profiles.get(client.id))})),summary:{count:selected.length},completeHistory:complete,completeWithinScope:false,nextCursor,queryKey}
+  return {clients:page.map(client=>({...client,profile:withoutOrders(profiles.get(client.id))})),summary:{count:selected.length,filters:Object.fromEntries((complete?['all','pending','inactive','empty']:['all']).map(filter=>[filter,filterAndSortClients(clients,{filter,relationships:profiles}).length]))},completeHistory:complete,completeWithinScope:false,nextCursor,queryKey}
 }
 export async function readCustomerRelationship(db,businessId,id,{granted,now=new Date(),...input}={}){
   requireCapability({granted},'clients.view')
@@ -38,4 +39,13 @@ export async function readCustomerRelationship(db,businessId,id,{granted,now=new
   const {page,nextCursor}=rankPage(selected,{queryKey,cursor:input.cursor,limit:parseReadLimit(input.limit)})
   const official=new Map(projectOrderList(await listOrdersByIds(db,businessId,page.map(o=>o.id)),granted).filter(order=>order.clientId===id&&eligible(order)).map(o=>[o.id,o]))
   return {client,profile:withoutOrders(profile),orders:page.map(o=>official.get(o.id)).filter(Boolean),summary:{count:selected.length},completeHistory:completeHistory(granted),completeWithinScope:false,nextCursor,queryKey}
+}
+
+export async function readCustomerDuplicates(db,businessId,{granted,name='',phone='',excludeId}={}){
+  requireCapability({granted},'clients.view')
+  name=readSearch(name);phone=readSearch(phone);excludeId=readSearch(excludeId)
+  // Names preserve the exact NFD/locale matching used by the current editor.
+  // This explicit preflight reads client identities, never order/item history.
+  const clients=(await db.prepare('SELECT id,name,phone,address FROM clients WHERE business_id=? ORDER BY name COLLATE NOCASE ASC').bind(businessId).all()).results.map(mapClientRow)
+  return findClientDuplicates(clients,{name,phone},excludeId || null)
 }

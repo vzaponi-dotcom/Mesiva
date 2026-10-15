@@ -1,4 +1,4 @@
-import {readCustomers,readCustomerRelationship} from './customerReadRepository.js'
+import {readCustomers,readCustomerRelationship,readCustomerDuplicates} from './customerReadRepository.js'
 import {readReceivables,readFinanceOverview,readFinanceMovements} from './financeReadRepository.js'
 import {readOrderHistory} from './orderHistoryRepository.js'
 import {json} from '../http.js'
@@ -18,6 +18,7 @@ export async function handleReadModelsApi(request,env,context,url){
   }
   const endpoints={
     '/api/reads/customers':readCustomers,
+    '/api/reads/customers/duplicates':readCustomerDuplicates,
     '/api/reads/finance/receivables':readReceivables,
     '/api/reads/finance/overview':readFinanceOverview,
     '/api/reads/finance/movements':readFinanceMovements,
@@ -25,7 +26,7 @@ export async function handleReadModelsApi(request,env,context,url){
   const relationship=/^\/api\/reads\/customers\/([^/]+)\/relationship$/.exec(url.pathname)
   const endpoint=Object.hasOwn(endpoints,url.pathname)?endpoints[url.pathname]:null
   if(endpoint || relationship){
-    const allowed=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','timing','groupKey','exactDateFilter','type','category','paymentMethod']
+    const allowed=['period','filter','search','startDate','endDate','cursor','limit','sort','mode','view','timing','groupKey','exactDateFilter','type','category','paymentMethod','name','phone','excludeId']
     const query=Object.fromEntries(allowed.filter(key=>url.searchParams.has(key)).map(key=>[key,url.searchParams.get(key)]))
     const options={...query,granted:context.granted}
     return json(endpoint?await endpoint(env.DB,context.businessId,options):await readCustomerRelationship(env.DB,context.businessId,decodeURIComponent(relationship[1]),options))
