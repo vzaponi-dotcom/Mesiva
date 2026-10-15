@@ -22,10 +22,8 @@ export function useRealtimeRuntime({accessContextId,enabled=false,api,visible,op
   useEffect(()=>{client.setActivity({visible:activityVisible,operational})},[activityVisible,client,operational])
   useEffect(()=>{
     const changed=()=>setPageVisible(globalThis.document?.visibilityState!=='hidden')
-    const focused=()=>{if(globalThis.document?.visibilityState!=='hidden')client.requestRefresh()}
     globalThis.document?.addEventListener?.('visibilitychange',changed)
-    globalThis.window?.addEventListener?.('focus',focused)
-    return()=>{globalThis.document?.removeEventListener?.('visibilitychange',changed);globalThis.window?.removeEventListener?.('focus',focused)}
+    return()=>{globalThis.document?.removeEventListener?.('visibilitychange',changed)}
   },[client])
   const subscribeInvalidations=useMemo(()=>fn=>client.subscribeInvalidations(event=>{
     if(owner.current===accessContextId && visibility.current)return fn(event)

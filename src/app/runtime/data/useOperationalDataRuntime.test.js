@@ -40,6 +40,7 @@ function createHarness({
   effectiveConfigVersion = null,
   accessContextId = null,
   realtime,
+  surface,
 } = {}) {
   let current
   const renders = []
@@ -52,6 +53,7 @@ function createHarness({
       effectiveConfigVersion,
       accessContextId,
       realtime,
+      surface,
       ...props,
     })
     renders.push(current)
@@ -681,4 +683,45 @@ test('action reads resolve up to 100 canonical orders in bounded batches and exp
   await act(async()=>{assert.equal(await h.getCurrent().refreshOrdersForAction(ids),true);assert.equal(h.getCurrent().getOfficialOrders().length,100)})
   assert.deepEqual(calls.map(ids=>ids.length),[99,1])
   assert.equal(await h.getCurrent().refreshOrdersForAction([...ids,'too-many']),false)
+})
+
+
+test('navigation cache restores each surface snapshot without reading again on return',async t=>{
+ const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);const data=scoped(surface,['orders'],{orders:[{id:surface==='orders'?'kitchen-active':'tab-order'}]});data.readModel.orderScope=surface==='orders'?'active':'open-tabs';return data}}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ await act(async()=>h.update({surface:'comandas'}))
+ assert.equal(h.getCurrent().orders[0].id,'tab-order')
+ await act(async()=>h.update({surface:'orders'}))
+ assert.deepEqual(calls,['orders','comandas'])
+ assert.equal(h.getCurrent().orders[0].id,'kitchen-active')
+ assert.equal(h.getCurrent().surfaceState,'ready')
+})
+
+test('navigation cache never restores a snapshot after local data changed or the company changed',async t=>{
+ const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);return scoped(surface,[])}}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ await act(async()=>h.update({surface:'clients'}))
+ await act(async()=>h.getCurrent().applyOfficialEffects({client:{id:'new-client'}}))
+ await act(async()=>h.update({surface:'orders'}))
+ assert.deepEqual(calls,['orders','clients','orders'])
+ await act(async()=>h.update({accessContextId:'B'}))
+ assert.equal(h.getCurrent().bootstrapState,'idle')
+ assert.deepEqual(h.getCurrent().orders,[])
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ assert.equal(calls.length,4)
+})
+
+
+test('a newer official snapshot invalidates conflicting cached orders before returning to the kitchen',async t=>{
+ let paid=false,reads=0
+ const h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{
+  reads++;return scoped(surface,['orders'],{orders:[{id:'shared-order',status:'Em preparo',paymentStatus:paid?'Pago':'Pendente'}]})
+ }}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ paid=true
+ await act(async()=>h.update({surface:'comandas'}))
+ assert.equal(h.getCurrent().getOfficialOrders()[0].paymentStatus,'Pago')
+ await act(async()=>h.update({surface:'orders'}))
+ assert.equal(h.getCurrent().getOfficialOrders()[0].paymentStatus,'Pago')
+ assert.equal(reads,3)
 })

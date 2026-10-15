@@ -141,3 +141,19 @@ test('a failed surface load keeps navigation available and retries without retur
  assert.equal(renderer.root.findByProps({className:'app-shell'}),shell)
  assert.match(nodeText(renderer.root),/201 clientes/)
 })
+
+
+test('returning to visited screens reuses snapshots and queries without another loading screen or read',async t=>{
+ const {renderer,router,calls}=await mount(t,'/pedidos',{grants:[...capabilities,'finance.overview','finance.movements','finance.receivables']})
+ // Finish the disabled-socket fixture's initial reconciliation before measuring navigation.
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,300))})
+ for(const path of ['/clientes','/financeiro','/financeiro/a-receber','/financeiro/movimentacoes','/pedidos/historico','/pedidos'])await act(async()=>{await router.navigate(path)})
+ const dataReads=()=>calls.filter(path=>path.startsWith('/api/bootstrap') || path.startsWith('/api/reads/'))
+ const before=dataReads().length
+ for(const path of ['/clientes','/financeiro','/financeiro/a-receber','/financeiro/movimentacoes','/pedidos/historico','/pedidos']){
+  await act(async()=>{await router.navigate(path)})
+  assert.equal(renderer.root.findAllByProps({'aria-label':'Carregando Mesiva'}).length,0)
+  assert.equal(renderer.root.findAll(node=>node.props.className?.startsWith?.('page-skeleton ')).length,0)
+ }
+ assert.equal(dataReads().length,before,JSON.stringify(dataReads().slice(before)))
+})

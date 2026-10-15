@@ -1,3 +1,4 @@
+import {getScopedReadCache} from '../../../infrastructure/realtime/scopedReadCache.js'
 import {getScopedBootstrapCollections,getScopedOperationalState} from '../../../../shared/scopedReads.js'
 import {createScopedReadsApi} from '../../../infrastructure/api/scopedReadsApi.js'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +14,7 @@ const GUARD_COLLECTIONS=[...DATA_COLLECTIONS,'operationalCounters']
 const scopedApi=createScopedReadsApi()
 const minimalOrder=order=>({id:order.id,status:order.status,createdAt:order.createdAt,scheduledFor:order.scheduledFor ?? null})
 const activeOrder=order=>['Em preparo','Agendado'].includes(order.status)
+const SNAPSHOT_TOPICS=['orders','tables','reservations','clients','catalog','finance','settings']
 const PAYMENT_COLLECTIONS = ['orders', 'movements', 'tableTabs', 'tables']
 
 const defaultApi = { getActiveOrders:scopedApi.getActiveOrders, getBootstrap, getOrders: ordersApi.getOrders, getOrdersByIds: ordersApi.getOrdersByIds }
@@ -200,7 +202,7 @@ export function useOperationalDataRuntime({
     }
   }, [accessContextId, commitTables,commitOrders, renderGuard])
 
-  const refreshBootstrap = useCallback(({ background = false } = {}) => {
+  const refreshBootstrap = useCallback(({ background = false, navigation = false } = {}) => {
     if(bootstrapSyncInFlightRef.current && bootstrapOwnerRef.current?.surface===surfaceRef.current)return bootstrapSyncInFlightRef.current
     bootstrapOwnerRef.current?.controller?.abort()
     const owner={surface:surfaceRef.current,controller:typeof AbortController==='function'?new AbortController():null}
@@ -208,7 +210,16 @@ export function useOperationalDataRuntime({
     if(owner.surface!==undefined&&appliedSurfaceRef.current!==owner.surface)setSurfaceState({surface:owner.surface,status:'loading'})
     const guard = syncGuardRef.current
     const readAccessContext = accessContextRef.current
+    const cache=getScopedReadCache(guard,readAccessContext),cacheKey='snapshot:'+owner.surface
+    const cacheVersion=cache?.version,cacheToken=guard.beginQueryRead(GUARD_COLLECTIONS)
     const token = guard.beginRead(GUARD_COLLECTIONS)
+    const cached=navigation&&modeRef.current?cache?.get(cacheKey):null
+    if(cached){
+      const receipt=applyBootstrapCollections(cached,token)
+      appliedSurfaceRef.current=owner.surface;setSurfaceState({surface:owner.surface,status:'ready'})
+      bootstrapOwnerRef.current=null;bootstrapSyncInFlightRef.current=false
+      return Promise.resolve(receipt)
+    }
     if (!background) setBootstrapState('loading')
 
     const read = async () => {
@@ -218,6 +229,8 @@ export function useOperationalDataRuntime({
         if (guard !== syncGuardRef.current || readAccessContext !== accessContextRef.current || owner!==bootstrapOwnerRef.current || owner.surface!==surfaceRef.current) return false
         if(data.readModel && owner.surface!==undefined && data.readModel.surface!==owner.surface)throw new TypeError('Unexpected bootstrap surface')
         const receipt = applyBootstrapCollections(data, token)
+        if(modeRef.current && receipt.metadataApplied && receipt.collectionsApplied.length===receipt.expectedCollections.length)
+          cache?.set(cacheKey,data,{topics:SNAPSHOT_TOPICS,collections:GUARD_COLLECTIONS,token:cacheToken,version:cacheVersion})
         appliedSurfaceRef.current=owner.surface;setSurfaceState({surface:owner.surface,status:'ready'})
         if(bootstrapStateRef.current!=='ready')setBootstrapState('ready')
         return receipt
@@ -248,6 +261,7 @@ export function useOperationalDataRuntime({
       try {
         const data = await (modeRef.current?apiRef.current.getActiveOrders():apiRef.current.getOrders())
         if (guard !== syncGuardRef.current || readAccessContext !== accessContextRef.current || readSurface!==surfaceRef.current || !Array.isArray(data?.orders) || !guard.canApply(token, 'orders')) return false
+        getScopedReadCache(guard,readAccessContext)?.invalidate(['orders'])
         officialRevisionRef.current += 1
         commitOrders(data.orders)
         if(modeRef.current&&guard.canApply(token,'operationalCounters'))setOperationalOrders(data.orders.filter(activeOrder).map(minimalOrder))
@@ -275,6 +289,7 @@ export function useOperationalDataRuntime({
         const data=await apiRef.current.getOrdersByIds(unique)
         if(guard!==syncGuardRef.current || readAccessContext!==accessContextRef.current || !guard.canApply(token,'orders'))return {applied:false,retryMs:250}
         if(!Array.isArray(data?.orders) || data.orders.some(order=>!unique.includes(order?.id)))return {applied:false,retryMs:30_000}
+        getScopedReadCache(guard,readAccessContext)?.invalidate(['orders'])
         officialRevisionRef.current+=1
         commitOrders(current=>upsertManyInCreatedOrder(current,data.orders))
         if(modeRef.current&&guard.canApply(token,'operationalCounters'))setOperationalOrders(current=>upsertManyById(current,data.orders.map(minimalOrder)).filter(activeOrder))
@@ -308,6 +323,7 @@ export function useOperationalDataRuntime({
   },[readOrdersByIds])
 
   const resetOperationalData = useCallback(() => {
+    getScopedReadCache(syncGuardRef.current,stateAccessContextRef.current)?.invalidate()
     bootstrapOwnerRef.current?.controller?.abort();bootstrapOwnerRef.current=null
     appliedSurfaceRef.current=null;setSurfaceState({surface:null,status:'idle'})
     modeRef.current=false;setReadModelEnabled(false);setOperationalOrders([]);setOpenTableTabIds(null);setOperationalCounters({orders:0,comandas:0});setReadModelRevision(0)
@@ -350,7 +366,7 @@ export function useOperationalDataRuntime({
     })
   }, [bootstrapState, ordersSyncEnabled, realtime, refreshOrders])
 
-  useEffect(()=>{if(surface!==undefined&&bootstrapStateRef.current!=='idle')void refreshBootstrapSilently()},[surface,refreshBootstrapSilently])
+  useLayoutEffect(()=>{if(surface!==undefined&&bootstrapStateRef.current!=='idle')void refreshBootstrap({background:true,navigation:true})},[surface,refreshBootstrap])
 
   const subscribeRealtime=realtime?.subscribeInvalidations
   const realtimeOrdersEnabled=globalSyncEnabled || ordersSyncEnabled
@@ -396,6 +412,8 @@ export function useOperationalDataRuntime({
     const unsubscribe=subscribeRealtime(event=>{
       if(!current())return
       const topics=event.topics || []
+      if(event.requiresFullRefresh)getScopedReadCache(guard,context)?.invalidate()
+      else if(topics.some(topic=>SNAPSHOT_TOPICS.includes(topic)))getScopedReadCache(guard,context)?.invalidate(topics)
       const other=globalSyncEnabled && topics.some(topic=>['tables','reservations','clients','catalog','finance','settings'].includes(topic))
       if(!other && !topics.includes('orders'))return
       merge({full:other || event.requiresFullRefresh || !event.orderIds?.length,ids:event.orderIds || []})

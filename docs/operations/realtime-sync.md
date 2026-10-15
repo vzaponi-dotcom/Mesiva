@@ -28,6 +28,14 @@ A abertura do Mesiva permanece reservada à verificação de sessão e ao bootst
 
 O skeleton compartilhado acompanha os estados das requisições existentes: não executa HTTP, polling ou timers de dados, nem impõe espera artificial. Clientes, histórico e financeiro também o utilizam no primeiro carregamento das consultas específicas. Atualizações em segundo plano preservam dados já disponíveis para a mesma consulta/contexto. O shimmer usa os tokens do tema e respeita `prefers-reduced-motion`; a mudança de sessão/empresa continua invalidando as projeções anteriores.
 
+## Cache na navegação
+
+No modo scoped, snapshots e consultas já concluídas ficam somente na memória do contexto autenticado, por até cinco minutos desde a resposta. Voltar à mesma tela/consulta reutiliza seus dados e páginas carregadas sem nova leitura HTTP enquanto a entrada continua válida. O limite compartilhado é de 20 resultados; resultados com mais de 500 itens em uma coleção não são retidos. Recarregar o navegador exige novo carregamento; a primeira visita continua consultando o servidor.
+
+Eventos relevantes, reconciliação, mutations locais, leituras canônicas de pedidos e respostas mais recentes conflitantes invalidam entradas antigas. Mudança de sessão/empresa/capabilities ou erro de acesso impede reaproveitar dados do contexto anterior. Cache não autoriza ações: valores, elegibilidade e acesso continuam revalidados pelos serviços oficiais. Impressão e renovação de acesso não usam esse cache.
+
+Um simples foco na janela, com a aba continuamente visível, não força uma recarga geral. Ocultar e retornar, recuperar conexão, reconciliação de 300s e fallback de 30s preservam a recuperação existente. O cache reduz releituras na navegação; não elimina os temporizadores operacionais da tabela abaixo nem garante o orçamento mensal.
+
 ## Leituras e temporizadores
 
 | Rotina | Canal saudável | Recuperação/compatibilidade |

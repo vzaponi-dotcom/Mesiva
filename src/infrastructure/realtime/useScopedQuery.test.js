@@ -67,3 +67,73 @@ test('transient failure retries only after 30 seconds and disabling clears priva
   await act(async()=>h.update({enabled:false}));assert.equal(h.current.data,null)
   await act(async()=>realtime.emit({topics:['orders']}));assert.equal(reads,2)
 })
+
+
+test('scoped query cache restores loaded pages after leaving without another request',async t=>{
+ let reads=0
+ const h=await mount(t,options(async({cursor})=>{reads++;return {orders:[{id:cursor?'second':'first'}],summary:{all:200},nextCursor:cursor?null:'next'}}))
+ await act(async()=>h.current.loadNext())
+ await act(async()=>h.update({enabled:false}))
+ assert.equal(h.current.data,null)
+ await act(async()=>h.update({enabled:true}))
+ assert.equal(reads,2)
+ assert.deepEqual(h.current.data.orders.map(row=>row.id),['first','second'])
+ assert.equal(h.current.data.summary.all,200)
+})
+
+test('scoped query cache keeps filters separate and cannot cross an access generation',async t=>{
+ let reads=0
+ const h=await mount(t,options(async()=>({orders:[{id:String(++reads)}]})))
+ await act(async()=>h.update({queryKey:'other'}))
+ await act(async()=>h.update({queryKey:'all'}))
+ assert.equal(reads,2)
+ assert.equal(h.current.data.orders[0].id,'1')
+ await act(async()=>h.update({accessContextId:'B'}))
+ assert.equal(reads,3)
+ assert.equal(h.current.data.orders[0].id,'3')
+})
+
+test('scoped query cache rejects data changed by an official mutation while the screen is away',async t=>{
+ let reads=0
+ const guard=createCollectionSyncGuard(['orders']),h=await mount(t,{...options(async()=>({orders:[{id:String(++reads)}]})),guard})
+ await act(async()=>h.update({enabled:false}))
+ guard.markMutation(['orders'])
+ await act(async()=>h.update({enabled:true}))
+ assert.equal(reads,2)
+ assert.equal(h.current.data.orders[0].id,'2')
+})
+
+test('scoped query cache revalidates after five minutes instead of keeping data indefinitely',async t=>{
+ let now=0,reads=0;t.mock.method(Date,'now',()=>now)
+ const h=await mount(t,options(async()=>({orders:[{id:String(++reads)}]})))
+ await act(async()=>h.update({enabled:false}));now=299999
+ await act(async()=>h.update({enabled:true}));assert.equal(reads,1)
+ await act(async()=>h.update({enabled:false}));now=300000
+ await act(async()=>h.update({enabled:true}));assert.equal(reads,2)
+})
+
+
+test('access denial clears cached queries instead of making another private screen appear from memory',async t=>{
+ let reads=0,denials=0
+ const load=async()=>{if(++reads===3)throw Object.assign(new Error('denied'),{status:403});return{orders:[{id:String(reads)}]}}
+ const h=await mount(t,{...options(load),onUnauthorized:()=>denials++})
+ await act(async()=>h.update({queryKey:'second'}))
+ await act(async()=>h.update({queryKey:'denied'}))
+ assert.equal(h.current.data,null);assert.equal(denials,1)
+ await act(async()=>h.update({queryKey:'all'}))
+ assert.equal(reads,4);assert.equal(h.current.data.orders[0].id,'4')
+})
+
+test('inactive screen cache is invalidated by the operational realtime owner before that screen mounts again',async t=>{
+ const {useOperationalDataRuntime}=await import('../../app/runtime/data/useOperationalDataRuntime.js')
+ const hook=await loadHook(),realtime=realtimeFixture();let runtime,current,renderer,reads=0
+ function Screen(){current=hook({...options(async()=>({orders:[{id:String(++reads)}]})),guard:runtime.getSyncGuard(),realtime});return null}
+ function Harness({visible=true}){runtime=useOperationalDataRuntime({accessContextId:'A',globalSyncEnabled:true,realtime,api:{getBootstrap:async()=>({orders:[]})}});return visible?React.createElement(Screen):null}
+ await act(async()=>{renderer=create(React.createElement(Harness))})
+ t.after(()=>renderer.unmount())
+ await act(async()=>runtime.refreshBootstrap())
+ await act(async()=>renderer.update(React.createElement(Harness,{visible:false})))
+ await act(async()=>realtime.emit({topics:['orders'],orderIds:[],requiresFullRefresh:true}))
+ await act(async()=>renderer.update(React.createElement(Harness)))
+ assert.equal(reads,2);assert.equal(current.data.orders[0].id,'2')
+})

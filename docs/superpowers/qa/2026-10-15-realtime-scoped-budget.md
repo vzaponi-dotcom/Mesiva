@@ -57,3 +57,14 @@ Validação local final:3.884testes aprovados, zero falhas; arquitetura/lint/bui
 O teste de navegação com bootstrap pendente reproduziu a desmontagem do shell antes da correção. Após o ajuste, o mesmo shell permanece montado, o conteúdo aguarda o snapshot, e a navegação executa um bootstrap e uma consulta dedicada de clientes, sem chamadas adicionais do skeleton. Falha de superfície e retry mantêm a navegação; verificação de sessão/bootstrap inicial continuam cobertos pelos testes de AppRoot. Suíte local: 3.886 testes aprovados, arquitetura/lint/build aprovados, com os avisos preexistentes. A revisão estática do ajuste não encontrou pendências. Conferência visual e CI/staging continuam vinculados ao SHA da publicação.
 
 Prévia visual com os componentes reais de shell/skeleton, sem API/banco: desktop 1440×960 e celular 390×844, temas claro/escuro, sem overflow horizontal; `prefers-reduced-motion` confirmou animação `none` e shimmer oculto. Um conflito entre a classe de variante e a grade interna foi identificado e corrigido na conferência visual. A prévia e seus processos temporários foram removidos ao concluir.
+
+
+## Cache contextual de navegação
+
+A extensão reutiliza somente respostas válidas do contexto atual em memória, com TTL de cinco minutos, 20 entradas e limite de 500 itens por coleção. Não adiciona dependências, endpoints, armazenamento persistente ou timers de dados. O teste integrado percorre seis superfícies e retorna a todas sem novas chamadas de bootstrap/reads no segundo percurso; chamadas temporais de impressão são contabilizadas separadamente.
+
+Os testes cobrem páginas acumuladas, filtros distintos, expiração, troca de contexto, erro de acesso, mutation e evento enquanto a tela está desmontada, limite de memória e resultado desconhecido. Duas regressões identificadas na revisão foram reproduzidas e corrigidas: um snapshot antigo não pode substituir um pedido mais recente recebido em outra tela; uma resposta grande demais para retenção também invalida resultados conflitantes. Foco da janela visível não recarrega o canal; ocultar e retornar continua reconciliando.
+
+A medição acima é de requisições no teste integrado, não de rows_read de produção. O cache não altera a projeção financeira registrada anteriormente nem preenche dimensões desconhecidas; a medição autenticada em staging e o CI devem corresponder ao SHA publicado.
+
+Validação local final desta extensão: 3.901 testes aprovados, zero falhas/cancelamentos; arquitetura, lint e build aprovados. Permanecem avisos de lint e tamanho de chunk. Revisão final sem pendências após as duas correções de conflito. CI e staging desta extensão serão registrados no PR para o SHA exato.
