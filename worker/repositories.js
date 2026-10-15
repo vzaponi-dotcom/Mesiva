@@ -151,7 +151,7 @@ export const loadBootstrap = async (db, businessId, effectiveBusinessConfig, gra
   const clientsResult = await db.prepare(`SELECT id, name, phone, address FROM clients WHERE business_id = ? ORDER BY name COLLATE NOCASE ASC`).bind(businessId).all()
   const productsResult = await db.prepare(`SELECT ${productSelectFields} FROM products WHERE business_id = ? AND active = 1 ORDER BY name COLLATE NOCASE ASC`).bind(businessId).all()
   const ordersResult = await db.prepare(`${orderSelect} WHERE o.business_id = ? ORDER BY o.created_at DESC`).bind(businessId).all()
-  const itemsResult = await db.prepare(`${itemSelect} WHERE business_id = ? ORDER BY created_at ASC`).bind(businessId).all()
+  const itemsResult = await db.prepare(`${itemSelect} WHERE business_id = ? ORDER BY created_at ASC, rowid ASC`).bind(businessId).all()
   const tableTabsResult = await db.prepare(`SELECT id, table_id, table_identifier, tab_number, status, opened_at, closed_at FROM table_tabs WHERE business_id = ? ORDER BY opened_at DESC`).bind(businessId).all()
   const tables = await listTables(db, businessId)
   const movementsResult = await db.prepare(`SELECT m.id, m.type, m.category, m.description, m.value_cents, m.source, m.order_id, m.payment_id,
@@ -319,7 +319,7 @@ const TABLE_RESERVATION_DURATION_MINUTES = 120
 export const loadOrderById = async (db, businessId, id) => {
   const row = await db.prepare(`${orderSelect} WHERE o.id = ? AND o.business_id = ? LIMIT 1`).bind(id, businessId).first()
   if (!row) return null
-  const itemsResult = await db.prepare(`${itemSelect} WHERE order_id = ? AND business_id = ? ORDER BY created_at ASC`).bind(id, businessId).all()
+  const itemsResult = await db.prepare(`${itemSelect} WHERE order_id = ? AND business_id = ? ORDER BY created_at ASC, rowid ASC`).bind(id, businessId).all()
   return mapOrderRow(row, rows(itemsResult).map(mapOrderItemRow))
 }
 

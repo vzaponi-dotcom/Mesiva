@@ -18,6 +18,8 @@ test('order history candidate can deploy manually to staging without admitting o
   assert.equal(allowed('codex/printing-background-self-recovery', 'push'), false)
   assert.equal(allowed('codex/administracao-empresas', 'workflow_dispatch'), true)
   assert.equal(allowed('codex/administracao-empresas', 'push'), false)
+  assert.equal(allowed('codex/operational-read-budget', 'workflow_dispatch'), true)
+  assert.equal(allowed('codex/operational-read-budget', 'push'), false)
   assert.equal(allowed('codex/another-unapproved-candidate', 'workflow_dispatch'), false)
   assert.equal(allowed('feature/unapproved-candidate', 'workflow_dispatch'), false)
   assert.equal(allowed('master', 'push'), true)

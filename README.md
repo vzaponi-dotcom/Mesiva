@@ -184,6 +184,8 @@ Gates D1 usados no CI:
 ```bash
 node scripts/infra/spec-b-d1-gate.mjs
 node scripts/infra/operation-profile-d1-gate.mjs
+node scripts/infra/print-recovery-d1-benchmark.mjs
+node scripts/infra/operational-read-d1-benchmark.mjs
 ```
 
 A aprovação completa do CI é necessária para integração/publicação. Informe falhas, travamentos ou limitações de verificações locais; não substitua testes por uma declaração de sucesso. Mudanças somente de documentação requerem conferir links, comandos e coerência, sem repetir a suíte da aplicação desnecessariamente.
@@ -224,6 +226,7 @@ Leia [o runbook de publicação e migrations](docs/release-and-migration-runbook
 - [Publicação, migrations e rollback](docs/release-and-migration-runbook.md)
 - [Produção multiempresa e administração corrente](docs/operations/multi-company-production.md)
 - [Impressão Windows/QZ e recuperação operacional](docs/operations/windows-qz-tray-printing.md)
+- [Orçamento de leituras operacionais D1](docs/operations/operational-data-read-budget.md)
 - [Políticas e configurações Spec B](docs/operations/spec-b-settings.md)
 
 Documentos em `docs/superpowers/` e registros datados em `docs/operations/` preservam decisões e evidências históricas. Para a operação atual, confira também o código, os workflows e os runbooks correntes.
