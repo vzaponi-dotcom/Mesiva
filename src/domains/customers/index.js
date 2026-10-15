@@ -10,5 +10,3 @@ export {
 } from './ui/customerSurfaces.js'
 
 export { createCustomersApi } from './infrastructure/customersApi.js'
-
-export {useCustomerReadModel} from './application/useCustomerReadModel.js'

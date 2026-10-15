@@ -41,3 +41,16 @@ test('dashboard renders full server metrics without deriving totals from an empt
  const screen=await renderWithNavigation(h,Dashboard,{orders:[],movements:[],currency,queryState:{period:'30d',valuesVisible:true},onQueryChange:()=>{},readContext:{enabled:true,api,accessContextId:'A'}})
  assert.match(nodeText(screen.root),/R\$ 2000.00/);assert.match(nodeText(screen.root),/R\$ 20000.00/)
 })
+
+test('transient selection revalidation preserves selected orders without claiming session revocation',async t=>{
+ const h=await workspaceHarness(t),{default:Receivables}=await h.load('/src/domains/finance/ui/Receivables.jsx'),listeners=new Set(),authErrors=[],readErrors=[]
+ const realtime={subscribeInvalidations:fn=>{listeners.add(fn);return()=>listeners.delete(fn)}}
+ const api={getReceivables:async q=>({orders:q.groupKey?orders.slice(0,2):[],entries:q.groupKey?orders.slice(0,2).map(entry):[],group:q.groupKey?group:null,groups:q.groupKey?[]:[group],summary,forecast:{days:[]},receivedToday:100,matchingCount:200,matchingGroupCount:1,nextCursor:null})}
+ const readContext={enabled:true,api,realtime,accessContextId:'A',onUnauthorized:error=>authErrors.push(error),onReadError:error=>readErrors.push(error),loadOrdersByIds:async()=>{throw Object.assign(new Error('Temporary failure'),{status:503})}}
+ function Controlled(){const[q,setQ]=React.useState({search:'',displayMode:'client',activeView:'pending',timingFilter:'all',sortMode:'urgency',selectedEntryKey:'client:c'});return React.createElement(Receivables,{orders:[],currency,readContext,queryState:q,onQueryChange:patch=>setQ(v=>({...v,...patch})),orderPresentation,orderRules})}
+ const screen=await renderWithNavigation(h,Controlled)
+ await act(async()=>screen.root.findByProps({className:'receivables-client-panel'}).findAllByType('input')[0].props.onChange())
+ await act(async()=>Promise.all([...listeners].map(fn=>fn({topics:['orders']}))))
+ assert.equal(authErrors.length,0);assert.equal(readErrors.length,1)
+ assert.match(nodeText(screen.root.findByProps({className:'receivables-client-panel-footer'})),/1 pedido selecionado/)
+})

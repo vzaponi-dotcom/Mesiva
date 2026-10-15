@@ -85,7 +85,7 @@ No mesmo cenário, o ajuste do índice de autoria reduziu a requisição por ID 
 
 Consultas SELECT guardadas compartilham o mesmo predicado de autorização em seu batch transacional, sem inserir/remover assertions auxiliares. Mutations, SQL não classificado e batches mistos mantêm o CHECK com rollback; a validação final da sessão permanece. Escritas HTTP medidas: bootstrap53→2, leitura por ID8→2, listagem de impressão20→11 e resumo8→5. Esses números incluem autenticação e operações auxiliares.
 
-**O orçamento ainda não passou.** O modelo conservador padrão aponta 24,326 bilhões de leituras no normal e 39,489 bilhões no degradado, antes dos demais serviços da conta. Escritas caíram para26,986 e17,710 milhões, respectivamente. O bootstrap completo ainda lê195.110 linhas nesse histórico; separar carga operacional e histórico é necessário antes de afirmar escala dentro da franquia. CPU, duração e baseline também permanecem pendentes. Manter produção com `REALTIME_ENABLED=false`; não tratar o gate funcional verde como aprovação financeira.
+A medição anterior à integração scoped projetava24,326bilhões de leituras no normal e39,489bilhões no degradado, com bootstrap integral. Foi substituída pelo [registro de validação da extensão](../superpowers/qa/2026-10-15-realtime-scoped-budget.md):18,960bilhões e13,940bilhões respectivamente para o mix declarado, antes do baseline dos demais serviços. **O orçamento agregado ainda não foi aprovado:** CPU, duração, armazenamento e baseline da conta permanecem pendentes. Produção conserva ambas as flagsfalse; gate funcional verde não é aprovação financeira.
 
 O CI executa o runtime real uma vez no job `validate`, após os dry-runs com Wrangler fixado; os oito shards executam os testes unitários do validador. O artifact `realtime-runtime-report` contém medidas/invariantes sanitizadas e marca dimensões desconhecidas, sem cookies, tickets ou tokens.
 
@@ -112,7 +112,7 @@ A migration0047 cria uma projeção derivada apenas de chaves de pendências (`u
 
 No gate D1 local com cinco clientes e10mil vendas históricas pagas, recebíveis com os mesmos candidatos passaram de1120para1141leituras, com duas escritas auxiliares HTTP. Dashboard com histórico retido fora do período passou de2136para2141leituras; com10mil pedidos dentro dos30dias, leu132138linhas para agregados e gráficos completos. Esse custo do período é real e deve entrar no dimensionamento. Movimentos sem registros leram616linhas. Grupos de recibo permanecem completos mesmo com limite1; o limite conta grupos, incluindo suas partes relacionadas na resposta.
 
-Essas medidas validam o backend da extensão. A integração dos owners/telas, orçamento com mix real, CPU/duração/baseline, revisão e homologação continuam pendentes. As flags permanecem desativadas em produção; não há nova publicação nesta etapa.
+Essas medidas validam o backend da extensão. A integração dos owners/telas foi concluída nas seções seguintes; orçamento agregado, CI e homologação permanecem gates de entrega. As flags de produção continuam desativadas até o aceite do SHA e aprovação financeira.
 
 
 O runtime reconhece `completeCollections` e substitui somente as coleções declaradas pelo snapshot da superfície atual. Uma resposta atrasada de outra superfície/empresa é descartada; loading com erro permite nova tentativa. O histórico já usa seu owner de consulta paginada no App. As demais telas serão migradas antes de ativar a flag scoped.

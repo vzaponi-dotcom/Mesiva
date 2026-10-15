@@ -113,7 +113,7 @@ function Receivables({
   const reads=useFinanceReadModel({...readContext,surface:'receivables',queryState,quickOpen:quickPaymentOpen,quickSearch})
   const groupPage=reads.group.data
   const scopedSelection=useScopedOrderSelection({scopeKey:JSON.stringify([readContext?.accessContextId,scoped?selectedEntryKey:null]),refreshKey:scoped?groupPage:null,
-    loadOrdersByIds:scoped?readContext.loadOrdersByIds:undefined,onError:readContext?.onUnauthorized,
+    loadOrdersByIds:scoped?readContext.loadOrdersByIds:undefined,onError:error=>{if(error?.status===401||error?.status===403||error?.code==='SESSION_CONTEXT_CHANGED')readContext?.onUnauthorized?.(error);else readContext?.onReadError?.(error)},
     isEligible:order=>buildPendingReceivableEntries([order],today,orderRules).some(entry=>entry.kind==='order')&&(!groupPage?.group?.clientId||order.clientId===groupPage.group.clientId)})
   const clientSelection=scoped?{selectedOrderIds:scopedSelection.ids,selectedCount:scopedSelection.ids.length,activeGroupKey:selectedEntryKey,selectionLimit:100,selectionLimitReached:scopedSelection.ids.length>=100,
     clear:scopedSelection.clear,deselectAll:scopedSelection.clear,toggleOrder:id=>scopedSelection.toggle(groupPage?.orders?.find(order=>order.id===id)),

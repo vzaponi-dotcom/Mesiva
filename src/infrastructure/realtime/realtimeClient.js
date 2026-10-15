@@ -1,7 +1,7 @@
 import { parseRealtimeMessage, REALTIME_PROTOCOL, REALTIME_TOPICS, REALTIME_MAX_IDS } from '../../../shared/realtimeProtocol.js'
 const defaultCreateSocket=(url,protocols)=>new WebSocket(url,protocols)
 const defaultClock={now:()=>Date.now(),setTimeout:(fn,ms)=>globalThis.setTimeout(fn,ms),clearTimeout:id=>globalThis.clearTimeout(id)}
-const permanentAuth=error=>[401,403,409].includes(error?.status)
+const permanentAuth=error=>[401,403].includes(error?.status)||error?.code==='SESSION_CONTEXT_CHANGED'
 export function createRealtimeClient({api,createSocket=defaultCreateSocket,clock=defaultClock,random=Math.random,onUnauthorized=()=>{}}) {
   const consumers=new Set(),states=new Set(),timers=new Map()
   let state='stopped',running=false,generation=0,epoch=0,socket=null,connectionId=null,controller=null,retries=0,disabled=false

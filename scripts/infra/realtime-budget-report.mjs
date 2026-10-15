@@ -6,10 +6,14 @@ import {fileURLToPath} from 'node:url'
 export const BUDGET_LIMITS=Object.freeze({rowsRead:25e9,rowsWritten:50e6,workerRequests:10e6,workerCpuMs:30e6,durableRequests:1e6,durableDurationGbS:400_000,durableRowsRead:25e9,durableRowsWritten:50e6,d1StorageGb:5,durableStorageGb:5,r2StorageGb:10,r2ClassA:1e6,r2ClassB:10e6,logs:20e6})
 const finite=value=>typeof value==='number' && Number.isFinite(value) && value>=0
 export function buildMonthlyWorkload(input={}) {
-  const w={devices:5,tvDevices:1,printerDevices:1,controlDevices:1,hoursPerDay:12,days:31,changesPerDay:5000,connections:5000,...input}
-  for(const [key,value] of Object.entries(w))assert.ok(finite(value),`Invalid workload ${key}`)
+  const w={devices:5,tvDevices:1,printerDevices:1,controlDevices:1,hoursPerDay:12,days:31,changesPerDay:5000,connections:5000,historyPagesPerDay:20,historySearchesPerDay:10,pointDetailsPerDay:50,customerChecksPerDay:10,administrativeChangesPerDay:20,...input}
+  for(const [key,value] of Object.entries(w))if(key!=='surfaceMix')assert.ok(finite(value),`Invalid workload ${key}`)
   assert.ok(Number.isInteger(w.devices) && w.devices>0 && w.tvDevices<w.devices && w.printerDevices<=w.devices-w.tvDevices && w.controlDevices<=w.devices-w.tvDevices,'Invalid device mix')
   const humans=w.devices-w.tvDevices,seconds=w.hoursPerDay*3600*w.days,changes=w.changesPerDay*w.days
+  const surfaces=['orders','clients','receivables','finance','dashboard','history','new-order','tables','comandas','kitchen-tv-control','print-queue','shell']
+  const surfaceMix=w.surfaceMix ?? {orders:humans}
+  assert.ok(surfaceMix&&typeof surfaceMix==='object'&&!Array.isArray(surfaceMix)&&Object.entries(surfaceMix).every(([key,value])=>surfaces.includes(key)&&finite(value))&&Math.abs(Object.values(surfaceMix).reduce((sum,n)=>sum+n,0)-humans)<1e-9,'Invalid surface mix')
+  w.surfaceMix=surfaceMix
   const humanConnections=Math.ceil(w.connections*humans/w.devices),tvConnections=w.connections-humanConnections
   // Explicit workload: 10% order creates, 10% finalizations, 10% payments,
   // 70% printing transitions. These are sizing assumptions, not observed sales.
@@ -20,14 +24,23 @@ export function buildMonthlyWorkload(input={}) {
   const manager=seconds*(w.printerDevices/5+(humans-w.printerDevices)/30)
   const normalManager=manager+changes*.8*humans+humanConnections
   const degradedManager=manager+humanConnections
+  const surfaceQueries=(interval,changed)=>{
+    const n=surface=>Number(surfaceMix[surface] || 0)
+    const reads=surface=>Math.ceil(seconds*n(surface)/interval)+Math.ceil(humanConnections*n(surface)/Math.max(1,humans))+(changed?(shared.orderCreate+shared.orderFinalize+shared.payment+w.administrativeChangesPerDay*w.days)*n(surface):0)
+    return {kitchenSummary:reads('orders'),customersPage:reads('clients'),customerRelationship:reads('clients'),
+      receivablesGroups:reads('receivables'),receivablesGroupOrders:reads('receivables'),receivablesQuick:reads('receivables'),
+      financeMovements:reads('finance'),receivablesRefunds:reads('finance'),financeOverview:reads('dashboard'),
+      historyPage:reads('history')+w.historyPagesPerDay*w.days,historySearch:w.historySearchesPerDay*w.days,customerDuplicates:w.customerChecksPerDay*w.days}
+  }
+  const actionReads=(changes*.1+w.pointDetailsPerDay*w.days)*2
   return {workload:w,
-    normal:{...shared,prepareHuman:humanConnections,upgradeHuman:humanConnections,renewHuman:seconds*humans/60,
+    normal:{...shared,...surfaceQueries(300,true),prepareHuman:humanConnections,upgradeHuman:humanConnections,renewHuman:seconds*humans/60,
       prepareTv:tvConnections,upgradeTv:tvConnections,renewTv:seconds*w.tvDevices/60,
       bootstrap:Math.ceil(seconds*humans/300)+humanConnections+changes*.1*humans,
-      byIds:changes*.2*humans,tvState:Math.ceil(seconds*w.tvDevices/300)+tvConnections+changes*w.tvDevices,
+      byIds:changes*.2*humans+actionReads,tvState:Math.ceil(seconds*w.tvDevices/300)+tvConnections+changes*w.tvDevices,
       printStations:normalManager+humanConnections,printJobs:normalManager,printSummary:normalManager},
-    degraded:{...shared,prepareHuman:humanConnections,upgradeHuman:0,renewHuman:0,prepareTv:tvConnections,upgradeTv:0,renewTv:0,
-      bootstrap:Math.ceil(seconds*humans/30)+humanConnections,byIds:0,tvState:Math.ceil(seconds*w.tvDevices/30)+tvConnections,
+    degraded:{...shared,...surfaceQueries(30,false),prepareHuman:humanConnections,upgradeHuman:0,renewHuman:0,prepareTv:tvConnections,upgradeTv:0,renewTv:0,
+      bootstrap:Math.ceil(seconds*humans/30)+humanConnections,byIds:actionReads,tvState:Math.ceil(seconds*w.tvDevices/30)+tvConnections,
       printStations:degradedManager+humanConnections,printJobs:degradedManager,printSummary:degradedManager},
   }
 }
@@ -73,6 +86,8 @@ export function projectMonthlyBudget({operations,workload,stageMetrics={},accoun
     'Projeção de regime estável; excedente já acumulado no ciclo não é estornado.',
     'Cinco dispositivos totais incluem uma TV, uma estação principal e uma tela de controle no padrão; composição é configurável.',
     '12h/dia,31dias,5000mudanças/dia:10%criação,10%finalização,10%pagamento,70%transições impressão; não é volume observado.',
+    'surfaceMix distribui dispositivos humanos; cada owner montado inclui reconciliação/fallback e invalidação por criação/finalização/pagamento (30% das mudanças); printing não publica orders/finance. Acrescenta20mudanças administrativas/dia para todos os owners. Clientes inclui perfil aberto; recebíveis inclui grupo e busca rápida abertos.',
+    'Por dia:20páginas históricas,10buscas globais,50detalhes porID e10checks de duplicatas, configuráveis; preparação de ações inclui duas leituras canônicas por pagamento/detalhe.',
     'Inclui auth/guards medidos em HTTP,claim2s,heartbeat15s,aging5s/30s,presençaTV5s,controle5s,renovação60s e ACK20:1.',
     'TV pode mudar projeção a cada alteração (limite conservador); heartbeat idêntico não publica.',
     'DO storage usa limite conservador64linhas porRPC e1porACK; confirmar com métricas SQLite antes de ampliar volume.',

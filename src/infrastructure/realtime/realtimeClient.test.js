@@ -103,3 +103,17 @@ test('unsupported TV browser falls back without preparing tickets or throwing',a
   f.client.setActivity({visible:false});f.client.setActivity({visible:true});await settle()
   assert.equal(f.states.at(-1),'fallback');assert.equal(prepares,0)
 })
+
+test('expired connection during renewal reconnects with bounded fallback and keeps the authenticated session',async t=>{
+ const f=await setup(t,{api:{renew:async()=>{throw Object.assign(new Error('expired socket'),{status:409,code:'REALTIME_CONNECTION_EXPIRED'})}}})
+ f.sockets[0].ready(f.clock);await f.clock.tick(60_000)
+ assert.equal(f.states.at(-1),'fallback');assert.equal(f.unauthorized,undefined)
+ assert.ok(f.clock.timers.size>0)
+ await f.clock.tick(1000);assert.equal(f.sockets.length,2)
+ f.sockets[1].ready(f.clock);assert.equal(f.states.at(-1),'live')
+})
+for(const error of [{status:401},{status:403,code:'ACCESS_CHANGED'},{status:409,code:'SESSION_CONTEXT_CHANGED'}])test('actual authorization failure stops renewal: '+JSON.stringify(error),async t=>{
+ const f=await setup(t,{api:{renew:async()=>{throw error}}})
+ f.sockets[0].ready(f.clock);await f.clock.tick(60_000)
+ assert.equal(f.states.at(-1),'stopped');assert.equal(f.unauthorized,error);assert.equal(f.clock.timers.size,0)
+})

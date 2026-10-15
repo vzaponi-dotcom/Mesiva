@@ -90,7 +90,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     }
     await db.batch([db.prepare('PRAGMA defer_foreign_keys=ON'),...seed])
     progress('schema-and-identities')
-    await json('bootstrapEmpty','/api/bootstrap')
+    await json('bootstrapEmpty','/api/bootstrap?surface=orders')
     const ids=await seedOperationalReadFixture(db,{businessId,activeOrders:20,itemsPerOrder:5})
     const pointPath='/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([ids.activeIds[0]]))
     await json('byIdsSmall',pointPath)
@@ -111,6 +111,8 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
       db.prepare("INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES('gate-history-allocation',?,'gate-history-receipt','Pix',?,?)").bind(businessId,historicalOrders*5000,at),
       db.prepare("INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) SELECT 'gate-paid:'||id,business_id,id,'gate-history-receipt',5000,?,? FROM orders WHERE business_id=? AND status='Finalizado'").bind(at,at,businessId),
     ])
+    // Retained history belongs to a real registered client in this fictional company.
+    await db.prepare("UPDATE orders SET client_id='gate-client',customer_identity_type='registered_client' WHERE business_id=?").bind(businessId).run()
     progress('history-seeded')
     await json('byIdsHistory',pointPath)
     await json('bootstrapScopedHistory','/api/bootstrap?surface=orders')
@@ -122,12 +124,19 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     await json('financeMovements','/api/reads/finance/movements?limit=50')
     await json('customersPage','/api/reads/customers?limit=50')
     await json('customerRelationship','/api/reads/customers/gate-client/relationship?limit=50')
+    await json('receivablesGroups','/api/reads/finance/receivables?mode=client')
+    await json('receivablesGroupOrders','/api/reads/finance/receivables?mode=orders&groupKey=client%3Agate-client')
+    await json('receivablesQuick','/api/reads/finance/receivables?mode=quick')
+    await json('receivablesRefunds','/api/reads/finance/receivables?mode=orders&view=refunds')
+    await json('kitchenSummary','/api/reads/orders/kitchen-summary')
+    await json('customerDuplicates','/api/reads/customers/duplicates?name=Ficticio&phone=11999998888')
     await json('historyPage','/api/reads/orders/history?limit=50')
     await json('historySearch','/api/reads/orders/history?limit=50&search=prato%20ficticio')
     const attributionPlans=[]
     await loadOrderAttributions({prepare:sql=>({bind:(...values)=>({async all(){const result=await db.prepare(sql).bind(...values).all();attributionPlans.push({rowsRead:result.meta.rows_read,details:(await db.prepare('EXPLAIN QUERY PLAN '+sql).bind(...values).all()).results.map(row=>row.detail)});return result}})})},businessId,[ids.activeIds[0]])
     progress('point-reads:'+JSON.stringify({small:operations.byIdsSmall,large:operations.byIdsHistory,attributionPlans}))
-    await json('bootstrap','/api/bootstrap')
+    await json('bootstrapLegacy','/api/bootstrap')
+    for(const surface of ['orders','clients','receivables','finance','dashboard','history','tables','comandas','new-order'])await json('bootstrap','/api/bootstrap?surface='+surface)
     await json('tvState','/api/kitchen-tv/state',{tvMode:true})
     await json('controlState','/api/kitchen-tv/control')
     const stationResult=await json('stationUpsert','/api/printing/stations/gate-station',{method:'PUT',body:{name:'Estação fictícia',platform:'windows',autoPrintEnabled:true,defaultCopies:1}})
@@ -173,7 +182,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
         if(!event.topics.some(topic=>topics.includes(topic)))return
         if(tvMode){const data=await json('tvState','/api/kitchen-tv/state',{tvMode:true});states[index]=new Map(data.orders.map(order=>[order.id,order.status]))}
         else if(event.requiresFullRefresh || event.topics.some(topic=>['tables','reservations','clients','catalog','finance','settings'].includes(topic)) || !event.orderIds.length){
-          const data=await json('bootstrap','/api/bootstrap');states[index]=new Map(data.orders.map(order=>[order.id,order.status]))
+          const data=await json('bootstrap','/api/bootstrap?surface=orders');states[index]=new Map(data.orders.map(order=>[order.id,order.status]))
         }else{const data=await json('byIds','/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify(event.orderIds)));for(const order of data.orders)states[index].set(order.id,order.status)}
       })
       clients.push({client,get state(){return clientState}});client.start()
@@ -207,9 +216,9 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const lostId=ids.activeIds[1],lostStart=clock.now(),hintsAtLoss=totalHints()
     await json('orderFinalize',`/api/orders/${encodeURIComponent(lostId)}/status`,{method:'PATCH',body:{status:'Finalizado'},headers:{'X-Gate-Drop-Publication':'1'}})
     await sleep(50);assert.equal(totalHints(),hintsAtLoss,'fixture failed to drop publication')
-    const converged=()=>states.every((state,index)=>index===devices-1?!state.has(lostId):state.get(lostId)==='Finalizado')
+    const converged=()=>states.every((state,index)=>!state.has(lostId)||state.get(lostId)==='Finalizado')
     while(!converged() && clock.now()-lostStart<331000)await tick(1000)
-    const lostEventConvergedClients=states.filter((state,index)=>index===devices-1?!state.has(lostId):state.get(lostId)==='Finalizado').length
+    const lostEventConvergedClients=states.filter((state,index)=>!state.has(lostId)||state.get(lostId)==='Finalizado').length
     const convergenceVirtualMs=clock.now()-lostStart
     const mutationCount=(await db.prepare("SELECT count(*) n FROM audit_events WHERE business_id=? AND resource_id=? AND action='order.finalized'").bind(businessId,lostId).first()).n
     progress('lost-publication-reconciled')
@@ -231,15 +240,15 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     await json('printMutation',`/api/printing/attempts/${attempt.id}/submitting`,{method:'POST',body:{stationId:'gate-station'}})
     await json('printMutation',`/api/printing/attempts/${attempt.id}/events`,{method:'POST',body:{stationId:'gate-station',event:{type:'ERROR',jobName:attempt.spoolJobName,spoolJobId:1}}})
     const nextClaim=await json('printClaim','/api/printing/jobs/claim-next',{method:'POST',body:{stationId:'gate-station'}})
-    const historyPreserved=states.slice(0,-1).every(state=>[...state.keys()].filter(id=>id.includes(':history:')).length===historicalOrders)
+    const historyPreserved=Number(await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE business_id=? AND id LIKE ?").bind(businessId,businessId+':history:%').first('n'))===historicalOrders
     const report={commit:process.env.GITHUB_SHA || null,workingTree:!process.env.GITHUB_SHA,runtime:'workerd/Wrangler4.128.0',fixture:{devices,historicalOrders,itemsPerOrder:5,terminalPrintJobs:3000},operations,
       financialCandidateHistoryGrowth:operations.receivablesHistory.rowsRead-operations.receivablesSmall.rowsRead,pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,scopedBootstrapHistoryGrowth:operations.bootstrapScopedHistory.rowsRead-operations.bootstrapScopedSmall.rowsRead,historyPreserved,attributionPlans,
       invariants:{legacyGlobalPolls,hibernationRecovered,restartConnectedClients,lostEventConvergedClients,convergenceVirtualMs,publicationFailureMutationCount:mutationCount,unchangedHeartbeatNotifications,unknownClaimedAgain:Boolean(nextClaim.job),concurrentClaimWinners:claims.filter(value=>value.job).length},
-      assumptions:['D1 metrics include real HTTP auth,session guards,audit and attributed payloads.','Client time compressed; real lease timestamps mapped to virtual clock.','Real workerd WebSocket101,SQLite DO hibernation/restart and D1. No physical printer output.','Local wall time is diagnostic; Cloudflare CPU/duration/account billing remain unknown.'],unknownDimensions:['workerCpuMs','durableDurationGbS','accountBaseline'],passed:false}
+      assumptions:['D1 metrics include real HTTP auth,session guards,audit and attributed payloads.','Client time compressed; real lease timestamps mapped to virtual clock.','Real workerd WebSocket101,SQLite DO hibernation/restart and D1. Five transport clients; scoped HTTP workload covers each surface separately. No physical printer output.','Local wall time is diagnostic; Cloudflare CPU/duration/account billing remain unknown.'],unknownDimensions:['workerCpuMs','durableDurationGbS','accountBaseline'],passed:false}
     const save=()=>{if(process.env.REALTIME_GATE_REPORT){const output=resolve(process.env.REALTIME_GATE_REPORT);mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n')}}
     save()
     assertRealtimeRuntimeGate(report);report.passed=true
-    report.monthlyProjection=projectMonthlyBudget({operations})
+    report.monthlyProjection=projectMonthlyBudget({operations,workload:{surfaceMix:{orders:1,clients:1,receivables:1,finance:1}}})
     save()
     return report
   }finally{for(const {client} of clients)client.stop();await mf.dispose();fixture.close()}

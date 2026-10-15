@@ -52,3 +52,19 @@ test('modeled workload remains visible when account usage is unknown and include
   assert.equal(report.normal.modeled.logs,report.normal.modeled.workerRequests*2+(rpc+report.normal.incomingAckMessages)*2)
   assert.equal(report.passed,false)
 })
+
+test('scoped workload includes every mounted surface owner, action preparation and explicit user history queries',()=>{
+ const counts=buildMonthlyWorkload({devices:5,tvDevices:1,days:1,hoursPerDay:1,connections:5,changesPerDay:100,surfaceMix:{orders:1,clients:1,receivables:1,finance:1}})
+ for(const name of ['kitchenSummary','customersPage','customerRelationship','receivablesGroups','receivablesGroupOrders','receivablesQuick','financeMovements','receivablesRefunds','historyPage','historySearch','customerDuplicates'])assert.ok(counts.normal[name]>0,name)
+ assert.ok(counts.degraded.customersPage>counts.normal.customersPage)
+ assert.ok(counts.degraded.byIds>0,'Explicit user actions still prepare canonical IDs without a socket')
+ assert.throws(()=>buildMonthlyWorkload({devices:5,tvDevices:1,surfaceMix:{orders:5}}),/surface|mix/i)
+})
+
+test('query invalidations follow operational topics while every printing transition remains billed',async()=>{
+ const {EFFECT_CATALOG}=await import('../../worker/realtime/effectCatalog.js')
+ for(const [action,effect] of Object.entries(EFFECT_CATALOG))if(action.startsWith('printing.'))assert.equal(effect.topics.includes('orders')||effect.topics.includes('finance'),false,action)
+ const counts=buildMonthlyWorkload({devices:2,tvDevices:0,days:1,hoursPerDay:1,changesPerDay:100,connections:2,administrativeChangesPerDay:0,surfaceMix:{clients:2}})
+ assert.equal(counts.normal.customerRelationship,24+2+60)
+ assert.equal(counts.normal.printMutation,70)
+})

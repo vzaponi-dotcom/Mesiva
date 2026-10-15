@@ -12,7 +12,7 @@ O acesso atual é por **e-mail e senha**, com contas Mesiva e vínculos por empr
 | Staging | https://staging.mesiva.com.br | D1 e recursos exclusivos de homologação |
 | Produção | https://app.mesiva.com.br | D1 e recursos com dados reais |
 
-A sincronização por avisos WebSocket, fallback HTTP e os temporizadores preservados de impressão/TV estão descritos em [operação realtime e orçamento](docs/operations/realtime-sync.md). A ativação em produção depende da flag e dos gates de release/orçamento.
+A sincronização por avisos WebSocket, fallback HTTP e os temporizadores preservados de impressão/TV estão descritos em [operação realtime e orçamento](docs/operations/realtime-sync.md). Quando o modo scoped está habilitado, cada superfície carrega seus candidatos operacionais; histórico, relacionamento e financeiro usam consultas paginadas com totais completos no servidor. A ativação em produção depende das flags e dos gates de release/orçamento.
 
 D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O navegador mantém preferências locais, mas não é a autoridade dos dados de negócio. Escritas não são enfileiradas offline.
 
