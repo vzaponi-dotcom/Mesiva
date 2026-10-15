@@ -16,7 +16,8 @@ add(['settings.business-profile.updated','settings.cancellation-reasons.updated'
 add(['settings.kitchen-tv.approved'],['settings','kitchen-tv'])
 add(['settings.kitchen-tv.revoked'],['settings','kitchen-tv'],{invalidateBusiness:true})
 add(['table-tab.transferred','table.created','table.updated','tables.reordered'],['orders','tables','reservations','finance'])
-add(['order.created','order.cancelled'],['orders','tables','reservations','finance','kitchen-tv','printing'])
+add(['order.cancelled'],['orders','tables','reservations','finance','kitchen-tv','printing'])
+add(['order.created','order.finalized','order.payment-promise.updated','order.price.adjusted'],['orders','kitchen-tv'])
 export const EFFECT_CATALOG=Object.freeze(catalog)
 export function topicsForCommittedEvent({action,resourceType,resourceId,outcome='success'}) {
   const topics=outcome==='success'?[...(catalog[action]?.topics || [])]:[]
@@ -35,6 +36,8 @@ export function effectForCommittedEvent(businessId,event) {
 // - platform/audit.preparePlatformAudit: successful lifecycle/membership completion.
 // - kitchenTvRepository.activateKitchenTvApprovedRequest: accepted consumed request
 //   and access upsert in one atomic batch; revoke uses conditional business audit.
+// - repositories.createOrder: table/reservation totals on the actual order INSERT;
+//   orderPrintingRepository.prepareAutomaticPrintJobStatement: actual job INSERT.
 // - tableRepository.getOrCreateOpenTableTabByTableId and repositories.closeTableTabIfSettled:
 //   actual open/close writes; sequence reservation is not a visible tab.
 // - orderPrintingRepository.heartbeatPrintStation: health/recovery transitions only.

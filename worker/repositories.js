@@ -506,6 +506,7 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
     idempotencyKey,
   )
 
+  if(tableTabId || pendingReservation)registerCommittedEffect(orderStatement,{businessId,topics:['tables','reservations'],orderIds:[]})
   const contactSnapshotStatement = db.prepare(`UPDATE orders SET client_phone_snapshot = ?, client_address_snapshot = ?
     WHERE id = ? AND business_id = ?`).bind(clientPhoneSnapshot, clientAddressSnapshot, orderId, businessId)
   const policyTxId = crypto.randomUUID()

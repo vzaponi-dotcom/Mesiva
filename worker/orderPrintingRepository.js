@@ -236,12 +236,12 @@ export const prepareAutomaticPrintJobStatement = (db, businessId, input) => {
   const id = String(input.id || crypto.randomUUID())
   const copies = assertCopies(input.copies)
   const createdAt = timestamp(input.createdAt || new Date())
-  return db.prepare(`INSERT INTO print_jobs (
+  return registerCommittedEffect(db.prepare(`INSERT INTO print_jobs (
       id, business_id, order_id, type, trigger, status, copies_requested, copies_printed,
       station_id, snapshot_json, created_at, available_at, processing_started_at, processed_at,
       last_error_code, last_error_message
     ) VALUES (?, ?, ?, 'order', 'automatic', 'pending', ?, 0, NULL, ?, ?, ?, NULL, NULL, NULL, NULL)`)
-    .bind(id, businessId, input.orderId, copies, JSON.stringify(input.document), createdAt, timestamp(input.availableAt || input.createdAt || new Date()))
+    .bind(id, businessId, input.orderId, copies, JSON.stringify(input.document), createdAt, timestamp(input.availableAt || input.createdAt || new Date())),{businessId,topics:['printing'],orderIds:[]})
 }
 
 export const loadPrintJob = async (db, businessId, jobId) => {

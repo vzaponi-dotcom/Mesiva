@@ -43,3 +43,11 @@ test('entity helpers upsert without duplicates and remove by id', async () => {
   ])
   assert.deepEqual(sync.removeById(initial, 'a'), [{ id: 'b', value: 2 }])
 })
+
+test('point upserts keep created order, stable ties and historical members',async()=>{
+  const sync=await loadSync()
+  assert.equal(typeof sync.upsertManyInCreatedOrder,'function')
+  const old=[{id:'b',createdAt:'2026-10-14'},{id:'a',createdAt:'2026-10-14'},{id:'history',createdAt:'2025-01-01'}]
+  assert.deepEqual(sync.upsertManyInCreatedOrder(old,[{id:'history',createdAt:'2025-01-01',paid:true},{id:'new',createdAt:'2026-10-15'}]).map(e=>e.id),['new','b','a','history'])
+  assert.equal(old[2].paid,undefined)
+})

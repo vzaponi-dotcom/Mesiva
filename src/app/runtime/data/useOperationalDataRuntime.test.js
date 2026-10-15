@@ -39,6 +39,7 @@ function createHarness({
   ordersSyncEnabled = false,
   effectiveConfigVersion = null,
   accessContextId = null,
+  realtime,
 } = {}) {
   let current
   const renders = []
@@ -50,6 +51,7 @@ function createHarness({
       ordersSyncEnabled,
       effectiveConfigVersion,
       accessContextId,
+      realtime,
       ...props,
     })
     renders.push(current)
@@ -532,4 +534,96 @@ test('silent bootstrap refresh immediately replaces only confirmed operation ide
 
   await act(async () => { await harness.getCurrent().refreshBootstrapSilently() })
   assert.deepEqual(harness.getCurrent().business, updated.business)
+})
+
+const realtimeFixture=()=>{
+  const listeners=new Set()
+  return {state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)},emit(event){return Promise.all([...listeners].map(fn=>fn(event)))}}
+}
+const orderHint=id=>({topics:['orders'],orderIds:[id],requiresFullRefresh:false})
+
+test('changed order is fetched by ID without dropping 10000 historical orders',async t=>{
+  const realtime=realtimeFixture(),calls=[],history=Array.from({length:10000},(_,i)=>({id:'old-'+i,createdAt:'2025-01-01T00:00:00Z',status:'Finalizado'}))
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>({...bootstrapFixture(),orders:history}),getOrders:async()=>{throw new Error('unexpected full orders')},getOrdersByIds:async ids=>{calls.push(ids);return {orders:[{id:'new',status:'Em preparo',createdAt:'2026-10-14T15:00:00Z'}]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>realtime.emit(orderHint('new')))
+  assert.deepEqual(calls,[['new']]);assert.equal(harness.getCurrent().orders.length,10001)
+  assert.equal(harness.getCurrent().orders[0].id,'new');assert.equal(harness.getCurrent().orders.at(-1).id,'old-9999')
+})
+
+test('partial response cannot overwrite a payment committed during the read',async t=>{
+  const pending=deferred(),harness=await mountHarness(t,{api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:()=>pending.promise}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let read
+  await act(async()=>{read=harness.getCurrent().refreshOrdersByIds(['order-1'])})
+  await act(async()=>harness.getCurrent().applyOfficialEffects({order:{id:'order-1',paymentStatus:'Pago',paymentId:'official'}}))
+  pending.resolve({orders:[{id:'order-1',paymentStatus:'Pendente'}]})
+  await act(async()=>assert.equal(await read,false))
+  assert.equal(harness.getCurrent().orders[0].paymentId,'official')
+})
+
+test('rejected realtime read remains dirty and rereads after a local mutation',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']})
+  const realtime=realtimeFixture(),pending=deferred();let reads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:async()=>++reads===1?pending.promise:{orders:[{id:'order-1',paymentStatus:'Pago'}]}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let hint
+  await act(async()=>{hint=realtime.emit(orderHint('order-1'))})
+  await act(async()=>harness.getCurrent().applyOfficialEffects({order:{id:'order-1',paymentStatus:'Pago'}}))
+  pending.resolve({orders:[{id:'order-1',paymentStatus:'Pendente'}]})
+  await act(async()=>hint)
+  assert.equal(harness.getCurrent().orders[0].paymentStatus,'Pago')
+  await act(async()=>{t.mock.timers.tick(250)})
+  assert.equal(reads,2);assert.equal(harness.getCurrent().orders[0].paymentStatus,'Pago')
+})
+
+test('missing ID retains history until an official snapshot succeeds',async t=>{
+  const realtime=realtimeFixture(),snapshot=deferred();let bootstraps=0,pointReads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>++bootstraps===1?bootstrapFixture():snapshot.promise,getOrdersByIds:async()=>{pointReads++;return {orders:[]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>{void realtime.emit(orderHint('order-1'))})
+  assert.equal(harness.getCurrent().orders[0].id,'order-1');assert.equal(bootstraps,2);assert.equal(pointReads,1)
+  snapshot.resolve({...bootstrapFixture(),orders:[{id:'order-1',status:'Finalizado'}]})
+  await act(async()=>{})
+  assert.equal(harness.getCurrent().orders[0].status,'Finalizado')
+})
+
+test('live runtime removes legacy 5s and 2s intervals',async t=>{
+  const intervals=[]
+  t.mock.method(globalThis,'setInterval',(_fn,delay)=>{intervals.push(delay);return 1})
+  t.mock.method(globalThis,'clearInterval',()=>{})
+  const harness=await mountHarness(t,{realtime:realtimeFixture(),globalSyncEnabled:true,ordersSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrders:async()=>({orders:[]})}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  assert.deepEqual(intervals,[])
+})
+
+test('settings burst groups one bootstrap and never runs full orders in parallel',async t=>{
+  const realtime=realtimeFixture();let bootstraps=0,orders=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,ordersSyncEnabled:true,api:{getBootstrap:async()=>{bootstraps++;return bootstrapFixture()},getOrders:async()=>{orders++;return {orders:[]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap());bootstraps=0;orders=0
+  await act(async()=>Promise.all([realtime.emit({topics:['settings'],orderIds:[],requiresFullRefresh:false}),realtime.emit(orderHint('order-1')),realtime.emit({topics:['finance'],orderIds:[],requiresFullRefresh:false})]))
+  assert.equal(bootstraps,1);assert.equal(orders,0)
+})
+
+test('point response from an old access generation cannot apply in the new company',async t=>{
+  const pending=deferred(),harness=await mountHarness(t,{accessContextId:'A',api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:()=>pending.promise}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let read;await act(async()=>{read=harness.getCurrent().refreshOrdersByIds(['order-1'])})
+  await act(async()=>harness.update({accessContextId:'B'}))
+  pending.resolve({orders:[{id:'order-1',status:'Finalizado'}]})
+  await act(async()=>assert.equal(await read,false))
+  assert.deepEqual(harness.getCurrent().orders,[])
+})
+
+test('transient point-read failures retain dirty without retrying faster than fallback',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']})
+  const realtime=realtimeFixture();let reads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:async()=>{if(++reads===1)throw new Error('offline');return {orders:[{id:'order-1',status:'Finalizado'}]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>realtime.emit(orderHint('order-1')))
+  assert.equal(reads,1)
+  await act(async()=>{t.mock.timers.tick(29_999)})
+  assert.equal(reads,1)
+  await act(async()=>{t.mock.timers.tick(1)})
+  assert.equal(reads,2);assert.equal(harness.getCurrent().orders[0].status,'Finalizado')
 })

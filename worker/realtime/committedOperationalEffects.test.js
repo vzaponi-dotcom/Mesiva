@@ -76,3 +76,15 @@ test('bulk printing groups committed candidates and an empty repeat emits no not
   await discardPendingPrintJobs(f.db,business,'Sistema',now)
   assert.deepEqual(f.events,[])
 })
+
+test('ordinary order creation emits narrow hints; table totals retain their own invalidation',async t=>{
+  const f=fixture(t)
+  await f.order('narrow-order')
+  assert.deepEqual(new Set(f.events.flatMap(e=>e.topics)),new Set(['orders','kitchen-tv','printing']))
+  f.events.length=0
+  const first=await f.order('table-one',{customerIdentity:{type:'table',tableId:'t'},type:'Local'})
+  assert.ok(f.events.some(e=>e.topics.includes('tables')))
+  f.events.length=0
+  await f.order('table-two',{customerIdentity:{type:'table',tableId:'t'},type:'Local',expectedTableTabId:first.tableTabId})
+  assert.ok(f.events.some(e=>e.topics.includes('tables')))
+})

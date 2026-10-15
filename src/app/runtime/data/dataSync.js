@@ -51,3 +51,7 @@ export const upsertManyById = (items = [], entities = []) => {
 }
 
 export const removeById = (items = [], id) => items.filter((item) => item?.id !== id)
+
+// Point reads preserve every existing member; stable sorting retains tie order.
+export const upsertManyInCreatedOrder=(items=[],entities=[])=>upsertManyById(items,entities)
+  .slice().sort((a,b)=>String(b.createdAt || '').localeCompare(String(a.createdAt || '')))

@@ -311,7 +311,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     getOfficialRevision,
     getOfficialTables,
   } = useOperationalDataRuntime({
-    api: { ...clientsForContext.bootstrap, getOrders: clientsForContext.orders.getOrders },
+    api: { ...clientsForContext.bootstrap, getOrders: clientsForContext.orders.getOrders, getOrdersByIds: clientsForContext.orders.getOrdersByIds },
     onUnauthorized: handleOperationalUnauthorized,
     realtime: globalSession ? realtime : undefined,
     globalSyncEnabled: operationalAccess && isOnline && authState === 'authenticated',

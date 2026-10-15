@@ -14,3 +14,8 @@ test('projection topics reflect official cross-domain effects and IDs are order-
   assert.deepEqual(topicsForCommittedEvent({action:'printing.requested',resourceType:'print-job',resourceId:'j1'}),{topics:['printing'],orderIds:[]})
   assert.deepEqual(topicsForCommittedEvent({action:'kitchen-tv.page.updated',resourceType:'settings',resourceId:'page'}),{topics:['kitchen-tv'],orderIds:[]})
 })
+
+test('plain order changes do not force unrelated bootstrap collections',()=>{
+  for(const action of ['order.created','order.finalized','order.payment-promise.updated','order.price.adjusted'])
+    assert.deepEqual(topicsForCommittedEvent({action,resourceType:'order',resourceId:'o1'}),{topics:['orders','kitchen-tv'],orderIds:['o1']})
+})
