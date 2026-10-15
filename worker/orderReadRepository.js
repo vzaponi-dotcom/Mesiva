@@ -15,7 +15,7 @@ const mapOrdersWithItems = (orderRows, itemRows) => {
 
 export const listOrders = async (db, businessId) => {
   const ordersResult = await db.prepare(`${ORDER_SELECT} WHERE o.business_id = ? ORDER BY o.created_at DESC`).bind(businessId).all()
-  const itemsResult = await db.prepare(`${ORDER_ITEM_SELECT} WHERE business_id = ? ORDER BY created_at ASC`).bind(businessId).all()
+  const itemsResult = await db.prepare(`${ORDER_ITEM_SELECT} WHERE business_id = ? ORDER BY created_at ASC, rowid ASC`).bind(businessId).all()
   return mapOrdersWithItems(rows(ordersResult), rows(itemsResult))
 }
 
@@ -31,7 +31,7 @@ export const listOrdersByIds = async (db, businessId, ids) => {
       WHERE o.business_id = ? AND o.id IN (${placeholders})`)
       .bind(businessId, ...selectedIds).all()
     const items = await db.prepare(`${ORDER_ITEM_SELECT}
-      WHERE business_id = ? AND order_id IN (${placeholders}) ORDER BY created_at ASC`)
+      WHERE business_id = ? AND order_id IN (${placeholders}) ORDER BY created_at ASC, rowid ASC`)
       .bind(businessId, ...selectedIds).all()
     orderRows.push(...rows(orders))
     itemRows.push(...rows(items))

@@ -4,7 +4,7 @@
 
 `GET /api/orders/by-ids?ids=<array JSON codificado>` busca pedidos completos somente pelos IDs solicitados. A empresa vem da sessão/contexto; a rota mantém `orders.view`/`orders.history`, projeção por estado e atribuições oficiais. Aceita até 99 IDs únicos, strings não vazias com até 200 caracteres; parâmetros inválidos retornam `INVALID_ORDER_IDS`. Pedidos de outra empresa e inexistentes não são retornados. ID ausente não é um sinal de exclusão, pois pode estar fora da projeção autorizada.
 
-O adapter `ordersApi.getOrdersByIds(ids)` usa o cliente HTTP contextual atual. A API legada de lista completa permanece compatível. Esta entrega prepara a sincronização por eventos; não remove os polls de dois/cinco segundos nem afirma que WebSocket já está publicado.
+O adapter `ordersApi.getOrdersByIds(ids)` usa o cliente HTTP contextual atual. A API legada de lista completa permanece compatível. Leituras de pedidos completos desempatarão itens com o mesmo created_at pela ordem persistida (rowid), preservando posição, primeiro produto e quantidade entre lista, bootstrap e respostas de mutations mesmo após o índice novo. Esta entrega prepara a sincronização por eventos; não remove os polls de dois/cinco segundos nem afirma que WebSocket já está publicado.
 
 A TV lê somente pedidos que satisfazem seu filtro atual: estados diferentes de Finalizado/Cancelado/Entregue/Despachado, sem finished_at/cancelled_at e sem ocultação da TV. Pedidos futuros agendados e estados desconhecidos mantêm a semântica anterior. O schema continua rejeitando status NULL. A seleção de itens usa os candidatos ativos como loop externo: mesmo com índices novos, INNER JOIN permitiu ao otimizador D1 começar pelo histórico de itens; CROSS JOIN limita essa ordem.
 
