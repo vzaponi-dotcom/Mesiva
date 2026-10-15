@@ -41,7 +41,7 @@ const getPrintJobView = (job, stationReady, order) => {
   return {
     orderNumber: job?.type === 'table-tab' && job?.document?.tableTab?.number
       ? `Comanda #${job.document.tableTab.number}`
-      : order ? formatOrderDisplayNumber(order) : 'Pedido',
+      : order ? formatOrderDisplayNumber(order) : formatOrderDisplayNumber({orderNumber:job?.document?.order?.number}),
     jobId: job?.id || '—',
     customerOrTable: getCustomerOrTable(job?.document),
     origin: job?.trigger === 'automatic' ? 'Automático' : job?.trigger === 'manual' ? 'Manual/Reimpressão' : null,

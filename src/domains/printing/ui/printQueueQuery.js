@@ -27,7 +27,7 @@ const sortValue = (job, sortBy, ordersById) => {
       const number = Number(job?.document?.tableTab?.number)
       return Number.isInteger(number) && number > 0 ? number : null
     }
-    const value = Number(ordersById.get(String(job?.orderId))?.orderNumber)
+    const value = Number(ordersById.get(String(job?.orderId))?.orderNumber ?? job?.document?.order?.number)
     return Number.isInteger(value) && value > 0 ? value : null
   }
   if (sortBy === 'jobId') return String(job?.id || '') || null

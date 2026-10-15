@@ -18,7 +18,9 @@ async function mount(t,path,{grants=capabilities,failOnce=false,failBootstrap=fa
    data={business:{id:'amor-e-sabor',name:'Loja fictícia'},effectiveBusinessConfig:config,effectiveConfigVersion:config.version,
     readModel:{version:1,surface,completeCollections:surface==='orders'?['orders']:surface==='new-order'?['products','clients']:surface==='products'?['products']:[],orderScope:surface==='orders'?'active':null,counters:{orders:0,comandas:0},operationalOrders:[],openTableTabIds:[]},
     ...(surface==='orders'?{orders:[]}:surface==='new-order'?{clients:[],products:[]}:surface==='products'?{products:[]}:{}),}
-  }else if(url.pathname==='/api/reads/orders/history')data={orders:[order],summary:{all:200,finalized:200,cancelled:0,days:{'2026-10-15':200}},validRange:true,queryKey:'history',nextCursor:null}
+  }else if(url.pathname==='/api/reads/orders/kitchen-summary')data={finishedToday:12,businessDate:'2026-10-15'}
+  else if(url.pathname==='/api/reads/orders/history')data={orders:[order],summary:{all:200,finalized:200,cancelled:0,days:{'2026-10-15':200}},validRange:true,queryKey:'history',nextCursor:null}
+  else if(url.pathname==='/api/access/activity')data={items:[{id:'event',resourceType:'order',resourceId:order.id,action:'order.created',actor:{type:'system'},occurredAt:'2026-10-15T12:00:00Z'}],nextCursor:null}
   else if(url.pathname==='/api/reads/customers')data={clients:[],summary:{count:201,filters:{all:201}},completeHistory:true,nextCursor:null}
   else if(url.pathname==='/api/reads/finance/receivables')data={orders:[],entries:[],groups:[],summary:{today:{amount:4000,count:200},upcoming:{amount:0,count:0},overdue:{amount:0,count:0}},forecast:{days:[]},receivedToday:0,matchingCount:200,matchingGroupCount:100,nextCursor:null}
   else if(url.pathname==='/api/reads/finance/movements')data={movements:[],totals:{entries:5000,exits:100,balance:4900},currentBalance:4900,financeSettings:null,summary:{count:201},nextCursor:null}
@@ -84,4 +86,19 @@ test('scoped customer and financial deep links show global server totals without
   assert.equal(calls.includes('/api/orders'),false);assert.equal(calls.includes('/api/movements'),false)
   assert.doesNotMatch(nodeText(renderer.root),/Não foi possível carregar|Carregando os dados/)
  })
+})
+
+test('scoped kitchen finished counter is server-authorized and independent of active order payload',async t=>{
+ const {renderer,calls}=await mount(t,'/pedidos')
+ const cards=renderer.root.findAll(node=>typeof node.props.className==='string'&&node.props.className.includes('kitchen-stat-finished'))
+ assert.ok(cards.some(node=>nodeText(node).includes('12')))
+ assert.ok(calls.includes('/api/reads/orders/kitchen-summary'))
+})
+
+test('audit detail loads its permitted historical order by ID without requiring global history in bootstrap',async t=>{
+ const {renderer,calls}=await mount(t,'/configuracoes/atividades',{grants:[...capabilities,'access.audit.view']})
+ await act(async()=>buttonNamed(renderer.root,'Abrir detalhe').props.onClick())
+ assert.ok(calls.some(path=>path.startsWith('/api/orders/by-ids?')))
+ assert.ok(renderer.root.findAllByProps({role:'dialog'}).some(dialog=>nodeText(dialog).includes('Cliente fictício')))
+ assert.equal(calls.includes('/api/orders'),false)
 })

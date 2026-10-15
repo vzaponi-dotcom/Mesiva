@@ -56,7 +56,7 @@
         "AUTH_PUBLIC_ORIGIN": "https://staging.mesiva.com.br",
         "AUTH_EMAIL_DAILY_LIMIT": "80",
         "REALTIME_ENABLED": "true",
-        "OPERATIONAL_READ_MODELS_ENABLED": "false"
+        "OPERATIONAL_READ_MODELS_ENABLED": "true"
       },
       "workers_dev": true,
       "routes": [

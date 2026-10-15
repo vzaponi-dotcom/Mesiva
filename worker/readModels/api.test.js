@@ -94,3 +94,12 @@ test('customer and financial read routes are isolated, gated and reject denied c
   f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability IN ('clients.view','finance.receivables','finance.movements','finance.movements.manage','finance.overview')").run(f.businesses.A,f.businesses.A+':manager')
   for(const path of ['/api/reads/customers','/api/reads/customers/read-client/relationship','/api/reads/finance/receivables','/api/reads/finance/overview','/api/reads/finance/movements'])assert.equal((await handleRequest(f.request(path),f.env)).status,403,path)
 })
+
+test('kitchen summary stays business-authenticated and preserves history grant visibility',async t=>{
+ const f=await setup(t)
+ assert.equal((await handleRequest(new Request('https://example.test/api/reads/orders/kitchen-summary'),f.env)).status,401)
+ const response=await handleRequest(f.request('/api/reads/orders/kitchen-summary'),f.env)
+ assert.equal(response.status,200);assert.equal((await response.json()).finishedToday,0)
+ f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability='orders.view'").run(f.businesses.A,f.businesses.A+':manager')
+ assert.equal((await handleRequest(f.request('/api/reads/orders/kitchen-summary'),f.env)).status,403)
+})

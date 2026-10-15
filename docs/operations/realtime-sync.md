@@ -128,3 +128,11 @@ Ações sobre pedidos fora do cache operacional preparam até100IDs em lotes de9
 Clientes, relacionamento, A Receber, fluxo de caixa e dashboard usam owners de consulta por contexto quando o bootstrap anuncia o modo scoped. Totais, favoritos, contagens de filtros e saldo vêm do universo autorizado no servidor; páginas só fornecem as linhas exibidas. Recebimentos por cliente preservam IDs explícitos entre páginas, até100, e revalidam os selecionados por leitura canônica antes do owner de pagamento existente. Ausência numa página não remove uma seleção.
 
 A verificação de duplicidade de nome/telefone consulta identidades da empresa ao salvar; não depende da página de clientes carregada e não lê pedidos. Fechar o editor, trocar empresa ou perder permissão invalida a preparação pendente. As consultas não adicionam polling: recebem invalidações, reconciliação e fallback do transporte contextual. Loading, erro e retry não exibem totais parciais como globais. Flags de produção continuam desativadas até conclusão dos consumidores remanescentes, orçamento e homologação.
+
+### Consumidores operacionais sem histórico global
+
+Comandas/mesas continuam obtendo detalhes oficiais por ID; o snapshot inclui comandas abertas antigas e as reservas da consulta canônica de mesas. A interface atual não possui listagem de comandas fechadas: o histórico permanece preservado no banco e nos fluxos oficiais existentes, sem criar um endpoint sem consumidor.
+
+“Finalizados hoje” usa `/api/reads/orders/kitchen-summary`: status Finalizado, finished_at e dia de São Paulo, incluindo compatibilidade Date.parse de timestamps antigos. Mantém a visibilidade histórica da sessão; orders.view sozinho não ganha contagens de histórico. Os índices0049 limitam a contagem à data e ao subconjunto legado. A mesma invalidação/reconciliação do transporte atualiza esse indicador; o relógio local renova a consulta na mudança de dia.
+
+Atividades abre o pedido autorizado por ID e descarta respostas de contexto anterior. A fila obtém número e identidade do documento persistido no job quando o pedido não está no cache. Documento, segunda via, confirmação do spooler e decisão humana para impressão desconhecida continuam usando os serviços oficiais, sem depender do histórico global.
