@@ -38,7 +38,7 @@ import { handleCompanyInvitationsApi } from './tenancy/invitationsApi.js'
 import { handlePlatformBusinessesApi } from './platform/businessesApi.js'
 import { classifyApiRoute, multiCompanyEnabled, resolveRequestContext } from './tenancy/routePolicy.js'
 import { requireBusinessContext } from './tenancy/businessContext.js'
-import { authenticateAccountRequest, contextChanged } from './identity/sessions.js'
+import { authenticateAccountRequest, contextChanged, getRoleGrantsSnapshot } from './identity/sessions.js'
 import { withBusinessSessionGuard } from './tenancy/guardedBusinessDb.js'
 
 // Shared with the infrastructure CLI; never sourced from a request or CLI flag.
@@ -85,6 +85,7 @@ const validateResponseSession = async (request, env, session, response) => {
     const current = await authenticateAccountRequest(request, env)
     if (!current || current.contextId !== session.contextId || current.accountId !== session.accountId
       || current.businessId !== session.businessId || current.userId !== session.userId || current.roleId !== session.roleId
+      || getRoleGrantsSnapshot(current) !== getRoleGrantsSnapshot(session)
       || current.roleVersion !== session.roleVersion || [...current.granted].sort().join('\n') !== [...session.granted].sort().join('\n')) throw contextChanged()
     return response
   }

@@ -104,6 +104,10 @@ export async function prepareAccountSession(db, {
     ...(scope === 'business' ? { businessId, userId, businessSessionId } : {}) } }
 }
 
+// Keep persisted grants private for snapshot validation; unknown grants never authorize.
+const roleGrantsSnapshots = new WeakMap()
+export const getRoleGrantsSnapshot = context => roleGrantsSnapshots.get(context)
+
 function contextFromRow(row) {
   const context = { accountId: row.account_id, identitySessionId: row.id, familyId: row.family_id, scope: row.scope,
     contextId: row.context_id, expiresAt: row.expires_at, deviceMode: row.device_mode, credentialRevision: row.credential_revision,
@@ -112,6 +116,7 @@ function contextFromRow(row) {
     displayName: row.display_name, roleName: row.role_name, roleId: row.role_id, roleVersion: row.role_version, authMode: 'user_only', legacy: false,
     granted: new Set(JSON.parse(row.role_grants_json).filter((value) => APPLICATION_CAPABILITIES.includes(value))) })
   if (row.scope === 'platform') context.platformGranted = new Set(JSON.parse(row.platform_grants_json).filter((value) => PLATFORM_CAPABILITIES.includes(value)))
+  if (row.scope === 'business') roleGrantsSnapshots.set(context, row.role_grants_json)
   return Object.freeze(context)
 }
 

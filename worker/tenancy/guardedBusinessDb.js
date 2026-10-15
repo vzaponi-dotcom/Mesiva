@@ -1,15 +1,16 @@
-import { loadAccountSessionRow, prepareSessionSnapshotAssertion, contextChanged } from '../identity/sessions.js'
+import { loadAccountSessionRow, prepareSessionSnapshotAssertion, contextChanged, getRoleGrantsSnapshot } from '../identity/sessions.js'
 
 // A request-owned facade. Use the original binding for guards, never itself.
 export function withBusinessSessionGuard(db, context, { now = new Date(), monotonicNow = () => performance.now() } = {}) {
   const started = monotonicNow(), originals = new WeakMap()
+  const roleGrantsSnapshot = getRoleGrantsSnapshot(context) ?? (context.granted ? JSON.stringify([...context.granted].sort()) : undefined)
   const execute = async statements => {
     const currentNow = new Date(now.getTime() + Math.max(0, Math.floor(monotonicNow() - started)))
     const row = await loadAccountSessionRow(db, context.identitySessionId, currentNow)
     if (!row || row.scope !== 'business' || row.business_id !== context.businessId || row.account_id !== context.accountId || row.context_id !== context.contextId
       || context.roleVersion !== undefined && row.role_version !== context.roleVersion
       || context.credentialRevision !== undefined && row.credential_revision !== context.credentialRevision
-      || context.granted && JSON.stringify([...context.granted].sort()) !== row.role_grants_json) throw contextChanged()
+      || roleGrantsSnapshot !== undefined && roleGrantsSnapshot !== row.role_grants_json) throw contextChanged()
     try {
       const results = await db.batch([prepareSessionSnapshotAssertion(db,row,currentNow),...statements.map(statement => originals.get(statement) || statement),db.prepare('DELETE FROM identity_tx_assertions')])
       return results.slice(1,-1)
