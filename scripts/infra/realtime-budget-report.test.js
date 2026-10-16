@@ -13,9 +13,9 @@ test('projection counts authenticated renewals, printing execution, heartbeat, r
   assert.equal(counts.normal.renewHuman,120)
   assert.equal(counts.normal.printClaim,1800)
   assert.equal(counts.normal.printHeartbeat,240)
-  assert.equal(counts.normal.bootstrap,46)
-  assert.equal(counts.degraded.bootstrap,242)
-  assert.ok(counts.normal.printJobs>840)
+  assert.equal(counts.normal.bootstrap,48)
+  assert.equal(counts.degraded.bootstrap,244)
+  assert.ok(counts.normal.printState>840)
   const report=projectMonthlyBudget(sample())
   assert.equal(report.normal.workerRequests,Object.values(counts.normal).reduce((a,b)=>a+b,0))
   assert.equal(report.normal.rowsRead,report.normal.workerRequests*10)
@@ -65,6 +65,34 @@ test('query invalidations follow operational topics while every printing transit
  const {EFFECT_CATALOG}=await import('../../worker/realtime/effectCatalog.js')
  for(const [action,effect] of Object.entries(EFFECT_CATALOG))if(action.startsWith('printing.'))assert.equal(effect.topics.includes('orders')||effect.topics.includes('finance'),false,action)
  const counts=buildMonthlyWorkload({devices:2,tvDevices:0,days:1,hoursPerDay:1,changesPerDay:100,connections:2,administrativeChangesPerDay:0,surfaceMix:{clients:2}})
- assert.equal(counts.normal.customerRelationship,24+2+60)
+ assert.equal(counts.normal.customerRelationship,24+4+60)
  assert.equal(counts.normal.printMutation,70)
+})
+
+
+test('manager state is counted once per refresh while a mounted queue keeps its own reads',()=>{
+ const counts=buildMonthlyWorkload({...workload,surfaceMix:{orders:2}})
+ assert.ok(counts.normal.printState>840)
+ assert.equal(counts.normal.printStations,2)
+ assert.equal(counts.normal.printJobs,0)
+ assert.equal(counts.normal.printSummary,0)
+ const queue=buildMonthlyWorkload({...workload,surfaceMix:{orders:1,'print-queue':1}})
+ assert.ok(queue.normal.printJobs>0)
+ assert.ok(queue.normal.printSummary>0)
+ assert.equal(queue.normal.printState,counts.normal.printState)
+})
+
+
+test('printing state includes its timer, independent realtime reconciliation and initial channel reconciliation',()=>{
+ const counts=buildMonthlyWorkload({...workload,surfaceMix:{orders:2}})
+ assert.equal(counts.normal.printState,1068)
+ assert.equal(counts.degraded.printState,1084)
+})
+
+
+test('mounted read owners include mount and initial channel reconciliation independently',()=>{
+ const counts=buildMonthlyWorkload({...workload,surfaceMix:{orders:1,'print-queue':1}})
+ assert.equal(counts.normal.printJobs,114)
+ assert.equal(counts.degraded.printSummary,122)
+ assert.equal(counts.normal.kitchenSummary,64)
 })

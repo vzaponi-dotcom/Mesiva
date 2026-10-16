@@ -349,29 +349,29 @@ export const usePrintingManager = ({ api = legacyPrintingApi, businessId, authen
   const refresh = useCallback(async ({ generation: expectedGeneration } = {}) => {
     if (!authenticated || !ownsAccess()) return { stations: [], jobs: [], stale: true }
     const readGeneration = initializationRef.current
-    let stationPayload, jobPayload, summaryPayload
+    let state
     try {
-      [stationPayload, jobPayload, summaryPayload] = await Promise.all([api.getPrintStations(), api.getPrintJobs({ limit: 100 }), api.getPrintQueueSummary()])
+      state = await api.getPrintState()
     } catch (error) {
       if (readGeneration !== initializationRef.current || !ownsAccess()) return { stations: [], jobs: [], summary: {}, stale: true }
       throw error
     }
-    const nextStations = Array.isArray(stationPayload?.stations) ? stationPayload.stations : []
-    const nextJobs = Array.isArray(jobPayload?.jobs) ? jobPayload.jobs : []
+    const nextStations = Array.isArray(state?.stations) ? state.stations : []
+    const nextJobs = Array.isArray(state?.jobs) ? state.jobs : []
     if (readGeneration !== initializationRef.current || accessContextRef.current !== accessContextId || (expectedGeneration !== undefined && expectedGeneration !== initializationRef.current)) {
       return { stations: [], jobs: [], summary: {}, stale: true }
     }
     setStations(nextStations)
     setJobs(nextJobs)
-    setActiveJobCount(Math.max(0, Number(summaryPayload?.summary?.active) || 0))
-    setRecoveryPendingCount(Math.max(0, Number(summaryPayload?.summary?.safeBacklog) || 0))
+    setActiveJobCount(Math.max(0, Number(state?.summary?.active) || 0))
+    setRecoveryPendingCount(Math.max(0, Number(state?.summary?.safeBacklog) || 0))
     physicalJobFailureNotifier.synchronize(nextJobs)
     const stationId = localStationRef.current?.id
     if (stationId) {
       const serverStation = nextStations.find((station) => station.id === stationId)
       if (serverStation) updateLocalStation(serverStation)
     }
-    return { stations: nextStations, jobs: nextJobs, summary: summaryPayload?.summary ?? {} }
+    return { stations: nextStations, jobs: nextJobs, summary: state?.summary ?? {} }
   }, [accessContextId, authenticated, ownsAccess, physicalJobFailureNotifier, updateLocalStation, api, qzTransport])
 
   const resolveConfiguredQzPrinter = useCallback(async (stationId) => {
@@ -1019,7 +1019,7 @@ export const usePrintingManager = ({ api = legacyPrintingApi, businessId, authen
     const queue=createRefreshQueue({run:()=>refresh(),isCurrent:ownsPoll,onError:reportError})
     const sync=()=>{if(ownsPoll() && (visiblePage() || primaryQzExecutor))return queue.refresh()}
     const unsubscribe=subscribeRealtime?.(event=>{if(event.topics.includes('printing'))return sync()})
-    // GET jobs performs timeout/recovery transitions. Keep a timed owner even
+    // The state read ages jobs for timeout/recovery. Keep a timed owner even
     // with a healthy channel; the primary QZ station also checks while hidden.
     const intervalMs=subscribeRealtime && !primaryQzExecutor?30_000:PRINT_STATE_POLL_MS
     const timer=globalThis.setInterval?.(sync,intervalMs)

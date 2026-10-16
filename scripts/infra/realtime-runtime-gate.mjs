@@ -43,6 +43,8 @@ export function assertRealtimeRuntimeGate(report){
   if(report.fixture?.historicalOrders>=1000)assert.ok(report.operations.historySearch.rowsRead<=report.fixture.historicalOrders*35+5000,'historical search repeatedly scanned the timeline prefix')
   assert.equal(report.historyPreserved,true,'historical orders were dropped')
   for(const op of Object.values(report.operations))for(const field of metrics)assert.ok(Number.isFinite(op[field]) && op[field]>=0,`invalid ${field}`)
+  assert.ok(report.operations.printState,'combined printing state was not measured')
+  for(const field of ['rowsRead','rowsWritten','sqlStatements'])assert.ok(report.operations.printState[field]<=['printStations','printJobs','printSummary'].reduce((sum,name)=>sum+report.operations[name][field],0),`combined printing state increased ${field}`)
   return true
 }
 export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}={}){
@@ -147,6 +149,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     await heartbeat('stationHealth')
     await json('printStations','/api/printing/stations')
     await json('printJobs','/api/printing/jobs?limit=100')
+    await json('printState','/api/printing/state')
     await json('printSummary','/api/printing/jobs/summary')
     await json('printClaim','/api/printing/jobs/claim-next',{method:'POST',body:{stationId:'gate-station'}})
     const states=Array.from({length:devices},()=>new Map()),readyCounts=Array(devices).fill(0),hintCounts=Array(devices).fill(0)
@@ -248,7 +251,8 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     const save=()=>{if(process.env.REALTIME_GATE_REPORT){const output=resolve(process.env.REALTIME_GATE_REPORT);mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n')}}
     save()
     assertRealtimeRuntimeGate(report);report.passed=true
-    report.monthlyProjection=projectMonthlyBudget({operations,workload:{surfaceMix:{orders:1,clients:1,receivables:1,finance:1}}})
+    report.monthlyProjection=projectMonthlyBudget({operations,workload:{changesPerDay:1500,surfaceMix:{orders:1,clients:1,receivables:1,finance:1}}})
+    report.stressProjection=projectMonthlyBudget({operations,workload:{changesPerDay:5000,surfaceMix:{orders:1,clients:1,receivables:1,finance:1}}})
     save()
     return report
   }finally{for(const {client} of clients)client.stop();await mf.dispose();fixture.close()}

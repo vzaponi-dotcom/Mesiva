@@ -6,7 +6,7 @@ O canal WebSocket distribui avisos de alterações confirmadas. HTTP/D1 continua
 
 `REALTIME_ENABLED` controla prepare/upgrade/renew e publicação. O binding `BUSINESS_REALTIME` usa `BusinessRealtimeHub`, classe SQLite criada pela migration de Durable Objects `realtime-v1`. Isso não é uma migration D1. Cada empresa usa um objeto; os Workers de staging e produção têm namespaces separados.
 
-A configuração de produção permanece desabilitada durante homologação. Habilitar staging pelo workflow **Deploy staging** na branch elegível `codex/realtime-budget`. A ativação em produção depende de CI, staging, orçamento completo, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Ativar a configuração revisada e conferir CI/staging do SHA efetivamente publicado. Merge sozinho não publica.
+A configuração de produção permanece desabilitada durante homologação. Habilitar staging pelo workflow **Deploy staging** na branch elegível da entrega (`codex/printing-state-budget` para a leitura unificada). A ativação em produção depende de CI, staging, orçamento completo, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Ativar a configuração revisada e conferir CI/staging do SHA efetivamente publicado. Merge sozinho não publica.
 
 Desabilitar a flag é o caminho de rollback do canal. O cliente passa ao fallback HTTP de 30s; dados, fila, auditoria e objetos persistidos são preservados. Não remover migrations ou namespaces para desligar o recurso.
 
@@ -53,6 +53,14 @@ Abas ocultas suspendem releituras visuais e retomam com reconciliação. A esta�
 Uma resposta parcial de pedidos preserva todo o histórico carregado e sua ordenação. ID ausente solicita snapshot; não remove entidade silenciosamente. Guards que rejeitam resposta concorrente mantêm dirty para releitura. Uma coleção tem uma leitura em andamento; bootstrap e lista completa de pedidos não disputam o mesmo aviso.
 
 Os fontes canônicos são `src/infrastructure/realtime/`, `src/app/runtime/data/` e `worker/realtime/`. A TV não importa o runtime administrativo. O catálogo `effectCatalog.js` registra ações, witnesses sem auditoria e exclusões; novos owners precisam atualizar cobertura/testes.
+
+## Leitura unificada da impressão
+
+O manager administrativo usa `GET /api/printing/state` para obter estações, a página operacional de jobs e o resumo em uma única requisição contextual. A rota exige `printing.queue` e `printing.station.view` antes de consultar ou recuperar pendências e aplica a mesma projeção de documentos por capabilities. Reutiliza os serviços oficiais de fila, timeout, retenção e resumo; os endpoints separados continuam atendendo paginação, filtros e consumidores existentes.
+
+Essa composição reduz autorizações e round trips repetidos. Preserva o owner temporal de 5s/30s, claim de 2s, heartbeat de 15s, confirmação física, segunda via e decisão humana para resultado desconhecido. Respostas de contexto anterior continuam descartadas. Uma leitura conjunta não transforma os dados em autorização para executar uma ação: as mutations continuam revalidando regras e sessão no Worker.
+
+O modelo mensal conta a leitura unificada por refresh do manager e, separadamente, os requests de jobs/resumo do painel de fila quando montado. Também conta montagem e primeira reconciliação dos owners, além da reconciliação periódica do transporte e do timer independente do manager. Dimensione com o volume declarado: nesta homologação,150pedidos e1.500alterações/dia para até cinco dispositivos; o cenário500/5.000permanece stress separado. A medição de D1 e a comparação de CPU em staging estão no [QA desta extensão](../superpowers/qa/2026-10-16-printing-state-budget.md). Produção depende da aprovação financeira e do release; implementação/CI não garantem a franquia mensal.
 
 ## Gate real e relatório
 

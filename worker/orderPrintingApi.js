@@ -205,6 +205,16 @@ export const handlePrintingApi = async (request, env, context, url) => {
     return printingJson({ station: saved.resource, receipt: saved.receipt })
   }
 
+  if (url.pathname === '/api/printing/state' && request.method === 'GET') {
+    requireCapability(context, 'printing.queue')
+    requireCapability(context, 'printing.station.view')
+    const { jobs } = await listPrintJobs(env.DB, businessId, { scope: 'operational' })
+    const [stations, summary] = await Promise.all([
+      listPrintStations(env.DB, businessId), getPrintQueueSummary(env.DB, businessId),
+    ])
+    return printingJson({ stations, jobs, summary })
+  }
+
   if (url.pathname === '/api/printing/jobs' && request.method === 'GET') {
     const orderId = url.searchParams.get('orderId') || ''
     if (orderId) {

@@ -584,7 +584,7 @@ test('printing hints only refresh presentation and leave unknown outcomes withou
   const h=await workspaceHarness(t,{userAgent:'Android'}),listeners=new Set(),mutations=[]
   const realtime={state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)}}
   let reads=0,station=null
-  const api={getPrintStations:async()=>({stations:station?[station]:[]}),upsertPrintStation:async id=>({station:station={id,platform:'android',isPrimary:false,autoPrintEnabled:false}}),getPrintJobs:async()=>{reads++;return {jobs:[{id:'unknown',status:'requires_attention',lastErrorCode:'PRINT_OUTCOME_UNKNOWN'}]}},getPrintQueueSummary:async()=>({summary:{active:1}}),claimNextPrintJob:async()=>{mutations.push('claim');return {job:null}},retryPrintJob:async()=>mutations.push('retry')}
+  const api={getPrintStations:async()=>({stations:station?[station]:[]}),upsertPrintStation:async id=>({station:station={id,platform:'android',isPrimary:false,autoPrintEnabled:false}}),getPrintState:async()=>{reads++;return {stations:station?[station]:[],jobs:[{id:'unknown',status:'requires_attention',lastErrorCode:'PRINT_OUTCOME_UNKNOWN'}],summary:{active:1}}},claimNextPrintJob:async()=>{mutations.push('claim');return {job:null}},retryPrintJob:async()=>mutations.push('retry')}
   function Probe(){return React.createElement('printing-probe',{value:usePrintingManager({api,authenticated:true,accessContextId:'A',realtime})})}
   const renderer=await h.render(Probe)
   await act(async()=>flushMicrotasks());const initial=reads
@@ -593,4 +593,20 @@ test('printing hints only refresh presentation and leave unknown outcomes withou
   assert.equal(reads,initial+1);assert.deepEqual(mutations,[])
   assert.equal(renderer.root.findByType('printing-probe').props.value.jobs[0].status,'requires_attention')
   await act(async()=>h.fireInterval(30_000));assert.equal(reads,initial+2)
+})
+
+
+test('manager refresh reads one coherent printing state and preserves unknown outcomes',async t=>{
+ const h=await workspaceHarness(t,{userAgent:'Android'}),calls=[]
+ let current
+ const station={id:'test-station',platform:'android',isPrimary:false,autoPrintEnabled:false}
+ const payload={stations:[station],jobs:[{id:'unknown',status:'requires_attention',lastErrorCode:'PRINT_OUTCOME_UNKNOWN'}],summary:{active:1,safeBacklog:0}}
+ const api={getPrintState:async()=>{calls.push('state');return payload},getPrintStations:async()=>{calls.push('stations');return{stations:[station]}},getPrintJobs:async()=>{calls.push('jobs');return{jobs:payload.jobs}},getPrintQueueSummary:async()=>{calls.push('summary');return{summary:payload.summary}},upsertPrintStation:async()=>({station})}
+ function Probe(){current=usePrintingManager({api,authenticated:true,accessContextId:'A'});return null}
+ await h.render(Probe)
+ calls.length=0
+ await act(async()=>current.refresh())
+ assert.deepEqual(calls,['state'])
+ assert.equal(current.jobs[0].lastErrorCode,'PRINT_OUTCOME_UNKNOWN')
+ assert.equal(current.activeJobCount,1)
 })
