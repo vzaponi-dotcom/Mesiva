@@ -342,3 +342,23 @@ for (const competingState of ['deferred','active']) test(`HTTP recovery cannot c
   assert.equal(env.DB.sqlite.prepare("SELECT recovery_job_id FROM print_stations WHERE id='s1'").get().recovery_job_id,'other-job')
   assert.equal(env.DB.sqlite.prepare("SELECT status FROM print_jobs WHERE id='job1'").get().status,'pending')
 })
+
+
+test('combined printing state preserves both read grants, tenant isolation and the existing projections', async () => {
+ const env=await makeEnv()
+ seedJob(env,{id:'state-local',status:'requires_attention'})
+ seedJob(env,{id:'state-foreign',type:'test',orderId:null})
+ env.DB.sqlite.exec("UPDATE print_jobs SET business_id='other-business' WHERE id='state-foreign'")
+ for(const grants of [[],['printing.queue'],['printing.station.view']])assert.equal((await call(env,'/api/printing/state','GET',grants))?.status,403)
+ const grants=['printing.queue','printing.station.view','printing.execute','orders.view']
+ const response=await call(env,'/api/printing/state','GET',grants)
+ assert.equal(response?.status,200)
+ const state=await response.json()
+ const stations=await (await call(env,'/api/printing/stations','GET',grants)).json()
+ const jobs=await (await call(env,'/api/printing/jobs','GET',grants)).json()
+ const summary=await (await call(env,'/api/printing/jobs/summary','GET',grants)).json()
+ assert.deepEqual(state,{stations:stations.stations,jobs:jobs.jobs,summary:summary.summary})
+ assert.equal(state.jobs.some(job=>job.id==='state-foreign'),false)
+ const restricted=await (await call(env,'/api/printing/state','GET',['printing.queue','printing.station.view'])).json()
+ assert.equal(Object.hasOwn(restricted.jobs[0],'document'),false)
+})

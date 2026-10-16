@@ -22,12 +22,13 @@ export function buildMonthlyWorkload(input={}) {
     tvReport:seconds*w.tvDevices/5,tvReportChanged:changes*w.tvDevices,
     controlState:seconds*w.controlDevices/5,stationUpsert:humanConnections}
   const manager=seconds*(w.printerDevices/5+(humans-w.printerDevices)/30)
-  const normalManager=manager+changes*.8*humans+humanConnections
-  const degradedManager=manager+humanConnections
+  const normalManager=manager+(changes*.8+w.administrativeChangesPerDay*w.days)*humans+humanConnections*2+Math.ceil(seconds*humans/300)
+  const degradedManager=manager+humanConnections*2+Math.ceil(seconds*humans/30)
   const surfaceQueries=(interval,changed)=>{
     const n=surface=>Number(surfaceMix[surface] || 0)
-    const reads=surface=>Math.ceil(seconds*n(surface)/interval)+Math.ceil(humanConnections*n(surface)/Math.max(1,humans))+(changed?(shared.orderCreate+shared.orderFinalize+shared.payment+w.administrativeChangesPerDay*w.days)*n(surface):0)
-    return {kitchenSummary:reads('orders'),customersPage:reads('clients'),customerRelationship:reads('clients'),
+    const reads=surface=>Math.ceil(seconds*n(surface)/interval)+2*Math.ceil(humanConnections*n(surface)/Math.max(1,humans))+(changed?(shared.orderCreate+shared.orderFinalize+shared.payment+w.administrativeChangesPerDay*w.days)*n(surface):0)
+    const printReads=Math.ceil(seconds*n('print-queue')/interval)+2*Math.ceil(humanConnections*n('print-queue')/Math.max(1,humans))+(changed?(changes*.8+w.administrativeChangesPerDay*w.days)*n('print-queue'):0)
+    return {printJobs:printReads,printSummary:printReads,kitchenSummary:reads('orders'),customersPage:reads('clients'),customerRelationship:reads('clients'),
       receivablesGroups:reads('receivables'),receivablesGroupOrders:reads('receivables'),receivablesQuick:reads('receivables'),
       financeMovements:reads('finance'),receivablesRefunds:reads('finance'),financeOverview:reads('dashboard'),
       historyPage:reads('history')+w.historyPagesPerDay*w.days,historySearch:w.historySearchesPerDay*w.days,customerDuplicates:w.customerChecksPerDay*w.days}
@@ -36,12 +37,12 @@ export function buildMonthlyWorkload(input={}) {
   return {workload:w,
     normal:{...shared,...surfaceQueries(300,true),prepareHuman:humanConnections,upgradeHuman:humanConnections,renewHuman:seconds*humans/60,
       prepareTv:tvConnections,upgradeTv:tvConnections,renewTv:seconds*w.tvDevices/60,
-      bootstrap:Math.ceil(seconds*humans/300)+humanConnections+changes*.1*humans,
-      byIds:changes*.2*humans+actionReads,tvState:Math.ceil(seconds*w.tvDevices/300)+tvConnections+changes*w.tvDevices,
-      printStations:normalManager+humanConnections,printJobs:normalManager,printSummary:normalManager},
+      bootstrap:Math.ceil(seconds*humans/300)+humanConnections*2+changes*.1*humans,
+      byIds:changes*.2*humans+actionReads,tvState:Math.ceil(seconds*w.tvDevices/300)+tvConnections*2+changes*w.tvDevices,
+      printState:normalManager,printStations:humanConnections},
     degraded:{...shared,...surfaceQueries(30,false),prepareHuman:humanConnections,upgradeHuman:0,renewHuman:0,prepareTv:tvConnections,upgradeTv:0,renewTv:0,
-      bootstrap:Math.ceil(seconds*humans/30)+humanConnections,byIds:actionReads,tvState:Math.ceil(seconds*w.tvDevices/30)+tvConnections,
-      printStations:degradedManager+humanConnections,printJobs:degradedManager,printSummary:degradedManager},
+      bootstrap:Math.ceil(seconds*humans/30)+humanConnections*2,byIds:actionReads,tvState:Math.ceil(seconds*w.tvDevices/30)+tvConnections*2,
+      printState:degradedManager,printStations:humanConnections},
   }
 }
 export function projectMonthlyBudget({operations,workload,stageMetrics={},accountBaseline={}}) {
@@ -85,10 +86,11 @@ export function projectMonthlyBudget({operations,workload,stageMetrics={},accoun
   const report={workload:counts.workload,operations,counts,normal:scenario('normal'),degraded:scenario('degraded'),unknownDimensions:[...new Set(unknownDimensions)],assumptions:[
     'Projeção de regime estável; excedente já acumulado no ciclo não é estornado.',
     'Cinco dispositivos totais incluem uma TV, uma estação principal e uma tela de controle no padrão; composição é configurável.',
-    '12h/dia,31dias,5000mudanças/dia:10%criação,10%finalização,10%pagamento,70%transições impressão; não é volume observado.',
+    `${counts.workload.hoursPerDay}h/dia,${counts.workload.days}dias,${counts.workload.changesPerDay}mudanças/dia:10%criação,10%finalização,10%pagamento,70%transições impressão; não é volume observado.`,
     'surfaceMix distribui dispositivos humanos; cada owner montado inclui reconciliação/fallback e invalidação por criação/finalização/pagamento (30% das mudanças); printing não publica orders/finance. Acrescenta20mudanças administrativas/dia para todos os owners. Clientes inclui perfil aberto; recebíveis inclui grupo e busca rápida abertos.',
     'Por dia:20páginas históricas,10buscas globais,50detalhes porID e10checks de duplicatas, configuráveis; preparação de ações inclui duas leituras canônicas por pagamento/detalhe.',
     'Inclui auth/guards medidos em HTTP,claim2s,heartbeat15s,aging5s/30s,presençaTV5s,controle5s,renovação60s e ACK20:1.',
+    'Owners de leitura incluem montagem e reconciliação inicial do canal; manager de impressão também soma timer próprio e reconciliação realtime300s/30s, sem presumir coalescência entre essas fontes.',
     'TV pode mudar projeção a cada alteração (limite conservador); heartbeat idêntico não publica.',
     'DO storage usa limite conservador64linhas porRPC e1porACK; confirmar com métricas SQLite antes de ampliar volume.',
     'CPU/duração de workerd local não são faturamento Cloudflare; métricas externas e baseline da conta são obrigatórias.',

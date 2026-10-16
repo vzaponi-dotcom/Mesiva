@@ -17,7 +17,7 @@ test('printing manager is driven by official job APIs and never by new-order det
   for (const apiName of [
     'getPrintStations',
     'upsertPrintStation',
-    'getPrintJobs',
+    'getPrintState',
     'createManualPrintJob',
     'createTestPrintJob',
     'claimNextPrintJob',
