@@ -14,10 +14,11 @@ test('operational runtime owns finance settings and merges authoritative finance
   assert.match(runtime, /const DATA_COLLECTIONS = \[[^\]]*'financeSettings'/s)
   assert.match(runtime, /const \[financeSettings, setFinanceSettings\] = useState\(null\)/)
   assert.match(runtime, /data\?\.financeSettings \?\? null/)
+  assert.match(runtime, /selected\.includes\(key\)&&guard\.canApply\(token,key\)/)
   assert.match(runtime, /deletedMovementId/)
   assert.match(runtime, /removeById\(current, deletedMovementId\)/)
   assert.match(runtime, /setFinanceSettings\(nextFinanceSettings\)/)
-  assert.match(runtime, /guard\.canApply\(token, 'movements'\)\) setMovements\(Array\.isArray\(data\?\.movements\) \? data\.movements : \[\]\)/)
+  assert.match(runtime, /if\(allowed\('movements'\)\)setMovements\(Array\.isArray\(data\?\.movements\)\?data\.movements:\[\]\)/)
 })
 
 test('App delegates movement and opening-balance ownership to FinanceWorkspace', async () => {

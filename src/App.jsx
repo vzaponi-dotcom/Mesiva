@@ -1,3 +1,7 @@
+import {useScopedQuery} from './infrastructure/realtime/useScopedQuery.js'
+import {createScopedReadsApi} from './infrastructure/api/scopedReadsApi.js'
+import { useRealtimeRuntime } from './infrastructure/realtime/useRealtimeRuntime.js'
+import { createRealtimeApi } from './infrastructure/realtime/realtimeApi.js'
 import { PlatformRoutes, createProvisioningAttempts, createManagementAttempts } from './domains/platform/index.js'
 import { ACCOUNT_CONTEXT_PATHS } from './app/navigation/routes.js'
 import { CompanySelection, CompanyInvitationAccept, createCompaniesApi } from './domains/companies/index.js'
@@ -19,6 +23,7 @@ import './App.css'
 import './central-data.css'
 import AppShell from './app/shell/AppShell.jsx'
 import AppRoot from './app/shell/AppRoot.jsx'
+import SurfaceContent from './app/shell/SurfaceContent.jsx'
 import { useLocation, useNavigate } from 'react-router'
 import { AccessSurface, InvitationAccept, PasswordRecovery } from './domains/access/index.js'
 import Button from './shared/ui/Button'
@@ -196,7 +201,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     if (contextOwnerRef.current === sessionContext?.contextId) void refreshSession({ requireContext: true })
   } }), [sessionContext, refreshSession])
   const clientsForContext = useMemo(() => ({
-    orders: createOrdersApi(contextClient), reservations: createTableReservationApi(contextClient),
+    reads:createScopedReadsApi(contextClient), realtime: createRealtimeApi(contextClient), orders: createOrdersApi(contextClient), reservations: createTableReservationApi(contextClient),
     tables: createTableServiceApi(contextClient), customers: createCustomersApi(contextClient),
     companies: createCompaniesApi(contextClient), printing: createPrintingApi(contextClient), bootstrap: createBootstrapApi(contextClient),
     effective: createEffectiveConfigApi(contextClient), payments: createPaymentApi(contextClient), refunds: createRefundApi(contextClient),
@@ -282,8 +287,16 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     checkoutPending: newOrderDraft.checkoutPending || platformPending || provisioningAttempts.hasUnresolved() || managementAttempts.hasUnresolved(),
   })
   const handleOperationalUnauthorized = useCallback((error) => operationalRuntimeTargetsRef.current.onUnauthorized?.(error), [])
+  const handleRealtimeUnauthorized = useCallback(error => {
+    if(error?.status===401)handleOperationalUnauthorized(error)
+    else void refreshSession({requireContext:true})
+  },[handleOperationalUnauthorized,refreshSession])
+  const realtime = useRealtimeRuntime({accessContextId,api:clientsForContext.realtime,
+    enabled:globalSession && operationalAccess && authState==='authenticated' && isOnline,
+    operational:operationalAccess && granted.has('printing.execute'),onUnauthorized:handleRealtimeUnauthorized})
   const getEffectiveConfigVersion = useCallback(() => effectiveConfigVersionRef.current, [])
   const {
+    readModelEnabled,readModelRevision,operationalOrders,operationalCounters,surfaceState,
     business,
     bootstrapState,
     bootstrapEffectiveConfig,
@@ -300,15 +313,39 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     resetOperationalData,
     getSyncGuard,
     getOfficialRevision,
-    getOfficialTables,
+    getOfficialTables,getOfficialOrders,refreshOrdersForAction,
   } = useOperationalDataRuntime({
-    api: { ...clientsForContext.bootstrap, getOrders: clientsForContext.orders.getOrders },
+    api: { ...clientsForContext.bootstrap, getOrders: clientsForContext.orders.getOrders, getOrdersByIds: clientsForContext.orders.getOrdersByIds, getActiveOrders:clientsForContext.reads.getActiveOrders },
     onUnauthorized: handleOperationalUnauthorized,
+    surface:globalSession?(resolveDestination(activeTab,granted,IMPLEMENTED_DESTINATIONS,{authenticated:authState==='authenticated'}).status==='allowed'?activeTab:'shell'):undefined,
+    realtime: globalSession ? realtime : undefined,
     globalSyncEnabled: operationalAccess && isOnline && authState === 'authenticated',
     ordersSyncEnabled: operationalAccess && (activeTab === 'orders' || activeTab === 'kitchen-tv-control') && isOnline && authState === 'authenticated',
     effectiveConfigVersion: getEffectiveConfigVersion,
     accessContextId,
   })
+  const scopedHistory=useScopedQuery({accessContextId,queryKey:JSON.stringify(query.history),
+    load:({cursor,signal})=>clientsForContext.reads.getHistory({...query.history,cursor},{signal}),
+    realtime:globalSession?realtime:undefined,topics:['orders','finance','settings'],collections:['orders'],guard:getSyncGuard(),officialRevision:readModelRevision,
+    enabled:readModelEnabled&&activeTab==='history'&&hasCapability(granted,'orders.history')&&operationalAccess,
+    onUnauthorized:handleRealtimeUnauthorized})
+  const loadScopedOrdersByIds=useCallback(async(ids,{signal}={})=>{
+    if(!Array.isArray(ids)||ids.length>100)return false
+    const owner=accessContextId,guard=getSyncGuard(),token=guard.beginQueryRead(['orders']),orders=[]
+    const unique=[...new Set(ids)]
+    for(let offset=0;offset<unique.length;offset+=99){
+      const data=await clientsForContext.orders.getOrdersByIds(unique.slice(offset,offset+99),{signal})
+      if(sessionOwnerRef.current!==owner || guard!==getSyncGuard() || !guard.canApply(token,'orders'))return false
+      orders.push(...(data?.orders || []))
+    }
+    return orders
+  },[accessContextId,clientsForContext.orders,getSyncGuard])
+  const loadScopedOrderById=useCallback(async(id,options)=>{
+    const orders=await loadScopedOrdersByIds([id],options)
+    return orders===false?false:orders.find(order=>order.id===id) || null
+  },[loadScopedOrdersByIds])
+  const historyDetailRevision=useMemo(()=>({data:scopedHistory.data,revision:readModelRevision}),[scopedHistory.data,readModelRevision])
+  const historyReadModel=readModelEnabled?{...scopedHistory,ownerKey:accessContextId,loadOrderById:loadScopedOrderById,officialRevision:historyDetailRevision,onUnauthorized:handleRealtimeUnauthorized}:undefined
   useRouteGate({
     ready: authState === 'authenticated' && !choosingCompany && !platformEntry && sessionContext?.scope !== 'platform' && (!operationalAccess || bootstrapState === 'ready'),
     authenticated: authState === 'authenticated' && Boolean(sessionContext?.user?.id),
@@ -445,7 +482,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
   })
   const orderPayment = useOrderPaymentWorkflow({
     api: clientsForContext.payments,
-    orders,
+    orders,getOfficialOrders,
     granted,
     canReceivePayments,
     writesBlocked,
@@ -460,7 +497,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
   })
   const clientOrdersPayment = useClientOrdersPaymentWorkflow({
     api: clientsForContext.payments,
-    orders,
+    orders,getOfficialOrders,
     canReceivePayments,
     writesBlocked,
     paymentOptions,
@@ -472,6 +509,24 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     onSuccess: showSuccessMessage,
     onError: showApiError,
   })
+  const orderActionSequence=useRef(0),orderActionState=useRef(null)
+  orderActionState.current={owner:accessContextId,writesBlocked,surface:activeTab}
+  const prepareOrderAction=useCallback((ids,open,isCurrent=()=>true)=>{
+    if(!readModelEnabled)return open()
+    if(orderActionState.current.writesBlocked)return false
+    const owner=accessContextId,surface=activeTab,sequence=++orderActionSequence.current
+    return (async()=>{
+      const accepted=await refreshOrdersForAction(ids)
+      if(orderActionState.current.owner!==owner||orderActionState.current.surface!==surface||orderActionSequence.current!==sequence||orderActionState.current.writesBlocked||!isCurrent())return false
+      if(!accepted){setToastMessage('Não foi possível atualizar os pedidos. Confira a conexão e tente novamente.');return false}
+      return open()
+    })()
+  },[accessContextId,activeTab,readModelEnabled,refreshOrdersForAction,setToastMessage])
+  const openOrderPayment=useCallback((id,source,options={})=>prepareOrderAction([id],()=>orderPayment.open(id,source),options.isCurrent),[orderPayment.open,prepareOrderAction])
+  const openClientOrdersPayment=useCallback(target=>{
+    if(!target?.clientId||!Array.isArray(target.orderIds)||target.orderIds.length<2||target.orderIds.length>100)return false
+    return prepareOrderAction(target.orderIds,()=>clientOrdersPayment.open(target))
+  },[clientOrdersPayment.open,prepareOrderAction])
   const tableTabPayment = useTableTabPaymentWorkflow({
     api: clientsForContext.payments,
     writesBlocked,
@@ -504,11 +559,16 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     cancelDiscard()
     window.requestAnimationFrame(() => document.querySelector?.('.app-content')?.focus?.())
   }, [cancelDiscard])
-  const printing = usePrintingManager({ api: clientsForContext.printing, businessId: sessionContext?.authMode === 'multi_company' ? sessionContext.businessId : undefined, authenticated: operationalAccess && authState === 'authenticated' && bootstrapState === 'ready', accessContextId, isOnline, onPhysicalJobFailure: handlePhysicalJobFailure })
-  const kitchenNow = useKitchenClock(orders, { active: activeTab === 'orders' || activeTab === 'kitchen-tv-control', currentTiming })
-  const operationalNow = activeTab === 'orders' ? kitchenNow : new Date()
-  const operationalOrderCount = getOperationalOrderCount(orders, operationalNow, currentTiming)
-  const openComandaCount = getOpenComandaCount(tables, tableTabs)
+  const printing = usePrintingManager({ api: clientsForContext.printing, businessId: sessionContext?.authMode === 'multi_company' ? sessionContext.businessId : undefined, authenticated: operationalAccess && authState === 'authenticated' && bootstrapState === 'ready', accessContextId, isOnline, onPhysicalJobFailure: handlePhysicalJobFailure, realtime: globalSession ? realtime : undefined })
+  const badgeOrders=readModelEnabled?operationalOrders:orders
+  const kitchenNow = useKitchenClock(badgeOrders, { active: readModelEnabled || activeTab === 'orders' || activeTab === 'kitchen-tv-control', currentTiming })
+  const kitchenSummary=useScopedQuery({accessContextId,queryKey:'kitchen-summary:'+toLocalDateValue(kitchenNow),
+    load:({signal})=>clientsForContext.reads.getKitchenSummary({signal}),realtime:globalSession?realtime:undefined,
+    topics:['orders'],collections:['orders'],guard:getSyncGuard(),officialRevision:readModelRevision,
+    enabled:readModelEnabled&&activeTab==='orders'&&operationalAccess&&hasCapability(granted,'orders.view'),onUnauthorized:handleRealtimeUnauthorized})
+  const operationalNow = readModelEnabled || activeTab === 'orders' ? kitchenNow : new Date()
+  const operationalOrderCount = getOperationalOrderCount(badgeOrders, operationalNow, currentTiming)
+  const openComandaCount = readModelEnabled?operationalCounters.comandas:getOpenComandaCount(tables, tableTabs)
   const {
     newOrderIds,
     previewSound: previewKitchenOrderSound,
@@ -728,12 +788,23 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     return hasCapability(granted, ['Finalizado', 'Cancelado'].includes(order.status) ? 'orders.history' : 'orders.view') ? order : null
   }
   const accessProps = { section: activeTab, sessionContext, refreshSession, runCredentialChange, onApiError: showApiError, writesBlocked,
-    canOpenResource: (item) => Boolean(resolveActivityOrder(item)),
-    onOpenResource: (item) => { const order = resolveActivityOrder(item); if (order) setActivityDetail({ owner: accessContextId, orderId: order.id }) },
+    canOpenResource: (item) => readModelEnabled?operationalAccess&&item.resourceType==='order'&&Boolean(item.resourceId)&&['orders.view','orders.history'].some(cap=>hasCapability(granted,cap)):Boolean(resolveActivityOrder(item)),
+    onOpenResource: (item) => {
+      if(readModelEnabled){if(item.resourceType==='order'&&item.resourceId)setActivityDetail({owner:accessContextId,orderId:String(item.resourceId)});return}
+      const order=resolveActivityOrder(item);if(order)setActivityDetail({owner:accessContextId,orderId:order.id})
+    },
   }
+  const scopedActivityDetail=useScopedQuery({accessContextId,queryKey:'activity-order:'+activityDetail?.orderId,
+    load:async({signal})=>({order:await loadScopedOrderById(activityDetail.orderId,{signal})}),realtime:globalSession?realtime:undefined,
+    topics:['orders'],collections:['orders'],guard:getSyncGuard(),officialRevision:readModelRevision,
+    enabled:readModelEnabled&&activeTab==='access-activity'&&activityDetail?.owner===accessContextId,onUnauthorized:handleRealtimeUnauthorized})
   const activityOrder = activityDetail?.owner === accessContextId && activeTab === 'access-activity'
-    ? resolveActivityOrder({ resourceType: 'order', resourceId: activityDetail.orderId }) : null
+    ? (readModelEnabled?scopedActivityDetail.data?.order:resolveActivityOrder({resourceType:'order',resourceId:activityDetail.orderId})) : null
 
+  const scopedReadGuard=getSyncGuard()
+  const scopedReadContext=useMemo(()=>({enabled:readModelEnabled,api:clientsForContext.reads,accessContextId,realtime:globalSession?realtime:undefined,
+    guard:scopedReadGuard,officialRevision:readModelRevision,onUnauthorized:handleRealtimeUnauthorized,onReadError:showApiError,loadOrderById:loadScopedOrderById,loadOrdersByIds:loadScopedOrdersByIds}),
+    [readModelEnabled,clientsForContext.reads,accessContextId,globalSession,realtime,scopedReadGuard,readModelRevision,handleRealtimeUnauthorized,loadScopedOrderById,loadScopedOrdersByIds])
   const listedCompanies = companyList.owner === sessionContext?.contextId ? companyList : { items: [], loading: true, error: '' }
   const inPlatform = globalSession && sessionContext.scope === 'platform'
   const contextSurface = (choosingCompany || inPlatform) && routeLocation.pathname === '/minha-conta'
@@ -786,20 +857,23 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
       >
       <NavigationProvider authenticated={authState === 'authenticated' && Boolean(sessionContext?.user?.id)} activeTab={activeTab} activeMobileEntry={activeMobileEntry} granted={granted} implemented={IMPLEMENTED_DESTINATIONS} moreOpen={moreOpen} requestNavigation={requestNavigation} openMore={openMore} closeMore={closeMore}>
       <AppShell user={sessionContext?.user} onSwitchUser={handleSwitchUser} onSwitchCompany={globalSession && sessionContext?.eligibleBusinessCount > 1 ? handleSwitchCompany : undefined} onPlatform={globalSession && sessionContext.platformCapabilities?.includes('platform.businesses.view') ? handlePlatform : undefined} businessId={sessionContext?.businessId} businessName={business?.name} businessHasLogo={business?.hasLogo} businessLogoVersion={business?.logoVersion} navigationBadges={{ orders: operationalOrderCount, comandas: openComandaCount, 'print-queue': printing.activeJobCount }} onLogout={handleLogout} logoutDisabled={writesBlocked}>
+        <SurfaceContent state={readModelEnabled ? surfaceState : 'ready'} surface={activeTab} onRetry={() => void refreshBootstrapSilently()} retryDisabled={!isOnline || requestKey !== null}>
         {['my-account', 'access-team', 'access-activity'].includes(activeTab) && renderAccessSurface(accessProps)}
+        {activeTab==='access-activity'&&scopedActivityDetail.error&&<p role="alert">Não foi possível carregar o pedido.<button type="button" onClick={scopedActivityDetail.reload}>Tentar novamente</button></p>}
         {activityOrder && <OrderDetail order={activityOrder} currency={currency} onClose={() => setActivityDetail(null)} canExecutePrinting={false} canCancelOrders={false} />}
-        {activeTab === 'dashboard' && <DashboardSurface orders={orders} movements={movements} currency={currency} queryState={query.dashboard} onQueryChange={(patch) => patchQuery('dashboard', patch)} />}
+        {activeTab === 'dashboard' && <DashboardSurface key={accessContextId} readContext={scopedReadContext} orders={orders} movements={movements} currency={currency} queryState={query.dashboard} onQueryChange={(patch) => patchQuery('dashboard', patch)} />}
         {activeTab === 'reports' && <ReportingWorkspace granted={granted} onOpenClient={canViewClients ? (client) => { patchQuery('clients', { search: client?.name || '' }); requestNavigation('clients') } : null} />}
-        {activeTab === 'orders' && <Orders orders={orders} officialOrders={orders} now={kitchenNow} currentTiming={currentTiming} search={query.orders.search} onSearchChange={(search) => patchQuery('orders', { search })} currency={currency} onNewOrder={handleNewOrder} onFinalizeOrder={orderCommands.finalizeOrder} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={orderPayment.open} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} onNavigatePrintQueue={() => requestNavigation('print-queue')} printQueueActiveCount={printing.activeJobCount} granted={granted} newOrderIds={newOrderIds} soundEnabled={kitchenSoundEnabled} onSoundEnabledChange={handleKitchenSoundEnabledChange} printing={printing} onToast={setToastMessage} canCreateOrders={canCreateOrders} canFinalizeOrders={canFinalizeOrders} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canUseLocalPreferences={canUseLocalPreferences} canViewPrintQueue={canViewPrintQueue} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} onEditReservation={handleEditFutureReservation} />}
-        {activeTab === 'history' && <OrderHistory orders={orders} currentTiming={currentTiming} currency={currency} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={orderPayment.open} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} actionKey={orderCommands.actionKey} printing={printing} onToast={setToastMessage} queryState={query.history} onQueryChange={(patch) => patchQuery('history', patch)} granted={granted} canViewAnalysis={canViewOperationalAnalysis} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} />}
-        {activeTab === 'kitchen-tv-control' && <KitchenTvControlSurface orders={orders} now={kitchenNow} currentTiming={currentTiming} granted={granted} isOnline={isOnline} onNavigate={requestNavigation} onFeedback={setToastMessage} />}
+        {activeTab==='orders'&&readModelEnabled&&kitchenSummary.error&&<p role="alert">Não foi possível atualizar o contador de finalizados.<button type="button" onClick={kitchenSummary.reload}>Tentar novamente</button></p>}
+        {activeTab === 'orders' && <Orders orders={orders} key={accessContextId} finishedTodayCount={readModelEnabled?(kitchenSummary.data?.finishedToday ?? '—'):undefined} officialOrders={orders} now={kitchenNow} currentTiming={currentTiming} search={query.orders.search} onSearchChange={(search) => patchQuery('orders', { search })} currency={currency} onNewOrder={handleNewOrder} onFinalizeOrder={orderCommands.finalizeOrder} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={openOrderPayment} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} onNavigatePrintQueue={() => requestNavigation('print-queue')} printQueueActiveCount={printing.activeJobCount} granted={granted} newOrderIds={newOrderIds} soundEnabled={kitchenSoundEnabled} onSoundEnabledChange={handleKitchenSoundEnabledChange} printing={printing} onToast={setToastMessage} canCreateOrders={canCreateOrders} canFinalizeOrders={canFinalizeOrders} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canUseLocalPreferences={canUseLocalPreferences} canViewPrintQueue={canViewPrintQueue} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} onEditReservation={handleEditFutureReservation} />}
+        {activeTab === 'history' && <OrderHistory key={accessContextId} readModel={historyReadModel} orders={orders} currentTiming={currentTiming} currency={currency} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={openOrderPayment} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} actionKey={orderCommands.actionKey} printing={printing} onToast={setToastMessage} queryState={query.history} onQueryChange={(patch) => patchQuery('history', patch)} granted={granted} canViewAnalysis={canViewOperationalAnalysis} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} />}
+        {activeTab === 'kitchen-tv-control' && <KitchenTvControlSurface key={accessContextId} orders={orders} realtime={globalSession ? realtime : undefined} now={kitchenNow} currentTiming={currentTiming} granted={granted} isOnline={isOnline} onNavigate={requestNavigation} onFeedback={setToastMessage} />}
         {activeTab === 'new-order' && newOrderDraft.context && <NewOrderRoute key={newOrderDraft.renderKey ?? 'new-order'} clients={clients} products={products} tables={tables} mode={newOrderDraft.context?.mode || 'create'} reservationContext={newOrderDraft.context?.reservationContext || null} initialDraft={newOrderDraft.context?.initialDraft || null} initialTableId={newOrderDraft.context?.tableId || ''} expectedTableTabId={newOrderDraft.context?.expectedTableTabId || ''} currency={currency} disabled={writesBlocked} renderPaymentComposition={(props) => <CheckoutPaymentComposition {...props} paymentOptions={paymentOptions} defaultPaymentMethod={defaultPaymentMethod} />} modalityOptions={modalityOptions} defaultModality={defaultModality} onPolicyChanged={effectiveConfig.refresh} onCancel={() => requestNavigation(newOrderDraft.context?.returnDestination || 'orders')} onCreateClient={quickCreateCustomer} onSubmit={newOrderDraft.submit} onDraftDirtyChange={newOrderDraft.setDirty} canCreateClients={canCreateClients} canAdjustOrders={canAdjustOrders} canBackdateOrders={canBackdateOrders} />}
-        {activeTab === 'clients' && <CustomersWorkspace clients={clients} orders={orders} granted={granted} currency={currency} onRegisterPayment={orderPayment.open} onRegisterClientOrdersPayment={clientOrdersPayment.open} onNewOrder={client => handleNewOrder({ clientId: client.id, returnTab: 'clients' })} printing={printing} onToast={setToastMessage} search={query.clients.search} sort={query.clients.sort} onSearchChange={(search) => patchQuery('clients', { search })} onSortChange={(sort) => patchQuery('clients', { sort })} writesBlocked={writesBlocked} canCreateClients={canCreateClients} canUpdateClients={canUpdateClients} canDeleteClients={canDeleteClients} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} onDuplicatePhone={setToastMessage} />}
+        {activeTab === 'clients' && <CustomersWorkspace key={accessContextId} readContext={scopedReadContext} clients={clients} orders={orders} granted={granted} currency={currency} onRegisterPayment={openOrderPayment} onRegisterClientOrdersPayment={openClientOrdersPayment} onNewOrder={client => handleNewOrder({ clientId: client.id, returnTab: 'clients' })} printing={printing} onToast={setToastMessage} search={query.clients.search} sort={query.clients.sort} onSearchChange={(search) => patchQuery('clients', { search })} onSortChange={(sort) => patchQuery('clients', { sort })} writesBlocked={writesBlocked} canCreateClients={canCreateClients} canUpdateClients={canUpdateClients} canDeleteClients={canDeleteClients} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} onDuplicatePhone={setToastMessage} />}
         <CatalogWorkspace visible={activeTab === 'products'} products={products} search={query.products.search} queryState={query.products} onSearchChange={(search) => patchQuery('products', { search })} onQueryChange={(patch) => patchQuery('products', patch)} currency={currency} writesBlocked={writesBlocked} canManageProducts={canManageProducts} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />
-        {activeTab === 'print-queue' && <PrintQueue orders={orders} printing={printing} reviewJobId={printQueueReviewJobId} onReviewJobConsumed={() => setPrintQueueReviewJobId(null)} onOpenPrintingSettings={canOpenPrintingSettings ? () => requestNavigation('settings-printing') : undefined} onToast={setToastMessage} queryState={query.printQueue} onQueryChange={(patch) => patchQuery('printQueue', patch)} canExecutePrinting={canExecutePrinting} canForcePrinting={canForcePrinting} canDiscardPrinting={canDiscardPrinting} isOnline={isOnline} />}
-        {activeTab === 'receivables' && <ReceivablesSurface orders={orders} movements={movements} currency={currency} disabled={writesBlocked} onRegisterPayment={orderPayment.open} onRegisterClientOrdersPayment={clientOrdersPayment.open} onOpenClient={canViewClients ? (client) => { patchQuery('clients', { search: client?.name || '' }); requestNavigation('clients') } : null} queryState={query.receivables} onQueryChange={(patch) => patchQuery('receivables', patch)} canReceivePayments={canReceivePayments} canManagePaymentPromises={canManagePaymentPromises} canExecutePrinting={canExecutePrinting} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />}
-        {activeTab === 'finance' && <FinanceWorkspace movements={movements} financeSettings={financeSettings} today={todayValue} currency={currency} pendingRefundOrders={pendingRefundOrders} paymentOptions={paymentOptions} categoryOptions={financeCategoryOptions} categoryRevision={financeCategoryRevision} writesBlocked={writesBlocked} canManageMovements={canManageMovements} canRefundPayments={canRefundPayments} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} formatCancellationDate={formatCancellationDate} onRequestRefund={refund.request} />}
-        {activeTab === 'tables' && <Tables tables={tables} disabled={writesBlocked} canOpenComanda={canOpenComanda} onCreate={tableServiceCommands.createTable} onRename={tableServiceCommands.renameTable} onSetActive={tableServiceCommands.setTableActive} onReorder={tableServiceCommands.reorderTables} onOpenComanda={handleOpenComanda} canManageTables={canManageTables} />}
+        {activeTab === 'print-queue' && <PrintQueue orders={orders} printing={printing} key={accessContextId} realtime={globalSession ? realtime : undefined} reviewJobId={printQueueReviewJobId} onReviewJobConsumed={() => setPrintQueueReviewJobId(null)} onOpenPrintingSettings={canOpenPrintingSettings ? () => requestNavigation('settings-printing') : undefined} onToast={setToastMessage} queryState={query.printQueue} onQueryChange={(patch) => patchQuery('printQueue', patch)} canExecutePrinting={canExecutePrinting} canForcePrinting={canForcePrinting} canDiscardPrinting={canDiscardPrinting} isOnline={isOnline} />}
+        {activeTab === 'receivables' && <ReceivablesSurface key={accessContextId} readContext={scopedReadContext} orders={orders} movements={movements} currency={currency} disabled={writesBlocked} onRegisterPayment={openOrderPayment} onRegisterClientOrdersPayment={openClientOrdersPayment} onOpenClient={canViewClients ? (client) => { patchQuery('clients', { search: client?.name || '' }); requestNavigation('clients') } : null} queryState={query.receivables} onQueryChange={(patch) => patchQuery('receivables', patch)} canReceivePayments={canReceivePayments} canManagePaymentPromises={canManagePaymentPromises} canExecutePrinting={canExecutePrinting} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />}
+        {activeTab === 'finance' && <FinanceWorkspace key={accessContextId} readContext={scopedReadContext} movements={movements} financeSettings={financeSettings} today={todayValue} currency={currency} pendingRefundOrders={pendingRefundOrders} paymentOptions={paymentOptions} categoryOptions={financeCategoryOptions} categoryRevision={financeCategoryRevision} writesBlocked={writesBlocked} canManageMovements={canManageMovements} canRefundPayments={canRefundPayments} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} formatCancellationDate={formatCancellationDate} onRequestRefund={refund.request} />}
+        {activeTab === 'tables' && <Tables key={accessContextId} tables={tables} disabled={writesBlocked} canOpenComanda={canOpenComanda} onCreate={tableServiceCommands.createTable} onRename={tableServiceCommands.renameTable} onSetActive={tableServiceCommands.setTableActive} onReorder={tableServiceCommands.reorderTables} onOpenComanda={handleOpenComanda} canManageTables={canManageTables} />}
         {activeTab === 'comandas' && (
           <TableServiceExternalActions
             selection={selectedComanda}
@@ -869,6 +943,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         {clientOrdersPayment.dialog && <ClientOrdersPaymentDialog dialog={clientOrdersPayment.dialog} currency={currency} />}
 
         <RegisterRefundDialog open={canRefundPayments && Boolean(refund.refundOrder)} order={refund.refundOrder} paymentOptions={paymentOptions} onClose={refund.close} onConfirm={refund.confirm} submitting={refund.submitting} />
+        </SurfaceContent>
       </AppShell>
       </NavigationProvider>
       </SettingsPolicyBoundary>}

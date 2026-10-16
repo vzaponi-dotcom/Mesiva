@@ -7,6 +7,7 @@ import { assertPreservedPrintContext } from './print-context-snapshot.mjs'
 const directory = new URL('../../migrations/', import.meta.url)
 const files = readdirSync(directory).filter(name => name.endsWith('.sql')).sort()
 const recoveryIndexSql = readFileSync(new URL('0042_print_recovery_candidate_indexes.sql', directory), 'utf8')
+const summaryIndexSql = readFileSync(new URL('0044_print_summary_retention_indexes.sql', directory), 'utf8')
 const guardSql = readFileSync(new URL('0039_tenant_reference_guards.sql', directory), 'utf8')
 function fixture(t) {
   const db = new DatabaseSync(':memory:'); t.after(() => db.close())
@@ -22,8 +23,8 @@ function fixture(t) {
 }
 test('the real full migration sequence preserves printing data and prior schema while adding exactly the reviewed tenant guards', t => {
   const { before, after } = fixture(t)
-  assert.equal(after[4].length - before[4].length, 11)
-  assert.doesNotThrow(() => assertPreservedPrintContext(before, after, guardSql, recoveryIndexSql))
+  assert.equal(after[4].length - before[4].length, 14)
+  assert.doesNotThrow(() => assertPreservedPrintContext(before, after, guardSql, recoveryIndexSql, summaryIndexSql))
 })
 test('the D1 gate still rejects changed history, changed old schema and missing, weakened or unexpected guards', t => {
   const { before, after } = fixture(t)
@@ -34,6 +35,8 @@ test('the D1 gate still rejects changed history, changed old schema and missing,
     value => { value[4].find(row => row.name === 'tenant_print_jobs_reference_insert').sql = 'CREATE TRIGGER unsafe' },
     value => { value[4] = value[4].filter(row => row.name !== 'print_job_attempts_job_lookup_idx') },
     value => { value[4].find(row => row.name === 'print_job_attempts_unresolved_status_idx').sql = 'CREATE INDEX unsafe' },
+    value => { value[4] = value[4].filter(row => row.name !== 'print_jobs_terminal_expiry_idx') },
+    value => { value[4].find(row => row.name === 'print_jobs_nonterminal_idx').sql = 'CREATE INDEX unsafe' },
     value => { value[4].push({ type: 'trigger', name: 'unexpected', tbl_name: 'print_jobs', sql: 'unsafe' }) },
-  ]) { const altered = structuredClone(after); mutate(altered); assert.throws(() => assertPreservedPrintContext(before, altered, guardSql, recoveryIndexSql)) }
+  ]) { const altered = structuredClone(after); mutate(altered); assert.throws(() => assertPreservedPrintContext(before, altered, guardSql, recoveryIndexSql, summaryIndexSql)) }
 })

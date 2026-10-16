@@ -1,3 +1,4 @@
+import { useRealtimeRuntime } from '../infrastructure/realtime/useRealtimeRuntime.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { detectOperationalArrivals } from '../domains/orders/index.js'
 import {
@@ -54,6 +55,8 @@ export function KitchenDisplayApp({
   readState = readStoredKitchenDisplayState,
   reportState = reportStoredKitchenDisplayState,
   audio: suppliedAudio,
+  realtimeApi=null,
+  realtimeTransport,
   schedule = globalThis.setTimeout,
   cancelSchedule = globalThis.clearTimeout,
   requestFullscreen = requestKitchenDisplayFullscreen,
@@ -80,6 +83,9 @@ export function KitchenDisplayApp({
   const highlightTimers = useRef(new Map())
   const telemetryFingerprint = useRef(null)
   const telemetryPayloadRef = useRef(null)
+  const snapshotRef=useRef(snapshot),clockRef=useRef(now),readGeneration=useRef(0),refreshInFlight=useRef(null)
+  snapshotRef.current=snapshot
+  const [realtimeGeneration,setRealtimeGeneration]=useState(0)
 
   const commitPaging = useCallback((nextPaging) => {
     pagingRef.current = nextPaging
@@ -96,8 +102,9 @@ export function KitchenDisplayApp({
     })
   }, [reportState])
 
-  const applySnapshot = useCallback(async (next) => {
-    const currentNow = new Date(next.serverNow || Date.now())
+  const applySnapshot = useCallback(async (next, {clockNow=null,clockOnly=false}={}) => {
+    const currentNow = clockNow || new Date(next.serverNow || Date.now())
+    clockRef.current=currentNow
     setNow(currentNow)
     const arrival = detectOperationalArrivals(previousIds.current, next.orders || [], currentNow, alertedIds.current, next.timing)
     previousIds.current = arrival.currentIds
@@ -132,9 +139,7 @@ export function KitchenDisplayApp({
       setHighlightedIds((current) => new Set([...current, ...arrival.newIds]))
       if (!await audio.playArrival({ profile: soundProfile, volume: soundVolume })) setSoundBlocked(true)
     }
-    setSnapshot(next)
-    setStale(false)
-    setLastUpdatedAt(new Date())
+    if(!clockOnly){setSnapshot(next);setStale(false);setLastUpdatedAt(new Date())}
   }, [audio, cancelSchedule, commitPaging, schedule, soundProfile, soundVolume, viewport.height, viewport.width])
 
   const prepareStartPanel = useCallback((next) => {
@@ -198,21 +203,40 @@ export function KitchenDisplayApp({
     return () => globalThis.clearInterval(poll)
   }, [phase, pollPairing, prepareStartPanel])
 
-  const refresh = useCallback(async () => {
-    try {
-      await applySnapshot(await readState())
-    } catch (error) {
-      if (isDefinitive(error)) {
-        previousIds.current = undefined
-        commitPaging(createKitchenDisplayPagingState(null))
-        setSnapshot(null)
-        setStale(false)
-        setPhase('unauthorized')
-      } else {
-        setStale(true)
-      }
-    }
-  }, [applySnapshot, commitPaging, readState])
+  const revokeDisplay=useCallback(()=>{
+    readGeneration.current++;previousIds.current=undefined
+    commitPaging(createKitchenDisplayPagingState(null));setSnapshot(null);setStale(false);setPhase('unauthorized')
+  },[commitPaging])
+  const refresh = useCallback(() => {
+    if(refreshInFlight.current)return refreshInFlight.current
+    const generation=readGeneration.current
+    const pending=Promise.resolve().then(async()=>{
+      try {
+        const next=await readState()
+        if(generation!==readGeneration.current)return false
+        await applySnapshot(next);return true
+      } catch(error){
+        if(generation!==readGeneration.current)return false
+        if(isDefinitive(error))revokeDisplay();else setStale(true)
+        return false
+      } finally {if(refreshInFlight.current===pending)refreshInFlight.current=null}
+    })
+    refreshInFlight.current=pending;return pending
+  },[applySnapshot,readState,revokeDisplay])
+  const onRealtimeUnauthorized=useCallback(async error=>{
+    if(error?.status===401 || error?.status===403){revokeDisplay();return}
+    // A company-wide access hint may leave this paired TV valid. Revalidate it.
+    const generation=readGeneration.current
+    await refresh()
+    if(readGeneration.current===generation)setRealtimeGeneration(current=>current+1)
+  },[refresh,revokeDisplay])
+  const realtime=useRealtimeRuntime({api:realtimeApi,accessContextId:'kitchen-tv:'+realtimeGeneration,
+    enabled:Boolean(realtimeApi) && phase==='live',onUnauthorized:onRealtimeUnauthorized,transport:realtimeTransport})
+  const subscribeRealtime=realtime.subscribeInvalidations
+  useEffect(()=>{
+    if(!realtimeApi || phase!=='live')return undefined
+    return subscribeRealtime(event=>{if(event.topics.some(topic=>topic==='orders' || topic==='kitchen-tv'))return refresh()})
+  },[phase,realtimeApi,subscribeRealtime,refresh])
 
   useEffect(() => {
     if (phase !== 'live') return undefined
@@ -224,14 +248,17 @@ export function KitchenDisplayApp({
 
   useEffect(() => {
     if (phase !== 'live') return undefined
-    const tick = globalThis.setInterval(() => setNow((current) => new Date(current.getTime() + 1000)), 1000)
-    const poll = globalThis.setInterval(() => {
-      if (document.visibilityState === 'visible') void refresh()
+    const tick = globalThis.setInterval(() => {
+      const nextNow=new Date(clockRef.current.getTime()+1000);clockRef.current=nextNow
+      if(snapshotRef.current && document.visibilityState==='visible')void applySnapshot(snapshotRef.current,{clockNow:nextNow,clockOnly:true});else setNow(nextNow)
+    },1000)
+    const poll = realtimeApi ? null : globalThis.setInterval(() => {
+      if (!realtimeApi && document.visibilityState === 'visible') void refresh()
     }, 2000)
-    const onOnline = () => void refresh()
-    const onFocus = () => void refresh()
+    const onOnline = () => realtimeApi ? setRealtimeGeneration(current=>current+1) : void refresh()
+    const onFocus = () => {if(!realtimeApi)void refresh()}
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') void refresh()
+      if (!realtimeApi && document.visibilityState === 'visible') void refresh()
     }
     window.addEventListener('online', onOnline)
     window.addEventListener('focus', onFocus)
@@ -243,7 +270,7 @@ export function KitchenDisplayApp({
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [phase, refresh])
+  }, [applySnapshot,phase,refresh,realtimeApi,subscribeRealtime])
 
   useEffect(() => () => {
     for (const timer of highlightTimers.current.values()) cancelSchedule(timer)

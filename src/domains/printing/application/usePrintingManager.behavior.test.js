@@ -579,3 +579,18 @@ test('bulk operational discard is exposed by the manager without reusing the rec
   assert.match(block, /await refresh\(\)/)
   assert.doesNotMatch(block, /setPrintStationRecovery/)
 })
+
+test('printing hints only refresh presentation and leave unknown outcomes without retry or claim',async t=>{
+  const h=await workspaceHarness(t,{userAgent:'Android'}),listeners=new Set(),mutations=[]
+  const realtime={state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)}}
+  let reads=0,station=null
+  const api={getPrintStations:async()=>({stations:station?[station]:[]}),upsertPrintStation:async id=>({station:station={id,platform:'android',isPrimary:false,autoPrintEnabled:false}}),getPrintJobs:async()=>{reads++;return {jobs:[{id:'unknown',status:'requires_attention',lastErrorCode:'PRINT_OUTCOME_UNKNOWN'}]}},getPrintQueueSummary:async()=>({summary:{active:1}}),claimNextPrintJob:async()=>{mutations.push('claim');return {job:null}},retryPrintJob:async()=>mutations.push('retry')}
+  function Probe(){return React.createElement('printing-probe',{value:usePrintingManager({api,authenticated:true,accessContextId:'A',realtime})})}
+  const renderer=await h.render(Probe)
+  await act(async()=>flushMicrotasks());const initial=reads
+  await act(async()=>h.fireInterval(5000));assert.equal(reads,initial)
+  await act(async()=>Promise.all([...listeners].map(fn=>fn({topics:['printing'],orderIds:[],requiresFullRefresh:false}))))
+  assert.equal(reads,initial+1);assert.deepEqual(mutations,[])
+  assert.equal(renderer.root.findByType('printing-probe').props.value.jobs[0].status,'requires_attention')
+  await act(async()=>h.fireInterval(30_000));assert.equal(reads,initial+2)
+})

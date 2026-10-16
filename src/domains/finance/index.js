@@ -33,3 +33,5 @@ export { createFinanceApi } from './infrastructure/financeApi.js'
 export { createPaymentMethodsPolicy } from './infrastructure/paymentMethodsPolicy.js'
 
 export { createFinanceCategoriesPolicy } from './infrastructure/financeCategoriesPolicy.js'
+
+export { useFinanceReadModel } from './application/useFinanceReadModel.js'

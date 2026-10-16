@@ -39,6 +39,8 @@ function createHarness({
   ordersSyncEnabled = false,
   effectiveConfigVersion = null,
   accessContextId = null,
+  realtime,
+  surface,
 } = {}) {
   let current
   const renders = []
@@ -50,6 +52,8 @@ function createHarness({
       ordersSyncEnabled,
       effectiveConfigVersion,
       accessContextId,
+      realtime,
+      surface,
       ...props,
     })
     renders.push(current)
@@ -532,4 +536,192 @@ test('silent bootstrap refresh immediately replaces only confirmed operation ide
 
   await act(async () => { await harness.getCurrent().refreshBootstrapSilently() })
   assert.deepEqual(harness.getCurrent().business, updated.business)
+})
+
+const realtimeFixture=()=>{
+  const listeners=new Set()
+  return {state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)},emit(event){return Promise.all([...listeners].map(fn=>fn(event)))}}
+}
+const orderHint=id=>({topics:['orders'],orderIds:[id],requiresFullRefresh:false})
+
+test('changed order is fetched by ID without dropping 10000 historical orders',async t=>{
+  const realtime=realtimeFixture(),calls=[],history=Array.from({length:10000},(_,i)=>({id:'old-'+i,createdAt:'2025-01-01T00:00:00Z',status:'Finalizado'}))
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>({...bootstrapFixture(),orders:history}),getOrders:async()=>{throw new Error('unexpected full orders')},getOrdersByIds:async ids=>{calls.push(ids);return {orders:[{id:'new',status:'Em preparo',createdAt:'2026-10-14T15:00:00Z'}]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>realtime.emit(orderHint('new')))
+  assert.deepEqual(calls,[['new']]);assert.equal(harness.getCurrent().orders.length,10001)
+  assert.equal(harness.getCurrent().orders[0].id,'new');assert.equal(harness.getCurrent().orders.at(-1).id,'old-9999')
+})
+
+test('partial response cannot overwrite a payment committed during the read',async t=>{
+  const pending=deferred(),harness=await mountHarness(t,{api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:()=>pending.promise}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let read
+  await act(async()=>{read=harness.getCurrent().refreshOrdersByIds(['order-1'])})
+  await act(async()=>harness.getCurrent().applyOfficialEffects({order:{id:'order-1',paymentStatus:'Pago',paymentId:'official'}}))
+  pending.resolve({orders:[{id:'order-1',paymentStatus:'Pendente'}]})
+  await act(async()=>assert.equal(await read,false))
+  assert.equal(harness.getCurrent().orders[0].paymentId,'official')
+})
+
+test('rejected realtime read remains dirty and rereads after a local mutation',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']})
+  const realtime=realtimeFixture(),pending=deferred();let reads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:async()=>++reads===1?pending.promise:{orders:[{id:'order-1',paymentStatus:'Pago'}]}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let hint
+  await act(async()=>{hint=realtime.emit(orderHint('order-1'))})
+  await act(async()=>harness.getCurrent().applyOfficialEffects({order:{id:'order-1',paymentStatus:'Pago'}}))
+  pending.resolve({orders:[{id:'order-1',paymentStatus:'Pendente'}]})
+  await act(async()=>hint)
+  assert.equal(harness.getCurrent().orders[0].paymentStatus,'Pago')
+  await act(async()=>{t.mock.timers.tick(250)})
+  assert.equal(reads,2);assert.equal(harness.getCurrent().orders[0].paymentStatus,'Pago')
+})
+
+test('missing ID retains history until an official snapshot succeeds',async t=>{
+  const realtime=realtimeFixture(),snapshot=deferred();let bootstraps=0,pointReads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>++bootstraps===1?bootstrapFixture():snapshot.promise,getOrdersByIds:async()=>{pointReads++;return {orders:[]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>{void realtime.emit(orderHint('order-1'))})
+  assert.equal(harness.getCurrent().orders[0].id,'order-1');assert.equal(bootstraps,2);assert.equal(pointReads,1)
+  snapshot.resolve({...bootstrapFixture(),orders:[{id:'order-1',status:'Finalizado'}]})
+  await act(async()=>{})
+  assert.equal(harness.getCurrent().orders[0].status,'Finalizado')
+})
+
+test('live runtime removes legacy 5s and 2s intervals',async t=>{
+  const intervals=[]
+  t.mock.method(globalThis,'setInterval',(_fn,delay)=>{intervals.push(delay);return 1})
+  t.mock.method(globalThis,'clearInterval',()=>{})
+  const harness=await mountHarness(t,{realtime:realtimeFixture(),globalSyncEnabled:true,ordersSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrders:async()=>({orders:[]})}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  assert.deepEqual(intervals,[])
+})
+
+test('settings burst groups one bootstrap and never runs full orders in parallel',async t=>{
+  const realtime=realtimeFixture();let bootstraps=0,orders=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,ordersSyncEnabled:true,api:{getBootstrap:async()=>{bootstraps++;return bootstrapFixture()},getOrders:async()=>{orders++;return {orders:[]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap());bootstraps=0;orders=0
+  await act(async()=>Promise.all([realtime.emit({topics:['settings'],orderIds:[],requiresFullRefresh:false}),realtime.emit(orderHint('order-1')),realtime.emit({topics:['finance'],orderIds:[],requiresFullRefresh:false})]))
+  assert.equal(bootstraps,1);assert.equal(orders,0)
+})
+
+test('point response from an old access generation cannot apply in the new company',async t=>{
+  const pending=deferred(),harness=await mountHarness(t,{accessContextId:'A',api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:()=>pending.promise}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  let read;await act(async()=>{read=harness.getCurrent().refreshOrdersByIds(['order-1'])})
+  await act(async()=>harness.update({accessContextId:'B'}))
+  pending.resolve({orders:[{id:'order-1',status:'Finalizado'}]})
+  await act(async()=>assert.equal(await read,false))
+  assert.deepEqual(harness.getCurrent().orders,[])
+})
+
+test('transient point-read failures retain dirty without retrying faster than fallback',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']})
+  const realtime=realtimeFixture();let reads=0
+  const harness=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async()=>bootstrapFixture(),getOrdersByIds:async()=>{if(++reads===1)throw new Error('offline');return {orders:[{id:'order-1',status:'Finalizado'}]}}}})
+  await act(async()=>harness.getCurrent().refreshBootstrap())
+  await act(async()=>realtime.emit(orderHint('order-1')))
+  assert.equal(reads,1)
+  await act(async()=>{t.mock.timers.tick(29_999)})
+  assert.equal(reads,1)
+  await act(async()=>{t.mock.timers.tick(1)})
+  assert.equal(reads,2);assert.equal(harness.getCurrent().orders[0].status,'Finalizado')
+})
+
+const scoped=(surface,collections,data={})=>({...data,readModel:{version:1,surface,completeCollections:collections,orderScope:collections.includes('orders')?'active':null,counters:{orders:1,comandas:0},operationalOrders:[{id:'active',status:'Em preparo',scheduledFor:null}],openTableTabIds:[]}})
+test('scoped bootstrap replaces only declared collections, preserves other caches and passes the requested surface',async t=>{
+  const calls=[],h=await mountHarness(t,{api:{getBootstrap:async(...args)=>{calls.push(args);return calls.length===1?bootstrapFixture():scoped('products',['products'],{products:[{id:'new-product'}]})}}})
+  await act(async()=>h.getCurrent().refreshBootstrap())
+  await act(async()=>h.update({surface:'products'}))
+  assert.equal(h.getCurrent().readModelEnabled,true)
+  assert.deepEqual(h.getCurrent().orders,bootstrapFixture().orders)
+  assert.deepEqual(h.getCurrent().clients,bootstrapFixture().clients)
+  assert.deepEqual(h.getCurrent().products,[{id:'new-product'}])
+  assert.equal(calls.at(-1)[1].surface,'products')
+})
+test('scoped refreshOrders and full realtime fallback never call the integral orders endpoint',async t=>{
+  const realtime=realtimeFixture(),calls=[]
+  const h=await mountHarness(t,{realtime,globalSyncEnabled:true,api:{getBootstrap:async(...args)=>{calls.push(args);return scoped('history',[])},getOrders:async()=>{throw new Error('integral forbidden')},getActiveOrders:async()=>({orders:[{id:'active',status:'Em preparo'}]})}})
+  await act(async()=>h.update({surface:'history'}))
+  await act(async()=>h.getCurrent().refreshBootstrap())
+  await act(async()=>h.getCurrent().refreshOrders())
+  assert.deepEqual(h.getCurrent().orders.map(o=>o.id),['active'])
+  await act(async()=>realtime.emit({topics:['orders'],orderIds:[],requiresFullRefresh:true}))
+  assert.ok(calls.every(args=>args[1]?.surface==='history'))
+  assert.equal(calls.length,2)
+})
+test('navigation during the first scoped bootstrap discards the previous surface and finishes loading the current one',async t=>{
+  const old=deferred(),calls=[]
+  const h=await mountHarness(t,{api:{getBootstrap:async(_v,{surface}={})=>{calls.push(surface);return surface==='orders'?old.promise:scoped(surface,[])}}})
+  await act(async()=>h.update({surface:'orders'}))
+  let first;await act(async()=>{first=h.getCurrent().refreshBootstrap()})
+  await act(async()=>h.update({surface:'history'}))
+  old.resolve(scoped('orders',['orders'],{orders:[{id:'old-surface'}]}))
+  await act(async()=>{await first})
+  assert.equal(h.getCurrent().bootstrapState,'ready')
+  assert.deepEqual(h.getCurrent().orders,[])
+  assert.equal(calls.at(-1),'history')
+})
+test('local committed effects update minimal operational identities and invalidate scoped queries without changing financial revision semantics',async t=>{
+  const h=await mountHarness(t,{api:{getBootstrap:async()=>scoped('history',[])}})
+  await act(async()=>h.getCurrent().refreshBootstrap())
+  const revision=h.getCurrent().readModelRevision,financial=h.getCurrent().getOfficialRevision()
+  await act(async()=>h.getCurrent().applyOfficialEffects({client:{id:'client',name:'Changed'}}))
+  assert.equal(h.getCurrent().readModelRevision,revision+1)
+  assert.equal(h.getCurrent().getOfficialRevision(),financial)
+  await act(async()=>h.getCurrent().applyOfficialEffects({order:{id:'active',status:'Finalizado'},tableTab:{id:'new-tab',status:'open'}}))
+  assert.deepEqual(h.getCurrent().operationalOrders,[])
+  assert.equal(h.getCurrent().operationalCounters.comandas,1)
+})
+
+test('action reads resolve up to 100 canonical orders in bounded batches and expose them synchronously to official workflows',async t=>{
+  const calls=[],h=await mountHarness(t,{accessContextId:'A',api:{getBootstrap:async()=>scoped('history',[]),getOrdersByIds:async ids=>{calls.push(ids);return {orders:ids.map(id=>({id,status:'Finalizado',paymentStatus:'Pendente'}))}}}})
+  await act(async()=>h.getCurrent().refreshBootstrap())
+  const ids=Array.from({length:100},(_,i)=>'order-'+i)
+  await act(async()=>{assert.equal(await h.getCurrent().refreshOrdersForAction(ids),true);assert.equal(h.getCurrent().getOfficialOrders().length,100)})
+  assert.deepEqual(calls.map(ids=>ids.length),[99,1])
+  assert.equal(await h.getCurrent().refreshOrdersForAction([...ids,'too-many']),false)
+})
+
+
+test('navigation cache restores each surface snapshot without reading again on return',async t=>{
+ const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);const data=scoped(surface,['orders'],{orders:[{id:surface==='orders'?'kitchen-active':'tab-order'}]});data.readModel.orderScope=surface==='orders'?'active':'open-tabs';return data}}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ await act(async()=>h.update({surface:'comandas'}))
+ assert.equal(h.getCurrent().orders[0].id,'tab-order')
+ await act(async()=>h.update({surface:'orders'}))
+ assert.deepEqual(calls,['orders','comandas'])
+ assert.equal(h.getCurrent().orders[0].id,'kitchen-active')
+ assert.equal(h.getCurrent().surfaceState,'ready')
+})
+
+test('navigation cache never restores a snapshot after local data changed or the company changed',async t=>{
+ const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);return scoped(surface,[])}}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ await act(async()=>h.update({surface:'clients'}))
+ await act(async()=>h.getCurrent().applyOfficialEffects({client:{id:'new-client'}}))
+ await act(async()=>h.update({surface:'orders'}))
+ assert.deepEqual(calls,['orders','clients','orders'])
+ await act(async()=>h.update({accessContextId:'B'}))
+ assert.equal(h.getCurrent().bootstrapState,'idle')
+ assert.deepEqual(h.getCurrent().orders,[])
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ assert.equal(calls.length,4)
+})
+
+
+test('a newer official snapshot invalidates conflicting cached orders before returning to the kitchen',async t=>{
+ let paid=false,reads=0
+ const h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{
+  reads++;return scoped(surface,['orders'],{orders:[{id:'shared-order',status:'Em preparo',paymentStatus:paid?'Pago':'Pendente'}]})
+ }}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ paid=true
+ await act(async()=>h.update({surface:'comandas'}))
+ assert.equal(h.getCurrent().getOfficialOrders()[0].paymentStatus,'Pago')
+ await act(async()=>h.update({surface:'orders'}))
+ assert.equal(h.getCurrent().getOfficialOrders()[0].paymentStatus,'Pago')
+ assert.equal(reads,3)
 })

@@ -1,8 +1,9 @@
+import { prepareBusinessDefaults } from '../tenancy/businessDefaults.js'
 import { createSettingsDb } from './settingsDb.js'
 import { hashHumanPassword } from '../access/credentials.js'
 import { prepareBuiltinRoles } from '../access/roles.js'
 
-export async function createTenancyFixture(t) {
+export async function createTenancyFixture(t,{operationalDefaults=false}={}) {
   const fixture = createSettingsDb()
   t?.after(fixture.close)
   const { db, sqlite } = fixture
@@ -12,8 +13,13 @@ export async function createTenancyFixture(t) {
   const accounts = { alice: 'account-alice', bob: 'account-bob', carol: 'account-carol', admin: 'account-admin', pending: 'account-pending' }
   const members = { aliceA: 'member-alice-A', aliceB: 'member-alice-B', bobA: 'member-bob-A', carolB: 'member-carol-B' }
   for (const [key, id] of Object.entries(businesses)) {
+    if(operationalDefaults){
+      await db.batch(prepareBusinessDefaults(db,{businessId:id,name:`Company ${key}`,now}))
+      sqlite.prepare("UPDATE businesses SET access_status='active' WHERE id=?").run(id)
+    }else{
     sqlite.prepare("INSERT INTO businesses(id,slug,name,created_at,updated_at,access_status) VALUES(?,?,?,?,?,'active')").run(id, id, `Company ${key}`, timestamp, timestamp)
     await db.batch(prepareBuiltinRoles(db, id, now))
+    }
   }
   const verifier = await hashHumanPassword('Fixture password 2026!')
   for (const [name, id] of Object.entries(accounts)) {

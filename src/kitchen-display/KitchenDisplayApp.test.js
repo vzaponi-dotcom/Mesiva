@@ -758,3 +758,42 @@ test('table modality keeps an operational Local reservation visible without expo
   assert.equal(renderer.root.findAllByProps({ 'data-order-id': 'local-future' }).length, 0)
   assert.equal(buttonNamed(renderer.root, 'Próximos dias'), undefined)
 })
+
+import { clientFixture } from '../infrastructure/realtime/test-support/clientFixture.js'
+
+test('paired TV uses realtime hints without the legacy two-second projection poll',async t=>{
+  const h=await workspaceHarness(t),f=clientFixture()
+  const {KitchenDisplayApp}=await h.load('/src/kitchen-display/KitchenDisplayApp.jsx')
+  let reads=0
+  const renderer=await h.render(KitchenDisplayApp,{realtimeApi:f.api,realtimeTransport:{clock:f.clock,createSocket:f.createSocket,random:()=>0.5},bootstrap:async()=>({kind:'paired',state:state([])}),readState:async()=>{reads++;return state(['new-order'])},audio:{unlock:async()=>true,playArrival:async()=>true}})
+  await flushEffects();assert.equal(f.sockets.length,0)
+  await act(async()=>buttonNamed(renderer.root,'Iniciar painel da cozinha').props.onClick())
+  assert.equal(f.sockets.length,1)
+  await act(async()=>{f.sockets[0].ready(f.clock);f.sockets[0].invalidate('2',['new-order']);await f.clock.tick(250)})
+  assert.equal(reads,1);assert.equal(renderer.root.findAllByProps({'data-order-id':'new-order'}).length,1)
+  await act(async()=>h.fireInterval(2000));assert.equal(reads,1)
+  await act(async()=>{f.sockets[0].invalidate('3',['new-order']);await f.clock.tick(250)});assert.equal(reads,2)
+})
+test('revoked realtime TV cannot resume its projection or expose orders',async t=>{
+  const h=await workspaceHarness(t),f=clientFixture()
+  f.api.prepare=async()=>{throw Object.assign(new Error('revoked'),{status:401})}
+  const {KitchenDisplayApp}=await h.load('/src/kitchen-display/KitchenDisplayApp.jsx')
+  let reads=0
+  const renderer=await h.render(KitchenDisplayApp,{realtimeApi:f.api,realtimeTransport:{clock:f.clock,createSocket:f.createSocket},bootstrap:async()=>({kind:'paired',state:state(['private'])}),readState:async()=>{reads++;return state(['private'])},audio:{unlock:async()=>true,playArrival:async()=>true}})
+  await flushEffects();await act(async()=>buttonNamed(renderer.root,'Iniciar painel da cozinha').props.onClick())
+  await act(async()=>f.clock.tick(300_000))
+  assert.equal(f.sockets.length,0);assert.equal(reads,0)
+  assert.equal(renderer.root.findAllByProps({'data-order-id':'private'}).length,0)
+})
+test('scheduled orders enter their window and alert from local clock without HTTP or messages',async t=>{
+  const h=await workspaceHarness(t),f=clientFixture(),plays=[]
+  const {KitchenDisplayApp}=await h.load('/src/kitchen-display/KitchenDisplayApp.jsx')
+  const initial={...state([]),serverNow:'2026-10-14T14:09:59.000Z',orders:[{id:'scheduled-clock',status:'Em preparo',type:'Entrega',orderDate:'2026-10-14',scheduledFor:'2026-10-14T15:00:00.000Z',createdAt:'2026-10-14T12:00:00.000Z',items:[]}]}
+  let reads=0
+  const renderer=await h.render(KitchenDisplayApp,{realtimeApi:f.api,realtimeTransport:{clock:f.clock,createSocket:f.createSocket},bootstrap:async()=>({kind:'paired',state:initial}),readState:async()=>{reads++;return initial},audio:{unlock:async()=>true,playArrival:async()=>{plays.push('arrival');return true}}})
+  await flushEffects();await act(async()=>buttonNamed(renderer.root,'Iniciar painel da cozinha').props.onClick())
+  assert.equal(plays.length,0)
+  await act(async()=>h.fireInterval(1000))
+  assert.equal(reads,0);assert.deepEqual(plays,['arrival'])
+  await act(async()=>h.fireInterval(1000));assert.equal(plays.length,1)
+})

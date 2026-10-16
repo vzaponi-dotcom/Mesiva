@@ -1,3 +1,5 @@
+import { registerCommittedEffect } from '../realtime/committedEffects.js'
+import { sessionRevocationEffects } from '../realtime/effectCatalog.js'
 import { apiError } from '../http.js'
 import { sha256Hex } from '../auth.js'
 import { hashHumanPassword, verifyHumanPassword } from '../access/credentials.js'
@@ -19,7 +21,7 @@ export function prepareCredentialChallengeRevocation(db, accountId, now = new Da
 export function prepareGlobalSessionRevocation(db, accountId, now = new Date(), preserveFamilyId = null) {
   const timestamp = now.toISOString()
   return [
-    db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE account_id = ?').bind(timestamp, accountId),
+    registerCommittedEffect(db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE account_id = ? AND revoked_at IS NULL RETURNING id,business_id').bind(timestamp, accountId),result=>sessionRevocationEffects(result,accountId)),
     db.prepare('UPDATE identity_session_families SET revoked_at = COALESCE(revoked_at,?) WHERE account_id = ? AND (? IS NULL OR id != ?)').bind(timestamp, accountId, preserveFamilyId, preserveFamilyId),
     db.prepare('UPDATE sessions SET revoked_at = COALESCE(revoked_at,?) WHERE user_id IN (SELECT id FROM users WHERE account_id = ?)').bind(timestamp, accountId),
   ]

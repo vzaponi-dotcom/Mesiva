@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
 import { formatClientPhone, normalizeClientPhone } from '../shared/clientIdentity.js'
 import { projectBootstrap } from './access/projections.js'
@@ -505,6 +506,7 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
     idempotencyKey,
   )
 
+  if(tableTabId || pendingReservation)registerCommittedEffect(orderStatement,{businessId,topics:['tables','reservations'],orderIds:[]})
   const contactSnapshotStatement = db.prepare(`UPDATE orders SET client_phone_snapshot = ?, client_address_snapshot = ?
     WHERE id = ? AND business_id = ?`).bind(clientPhoneSnapshot, clientAddressSnapshot, orderId, businessId)
   const policyTxId = crypto.randomUUID()
@@ -734,8 +736,8 @@ export const closeTableTabIfSettled = async (db, businessId, tableTabId, now = n
   if (Number(pending?.count || 0) > 0) return null
 
   const timestamp = now.toISOString()
-  await db.prepare(`UPDATE table_tabs SET status = 'closed', closed_at = COALESCE(closed_at, ?), updated_at = ?
-    WHERE id = ? AND business_id = ? AND status = 'open'`).bind(timestamp, timestamp, tableTabId, businessId).run()
+  await registerCommittedEffect(db.prepare(`UPDATE table_tabs SET status = 'closed', closed_at = COALESCE(closed_at, ?), updated_at = ?
+    WHERE id = ? AND business_id = ? AND status = 'open'`).bind(timestamp, timestamp, tableTabId, businessId),{businessId,topics:['tables'],orderIds:[]}).run()
   const row = await db.prepare(`SELECT id, table_id, table_identifier, tab_number, status, opened_at, closed_at FROM table_tabs
     WHERE id = ? AND business_id = ? LIMIT 1`).bind(tableTabId, businessId).first()
   return row ? mapTableTabRow(row) : null

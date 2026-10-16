@@ -1,6 +1,6 @@
 # Roteiro de custo e escala do Mesiva
 
-Data: 14/10/2026. Solicitado pelo usuário: planejar as melhorias discutidas; código e publicação não iniciados.
+Data: 14/10/2026; estado atualizado em15/10/2026. Entrega1 publicada no PR#111; entrega2 implementada, com validação funcional local aprovada e orçamento ainda pendente. A publicação do canal permanece bloqueada pelo gate financeiro.
 
 ## Resultado esperado
 
@@ -31,7 +31,7 @@ Preservar os tickers de execução/spooler/recuperação. Poll temporário de pa
 
 Esta etapa altera contratos de dados consumidos por várias superfícies; precisa de especificação e plano próprios antes de implementação. O objetivo aprovado para planejamento é limitar dados carregados, preservando todas as funcionalidades e históricos. Não cortar por uma janela arbitrária de dias.
 
-A primeira tarefa dessa etapa produz uma matriz verificável de consumidores, contendo campos lidos, elegibilidade, filtros, ordenação, totals, seleção de pagamentos, efeitos de mutations e política de atualização. Pontos de entrada obrigatórios:
+A [matriz proposta para aprovação](../specs/2026-10-15-operational-snapshots-matrix.md) registra o levantamento inicial. A primeira tarefa dessa etapa produz uma matriz verificável de consumidores, contendo campos lidos, elegibilidade, filtros, ordenação, totals, seleção de pagamentos, efeitos de mutations e política de atualização. Pontos de entrada obrigatórios:
 
 | Consumidor | Entrada | Política a preservar |
 | --- | --- | --- |

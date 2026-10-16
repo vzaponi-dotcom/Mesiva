@@ -21,6 +21,15 @@ export const createCollectionSyncGuard = (collections = []) => {
       return snapshot
     },
 
+    beginQueryRead(keys = []) {
+      const snapshot = {}
+      for (const key of keys) {
+        ensureCollection(key)
+        snapshot[key] = { independent: true, mutationVersion: mutationVersion[key] }
+      }
+      return snapshot
+    },
+
     markMutation(keys = []) {
       for (const key of keys) {
         ensureCollection(key)
@@ -31,7 +40,7 @@ export const createCollectionSyncGuard = (collections = []) => {
     canApply(token, key) {
       ensureCollection(key)
       return Boolean(token?.[key])
-        && token[key].readVersion === readVersion[key]
+        && (token[key].independent === true || token[key].readVersion === readVersion[key])
         && token[key].mutationVersion === mutationVersion[key]
     },
   }
@@ -51,3 +60,7 @@ export const upsertManyById = (items = [], entities = []) => {
 }
 
 export const removeById = (items = [], id) => items.filter((item) => item?.id !== id)
+
+// Point reads preserve every existing member; stable sorting retains tie order.
+export const upsertManyInCreatedOrder=(items=[],entities=[])=>upsertManyById(items,entities)
+  .slice().sort((a,b)=>String(b.createdAt || '').localeCompare(String(a.createdAt || '')))

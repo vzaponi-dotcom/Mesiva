@@ -197,3 +197,16 @@ test('approved activation failure is surfaced instead of silently rotating to a 
   assert.equal(sessionStorage.getItem(KITCHEN_TV_PAIRING_STORAGE_KEY), null)
   assert.equal(sessionStorage.getItem(KITCHEN_TV_SESSION_STORAGE_KEY), 'legacy-final-token')
 })
+
+import { createStoredKitchenDisplayRealtimeApi } from './kitchenDisplaySession.js'
+test('stored realtime adapter prepares and renews with the current legacy TV credential',async()=>{
+  const store=storage(),calls=[]
+  store.setItem(KITCHEN_TV_SESSION_STORAGE_KEY,'fictional-old')
+  const api=createStoredKitchenDisplayRealtimeApi({storage:store,fetchImpl:async(path,options)=>{calls.push({path,options});return Response.json({enabled:true})}})
+  await api.prepare()
+  store.setItem(KITCHEN_TV_SESSION_STORAGE_KEY,'fictional-current')
+  await api.renew('connection')
+  assert.equal(calls[0].options.headers['x-kitchen-tv-session'],'fictional-old')
+  assert.equal(calls[1].options.headers['x-kitchen-tv-session'],'fictional-current')
+  assert.ok(calls.every(call=>!call.path.includes('fictional')))
+})

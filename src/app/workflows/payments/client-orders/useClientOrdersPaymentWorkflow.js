@@ -21,6 +21,7 @@ const normalizeTarget = (target) => {
 export function useClientOrdersPaymentWorkflow({
   api = paymentApi,
   orders = [],
+  getOfficialOrders,
   canReceivePayments = false,
   writesBlocked = false,
   paymentOptions = [],
@@ -41,7 +42,8 @@ export function useClientOrdersPaymentWorkflow({
 
   const resolveSelection = useCallback((clientId, orderIds) => {
     if (!clientId || !Array.isArray(orderIds) || orderIds.length < 2 || orderIds.length > 100) return null
-    const byId = new Map((Array.isArray(orders) ? orders : []).map((order) => [order.id, order]))
+    const currentOrders=getOfficialOrders?.() ?? orders
+    const byId = new Map((Array.isArray(currentOrders) ? currentOrders : []).map((order) => [order.id, order]))
     const selected = orderIds.map((orderId) => byId.get(orderId))
     if (selected.some((order) => (
       !order
@@ -53,7 +55,7 @@ export function useClientOrdersPaymentWorkflow({
       || orderTotalCents(order) <= 0
     ))) return null
     return selected
-  }, [orders])
+  }, [orders,getOfficialOrders])
 
   const clearRequestKey = useCallback((owner) => {
     if (!owner?.requestKey) return

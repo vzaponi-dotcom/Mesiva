@@ -9,7 +9,9 @@
     "AUTH_MULTI_COMPANY_PREPARE_ENABLED": "false",
     "AUTH_EMAIL_FROM": "Mesiva <acesso@mesiva.com.br>",
     "AUTH_PUBLIC_ORIGIN": "https://app.mesiva.com.br",
-    "AUTH_EMAIL_DAILY_LIMIT": "80"
+    "AUTH_EMAIL_DAILY_LIMIT": "80",
+    "REALTIME_ENABLED": "false",
+    "OPERATIONAL_READ_MODELS_ENABLED": "false"
   },
   "assets": {
     "directory": "./dist",
@@ -52,7 +54,9 @@
         "AUTH_MULTI_COMPANY_PREPARE_ENABLED": "false",
         "AUTH_EMAIL_FROM": "Mesiva <acesso@mesiva.com.br>",
         "AUTH_PUBLIC_ORIGIN": "https://staging.mesiva.com.br",
-        "AUTH_EMAIL_DAILY_LIMIT": "80"
+        "AUTH_EMAIL_DAILY_LIMIT": "80",
+        "REALTIME_ENABLED": "true",
+        "OPERATIONAL_READ_MODELS_ENABLED": "true"
       },
       "workers_dev": true,
       "routes": [
@@ -84,7 +88,15 @@
             "period": 60
           }
         }
-      ]
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "BUSINESS_REALTIME",
+            "class_name": "BusinessRealtimeHub"
+          }
+        ]
+      }
     }
   },
   "workers_dev": false,
@@ -92,6 +104,22 @@
     {
       "pattern": "app.mesiva.com.br",
       "custom_domain": true
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BUSINESS_REALTIME",
+        "class_name": "BusinessRealtimeHub"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "realtime-v1",
+      "new_sqlite_classes": [
+        "BusinessRealtimeHub"
+      ]
     }
   ]
 }

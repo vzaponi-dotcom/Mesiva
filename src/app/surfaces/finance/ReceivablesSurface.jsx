@@ -13,6 +13,7 @@ import {
 
 export default function ReceivablesSurface({
   orders,
+  readContext,
   movements = [],
   currency,
   disabled = false,
@@ -52,6 +53,7 @@ export default function ReceivablesSurface({
 
   return <Receivables
     orders={orders}
+    readContext={readContext}
     movements={movements}
     currency={currency}
     disabled={disabled}

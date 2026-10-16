@@ -138,7 +138,7 @@ export async function runOperationalReadBenchmark() {
       return recorded.summarize(value.length)
     }
     const assertSameTv=(before,after)=>assertSameTvReads(before.raw,after.raw)
-    const report={schemaVersion:43,fixture:{activeOrders:20,itemsPerOrder:5,historySizes:[1000,10000]},baseline:{sourceCommit:baseline.commit,sourceSha256:baseline.sourceSha256},after:{},queryPlans:{}}
+    const report={schemaVersion:Math.max(...readdirSync(join(root,'migrations')).map(name=>Number(/^(\d+)_.*\.sql$/.exec(name)?.[1] || 0))),fixture:{activeOrders:20,itemsPerOrder:5,historySizes:[1000,10000]},baseline:{sourceCommit:baseline.commit,sourceSha256:baseline.sourceSha256},after:{},queryPlans:{}}
     progress('empty_start')
     const emptyBefore=await publishedTv()
     await addIndexes()

@@ -1,3 +1,7 @@
+import {readModelsEnabled,handleReadModelsApi} from './readModels/api.js'
+import {loadSurfaceSnapshot} from './readModels/snapshotRepository.js'
+import { withCommittedEffects, publishCommittedEffect } from './realtime/committedEffects.js'
+import { realtimeEnabled, handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
 import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSION_MAX_AGE, verifyPin } from './auth.js'
 import { authenticateHumanRequest, loadAuthMode } from './access/sessions.js'
 import { handleEmailAuthApi, loginWithEmail } from './access/emailAuthApi.js'
@@ -168,6 +172,10 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   env = { ...env, DB: withAuditContext(multiCompanyEnabled(env) ? withBusinessSessionGuard(env.DB, session) : env.DB, context) }
   const effectsJson = (payload, init) => json(projectMutationEffects(payload, context.granted), init)
 
+  const realtimeResponse=await handleHumanRealtimeApi(request,env,session,url)
+  if(realtimeResponse)return realtimeResponse
+  const readModelsResponse=await handleReadModelsApi(request,env,context,url)
+  if(readModelsResponse)return readModelsResponse
   const accessResponse = await handleAccessApi(request, env, context, url)
   if (accessResponse) return accessResponse
 
@@ -192,7 +200,10 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
     const effectiveBusinessConfig = await loadEffectiveBusinessConfig(env.DB, session.businessId, context.granted, context.userId)
     const knownVersion = url.searchParams.get('knownEffectiveConfigVersion')
-    const bootstrap = await loadBootstrap(
+    const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
+      ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,currentTiming:effectiveBusinessConfig.operations?.timing,
+        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
+      : await loadBootstrap(
       env.DB,
       session.businessId,
       knownVersion === effectiveBusinessConfig.version ? undefined : effectiveBusinessConfig,
@@ -460,8 +471,13 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 }
 
 export const handleRequest = async (request, env, executionContext) => {
+  if(realtimeEnabled(env) && env.BUSINESS_REALTIME) {
+    const originalEnv=env
+    env={...env,DB:withCommittedEffects(env.DB,{onCommitted:effect=>publishCommittedEffect(originalEnv,effect.businessId,effect,executionContext)})}
+  }
   try {
     const url = new URL(request.url)
+    if(url.pathname==='/api/realtime/socket' && request.method==='GET')return await handleRealtimeUpgrade(request,env)
     if (!multiCompanyEnabled(env) && [true, 'true'].includes(env.AUTH_MULTI_COMPANY_PREPARE_ENABLED)) {
       if (['/api/auth/email-challenges/inspect', '/api/auth/email-challenges/complete'].includes(url.pathname)) return await handleGlobalAuthApi(request, env)
       if (['/api/auth/company-invitations/inspect', '/api/auth/company-invitations/accept'].includes(url.pathname)) return await handleCompanyInvitationsApi(request, env)

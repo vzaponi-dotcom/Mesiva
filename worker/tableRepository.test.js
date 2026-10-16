@@ -675,3 +675,32 @@ test('destination inactivated between read and write rejects without moving the 
     db.sqlite.close()
   }
 })
+
+
+test('table summaries seek only open tabs and their orders, independent of unrelated history', async () => {
+  const db = new D1Sqlite()
+  db.exec(`CREATE INDEX idx_orders_table_tab ON orders(business_id,table_tab_id);
+    CREATE INDEX order_items_business_order_created_idx ON order_items(business_id,order_id);
+    CREATE INDEX payments_business_order_idx ON payments(business_id,order_id);`)
+  insertTable(db,{id:'occupied',name:'Mesa 1',sortOrder:1})
+  insertOpenTableTab(db,{id:'open',tableId:'occupied',tableIdentifier:'Mesa 1'})
+  db.exec(`INSERT INTO orders(id,business_id,table_tab_id,status,total_cents,created_at) VALUES
+    ('old-open','biz-a','open','Finalizado',2300,'2020-01-01'),
+    ('other-company','biz-b','open','Finalizado',9900,'2020-01-01');
+    INSERT INTO order_items(id,business_id,order_id,quantity) VALUES('item','biz-a','old-open',3);
+    WITH RECURSIVE n(x) AS(SELECT 0 UNION ALL SELECT x+1 FROM n WHERE x<9999)
+    INSERT INTO orders(id,business_id,status,total_cents,created_at)
+    SELECT 'history:'||x,'biz-a','Finalizado',1000,'2020-01-01' FROM n;`)
+  const plans=[],prepare=db.prepare.bind(db)
+  db.prepare=sql=>({bind:(...values)=>{
+    if(sql.includes('AS open_table_tab_order_count'))plans.push(...db.sqlite.prepare('EXPLAIN QUERY PLAN '+sql).all(...values).map(r=>r.detail))
+    return prepare(sql).bind(...values)
+  }})
+  for(const table of [(await listTables(db,'biz-a'))[0],await loadTableById(db,'biz-a','occupied')]){
+    assert.equal(table.openTableTab.orderCount,1)
+    assert.equal(table.openTableTab.itemCount,3)
+    assert.equal(table.openTableTab.totalCents,2300)
+  }
+  assert.equal(plans.some(p=>/^SCAN (orders|order_items)\b/.test(p)),false,plans.join('\n'))
+  assert.equal(plans.filter(p=>p.includes('idx_orders_table_tab') && p.includes('table_tab_id=?')).length,2)
+})

@@ -1,27 +1,6 @@
 import { getOperationalDurationMinutes } from '../../../../shared/orderTiming.js'
-import { isOrderCancelled } from './orderLifecycle.js'
-import { toLocalDateValue } from './orderWorkflow.js'
-
-const PERIOD_DAYS = { today: 1, '7d': 7, '30d': 30 }
-const localNoon = (value) => new Date(value.getFullYear(), value.getMonth(), value.getDate(), 12, 0, 0)
-
-export const getDashboardDateRange = (period = '30d', now = new Date()) => {
-  const days = PERIOD_DAYS[period] ?? PERIOD_DAYS['30d']
-  const end = localNoon(now instanceof Date ? now : new Date(now))
-
-  return Array.from({ length: days }, (_, index) => {
-    const date = new Date(end)
-    date.setDate(end.getDate() - (days - 1 - index))
-    return toLocalDateValue(date)
-  })
-}
-
-export const filterOrdersByPeriod = (orders, period = '30d', now = new Date()) => {
-  const dates = new Set(getDashboardDateRange(period, now))
-  return (Array.isArray(orders) ? orders : [])
-    .filter((order) => !isOrderCancelled(order))
-    .filter((order) => dates.has(order?.orderDate))
-}
+import {filterOrdersByPeriod} from '../../../../shared/orderPeriodRead.js'
+export {filterOrdersByPeriod,getDashboardDateRange} from '../../../../shared/orderPeriodRead.js'
 
 export const calculateOperationalMetrics = (orders, period = '30d', now = new Date(), currentTiming) => {
   const eligible = filterOrdersByPeriod(orders, period, now)

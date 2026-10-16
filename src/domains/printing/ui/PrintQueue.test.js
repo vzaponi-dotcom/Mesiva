@@ -919,3 +919,16 @@ test('bulk discard stays disabled when attention exists but the server marks eve
   assert.ok(button)
   assert.equal(button.props.disabled, true)
 })
+
+test('realtime print queue refreshes the official panel without starting print actions or ten-second polling',async t=>{
+  const h=await workspaceHarness(t),listeners=new Set(),actions=[]
+  const realtime={state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)}}
+  let reads=0
+  globalThis.fetch=async path=>({ok:true,json:async()=>String(path).includes('/summary')?{summary:{active:0}}:(reads++,{jobs:[],pageInfo:{page:1,pageSize:10,totalItems:0,totalPages:1}})})
+  const {default:PrintQueue}=await h.load('/src/domains/printing/ui/PrintQueue.jsx')
+  await h.render(PrintQueue,{orders:[],realtime,printing:{stations:[],requestRetry:()=>actions.push('retry'),requestPrintNow:()=>actions.push('print')},queryState:{...DEFAULT_PRINT_QUEUE_QUERY},onQueryChange(){}})
+  await act(async()=>{});const initial=reads
+  await act(async()=>h.fireInterval(10000));assert.equal(reads,initial)
+  await act(async()=>Promise.all([...listeners].map(fn=>fn({topics:['printing'],orderIds:[],requiresFullRefresh:false}))))
+  assert.equal(reads,initial+1);assert.deepEqual(actions,[])
+})

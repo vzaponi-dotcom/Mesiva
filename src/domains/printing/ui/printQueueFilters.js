@@ -3,7 +3,7 @@ import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.
 
 const getHumanIdentifiers = (job, ordersById) => {
   const document = job?.document || {}
-  const order = ordersById.get(String(job?.orderId || ''))
+  const order = ordersById.get(String(job?.orderId || '')) || (document.order?.number?{orderNumber:document.order.number}:null)
   return [
     order && formatOrderDisplayNumber(order),
     document.customer?.name,

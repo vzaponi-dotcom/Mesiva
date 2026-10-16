@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation, prepareAuditSelection, withAuditContext, auditContext } from './access/audit.js'
 import { printingActor } from './access/printingAuthorization.js'
 import { createTestPrintDocument } from '../shared/orderPrintDocument.js'
@@ -235,12 +236,12 @@ export const prepareAutomaticPrintJobStatement = (db, businessId, input) => {
   const id = String(input.id || crypto.randomUUID())
   const copies = assertCopies(input.copies)
   const createdAt = timestamp(input.createdAt || new Date())
-  return db.prepare(`INSERT INTO print_jobs (
+  return registerCommittedEffect(db.prepare(`INSERT INTO print_jobs (
       id, business_id, order_id, type, trigger, status, copies_requested, copies_printed,
       station_id, snapshot_json, created_at, available_at, processing_started_at, processed_at,
       last_error_code, last_error_message
     ) VALUES (?, ?, ?, 'order', 'automatic', 'pending', ?, 0, NULL, ?, ?, ?, NULL, NULL, NULL, NULL)`)
-    .bind(id, businessId, input.orderId, copies, JSON.stringify(input.document), createdAt, timestamp(input.availableAt || input.createdAt || new Date()))
+    .bind(id, businessId, input.orderId, copies, JSON.stringify(input.document), createdAt, timestamp(input.availableAt || input.createdAt || new Date())),{businessId,topics:['printing'],orderIds:[]})
 }
 
 export const loadPrintJob = async (db, businessId, jobId) => {
@@ -376,10 +377,10 @@ const normalizePageSize = (value) => Math.min(10, Math.max(1, Math.floor(Number(
 export const purgeExpiredTerminalPrintJobs = async (db, businessId, now = new Date()) => {
   const at = now instanceof Date ? now : new Date(now)
   const cutoff = new Date(at.getTime() - PRINT_JOB_RETENTION_MS).toISOString()
-  const result = await db.prepare(`DELETE FROM print_jobs
+  const result = await registerCommittedEffect(db.prepare(`DELETE FROM print_jobs
     WHERE business_id = ? AND status IN ('printed', 'discarded')
       AND COALESCE(processed_at, discarded_at, created_at) <= ?`)
-    .bind(businessId, cutoff).run()
+    .bind(businessId, cutoff),{businessId,topics:['printing'],orderIds:[]}).run()
   return Number(result?.meta?.changes || 0)
 }
 
@@ -402,14 +403,15 @@ export const getPrintQueueSummary = async (db, businessId, now = new Date()) => 
             AND print_job_attempts.resolution IS NULL
             AND print_job_attempts.status <> 'complete'
         ) THEN 1 ELSE 0 END) AS discardable,
-      SUM(CASE WHEN status = 'printed' AND COALESCE(processed_at, created_at) >= ? THEN 1 ELSE 0 END) AS completed_today,
+      (SELECT COUNT(*) FROM print_jobs completed WHERE completed.business_id = ?
+        AND completed.status = 'printed' AND COALESCE(completed.processed_at, completed.created_at) >= ?) AS completed_today,
       SUM(CASE WHEN status = 'pending' AND copies_printed = 0 AND NOT EXISTS (
         SELECT 1 FROM print_job_attempts
         WHERE print_job_attempts.business_id = print_jobs.business_id
           AND print_job_attempts.job_id = print_jobs.id
           AND print_job_attempts.submission_started_at IS NOT NULL
       ) THEN 1 ELSE 0 END) AS safe_backlog
-    FROM print_jobs WHERE business_id = ?`).bind(startOfToday, businessId).first()
+    FROM print_jobs WHERE business_id = ? AND status NOT IN ('printed', 'discarded')`).bind(businessId, startOfToday, businessId).first()
   return {
     active: Number(row?.active || 0),
     pending: Number(row?.pending || 0),
@@ -604,8 +606,10 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
   const becameReady = wasUnavailable && resolvePrintStationHealth({
     ...previous, lastSeenAt: at, qzReady, printerReady, physicalState,
   }, now).ready
+  const healthChanged=previous.qzReady!==qzReady || previous.printerReady!==printerReady || previous.physicalState!==physicalState || !previous.health.online
+  const markHealth=statement=>registerCommittedEffect(statement,healthChanged?{businessId,topics:['printing'],orderIds:[]}:null)
   const row = hasPhysicalState
-    ? await db.prepare(`UPDATE print_stations SET
+    ? await markHealth(db.prepare(`UPDATE print_stations SET
         last_seen_at = ?, qz_ready = ?, printer_ready = ?,
         physical_state = ?, physical_status_text = ?, physical_status_code = ?, physical_status_at = ?,
         last_offline_at = CASE WHEN ? = 'printer_offline' THEN ? ELSE last_offline_at END,
@@ -614,20 +618,20 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
       WHERE id = ? AND business_id = ?
       RETURNING *`)
       .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, physicalStatusText, physicalStatusCode, at,
-        physicalState, at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, at, at, stationId, businessId)
+        physicalState, at, qzReady ? 1 : 0, printerReady ? 1 : 0, physicalState, at, at, stationId, businessId))
       .first()
-    : await db.prepare(`UPDATE print_stations SET
+    : await markHealth(db.prepare(`UPDATE print_stations SET
         last_seen_at = ?, qz_ready = ?, printer_ready = ?,
         last_ready_at = CASE WHEN ? = 1 AND ? = 1 THEN ? ELSE last_ready_at END,
         updated_at = ?
       WHERE id = ? AND business_id = ?
       RETURNING *`)
-      .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, qzReady ? 1 : 0, printerReady ? 1 : 0, at, at, stationId, businessId)
+      .bind(at, qzReady ? 1 : 0, printerReady ? 1 : 0, qzReady ? 1 : 0, printerReady ? 1 : 0, at, at, stationId, businessId))
       .first()
   if (!row) throw repositoryError(404, 'PRINT_STATION_NOT_FOUND', 'Estação de impressão não encontrada.')
   const station = mapStationRow(row, now)
   if (!hasPhysicalState || !becameReady || station.recoveryState !== 'normal') return station
-  const recovered = await db.prepare(`UPDATE print_stations SET recovery_state = 'pending', updated_at = ?
+  const recovered = await registerCommittedEffect(db.prepare(`UPDATE print_stations SET recovery_state = 'pending', updated_at = ?
     WHERE id = ? AND business_id = ? AND recovery_state = 'normal'
       AND EXISTS (
         SELECT 1 FROM print_jobs
@@ -640,7 +644,7 @@ export const heartbeatPrintStation = async (db, businessId, stationId, health = 
               AND print_job_attempts.submission_started_at IS NOT NULL
           )
       )
-    RETURNING *`).bind(at, stationId, businessId).first()
+    RETURNING *`).bind(at, stationId, businessId),{businessId,topics:['printing'],orderIds:[]}).first()
   return mapStationRow(recovered || row, now)
 }
 

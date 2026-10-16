@@ -19,6 +19,7 @@ const timingText = (group, formatOrderDate) => {
 
 export default function ReceivableClientPanel({
   group,
+  readModel,
   selectedOrderIds = [],
   currency,
   formatOrderDate,
@@ -38,11 +39,12 @@ export default function ReceivableClientPanel({
 
   const selected = new Set(selectedOrderIds)
   const selectedEntries = group.entries.filter((entry) => selected.has(entry.order.id))
-  const selectedTotal = selectedEntries.reduce((sum, entry) => sum + (Number(entry.total) || 0), 0)
+  const selectedTotal = readModel?readModel.selectedTotal:selectedEntries.reduce((sum, entry) => sum + (Number(entry.total) || 0), 0)
   const selectionTargetCount = Math.min(group.entries.length, selectionLimit)
   const limitedGroup = group.entries.length > selectionLimit
-  const allSelected = selectionTargetCount > 0 && selectedEntries.length >= selectionTargetCount
+  const allSelected = selectionTargetCount > 0 && group.entries.slice(0,selectionLimit).every(entry=>selected.has(entry.order.id))
 
+  const selectedCount=readModel?readModel.selectedCount:selectedEntries.length
   return (
     <section className="receivables-client-panel">
       <header className="receivables-client-panel-heading">
@@ -79,7 +81,7 @@ export default function ReceivableClientPanel({
           onClick={allSelected ? onDeselectAll : () => onSelectAll?.(group)}
           disabled={disabled || !group.entries.length}
         >
-          {allSelected ? 'Desmarcar todos' : limitedGroup ? 'Selecionar até 100' : 'Selecionar todos'}
+          {allSelected ? 'Desmarcar todos' : limitedGroup ? 'Selecionar até 100' : readModel ? 'Selecionar carregados' : 'Selecionar todos'}
         </button>
       </div>
 
@@ -127,16 +129,19 @@ export default function ReceivableClientPanel({
         })}
       </div>
 
+      {readModel?.status==='loading'&&<p role="status">Carregando pedidos…</p>}
+      {readModel?.error&&<p role="alert">Não foi possível carregar os pedidos.<button type="button" onClick={readModel.reload}>Tentar novamente</button></p>}
+      {readModel?.hasMore&&<button type="button" disabled={readModel.status==='loading-next'} onClick={readModel.loadNext}>Carregar mais pedidos</button>}
       <footer className="receivables-client-panel-footer">
         <div>
-          <span>{selectedEntries.length} {selectedEntries.length === 1 ? 'pedido selecionado' : 'pedidos selecionados'}</span>
+          <span>{selectedCount} {selectedCount === 1 ? 'pedido selecionado' : 'pedidos selecionados'}</span>
           <strong>{currency(selectedTotal)}</strong>
         </div>
         <Button
           type="button"
           className="receivables-client-receive-button"
           onClick={() => onReceive?.(group)}
-          disabled={disabled || selectedEntries.length === 0}
+          disabled={disabled || selectedCount === 0}
         >
           Receber selecionados
         </Button>

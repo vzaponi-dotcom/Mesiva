@@ -41,3 +41,14 @@ export const listOrdersByIds = async (db, businessId, ids) => {
     ? (a.id < b.id ? 1 : a.id > b.id ? -1 : 0) : (a.created_at < b.created_at ? 1 : -1))
   return mapOrdersWithItems(orderRows, itemRows)
 }
+
+
+// Select only current candidates before loading their official payload/items.
+// Do not use the TV's stricter timestamp eligibility for the human kitchen.
+export const listActiveOrders = async (db,businessId) => {
+  const selected=await db.prepare(`SELECT id FROM orders
+    WHERE business_id = ? AND status IN ('Em preparo', 'Agendado')
+    ORDER BY created_at DESC, id DESC`).bind(businessId).all()
+  const orders=await listOrdersByIds(db,businessId,rows(selected).map(row=>row.id))
+  return orders.filter(order=>['Em preparo','Agendado'].includes(order.status))
+}

@@ -1,3 +1,4 @@
+import { createRefreshQueue } from '../../../infrastructure/realtime/refreshQueue.js'
 import { useContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -40,7 +41,7 @@ const getPrintJobView = (job, stationReady, order) => {
   return {
     orderNumber: job?.type === 'table-tab' && job?.document?.tableTab?.number
       ? `Comanda #${job.document.tableTab.number}`
-      : order ? formatOrderDisplayNumber(order) : 'Pedido',
+      : order ? formatOrderDisplayNumber(order) : formatOrderDisplayNumber({orderNumber:job?.document?.order?.number}),
     jobId: job?.id || '—',
     customerOrTable: getCustomerOrTable(job?.document),
     origin: job?.trigger === 'automatic' ? 'Automático' : job?.trigger === 'manual' ? 'Manual/Reimpressão' : null,
@@ -62,8 +63,9 @@ const cacheKeyForQuery = (query) => JSON.stringify([
   query.page, query.pageSize, query.sortBy, query.sortDir, query.status, query.trigger, query.search,
 ])
 
-function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobConsumed, onOpenPrintingSettings, onToast, queryState, onQueryChange, canExecutePrinting = true, canDiscardPrinting = true, canForcePrinting = false, isOnline = true }) {
+function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobConsumed, onOpenPrintingSettings, onToast, queryState, onQueryChange, canExecutePrinting = true, canDiscardPrinting = true, canForcePrinting = false, isOnline = true, realtime }) {
   const { getPrintJobs, getPrintQueueSummary } = useContextApi(createPrintingApi)
+  const subscribeRealtime=realtime?.subscribeInvalidations
   const station = printing?.localStation ?? null
   const query = queryState
   const [operationalPage, setOperationalPage] = useState({ jobs: [], pageInfo: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1 } })
@@ -175,14 +177,17 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       setPanelLoading(false)
       return undefined
     }
-    void refreshPanel()
-    const timer = globalThis.setInterval?.(() => { void refreshPanel() }, 10000)
+    const queue=createRefreshQueue({run:refreshPanel})
+    void queue.refresh()
+    const unsubscribe=subscribeRealtime?.(event=>{if(event.topics.includes('printing'))return queue.refresh()})
+    const timer = subscribeRealtime?null:globalThis.setInterval?.(() => { void queue.refresh() }, 10000)
     return () => {
+      queue.stop();unsubscribe?.()
       generationRef.current += 1
       refreshAbortRef.current?.abort()
       if (timer) globalThis.clearInterval?.(timer)
     }
-  }, [isOnline, refreshPanel])
+  }, [isOnline, refreshPanel,subscribeRealtime])
   const operationalStatus = derivePrintOperationalStatus({
     stations: printing?.stations,
     localStation: station,

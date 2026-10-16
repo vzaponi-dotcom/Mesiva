@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
+import {useCustomerReadModel} from '../application/useCustomerReadModel.js'
+import { useEffect,useMemo,useRef, useState } from 'react'
 import '../../../clients-phonebook.css'
 import './client-relationship.css'
 import Button from '../../../shared/ui/Button'
@@ -16,8 +18,10 @@ const SORT_OPTIONS = [{ value: 'name-asc', label: 'Nome A–Z' }, { value: 'name
 const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 const dateLabel = value => value ? value.split('-').reverse().join('/') : 'Sem compras'
 
-function Clients({ clients = [], orders = [], search = '', sort = 'name-asc', onSearchChange = () => {}, onSortChange = () => {}, onAdd, onEdit, onDelete, canCreateClients = false, canUpdateClients = false, canDeleteClients = false, granted = new Set(), currency = money, writesBlocked = false, onRegisterPayment, onRegisterClientOrdersPayment, onNewOrder, canReceiveOrder, renderOrderDetail }) {
+function Clients({ readContext,clients = [], orders = [], search = '', sort = 'name-asc', onSearchChange = () => {}, onSortChange = () => {}, onAdd, onEdit, onDelete, canCreateClients = false, canUpdateClients = false, canDeleteClients = false, granted = new Set(), currency = money, writesBlocked = false, onRegisterPayment, onRegisterClientOrdersPayment, onNewOrder, canReceiveOrder, renderOrderDetail }) {
   const [selectedId, setSelectedId] = useState(null)
+  const [selectedSeed,setSelectedSeed]=useState(null),selectionOwner=useRef(null)
+  const [relationshipFilter,setRelationshipFilter]=useState('all')
   const [tab, setTab] = useState('summary')
   const [filter, setFilter] = useState('all')
   const [filterDraft, setFilterDraft] = useState(null)
@@ -27,13 +31,23 @@ function Clients({ clients = [], orders = [], search = '', sort = 'name-asc', on
   const canViewHistory = hasCapability(granted, 'orders.history')
   const completeHistory = canViewActive && canViewHistory
   const canViewOrders = canViewActive || canViewHistory
+  const scoped=Boolean(readContext?.enabled),ownerKey=readContext?.accessContextId ?? null
+  const ownsSelection=selectionOwner.current===ownerKey
+  const model=useCustomerReadModel({...readContext,enabled:scoped,search,sort,filter:completeHistory?filter:'all',clientId:ownsSelection?selectedId:null,orderFilter:relationshipFilter})
+  const pageClients=scoped?(model.list.data?.clients || []):clients
   const readableOrders = useMemo(() => orders.filter(order => ['Finalizado', 'Cancelado', 'Entregue', 'Despachado'].includes(order.status) ? canViewHistory : canViewActive), [orders, canViewActive, canViewHistory])
-  const relationships = useMemo(() => buildClientRelationships(clients, readableOrders), [clients, readableOrders])
-  const selected = clients.find(client => client.id === selectedId)
-  const visible = filterAndSortClients(clients, { search, sort, relationships, filter: completeHistory ? filter : 'all' })
+  const legacyRelationships=useMemo(()=>buildClientRelationships(clients,readableOrders),[clients,readableOrders])
+  const relationships=scoped?new Map(pageClients.map(client=>[client.id,client.profile])):legacyRelationships
+  const selected=ownsSelection?(model.relationship.data?.client || pageClients.find(client=>client.id===selectedId) || selectedSeed):null
+  const emptyProfile={orders:[],favorites:[],orderCount:0,cancelledCount:0,total:0,pending:0,average:0,lastPurchase:null,daysSincePurchase:null,frequencyDays:null}
+  const profile=scoped?{...emptyProfile,...model.relationship.data?.profile,orders:model.relationship.data?.orders || []}:relationships.get(selectedId)
+  const visible=scoped?pageClients:filterAndSortClients(clients,{search,sort,relationships,filter:completeHistory?filter:'all'})
+  const panelModel=scoped?{...model.relationship,filter:relationshipFilter,onFilterChange:setRelationshipFilter,
+    loadOrdersByIds:readContext.loadOrdersByIds,loadOrderById:readContext.loadOrderById,onUnauthorized:readContext.onUnauthorized}:undefined
+  useEffect(()=>{setSelectedId(null);setSelectedSeed(null);setDeleteConfirm(false);setRelationshipFilter('all')},[ownerKey])
   const actionsDisabled = writesBlocked || pendingId !== null || (typeof navigator !== 'undefined' && !navigator.onLine)
-  const openProfile = client => { setSelectedId(client.id); setTab('summary') }
-  const closeProfile = () => { setSelectedId(null); setDeleteConfirm(false) }
+  const openProfile = client => {selectionOwner.current=ownerKey;setSelectedSeed(client);setSelectedId(client.id);setRelationshipFilter('all');setTab('summary')}
+  const closeProfile = () => {setSelectedId(null);setSelectedSeed(null);setDeleteConfirm(false)}
   const confirmDelete = async () => {
     if (!selected || !canDeleteClients || actionsDisabled) return
     setPendingId(selected.id)
@@ -50,7 +64,7 @@ function Clients({ clients = [], orders = [], search = '', sort = 'name-asc', on
         <Button variant="secondary" icon="filter" onClick={() => setFilterDraft({ filter: activeFilter, sort: allowedSort.some(option => option.value === sort) ? sort : 'name-asc' })}>Filtros{activeFilter !== 'all' ? ' · 1' : ''}</Button>
       </div>
       {activeFilter !== 'all' && <div className="client-filter-summary"><span>Filtro aplicado</span><button type="button" className="client-filter-chip" onClick={() => setFilter('all')} aria-label="Remover filtro de clientes">{FILTERS.find(([id]) => id === activeFilter)?.[1]}<Icon name="close" size={14} /></button></div>}
-      <div className="client-list-caption"><span>{visible.length} {visible.length === 1 ? 'cliente' : 'clientes'}</span>{canViewOrders && !completeHistory && <span>Pedidos conforme suas permissões</span>}</div>
+      <div className="client-list-caption"><span>{scoped?(model.list.data?.summary?.count || 0):visible.length} {(scoped?model.list.data?.summary?.count:visible.length) === 1 ? 'cliente' : 'clientes'}</span>{canViewOrders && !completeHistory && <span>Pedidos conforme suas permissões</span>}</div>
       <div className="client-phonebook-list client-relationship-table">
         <div className="client-relationship-tablehead" aria-hidden="true"><span>Cliente / contato</span><span className="client-last-purchase">Última compra</span><span className="client-orders-count">Pedidos</span><span className="client-open-balance">Saldo em aberto</span><span /></div>
         {visible.map(client => {
@@ -64,14 +78,17 @@ function Clients({ clients = [], orders = [], search = '', sort = 'name-asc', on
           </button>
         })}
       </div>
-      {!visible.length && <div className="empty-state"><Icon name="clients" size={28} /><strong>Nenhum cliente encontrado</strong><span>Cadastre um cliente ou ajuste os filtros.</span></div>}
+      {!visible.length && !(scoped&&model.list.status==='loading') && !model.list.error && <div className="empty-state"><Icon name="clients" size={28} /><strong>Nenhum cliente encontrado</strong><span>Cadastre um cliente ou ajuste os filtros.</span></div>}
+      {scoped&&model.list.status==='loading'&&!model.list.data&&<PageSkeleton label="Carregando clientes" heading={false} />}
+      {scoped&&model.list.error&&<div role="alert"><p>Não foi possível carregar os clientes.</p><Button variant="secondary" onClick={model.list.reload}>Tentar novamente</Button></div>}
+      {scoped&&model.list.hasMore&&<Button variant="secondary" disabled={model.list.status==='loading-next'} onClick={model.list.loadNext}>Carregar mais clientes</Button>}
     </section>
     {filterDraft && <Modal title="Filtrar clientes" onClose={() => setFilterDraft(null)} className="client-filter-modal" footer={<div className="form-actions"><Button variant="secondary" onClick={() => setFilterDraft({ filter: 'all', sort: 'name-asc' })}>Limpar</Button><Button onClick={() => { setFilter(filterDraft.filter); onSortChange(filterDraft.sort); setFilterDraft(null) }}>Aplicar filtros</Button></div>}>
       <div className="form-stack"><span className="client-filter-label">Situação do cliente</span><div className="client-filter-options">
-        {FILTERS.filter(([id]) => completeHistory || id === 'all').map(([id, label]) => <label key={id}><input type="radio" name="client-situation" value={id} checked={filterDraft.filter === id} onChange={() => setFilterDraft({ ...filterDraft, filter: id })} /><span>{label}</span><small>{filterAndSortClients(clients, { relationships, filter: id }).length}</small></label>)}
+        {FILTERS.filter(([id]) => completeHistory || id === 'all').map(([id, label]) => <label key={id}><input type="radio" name="client-situation" value={id} checked={filterDraft.filter === id} onChange={() => setFilterDraft({ ...filterDraft, filter: id })} /><span>{label}</span><small>{scoped?(model.list.data?.summary?.filters?.[id] || 0):filterAndSortClients(clients, { relationships, filter: id }).length}</small></label>)}
       </div><label className="field"><span>Ordenar por</span><SystemSelect value={filterDraft.sort} options={allowedSort} label="Ordenar clientes" onChange={value => setFilterDraft({ ...filterDraft, sort: value })} /></label></div>
     </Modal>}
-    {selected && <ClientRelationshipPanel key={selected.id} client={selected} profile={relationships.get(selected.id)} completeHistory={completeHistory} canViewOrders={canViewOrders} tab={tab} onTabChange={setTab} onClose={closeProfile} currency={currency} disabled={actionsDisabled} onEdit={canUpdateClients ? () => onEdit?.(selected) : undefined} onDelete={canDeleteClients ? () => setDeleteConfirm(true) : undefined} onNewOrder={hasCapability(granted, 'orders.create') && onNewOrder ? () => onNewOrder(selected) : undefined} onRegisterPayment={onRegisterPayment} onRegisterClientOrdersPayment={onRegisterClientOrdersPayment} canReceiveOrder={canReceiveOrder} renderOrderDetail={renderOrderDetail} />}
+    {selected && <ClientRelationshipPanel key={`${ownerKey}:${selected.id}`} readModel={panelModel} client={selected} profile={profile} completeHistory={completeHistory} canViewOrders={canViewOrders} tab={tab} onTabChange={setTab} onClose={closeProfile} currency={currency} disabled={actionsDisabled} onEdit={canUpdateClients ? () => onEdit?.(selected) : undefined} onDelete={canDeleteClients ? () => setDeleteConfirm(true) : undefined} onNewOrder={hasCapability(granted, 'orders.create') && onNewOrder ? () => onNewOrder(selected) : undefined} onRegisterPayment={onRegisterPayment} onRegisterClientOrdersPayment={onRegisterClientOrdersPayment} canReceiveOrder={canReceiveOrder} renderOrderDetail={renderOrderDetail} />}
     {deleteConfirm && selected && <ConfirmationDialog title="Excluir cliente" message={`Tem certeza que deseja excluir ${selected.name}? Esta ação não pode ser desfeita.`} confirmLabel="Excluir cliente" onClose={() => setDeleteConfirm(false)} onConfirm={confirmDelete} disabled={pendingId !== null} />}
   </>
 }

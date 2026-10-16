@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent } from './access/audit.js'
 const SELECT_ACCESS = `SELECT business_id, pairing_token_hash, pairing_expires_at,
   session_token_hash, session_issued_at, paired_at, last_seen_at, revoked_at,
@@ -83,13 +84,13 @@ export async function approveKitchenTvPairingCode(db, code, businessId, now = ne
 export async function activateKitchenTvApprovedRequest(db, requestHash, sessionHash, now = new Date(), { requireActive = false } = {}) {
   const pairedAt = now.toISOString()
   const results = await db.batch([
-    db.prepare(`UPDATE kitchen_tv_pairing_requests
+    registerCommittedEffect(db.prepare(`UPDATE kitchen_tv_pairing_requests
       SET consumed_at = ?
       WHERE request_token_hash = ? AND approved_business_id IS NOT NULL
         AND consumed_at IS NULL AND expires_at > ?
         AND EXISTS (SELECT 1 FROM businesses b WHERE b.id=approved_business_id AND b.lifecycle_status='enabled' AND (?=0 OR b.access_status='active'))
       RETURNING approved_business_id`)
-      .bind(pairedAt, requestHash, pairedAt,requireActive ? 1 : 0),
+      .bind(pairedAt, requestHash, pairedAt,requireActive ? 1 : 0),result=>(result.results || []).map(row=>({businessId:row.approved_business_id,topics:['settings','kitchen-tv'],orderIds:[],invalidations:[{scope:'business',id:row.approved_business_id}]}))),
     db.prepare(`INSERT INTO kitchen_tv_access (
         business_id, pairing_token_hash, pairing_expires_at, session_token_hash,
         session_issued_at, paired_at, last_seen_at, revoked_at, created_at, updated_at

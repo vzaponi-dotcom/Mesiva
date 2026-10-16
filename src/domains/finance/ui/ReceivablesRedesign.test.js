@@ -125,7 +125,7 @@ test('large client groups disclose the 100-order payment limit and preserve read
   assert.match(group, /Limite de 100 pedidos por recebimento\./)
   assert.match(group, /Selecionar até 100/)
   assert.match(panel, /Limite de 100 pedidos por recebimento\./)
-  assert.match(page, /disabled=\{writeDisabled \|\| !canReceivePayments\}/)
+  assert.match(page, /disabled=\{writeDisabled \|\| !canReceivePayments \|\| \(scoped&&scopedSelection\.validating\)\}/)
   assert.match(group, /aria-expanded=\{expanded\}/)
   assert.match(group, /aria-label=.*Selecionar.*no valor de/s)
   assert.match(panel, /aria-label=.*Selecionar pedido.*no valor de/s)

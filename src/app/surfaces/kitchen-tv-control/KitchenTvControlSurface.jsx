@@ -1,3 +1,4 @@
+import { createRefreshQueue } from '../../../infrastructure/realtime/refreshQueue.js'
 import { useContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AreaNavigation from '../../navigation/AreaNavigation.jsx'
@@ -69,6 +70,7 @@ const printItemLabel = (item = {}) => {
 
 function KitchenTvControlSurface({
   orders = [],
+  realtime,
   now = new Date(),
   currentTiming,
   granted = new Set(),
@@ -92,6 +94,7 @@ function KitchenTvControlSurface({
   const [printSnapshotLoading, setPrintSnapshotLoading] = useState(false)
   const [printSnapshotError, setPrintSnapshotError] = useState('')
   const pendingOrderRef = useRef(null)
+  const subscribeRealtime=realtime?.subscribeInvalidations
 
   const canControl = granted instanceof Set && granted.has('orders.kitchen.control')
   const queueModel = useMemo(
@@ -165,10 +168,15 @@ function KitchenTvControlSurface({
       setError('')
       return undefined
     }
-    void loadControl()
-    const interval = globalThis.setInterval(() => { void loadControl(true) }, CONTROL_POLL_MS)
-    return () => globalThis.clearInterval(interval)
-  }, [isOnline, loadControl])
+    let first=true
+    const queue=createRefreshQueue({run:()=>{const silent=!first;first=false;return loadControl(silent)}})
+    void queue.refresh()
+    const unsubscribe=subscribeRealtime?.(event=>{if(event.topics.some(topic=>topic==='kitchen-tv' || topic==='orders'))return queue.refresh()})
+    // Presence expires in 15s; unchanged TV heartbeats intentionally do not broadcast.
+    // Preserve its health check on this mounted surface, independently of data sync.
+    const interval = globalThis.setInterval(() => {if(globalThis.document?.visibilityState!=='hidden')void queue.refresh()}, subscribeRealtime?5000:CONTROL_POLL_MS)
+    return () => {queue.stop();unsubscribe?.();globalThis.clearInterval(interval)}
+  }, [isOnline, loadControl,subscribeRealtime])
 
   useEffect(() => {
     if (selectedOrderId && !selectedEntry) {
