@@ -6,9 +6,9 @@ O canal WebSocket distribui avisos de alterações confirmadas. HTTP/D1 continua
 
 `REALTIME_ENABLED` controla prepare/upgrade/renew e publicação. O binding `BUSINESS_REALTIME` usa `BusinessRealtimeHub`, classe SQLite criada pela migration de Durable Objects `realtime-v1`. Isso não é uma migration D1. Cada empresa usa um objeto; os Workers de staging e produção têm namespaces separados.
 
-A configuração de produção permanece desabilitada durante homologação. Habilitar staging pelo workflow **Deploy staging** na branch elegível da entrega (`codex/printing-state-budget` para a leitura unificada). A ativação em produção depende de CI, staging, orçamento completo, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Ativar a configuração revisada e conferir CI/staging do SHA efetivamente publicado. Merge sozinho não publica.
+O candidato desta entrega configura `REALTIME_ENABLED=true` e `OPERATIONAL_READ_MODELS_ENABLED=true`. Homologar pelo workflow **Deploy staging** na branch elegível `codex/realtime-financial-validation`. A ativação segue CI, staging, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Em16/10 o usuário decidiu adiar a medição financeira completa e avaliar com uso real; a [exceção e seus limites](../superpowers/qa/2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega) não aprovam o orçamento nem garantem custo mensal. Conferir CI/staging e versão ativa do SHA efetivamente publicado; merge sozinho não publica.
 
-Desabilitar a flag é o caminho de rollback do canal. O cliente passa ao fallback HTTP de 30s; dados, fila, auditoria e objetos persistidos são preservados. Não remover migrations ou namespaces para desligar o recurso.
+Desabilitar `REALTIME_ENABLED` é o caminho de rollback do canal; desligar também `OPERATIONAL_READ_MODELS_ENABLED` restaura o contrato integral do bootstrap. O cliente passa ao fallback HTTP de 30s; dados, fila, auditoria e objetos persistidos são preservados. Não remover migrations ou namespaces para desligar o recurso.
 
 ## Segurança e protocolo
 
@@ -99,7 +99,11 @@ Conferir SHA e `/release.json`, bootstrap autenticado200, cinco conexões, mudan
 Amostras de latência commit→tela em staging têm alvo p95≤2s com canal saudável. CPU/duração/uso agregado devem vir da Cloudflare, distinguindo amostragem/atraso de ingestão. Após release, comparar taxas de leituras por hora durante uso real e projeção para o ciclo; a verificação horária anterior foi removida por solicitação do usuário em16/10; novas coletas são manuais, sem recriar a recorrência. Não afirmar redução faturada com sistema ocioso.
 
 
-## Estado da validação em 15/10/2026
+## Histórico de implementação e validação
+
+As etapas abaixo registram configurações e gates anteriores; a decisão vigente de ativação está na seção inicial e no QA de16/10.
+
+### Estado da validação em 15/10/2026
 
 O gate local em workerd passou com cinco clientes, 10 mil pedidos históricos, 50 mil itens, 10 mil eventos de auditoria e 3 mil impressões terminais. Publicação perdida convergiu em 264 segundos, hibernação e reinício recuperaram as conexões, houve um vencedor na disputa por claim e nenhum reenvio automático de resultado desconhecido. Isso não substitui homologação em navegador nem métricas faturadas da Cloudflare.
 
@@ -160,6 +164,6 @@ Comandas/mesas continuam obtendo detalhes oficiais por ID; o snapshot inclui com
 Atividades abre o pedido autorizado por ID e descarta respostas de contexto anterior. A fila obtém número e identidade do documento persistido no job quando o pedido não está no cache. Documento, segunda via, confirmação do spooler e decisão humana para impressão desconhecida continuam usando os serviços oficiais, sem depender do histórico global.
 
 
-### Continuação financeira em 16/10/2026
+### Continuação financeira e decisão de liberação em 16/10/2026
 
-A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,227bilhões de leituras no normal e15,050bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 já publicada mantém ambas as flagsfalse; este relatório não aprova ativação nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.
+A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,227bilhões de leituras no normal e15,050bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 é a referência anterior com flagsfalse. O candidato agora habilita ambas após a decisão explícita do usuário de adiar a medição; a publicação exige homologação e o workflow oficial. A decisão não altera o resultado financeiro incompleto nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.

@@ -1,10 +1,10 @@
 # Validação financeira do realtime — 16/10/2026
 
-Continuação da [medição do refresh de impressão](2026-10-16-printing-state-budget.md), vinculada à issue #75. **Validação financeira incompleta; ativação de produção não aprovada.** Esta entrega altera somente cálculo, testes e documentação; não muda consultas, timers, fila, dados ou flags do aplicativo.
+Continuação da [medição do refresh de impressão](2026-10-16-printing-state-budget.md), vinculada à issue #75. **Validação financeira incompleta.** Em16/10 o usuário decidiu prosseguir com a ativação sem concluir a medição agora e avaliar a Cloudflare com uso real nos próximos dias. O candidato habilita as duas flags existentes e permite a homologação desta branch no workflow de staging; não altera consultas, timers de execução, fila, dados ou regras de impressão. Publicação depende de CI, staging, aceite humano e Deploy production pela master.
 
-## Publicação e escopo
+## Referência publicada antes desta ativação
 
-O aplicativo já foi publicado pelo Deploy production 38845349415: master `63d1f148e612c879d412ee815acfd51de9c30046`, versão `996a542a-f01a-4c60-991b-fd1cc43a07d4`, 100%, em 16/10 às 03:25 UTC. Os bindings dessa versão mantêm `REALTIME_ENABLED=false` e `OPERATIONAL_READ_MODELS_ENABLED=false`. Código integrado/publicado não significa canal ou snapshots ativos.
+Referência anterior: aplicativo publicado pelo Deploy production 38845349415: master `63d1f148e612c879d412ee815acfd51de9c30046`, versão `996a542a-f01a-4c60-991b-fd1cc43a07d4`, 100%, em 16/10 às 03:25 UTC. Os bindings dessa versão mantêm `REALTIME_ENABLED=false` e `OPERATIONAL_READ_MODELS_ENABLED=false`. Código integrado/publicado não significa canal ou snapshots ativos.
 
 Staging medido: mesmo SHA, versão `d23cfb05-abf8-4562-a590-969b9862b3e3`, flags habilitadas, empresa fictícia. A verificação horária foi removida a pedido do usuário; a coleta abaixo foi manual e temporária. Nenhuma gravação de negócio ou impressão de teste foi enviada à produção.
 
@@ -54,7 +54,15 @@ O painel de cobrança consultado em 16/10 mostrava 45,09 bilhões de leituras D1
 
 Outro Worker (`mazinho-agendamento-staging`) mostrou 9.390 invocações nos últimos 30 dias, zero erros e CPU p50 de 34,415 ms. O painel retornou percentis, sem soma de CPU: não usar p50 como média nem multiplicá-lo para declarar consumo total. Ausência de amostras no tail curto de produção não significa custo zero.
 
-Faltam baseline separado dos outros serviços, CPU das operações ausentes, duração/armazenamento do DO, crescimento de armazenamento D1 e latência real em cinco telas. A estação Windows/QZ com fila vazia e a autorização de pareamento da TV foram solicitadas ao usuário; não enviar impressão física para obter essas amostras. O canal e os read models ficam desabilitados em produção até completar as dimensões, manter 20% de margem no normal/100% da franquia no degradado e obter autorização própria de ativação.
+Faltam baseline separado dos outros serviços, CPU das operações ausentes, duração/armazenamento do DO, crescimento de armazenamento D1 e latência real em cinco telas. O usuário informou que a estação Windows está indisponível e autorizou substituir o pareamento da TV fictícia Conta Teste1. O pareamento foi concluído pela interface oficial; as coletas e a aba temporária foram encerradas ao pedido de seguir sem medir agora. Nenhuma impressão física foi enviada.
+
+## Decisão de liberação desta entrega
+
+Instrução do usuário em16/10: “Podemos seguir sem medir agora, e mais pra frente vamos avaliar no cloudflare conforme for tento uso em produção nos próximos dias”. Para esta entrega, a aferição financeira completa fica adiada por essa decisão explícita. O relatório e `assertMonthlyBudget` continuam rejeitando dimensões desconhecidas: não converter a exceção de liberação em resultado financeiro aprovado.
+
+`wrangler.jsonc` do candidato configura `REALTIME_ENABLED=true` e `OPERATIONAL_READ_MODELS_ENABLED=true`, como já exercitado em staging. A franquia mensal de25bilhões de leituras e o custo total deUS$5 não estão garantidos; CPU e demais serviços também podem gerar excedente. Manter os gates de correção, isolamento, autenticação, fila, confirmação e resultado desconhecido; validar CI/staging do SHA exato, obter homologação humana e publicar somente por Deploy production na master.
+
+Se houver regressão operacional, rollback pelo mesmo fluxo de release: desabilitar a flag do canal para fallback HTTP, ou ambas para restaurar também o contrato integral. Preservar migrations, namespaces, histórico, fila e credenciais. Não recriar a automação horária removida; a avaliação posterior será manual conforme uso real e nova solicitação.
 
 Fontes primárias de franquias: [Workers](https://developers.cloudflare.com/workers/platform/pricing/), [D1](https://developers.cloudflare.com/d1/platform/pricing/), [Durable Objects](https://developers.cloudflare.com/durable-objects/platform/pricing/) e [R2](https://developers.cloudflare.com/r2/pricing/). A mensalidade não é um teto automático; a redução futura não estorna o excedente acumulado.
 
@@ -63,4 +71,4 @@ Fontes primárias de franquias: [Workers](https://developers.cloudflare.com/work
 - Testes focados: omissão inicial reproduzida em duas falhas, 27/27 após correção; achado de revisão sobre login operacional reproduzido em três falhas, 28/28 após incluir os dois escopos e seleção oficial.
 - Gate workerd/D1/WebSocket completo: passou, dimensões financeiras externas continuam desconhecidas.
 - Arquitetura, lint e build passaram; lint mantém avisos preexistentes.
-- Dry-runs de produção/staging e migrations exclusivamente locais passaram, sem migrations pendentes. Suíte completa após a correção de revisão: 3.911/3.911 passaram. CI verde do SHA exato continua obrigatório para integrar; consultar os checks do PR. Esta alteração não publica nem ativa flags.
+- Dry-runs de produção/staging e migrations exclusivamente locais passaram, sem migrations pendentes. Suíte completa após a correção de revisão: 3.911/3.911 passaram. CI verde do SHA exato continua obrigatório para integrar; consultar os checks do PR. Os resultados locais acima precedem a configuração de ativação; validar o SHA final no CI e em staging antes de merge/produção. Preparar a configuração não é confirmação de publicação.
