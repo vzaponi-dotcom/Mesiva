@@ -6,9 +6,9 @@ O canal WebSocket distribui avisos de alterações confirmadas. HTTP/D1 continua
 
 `REALTIME_ENABLED` controla prepare/upgrade/renew e publicação. O binding `BUSINESS_REALTIME` usa `BusinessRealtimeHub`, classe SQLite criada pela migration de Durable Objects `realtime-v1`. Isso não é uma migration D1. Cada empresa usa um objeto; os Workers de staging e produção têm namespaces separados.
 
-A configuração de produção permanece desabilitada durante homologação. Habilitar staging pelo workflow **Deploy staging** na branch elegível da entrega (`codex/printing-state-budget` para a leitura unificada). A ativação em produção depende de CI, staging, orçamento completo, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Ativar a configuração revisada e conferir CI/staging do SHA efetivamente publicado. Merge sozinho não publica.
+O candidato desta entrega configura `REALTIME_ENABLED=true` e `OPERATIONAL_READ_MODELS_ENABLED=true`. Homologar pelo workflow **Deploy staging** na branch elegível `codex/realtime-financial-validation`. A ativação segue CI, staging, aceite humano e autorização explícita pelo [runbook de release](../release-and-migration-runbook.md). Em16/10 o usuário decidiu adiar a medição financeira completa e avaliar com uso real; a [exceção e seus limites](../superpowers/qa/2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega) não aprovam o orçamento nem garantem custo mensal. Conferir CI/staging e versão ativa do SHA efetivamente publicado; merge sozinho não publica.
 
-Desabilitar a flag é o caminho de rollback do canal. O cliente passa ao fallback HTTP de 30s; dados, fila, auditoria e objetos persistidos são preservados. Não remover migrations ou namespaces para desligar o recurso.
+Desabilitar `REALTIME_ENABLED` é o caminho de rollback do canal; desligar também `OPERATIONAL_READ_MODELS_ENABLED` restaura o contrato integral do bootstrap. O cliente passa ao fallback HTTP de 30s; dados, fila, auditoria e objetos persistidos são preservados. Não remover migrations ou namespaces para desligar o recurso.
 
 ## Segurança e protocolo
 
@@ -82,13 +82,13 @@ O validador mensal recebe operações medidas, mix de dispositivos, métricas re
 node scripts/infra/realtime-budget-report.mjs .wrangler/realtime-budget-input.json .wrangler/realtime-budget-report.json --require-complete
 ```
 
-O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
+O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. `operations` inclui login, seleção de empresa e descoberta de sessão HTTP, além da preparação/renovação do WebSocket; relatórios antigos sem essas operações precisam de nova coleta. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
 
 O modelo padrão usa cinco dispositivos totais: uma TV, uma estação e uma tela de controle;12h/dia,31dias,5.000 alterações/dia e5.000 conexões/reconexões/mês. O mix de dimensionamento é10%criações,10%finalizações,10%pagamentos e70%transições de impressão. São hipóteses de ensaio, não vendas observadas. Outras composições/volumes precisam de nova projeção.
 
 Somar D1, Workers/CPU, RPCs do DO, ACKs de entrada20:1, duração, SQLite do DO, logs, R2 e armazenamento. Mensagens de saída não têm cobrança de requests, mas isso não torna toda a infraestrutura gratuita. O modelo reserva margem20% no normal e exige ficar dentro de todas as franquias no degradado. Consultas de histórico/bootstrap grandes podem impedir aprovação mesmo com WebSocket funcionando.
 
-A franquia é compartilhada pela conta; US$5 é mensalidade com excedentes, não teto automático. A redução futura não estorna leituras já acumuladas no ciclo. Se uma dimensão estiver desconhecida ou exceder o orçamento, manter o canal em staging e otimizar as leituras antes de habilitar produção; não bloquear vendas/impressões como contenção automática.
+A franquia é compartilhada pela conta; US$5 é mensalidade com excedentes, não teto automático. A redução futura não estorna leituras já acumuladas no ciclo. Se uma dimensão estiver desconhecida ou exceder o orçamento, manter o canal em staging e otimizar as leituras antes de habilitar produção; não bloquear vendas/impressões como contenção automática. Para a ativação de16/10, aplica-se somente a [exceção explícita desta entrega](../superpowers/qa/2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega): aferição financeira adiada pelo usuário, sem dispensar CI, staging, homologação e publicação oficial.
 
 Fontes de preços: [Workers](https://developers.cloudflare.com/workers/platform/pricing/), [D1](https://developers.cloudflare.com/d1/platform/pricing/), [Durable Objects](https://developers.cloudflare.com/durable-objects/platform/pricing/) e [R2](https://developers.cloudflare.com/r2/pricing/). Conferir preços/franquias novamente ao rever o modelo.
 
@@ -96,10 +96,14 @@ Fontes de preços: [Workers](https://developers.cloudflare.com/workers/platform/
 
 Conferir SHA e `/release.json`, bootstrap autenticado200, cinco conexões, mudança refletida em outro dispositivo, retomada de foco/rede, revogação e fallback. No DevTools, uma conexão WS e requests temporais documentados são esperados; as recargas gerais de pedidos2s e bootstrap5s devem desaparecer no cliente integrado. Não interpretar o filtro Fetch/XHR como lista completa do canal WS.
 
-Amostras de latência commit→tela em staging têm alvo p95≤2s com canal saudável. CPU/duração/uso agregado devem vir da Cloudflare, distinguindo amostragem/atraso de ingestão. Após release, comparar taxas de leituras por hora durante uso real e projeção para o ciclo; manter o acompanhamento solicitado para15/10 a partir das10h de São Paulo. Não afirmar redução faturada com sistema ocioso.
+Amostras de latência commit→tela em staging têm alvo p95≤2s com canal saudável. CPU/duração/uso agregado devem vir da Cloudflare, distinguindo amostragem/atraso de ingestão. Após release, comparar taxas de leituras por hora durante uso real e projeção para o ciclo; a verificação horária anterior foi removida por solicitação do usuário em16/10; novas coletas são manuais, sem recriar a recorrência. Não afirmar redução faturada com sistema ocioso.
 
 
-## Estado da validação em 15/10/2026
+## Histórico de implementação e validação
+
+As etapas abaixo registram configurações e gates anteriores; a decisão vigente de ativação está na seção inicial e no QA de16/10.
+
+### Estado da validação em 15/10/2026
 
 O gate local em workerd passou com cinco clientes, 10 mil pedidos históricos, 50 mil itens, 10 mil eventos de auditoria e 3 mil impressões terminais. Publicação perdida convergiu em 264 segundos, hibernação e reinício recuperaram as conexões, houve um vencedor na disputa por claim e nenhum reenvio automático de resultado desconhecido. Isso não substitui homologação em navegador nem métricas faturadas da Cloudflare.
 
@@ -158,3 +162,8 @@ Comandas/mesas continuam obtendo detalhes oficiais por ID; o snapshot inclui com
 “Finalizados hoje” usa `/api/reads/orders/kitchen-summary`: status Finalizado, finished_at e dia de São Paulo, incluindo compatibilidade Date.parse de timestamps antigos. Mantém a visibilidade histórica da sessão; orders.view sozinho não ganha contagens de histórico. Os índices0049 limitam a contagem à data e ao subconjunto legado. A mesma invalidação/reconciliação do transporte atualiza esse indicador; o relógio local renova a consulta na mudança de dia.
 
 Atividades abre o pedido autorizado por ID e descarta respostas de contexto anterior. A fila obtém número e identidade do documento persistido no job quando o pedido não está no cache. Documento, segunda via, confirmação do spooler e decisão humana para impressão desconhecida continuam usando os serviços oficiais, sem depender do histórico global.
+
+
+### Continuação financeira e decisão de liberação em 16/10/2026
+
+A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,227bilhões de leituras no normal e15,050bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 é a referência anterior com flagsfalse. O candidato agora habilita ambas após a decisão explícita do usuário de adiar a medição; a publicação exige homologação e o workflow oficial. A decisão não altera o resultado financeiro incompleto nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.
