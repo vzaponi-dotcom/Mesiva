@@ -1,7 +1,7 @@
 # Mesiva — Edição de pedidos até a finalização, cozinha e reconciliação financeira
 
 **Data:** 2026-10-10
-**Status:** AUTORREVISADA em 2026-10-10 — revisão final de consistência concluída; apta à preparação de plano TDD; implementação ainda não iniciada.
+**Status:** IMPLEMENTADA NA PR #108, em integração/homologação. Atualizada em 16/10/2026 com as decisões posteriores de UX e os contratos realtime/scoped. [QA atual](../qa/2026-10-16-order-editing-integration.md); não representa liberação em produção.
 **Branch documental:** docs/order-editing-design-2026-10-10
 **Base técnica inspecionada:** master @ e595f7ed2a801fde6ffab231194788430cc53316 (merge PR #107, 2026-10-06).
 **Produção:** proibido deploy sem implementação, staging, homologação e autorização separada.
@@ -12,7 +12,7 @@ Permitir corrigir pedidos existentes enquanto ainda não foram finalizados, incl
 
 Decisões de negócio já aprovadas na conversa:
 1. Edição permitida até a finalização; pedidos finalizados ou cancelados não são editáveis.
-2. A cozinha e a TV devem mostrar os dados corrigidos e avisar claramente que houve alteração, com indicação do que mudou.
+2. Cozinha e TV mostram os dados atuais e o selo permanente **Editado**; diferenças estruturadas ficam em Detalhes/Controle da TV, sem exigir confirmação de leitura. A TV mantém altura, densidade e paginação originais, sem painel de diferenças no card.
 3. Cada edição mantém histórico de alterações.
 4. Editar nunca cria automaticamente um novo job de impressão. Depois de salvar, oferecer opção de imprimir/reimprimir manualmente a via completa e atualizada.
 5. Reutilizar os caminhos familiares **Salvar pedido** e **Salvar e receber**: quando existe diferença positiva a receber, permitir cobrá-la imediatamente ou deixá-la em A receber.
@@ -20,7 +20,7 @@ Decisões de negócio já aprovadas na conversa:
 7. Pedidos de mesa ligados a comanda aberta são recebidos pela comanda; não liberar pagamento individual do pedido nessa condição.
 8. Implementar e homologar em fases, isolando a evolução mais arriscada de pagamentos adicionais e estornos parciais.
 
-As subseções que definem detalhes não deliberados explicitamente (como formatos técnicos, mecanismo de confirmação e cobertura exata de campos) são **propostas de desenho para aprovação da Spec**, não decisões de produto já aprovadas.
+As decisões posteriores de UX registradas na PR em 10–12/10 substituem a proposta inicial de confirmação manual. As evidências iniciais abaixo descrevem a base histórica, não o estado atual da master.
 
 ## 2. Baseline comprovado e contratos existentes
 
@@ -162,11 +162,11 @@ Finalizar pedido **não** quita eventual saldo pendente; o pedido continua em A 
 
 - Mesma identidade do pedido: alterações atualizam card existente, não criam “novo pedido” nem reordenam toda fila sem necessidade operacional.
 - Expor contentRevision, lastEditedAt e resumo operacional de delta (adicionado/removido/quantidade/nota) por leitura; evitar retransmitir snapshots financeiros/contatos ao token da TV. Uma baixa financeira não modifica contentRevision nem soa como edição na TV.
-- No painel Cozinha e na TV, indicar **PEDIDO ALTERADO**, com destaque legível e diferenças visíveis inclusive em itens removidos. Cor sozinha não basta.
-- Proposta de UX: aviso persistente até ciência da revisão na Cozinha/Controle da TV, com ação Confirmar leitura sob sessão humana e orders.kitchen.control; a TV exibe o aviso, mas permanece somente leitura. A ciência é por pedido+revisão: uma nova mudança exige nova leitura. Não bloquear a edição ou o preparo enquanto a ciência está pendente, nem confundir som de PEDIDO NOVO com alteração. TV iniciada após a alteração mostra aviso ainda pendente sem tocar som retroativo.
-- Poll da TV permanece aproximadamente 2s; evitar WebSocket ou novo runtime. Não chamar edição de “instantânea” se a rede estiver desconectada ou o browser suspenso.
+- Cozinha, TV e detalhes usam o selo **Editado**, com rótulo legível além da cor. Detalhes e Controle da TV exibem **Últimas alterações** com adição/remoção e antes/depois de quantidade/nota. A TV mostra somente os produtos atuais e o selo, preservando o layout original.
+- Não há botão de ciência ou confirmação de leitura. ACKs antigos permanecem por compatibilidade/auditoria, sem condicionar o selo. Revisão não é pedido novo e não produz som retroativo.
+- Usar o runtime realtime oficial da master, com eventos de edição/liquidação após commit e leituras autorizadas por superfície. Preservar fallback/reconciliação e temporizadores documentados em [realtime](../../operations/realtime-sync.md); não criar outro runtime.
 - Preservar filtro Entrega/Retirada/Mesa, paginação, ocultação manual e layout adaptativo. Uma alteração não pode tornar pedido oculto visível à força nem quebrar posição/controle por página.
-- TV aberta após alterações passadas não deve tocar alerta retroativo; marcador pendente visível conforme política de ciência.
+- TV aberta após alterações passadas conserva o selo sem tocar alerta retroativo.
 
 ## 8. Regras de fase e gates
 
@@ -185,7 +185,7 @@ Finalizar pedido **não** quita eventual saldo pendente; o pedido continua em A 
 - Gating de concorrência com cobrança, baixa de comanda e recebimento por cliente. Migrações aditivas com dados legados de pagamento e quitação.
 - Gate: só liberar edição com variação de total pago em staging depois de passar a matriz de testes financeiros, recibos compartilhados e cancelamento depois de complementos/estornos parciais; produção requer aprovação separada.
 
-Fases podem morar na mesma Spec, mas não devem expor estado intermediário quebrado em produção nem fazer merge/release de fluxo financeiro incompleto. Plano TDD deve ser escrito **depois da aprovação desta Spec**.
+As fases A/B descrevem a execução histórica. A implementação atual inclui ambas; a integração de 16/10 migra também os novos leitores scoped e o lote misto de clientes. Fluxo financeiro incompleto continua bloqueando merge/release.
 
 ## 9. Critérios mínimos de aceite automatizado e manual
 
@@ -194,7 +194,7 @@ Fases podem morar na mesma Spec, mas não devem expor estado intermediário queb
 3. No-op não cria revisão, impressão, recebimento ou alerta.
 4. Pedido finalizado/cancelado/histórico rejeita edição; disputa edição × finalização/cancelamento não gera estado parcial.
 5. Revisão stale, token de outra empresa, usuário sem orders.edit e mutation duplicada não alteram dados indevidamente.
-6. Cozinha, TV, Controle da TV, paginação e filtros exibem itens atualizados e diferença de forma consistente.
+6. Cozinha/TV exibem itens atuais e selo; Detalhes/Controle da TV exibem diferenças. Paginação, filtros e ocultação permanecem preservados.
 7. Alertas de pedido novo e alterado não se confundem nem se repetem a cada polling; ocultação voluntária permanece.
 8. Ao salvar, nenhum job novo; recusar reimpressão não faz nada; aceitar gera somente job manual com snapshot completo atual.
 9. Job automático pending recebe atualização protegida do snapshot sem alterar jobs processando/impresso/descartado.
@@ -221,7 +221,7 @@ Fases podem morar na mesma Spec, mas não devem expor estado intermediário queb
 - Não criar runtime global paralelo, usar internal imports atravessando domínios, reimplementar receipt/alocação no módulo de Orders ou retornar a bridge legado de pagamentos.
 - Não editar diretamente a master; criar branch de implementação somente após aprovação + plano.
 
-## 11. Autorrevisão final — revisão de consistência e escolhas de UX
+## 11. Autorrevisão inicial — histórico de 10/10, anterior às decisões de UX da seção 7
 
 **Risco alto identificado:** o modelo atual payments.order_id UNIQUE e os consumidores baseados em payment_id requerem evolução consistente antes de habilitar edição de pago com diferença; “corrigir somente A receber” seria insuficiente.
 
@@ -243,4 +243,4 @@ Fases podem morar na mesma Spec, mas não devem expor estado intermediário queb
 6. Preservação de snapshots antigos mesmo com produtos inativos e separação de revisão operacional e financeira.
 7. Revisão e ciência da TV em projeção de leitura, sem conceder escrita à TV.
 
-**Resultado:** AUTORREVISADA — sem inconsistências internas adicionais identificadas após as correções, apta à próxima etapa (plano técnico e TDD). A criação desta Spec não autoriza implementação, migration, deploy, merge ou produção.
+**Resultado histórico:** spec autorrevisada em 10/10, seguida de aprovação e implementação na PR #108. O acompanhamento vigente está no QA da integração; merge e produção continuam sujeitos aos gates e autorizações próprios.

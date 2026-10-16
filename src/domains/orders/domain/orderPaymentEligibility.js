@@ -1,10 +1,7 @@
 import { hasCapability } from '../../../app/access.js'
 
-export const isOrderPaid = (order) => order?.paymentStatus === 'Pago'
-
-export const getPendingAmount = (order) => Number.isSafeInteger(order?.dueCents)
-  ? Math.max(0, order.dueCents) / 100
-  : isOrderPaid(order) ? 0 : Math.max(0, Number(order?.total) || 0)
+import {isOrderPaid,hasSupplementalBalance} from '../../../../shared/orderPaymentRead.js'
+export {isOrderPaid,getPendingAmount} from '../../../../shared/orderPaymentRead.js'
 
 const sourceCapability = Object.freeze({
   orders: 'orders.view',
@@ -29,9 +26,8 @@ export function canReceiveStandaloneOrder(order, granted, source) {
     && hasCapability(granted, viewCapability)
     && hasCapability(granted, 'payments.receive')
     && !isOrderPaid(order)
-    // The legacy endpoint receives only an initially unpaid order; supplemental
-    // receipts require the guarded Task 10 writer and dedicated Task 14 UX.
-    && !order.paymentId
+    // The workflow sends an existing payment balance only to the supplemental writer.
+    && (!order.paymentId || hasSupplementalBalance(order))
     && order.status !== 'Cancelado'
     && !hasTableRelationship(order),
   )

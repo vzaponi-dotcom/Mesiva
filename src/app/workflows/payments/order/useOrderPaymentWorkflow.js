@@ -12,23 +12,16 @@ import {
   toPaymentAllocations,
 } from '../paymentComposition.js'
 import { paymentApi } from '../paymentApi.js'
+import {hasSupplementalBalance as isSupplementalDue} from '../../../../../shared/orderPaymentRead.js'
 
 const operationalSources = new Set(['orders', 'history'])
-const isSupplementalDue = (order) => Boolean(order?.paymentId)
-  && order.paymentStatus === 'Parcialmente pago'
-  && Number.isSafeInteger(order.dueCents) && order.dueCents > 0
-  && Number.isSafeInteger(order.totalCents) && order.totalCents > 0
-  && Number.isSafeInteger(order.netReceivedCents)
-  && Number.isSafeInteger(order.contentRevision)
-  && !isOrderCancelled(order)
-  && ['Em preparo','Finalizado'].includes(order.status)
-  && order.tableReservationStatus !== 'reserved'
 const orderTotalCents = (order) => isSupplementalDue(order)
   ? order.dueCents : Math.max(0, Math.round((Number(order?.total) || 0) * 100))
 
 export function useOrderPaymentWorkflow({
   api = paymentApi,
   orders = [],
+  getOfficialOrders,
   granted = new Set(),
   canReceivePayments = false,
   writesBlocked = false,
@@ -49,8 +42,8 @@ export function useOrderPaymentWorkflow({
   const [, forceRender] = useState(0)
 
   const getOrder = useCallback(
-    (orderId) => orders.find((order) => order.id === orderId) ?? null,
-    [orders],
+    (orderId) => (getOfficialOrders?.() ?? orders).find((order) => order.id === orderId) ?? null,
+    [orders,getOfficialOrders],
   )
 
   const isEligible = useCallback((order, source) => {

@@ -1,3 +1,5 @@
+import { registerCommittedEffect } from '../realtime/committedEffects.js'
+import { sessionRevocationEffects } from '../realtime/effectCatalog.js'
 import { cookieValue, sha256Hex } from '../auth.js'
 import { apiError } from '../http.js'
 import { APPLICATION_CAPABILITIES } from '../../shared/settingsAccess.js'
@@ -34,13 +36,23 @@ const eligibility = `a.active = 1 AND a.email_verified_at IS NOT NULL AND c.vers
 
 export const loadAccountSessionRow = (db, id, now = new Date()) => db.prepare(`${sessionSelect} WHERE ${eligibility} AND s.id = ?`).bind(now.toISOString(), id).first()
 
-export function prepareSessionSnapshotAssertion(db, row, now = new Date()) {
-  return prepareIdentityAssertion(db, crypto.randomUUID(), `SELECT EXISTS(SELECT 1 FROM
+// Reads and mutations share the exact eligibility/grants predicate. Mutations
+// retain the CHECK assertion for rollback; read-only batches expose no data on failure.
+function sessionSnapshot(row, now) {
+  return {sql: `SELECT EXISTS(SELECT 1 FROM
     (${sessionSelect} WHERE ${eligibility} AND s.id = ?) current WHERE current.context_id = ?
     AND current.account_id = ? AND current.family_id = ? AND current.credential_revision = ?
     AND current.role_id IS ? AND current.role_version IS ? AND current.role_grants_json = ? AND current.platform_grants_json = ?)`,
-  [now.toISOString(), row.id, row.context_id, row.account_id, row.family_id, row.credential_revision,
-    row.role_id, row.role_version, row.role_grants_json, row.platform_grants_json])
+    values: [now.toISOString(), row.id, row.context_id, row.account_id, row.family_id, row.credential_revision,
+      row.role_id, row.role_version, row.role_grants_json, row.platform_grants_json]}
+}
+export function prepareSessionSnapshotAssertion(db, row, now = new Date()) {
+  const {sql,values}=sessionSnapshot(row,now)
+  return prepareIdentityAssertion(db,crypto.randomUUID(),sql,values)
+}
+export function prepareSessionSnapshotCheck(db, row, now = new Date()) {
+  const {sql,values}=sessionSnapshot(row,now)
+  return db.prepare(`SELECT (${sql}) AS ok`).bind(...values)
 }
 
 export async function prepareAccountSession(db, {
@@ -104,6 +116,10 @@ export async function prepareAccountSession(db, {
     ...(scope === 'business' ? { businessId, userId, businessSessionId } : {}) } }
 }
 
+// Keep persisted grants private for snapshot validation; unknown grants never authorize.
+const roleGrantsSnapshots = new WeakMap()
+export const getRoleGrantsSnapshot = context => roleGrantsSnapshots.get(context)
+
 function contextFromRow(row) {
   const context = { accountId: row.account_id, identitySessionId: row.id, familyId: row.family_id, scope: row.scope,
     contextId: row.context_id, expiresAt: row.expires_at, deviceMode: row.device_mode, credentialRevision: row.credential_revision,
@@ -112,6 +128,7 @@ function contextFromRow(row) {
     displayName: row.display_name, roleName: row.role_name, roleId: row.role_id, roleVersion: row.role_version, authMode: 'user_only', legacy: false,
     granted: new Set(JSON.parse(row.role_grants_json).filter((value) => APPLICATION_CAPABILITIES.includes(value))) })
   if (row.scope === 'platform') context.platformGranted = new Set(JSON.parse(row.platform_grants_json).filter((value) => PLATFORM_CAPABILITIES.includes(value)))
+  if (row.scope === 'business') roleGrantsSnapshots.set(context, row.role_grants_json)
   return Object.freeze(context)
 }
 
@@ -128,7 +145,7 @@ export function prepareBrowserFamilyRevocation(db, context, now = new Date()) {
   const timestamp = now.toISOString()
   return [
     db.prepare('UPDATE identity_session_families SET revoked_at = COALESCE(revoked_at,?) WHERE id = ? AND account_id = ?').bind(timestamp, context.familyId, context.accountId),
-    db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE family_id = ? AND account_id = ?').bind(timestamp, context.familyId, context.accountId),
+    registerCommittedEffect(db.prepare('UPDATE identity_sessions SET revoked_at = COALESCE(revoked_at,?) WHERE family_id = ? AND account_id = ? AND revoked_at IS NULL RETURNING id,business_id').bind(timestamp, context.familyId, context.accountId),sessionRevocationEffects),
     db.prepare(`UPDATE sessions SET revoked_at = COALESCE(revoked_at,?) WHERE id IN
       (SELECT business_session_id FROM identity_sessions WHERE family_id = ? AND account_id = ? AND business_session_id IS NOT NULL)`).bind(timestamp, context.familyId, context.accountId),
   ]

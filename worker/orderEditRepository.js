@@ -1,7 +1,7 @@
 import { auditContext, businessEvent } from './access/audit.js'
 import { buildOrderEdit, validateOrderEditInput } from './orderEditValidation.js'
 import { loadOrderById } from './repositories.js'
-import { PAYMENT_SETTLEMENT_SQL_SELECT } from './orderPaymentReadModel.js'
+import { PAYMENT_SETTLEMENT_SQL_SELECT, mapOrderPaymentFields } from './orderPaymentReadModel.js'
 import { clearSettingsAssertions, hashSettingsPayload, prepareSettingsAssertion } from './settingsTransactions.js'
 
 const failure = (status,code,message) => Object.assign(new Error(message),{status,code})
@@ -57,7 +57,7 @@ export async function updateExistingOrder(db,businessId,orderId,raw,options={},n
   ).bind(businessId,orderId).first()
   // Financial balances are read before saving so a concurrent settlement
   // cannot be silently merged into an order-content edit.
-  const financial=await db.prepare(`SELECT ${PAYMENT_SETTLEMENT_SQL_SELECT}
+  const financial=await db.prepare(`SELECT p.id AS payment_id,${PAYMENT_SETTLEMENT_SQL_SELECT}
     FROM orders o LEFT JOIN payments p
       ON p.business_id=o.business_id AND p.order_id=o.id
     WHERE o.business_id=? AND o.id=? LIMIT 1`).bind(businessId,orderId).first()
@@ -76,6 +76,8 @@ export async function updateExistingOrder(db,businessId,orderId,raw,options={},n
     const before=JSON.parse(queued.snapshot_json)
     nextSnapshot=JSON.stringify({
       ...before,
+      payment:{...before.payment,status:mapOrderPaymentFields({...financial,
+        total_cents:plan.totals.totalCents}).paymentStatus},
       items:plan.items.map(item=>({
         name:item.name_snapshot, presentation:item.size_snapshot || '',
         quantity:item.quantity,note:item.note || '',

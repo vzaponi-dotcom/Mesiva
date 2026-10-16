@@ -6,8 +6,9 @@ import {
   toPaymentAllocations,
 } from '../paymentComposition.js'
 import { paymentApi } from '../paymentApi.js'
+import {getPendingAmount} from '../../../../../shared/orderPaymentRead.js'
 
-const orderTotalCents = (order) => Math.max(0, Math.round((Number(order?.total) || 0) * 100))
+const orderTotalCents = (order) => Math.round(getPendingAmount(order)*100)
 
 const normalizeTarget = (target) => {
   const clientId = typeof target?.clientId === 'string' ? target.clientId.trim() : ''
@@ -21,6 +22,7 @@ const normalizeTarget = (target) => {
 export function useClientOrdersPaymentWorkflow({
   api = paymentApi,
   orders = [],
+  getOfficialOrders,
   canReceivePayments = false,
   writesBlocked = false,
   paymentOptions = [],
@@ -41,7 +43,8 @@ export function useClientOrdersPaymentWorkflow({
 
   const resolveSelection = useCallback((clientId, orderIds) => {
     if (!clientId || !Array.isArray(orderIds) || orderIds.length < 2 || orderIds.length > 100) return null
-    const byId = new Map((Array.isArray(orders) ? orders : []).map((order) => [order.id, order]))
+    const currentOrders=getOfficialOrders?.() ?? orders
+    const byId = new Map((Array.isArray(currentOrders) ? currentOrders : []).map((order) => [order.id, order]))
     const selected = orderIds.map((orderId) => byId.get(orderId))
     if (selected.some((order) => (
       !order
@@ -53,7 +56,7 @@ export function useClientOrdersPaymentWorkflow({
       || orderTotalCents(order) <= 0
     ))) return null
     return selected
-  }, [orders])
+  }, [orders,getOfficialOrders])
 
   const clearRequestKey = useCallback((owner) => {
     if (!owner?.requestKey) return
@@ -87,6 +90,7 @@ export function useClientOrdersPaymentWorkflow({
       submitting: false,
       requestKey: null,
       allocations: null,
+      mutationId:crypto.randomUUID(),
     }
     dialogOwnerRef.current = owner
     setDialogOwner(owner)
@@ -134,6 +138,7 @@ export function useClientOrdersPaymentWorkflow({
         owner.clientId,
         [...owner.orderIds],
         owner.allocations,
+        {mutationId:owner.mutationId},
       )
       if (!ownsMutation() || owner.guard !== getSyncGuard()) return false
 

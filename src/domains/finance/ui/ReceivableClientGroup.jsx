@@ -18,6 +18,7 @@ const groupTimingLabel = (group, formatOrderDate) => {
 
 export default function ReceivableClientGroup({
   group,
+  readModel,
   expanded = false,
   selectedOrderIds = [],
   currency,
@@ -37,7 +38,7 @@ export default function ReceivableClientGroup({
   const orderIds = group.orders.map((order) => order.id)
   const selectionTargetCount = Math.min(orderIds.length, selectionLimit)
   const limitedGroup = orderIds.length > selectionLimit
-  const allSelected = selectionTargetCount > 0 && selectedOrderIds.length >= selectionTargetCount
+  const allSelected = selectionTargetCount > 0 && orderIds.slice(0,selectionLimit).every(id=>selected.has(id))
 
   return (
     <article className="receivable-client-card" data-expanded={expanded ? 'true' : 'false'}>
@@ -71,7 +72,7 @@ export default function ReceivableClientGroup({
               onClick={() => onSelectAll?.(group)}
               disabled={disabled || !orderIds.length}
             >
-              {allSelected ? `${selectionTargetCount} selecionados` : limitedGroup ? 'Selecionar até 100' : 'Selecionar todos'}
+              {allSelected ? `${selectionTargetCount} selecionados` : limitedGroup ? 'Selecionar até 100' : readModel ? 'Selecionar carregados' : 'Selecionar todos'}
             </button>
           </div>
           {(limitedGroup || selectionLimitReached) && (
@@ -79,6 +80,9 @@ export default function ReceivableClientGroup({
               Limite de 100 pedidos por recebimento.
             </p>
           )}
+          {readModel?.status==='loading'&&<p role="status">Carregando pedidos…</p>}
+          {readModel?.error&&<p role="alert">Não foi possível carregar os pedidos.<button type="button" onClick={readModel.reload}>Tentar novamente</button></p>}
+          {readModel?.hasMore&&<button type="button" disabled={readModel.status==='loading-next'} onClick={readModel.loadNext}>Carregar mais pedidos</button>}
           <div className="receivable-client-orders-list">
             {group.entries.map((entry) => {
               const order = entry.order

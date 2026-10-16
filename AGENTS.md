@@ -13,6 +13,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Rotas, menus e capabilities de navegação | `src/app/navigation/registry.js` |
 | Cozinha / card de pedido | `src/domains/orders/ui/Orders.jsx`; `src/domains/orders/ui/components/KitchenTicket.jsx` |
 | Novo pedido | `src/domains/orders/ui/NewOrder.jsx` |
+| Edição de pedido / saldo complementar | `worker/orderEditRepository.js`; `worker/orderPaymentReadModel.js`; `worker/paymentRepository.js`; `src/app/workflows/payments/` |
 | Histórico de pedidos | `src/domains/orders/ui/OrderHistory.jsx` |
 | Detalhes compartilhados de pedido | `src/domains/orders/ui/components/OrderDetail.jsx` |
 | Clientes / relacionamento | `src/domains/customers/ui/CustomersWorkspace.jsx`; `src/domains/customers/ui/ClientRelationshipPanel.jsx` |
@@ -21,10 +22,13 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Mesas e comandas | `src/domains/table-service/ui/` |
 | Financeiro / a receber | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx` |
 | Recebimentos: pedido, comanda, lote de clientes | `src/app/workflows/payments/` |
+| Sincronização / WebSocket e fallback | `src/infrastructure/realtime/`; `src/app/runtime/data/useOperationalDataRuntime.js`; `worker/realtime/`; [operação](docs/operations/realtime-sync.md) |
+| Snapshots / histórico e financeiro paginados | `worker/readModels/`; `shared/scopedReads.js`; `src/infrastructure/realtime/useScopedQuery.js`; `src/infrastructure/api/scopedReadsApi.js` |
 | Fila de impressão / transporte QZ | `src/domains/printing/ui/PrintQueue.jsx`; `src/infrastructure/qz/` |
 | Configurações / conta e equipe | `src/app/surfaces/settings/SettingsSurface.jsx`; `src/domains/access/ui/AccessSurface.jsx` |
 | Administração Mesiva / empresas e convites | `src/domains/platform/ui/PlatformRoutes.jsx`; `worker/platform/businessesApi.js` |
 | Botões, ícones, modais, selects e badges | `src/shared/ui/` |
+| Bootstrap por superfície / consultas históricas | `worker/readModels/`; contratos em `shared/scopedReads.js`; runtime em `src/app/runtime/data/` |
 | API / contexto e autorização | `worker/entry.js`; `worker/index.js`; `worker/access/authorization.js` |
 
 ## Arquitetura
@@ -58,7 +62,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 - Configuração auth canônica em `wrangler.jsonc`: e-mail e multiempresa ativos, preparação desativada. Preserve a separação entre administração Mesiva e vínculos operacionais.
 - Autorize por capabilities reais da sessão/contexto, nunca pelo nome do perfil. Referências: `shared/settingsAccess.js`, `src/app/access.js`, `worker/access/authorization.js`; defaults em `worker/access/roles.js` não substituem grants persistidos.
 - Recebimentos exigem `payments.receive` e permissões da superfície; esconder botão não substitui autorização no Worker. Derive a empresa do contexto autenticado e preserve isolamento entre empresas em dados, relatórios e ações.
-- Receber não finaliza preparo. Reutilize os workflows de pagamento e regras de elegibilidade; pagos/cancelados não entram em recebimento e pedidos vinculados a comanda usam seu fluxo. Preserve efeitos oficiais e regras de valores/datas/fuso em `shared/finance.js`.
+- Receber não finaliza preparo. Reutilize os workflows e saldos oficiais; quitados/cancelados não entram em recebimento. Pedido já recebido com saldo de edição usa complemento, preservando o payment original; lotes de cliente cobram somente os saldos, com recibo único. Comanda aberta usa seu fluxo; ajuste após comanda quitada não reabre ocupação. Preserve efeitos oficiais e regras de valores/datas/fuso em `shared/finance.js`.
 - Impressão: fila central → estação principal Windows → QZ/spooler → USB. `qz.print()` não confirma saída física; preserve histórico de vias, confirmação do spooler e decisão humana para resultado desconhecido, sem reenvio automático. Mudanças de hardware exigem validação física pelo runbook.
 - Nunca exponha senhas, cookies, tokens, links de ativação/recuperação ou valores de secrets em Git, documentos, logs ou mensagens.
 

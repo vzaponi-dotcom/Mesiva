@@ -1,12 +1,12 @@
 # Mesiva — Plano TDD — Edição de pedidos e reconciliação financeira
 
 **Data:** 2026-10-10
-**Status:** PROPOSTO PARA APROVAÇÃO — somente documentação. Tasks, migrations, staging, merge e produção NÃO executados.
+**Status:** PLANO DE EXECUÇÃO HISTÓRICO — Tasks 1–16 implementadas na PR #108; Task 17 parcialmente homologada e Task 18 pendente. A integração atual é acompanhada no [plano de 16/10](2026-10-16-order-editing-integration.md) e no [QA](../qa/2026-10-16-order-editing-integration.md).
 **Spec:** docs/superpowers/specs/2026-10-10-order-editing-design.md, AUTORREVISADA.
 **Master inspecionada:** e595f7ed2a801fde6ffab231194788430cc53316.
 **Branch documental:** docs/order-editing-design-2026-10-10.
-**Branch de implementação proposta:** feature/order-editing-and-financial-reconciliation — ainda não criar.
-**PR proposta:** uma PR draft, somente após aprovação deste plano.
+**Branch de implementação:** feature/order-editing-and-financial-reconciliation.
+**PR:** [#108](https://github.com/vzaponi-dotcom/Mesiva/pull/108), Draft; sem merge/produção nesta etapa.
 **Produção:** nenhuma ação sem autorização explícita separada.
 
 > Executar task por task, RED válido → GREEN comprovado, commits pequenos, CI por SHA exato. Branch master nunca usada para desenvolvimento. Não criar runtime paralelo, refazer módulos da Spec C nem habilitar financeiro parcialmente migrado.
@@ -15,7 +15,7 @@
 
 1. Editar até finalização, incluindo durante preparo, mantendo ID/número, modalidade, vínculos de comanda/reserva e data original. Bloquear Finalizado e Cancelado.
 2. Preservar preço e identidade de cada item preexistente mesmo que produto tenha sido inativado; itens novos exigem produto ativo/preço oficial. Histórico mostra diferenças reais.
-3. Atualizar o mesmo card na Cozinha, TV e Controle da TV; distinguir pedido novo de pedido alterado; ciência em sessão humana. TV segue somente leitura.
+3. Atualizar o mesmo card na Cozinha/TV com selo Editado; diferenças em Detalhes/Controle, sem ciência manual (decisão posterior de UX). TV segue somente leitura e mantém seu layout original.
 4. Nenhum novo print job na edição. Atualizar somente snapshot automático pendente elegível, sem alterar jobs processados; prompt após salvar para impressão manual do documento oficial completo.
 5. Salvar mantém diferença positiva em A receber; Salvar e receber cobra só a diferença oficial; redução gera devolução pendente e só após confirmação manual cria saída de caixa.
 6. Preservar payments/receipts/allocations/movements originais; quitação de cada cobrança exige a soma integral do saldo cobrado, inclusive em várias formas. Estado parcial decorre de edição posterior, não de baixa parcial arbitrária.
@@ -23,7 +23,7 @@
 8. Autorização orders.edit e demais capabilities, tenant guard, revision/metadata de edição, mutationId/idempotência e atomicidade backend.
 9. Fase A operacional e Fase B financeira homologadas juntas antes de qualquer publicação completa. Nenhuma produção por autorização implícita.
 
-## 2. Preflight obrigatório (ainda NÃO executado)
+## 2. Preflight inicial (histórico; execução e evidências na PR)
 
 - Reconsultar HEAD atual da master e as migrations existentes; comparar divergências com o commit acima e interromper se houver conflito não resolvido.
 - Confirmar próxima numeração de migration (0042 após 0041, somente se continuar livre). Migration já publicada nunca é renumerada/reescrita.
@@ -72,8 +72,8 @@
 
 ### Task 5 — Cozinha, TV e Controle da TV
 
-**RED:** revisão de mesmo ID exibe PEDIDO ALTERADO e itens/removidos no resumo, não emite NOVO PEDIDO; filtro Entrega/Retirada/Mesa, paginação, ocultação e modo TV passiva preservados. Ciência de revisão 3 não quita revisão 4; token TV não pode escrever.
-**GREEN:** acrescentar contentRevision/lastEditedAt/delta na projeção segura do worker/kitchenTvReadRepository.js; reutilizar polling aproximadamente 2s. UI do painel e Controle da TV com aviso persistente até ciência autorizada por orders.kitchen.control; TV exibe estado sem fazer mutação. Não tocar em QZ.
+**Contrato atualizado:** revisão do mesmo ID conserva o selo Editado, sem NOVO PEDIDO; filtro Entrega/Retirada/Mesa, paginação, ocultação e TV passiva preservados. Diferenças aparecem em Detalhes/Controle; não há botão de confirmação. Tabelas de ciência antigas continuam compatíveis.
+**Integração:** projeção segura em worker/kitchenTvReadRepository.js e runtime realtime oficial; fallback/temporizadores seguem o guia de operação atual. Nenhuma escrita pela sessão restrita da TV nem alteração do transporte QZ.
 **Testes indicativos:** KitchenDisplayApp.test.js, KitchenDisplayCard.test.js, KitchenTvControlSurface.test.js e testes do Worker.
 **Aceite:** sem alertas retroativos de pedidos novos e sem repetição a cada poll.
 
@@ -191,4 +191,4 @@ Parar a task e investigar se:
 - CI, D1 upgrade, arquitetura, staging ou caso financeiro crítico estiver FAIL/BLOCKED;
 - falta autorização para merge ou deploy de produção.
 
-**Estado real desta entrega:** documentação apenas; Tasks 1–18 NÃO executadas. Plano aguardando aprovação antes de criar branch de feature/PR ou escrever código.
+**Estado atual:** Tasks 1–16 implementadas e previamente validadas na branch; Tasks 17–18 ainda dependem da integração atual e do aceite do SHA final. Registros da PR preservam RED/GREEN e aprovações parciais; não são homologação completa da árvore integrada.

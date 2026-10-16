@@ -1,0 +1,31 @@
+{
+  "commit": "7bfd06659828054ecb8f7dc386bbc78b000f75c6",
+  "source": "worker/kitchenTvReadRepository.js",
+  "sourceSha256": "65d0a522c12e7df6edbd6de2dbc3b73ee75f776850076c62c186e3ac5a6a5c14",
+  "queries": [
+    {
+      "sql": "SELECT h.business_id, h.revision, h.created_at, h.updated_at,\n  h.scheduled_prep_lead_minutes, h.scheduled_late_grace_minutes, h.immediate_late_after_minutes,\n  h.immediate_very_late_after_minutes, h.default_modality, h.default_active,\n  (SELECT json_group_array(json_object('code', code, 'active', active)) FROM business_order_modalities WHERE business_id = b.id) AS modalities,\n  (SELECT count(*) FROM (SELECT mutation_id, payload_hash, committed_revision, committed_at, resource_created_at, resource_updated_at\n    FROM settings_mutation_receipts WHERE business_id = b.id AND resource_key = 'operations')) AS receipt_count,\n  (SELECT count(*) FROM (SELECT tx_id, check_key, valid FROM settings_tx_assertions WHERE tx_id = '')) AS assertion_check,\n  (SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('settings_tx_assertions_insert_guard', 'settings_tx_assertions_update_guard')) AS guards\n  FROM businesses b LEFT JOIN business_operation_settings h ON h.business_id = b.id WHERE b.id = ?",
+      "values": [
+        "amor-e-sabor"
+      ]
+    },
+    {
+      "sql": "SELECT business_id, revision, requested_page, requested_modality, updated_at,\n  reported_revision, reported_page, reported_page_count,\n  reported_viewport_width, reported_viewport_height,\n  reported_visible_order_ids_json, reported_at\n  FROM kitchen_tv_display_control WHERE business_id = ?",
+      "values": [
+        "amor-e-sabor"
+      ]
+    },
+    {
+      "sql": "SELECT id, order_number, client_name_snapshot, type,\n  status, order_date, created_at, scheduled_for\n  FROM orders\n  WHERE business_id = ?\n    AND status NOT IN ('Finalizado', 'Cancelado', 'Entregue', 'Despachado')\n    AND finished_at IS NULL\n    AND cancelled_at IS NULL\n    AND NOT EXISTS (\n      SELECT 1 FROM kitchen_tv_hidden_orders hidden\n      WHERE hidden.business_id = orders.business_id\n        AND hidden.order_id = orders.id\n    )\n  ORDER BY created_at ASC, id ASC",
+      "values": [
+        "amor-e-sabor"
+      ]
+    },
+    {
+      "sql": "SELECT i.order_id, i.quantity, i.name_snapshot, i.size_snapshot, i.note\n  FROM order_items i\n  INNER JOIN orders o ON o.id = i.order_id AND o.business_id = i.business_id\n  WHERE i.business_id = ?\n    AND o.status NOT IN ('Finalizado', 'Cancelado', 'Entregue', 'Despachado')\n    AND o.finished_at IS NULL\n    AND o.cancelled_at IS NULL\n    AND NOT EXISTS (\n      SELECT 1 FROM kitchen_tv_hidden_orders hidden\n      WHERE hidden.business_id = o.business_id\n        AND hidden.order_id = o.id\n    )\n  ORDER BY i.created_at ASC, i.id ASC",
+      "values": [
+        "amor-e-sabor"
+      ]
+    }
+  ]
+}

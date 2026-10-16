@@ -1,3 +1,5 @@
+import { authenticatedTv } from './kitchenTvSession.js'
+import { handleTvRealtimeApi } from './realtime/api.js'
 import { multiCompanyEnabled } from './tenancy/routePolicy.js'
 import {
   clearKitchenTvPairingRequestCookie,
@@ -8,7 +10,6 @@ import {
   kitchenTvPairingRequestCookie,
   kitchenTvSessionCookie,
   readKitchenTvPairingRequestToken,
-  readKitchenTvSessionToken,
 } from './kitchenTvAuth.js'
 import {
   activateKitchenTvApprovedRequest,
@@ -17,7 +18,6 @@ import {
   loadKitchenTvAccess,
   loadKitchenTvPairingRequestByHash,
   loadKitchenTvPendingApproval,
-  loadKitchenTvSessionByHash,
   revokeKitchenTvAccess,
   touchKitchenTvSession,
 } from './kitchenTvRepository.js'
@@ -37,7 +37,6 @@ import { KITCHEN_TV_MODALITIES } from '../shared/kitchenTvModality.js'
 import { apiError, assertSameOriginMutation, json, readJson } from './http.js'
 import { requireCapability } from './settingsAccess.js'
 
-const unauthorized = () => apiError(401, 'KITCHEN_TV_UNAUTHORIZED', 'Este painel não está mais autorizado.')
 const pairingExpired = () => apiError(410, 'KITCHEN_TV_PAIRING_EXPIRED', 'O código expirou. Um novo código será gerado.')
 const normalizePairingCode = (value) => String(value ?? '').replace(/\D/g, '').slice(0, 6)
 const needsLegacySessionTokenFallback = (request) => /\bTizen\b/i.test(request.headers.get('user-agent') || '')
@@ -151,14 +150,6 @@ const reportInput = (body) => {
   }
 }
 
-async function authenticatedTv(request, env) {
-  const token = readKitchenTvSessionToken(request)
-  if (!token) throw unauthorized()
-  const access = await loadKitchenTvSessionByHash(env.DB, await hashKitchenTvToken(token),undefined,{requireActive:multiCompanyEnabled(env)})
-  if (!access) throw unauthorized()
-  return { token, access }
-}
-
 export async function handleKitchenTvAdminApi(request, env, context, url = new URL(request.url), now = new Date()) {
   if (url.pathname === '/api/kitchen-tv/control' && request.method === 'GET') {
     requireCapability(context, 'orders.view')
@@ -246,6 +237,8 @@ export async function handleKitchenTvAdminApi(request, env, context, url = new U
 }
 
 export async function handleKitchenTvPublicApi(request, env, url = new URL(request.url), now = new Date()) {
+  const realtime=await handleTvRealtimeApi(request,env,url)
+  if(realtime)return realtime
   if (url.pathname === '/api/kitchen-tv/pairing-request' && request.method === 'POST') {
     assertSameOriginMutation(request)
     const expiresAt = kitchenTvPairingExpiresAt(now)

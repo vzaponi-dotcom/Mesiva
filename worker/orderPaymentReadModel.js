@@ -1,7 +1,7 @@
 const cleanText = (value) => typeof value === 'string' ? value.trim() : ''
 
 export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
-    COALESCE(p.amount_cents, 0) +
+    CASE WHEN NULLIF(p.id,'') IS NOT NULL THEN COALESCE(p.amount_cents,0) ELSE 0 END +
     COALESCE((SELECT SUM(e.amount_cents)
       FROM order_settlement_entries e
       WHERE e.business_id = o.business_id AND e.order_id = o.id

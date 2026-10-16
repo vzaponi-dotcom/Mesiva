@@ -2,6 +2,7 @@ import { apiRequest, withJson } from '../../../infrastructure/api/httpClient.js'
 
 export const createOrdersApi = ({ request = apiRequest, json = withJson, randomUUID = () => crypto.randomUUID() } = {}) => Object.freeze({
   getOrders: () => request('/api/orders'),
+  getOrdersByIds: (ids,{signal}={}) => request(`/api/orders/by-ids?ids=${encodeURIComponent(JSON.stringify(ids))}`,...(signal?[{signal}]:[])),
   createOrder: (order, idempotencyKey = randomUUID()) => {
     const options = json('POST', order)
     return request('/api/orders', {

@@ -7,6 +7,7 @@ import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.
 function ReceivablesQuickPaymentDialog({
   open,
   entries = [],
+  readModel,
   currency,
   disabled = false,
   onClose,
@@ -14,10 +15,11 @@ function ReceivablesQuickPaymentDialog({
   orderPresentation,
 }) {
   const { formatOrderDate, getOrderItemsSearchText, getOrderItemsSummary } = orderPresentation
-  const [search, setSearch] = useState('')
+  const [localSearch, setLocalSearch] = useState('')
+  const search=readModel?readModel.search:localSearch,setSearch=readModel?readModel.onSearchChange:setLocalSearch
   const normalizedSearch = search.trim().toLowerCase()
 
-  const visibleEntries = useMemo(() => entries.filter((entry) => {
+  const visibleEntries = useMemo(() => readModel?entries:entries.filter((entry) => {
     const order = entry.order
     if (!order) return false
     if (!normalizedSearch) return true
@@ -30,7 +32,7 @@ function ReceivablesQuickPaymentDialog({
       getOrderItemsSearchText(order),
     ].join(' ').toLowerCase()
     return searchText.includes(normalizedSearch)
-  }), [entries, normalizedSearch])
+  }), [entries, normalizedSearch,readModel])
 
   if (!open) return null
 
@@ -77,7 +79,10 @@ function ReceivablesQuickPaymentDialog({
             </button>
           ))}
 
-          {!visibleEntries.length && (
+          {readModel?.status==='loading'&&<p role="status">Carregando pedidos…</p>}
+          {readModel?.error&&<p role="alert">Não foi possível carregar os pedidos.<button type="button" onClick={readModel.reload}>Tentar novamente</button></p>}
+          {readModel?.hasMore&&<button type="button" disabled={readModel.status==='loading-next'} onClick={readModel.loadNext}>Carregar mais pedidos</button>}
+          {!visibleEntries.length && (!readModel||readModel.status==='ready') && (
             <div className="empty-state receivables-quick-payment-empty">
               <Icon name="wallet" size={26} />
               <strong>Nenhum pedido pendente encontrado.</strong>

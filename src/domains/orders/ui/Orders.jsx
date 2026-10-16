@@ -95,7 +95,7 @@ function FutureScheduledOrderCard({
 }
 
 
-function Orders({ orders, officialOrders = orders, now, currentTiming, search, onSearchChange, currency, onNewOrder, onFinalizeOrder, onCancelOrder, onEditReservation, onEditOrder, onRegisterPayment, paymentDisabled = false, paymentOptions, cancellationOptions = [], cancellationRevision = null, onNavigatePrintQueue, printQueueActiveCount = 0, granted, newOrderIds = new Set(), soundEnabled = true, onSoundEnabledChange, printing, onToast, canCreateOrders = true, canEditOrders = false, canFinalizeOrders = true, canCancelOrders = true, canRefundPayments = true, canUseLocalPreferences = true, canViewPrintQueue = true, canForcePrinting = false, canExecutePrinting = true }) {
+function Orders({ finishedTodayCount,orders, officialOrders = orders, now, currentTiming, search, onSearchChange, currency, onNewOrder, onFinalizeOrder, onCancelOrder, onEditReservation, onEditOrder, onRegisterPayment, paymentDisabled = false, paymentOptions, cancellationOptions = [], cancellationRevision = null, onNavigatePrintQueue, printQueueActiveCount = 0, granted, newOrderIds = new Set(), soundEnabled = true, onSoundEnabledChange, printing, onToast, canCreateOrders = true, canEditOrders = false, canFinalizeOrders = true, canCancelOrders = true, canRefundPayments = true, canUseLocalPreferences = true, canViewPrintQueue = true, canForcePrinting = false, canExecutePrinting = true }) {
   const [queueFilter, setQueueFilter] = useState('all')
   const [pendingAction, setPendingAction] = useState(null)
   const [detailOrderId, setDetailOrderId] = useState(null)
@@ -180,7 +180,7 @@ function Orders({ orders, officialOrders = orders, now, currentTiming, search, o
         <StatCard className="kitchen-stat-card kitchen-stat-preparing" label="Em preparo" value={queueModel.counts.preparing} helper="Pedidos ativos agora" icon="preparation" />
         <StatCard className="kitchen-stat-card kitchen-stat-scheduled" label="Agendados" value={queueModel.counts.scheduled} helper="Próximos pedidos" icon="clock" />
         <StatCard className="kitchen-stat-card kitchen-stat-late" label="Fora do prazo" value={queueModel.counts.late} helper="Precisam de atenção" icon="alert" tone={queueModel.counts.late ? 'danger' : 'neutral'} />
-        <StatCard className="kitchen-stat-card kitchen-stat-finished" label="Finalizados hoje" value={queueModel.counts.finishedToday} helper="Já saíram da operação" icon="kitchen" tone="success" />
+        <StatCard className="kitchen-stat-card kitchen-stat-finished" label="Finalizados hoje" value={finishedTodayCount ?? queueModel.counts.finishedToday} helper="Já saíram da operação" icon="kitchen" tone="success" />
       </section>
 
       <section className="kitchen-board" aria-label="Filas da cozinha">

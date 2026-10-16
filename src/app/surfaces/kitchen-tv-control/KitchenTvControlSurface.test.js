@@ -54,6 +54,7 @@ async function render(t, {
     },
   }),
   apiOverrides = {},
+  realtime,
 } = {}) {
   const h = await workspaceHarness(t, { mobile: true })
   const calls = []
@@ -84,6 +85,7 @@ async function render(t, {
     granted,
     isOnline,
     api,
+    realtime,
     loadPrintDocument,
     onNavigate: (id) => calls.push(['navigate', id]),
     onFeedback: (message) => calls.push(['feedback', message]),
@@ -511,4 +513,17 @@ test('TV control does not show an empty edit-history panel when only a revision 
   const sheet = screen.root.findByProps({ role: 'dialog' })
   assert.equal(sheet.findAll((node) => node.type === 'details' && String(node.props.className || '').split(/\s+/).includes('kitchen-tv-control-edit-review')).length, 0)
   assert.ok(buttonNamed(sheet, 'Retirar da TV'))
+})
+
+test('control refreshes another device change by hint without the two-second poll',async t=>{
+  const listeners=new Set(),realtime={state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)}}
+  let reads=0,next=freshState
+  const {h,screen}=await render(t,{realtime,apiOverrides:{getKitchenTvControl:async()=>{reads++;return next}}})
+  const initial=reads
+  await act(async()=>h.fireInterval(2000));assert.equal(reads,initial)
+  next={...freshState,telemetry:{...freshState.telemetry,visibleOrderIds:['order-5']}}
+  await act(async()=>Promise.all([...listeners].map(fn=>fn({topics:['kitchen-tv'],orderIds:[],requiresFullRefresh:false}))))
+  const cards=screen.root.findAll(node=>String(node.props.className || '').split(' ').includes('kitchen-tv-control-order-card'))
+  assert.equal(cards.length,1);assert.match(nodeText(cards[0]),/Cliente 5/)
+  assert.equal(reads,initial+1)
 })

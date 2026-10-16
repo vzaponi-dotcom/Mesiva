@@ -127,7 +127,8 @@ const requestJson = (env, cookie, path, method, body) => handleRequest(new Reque
   body: body === undefined ? undefined : JSON.stringify(body),
 }), env)
 
-test('reprint API creates a linked pending manual job from the current official order without requiring a station on the requesting device', async () => {
+test('reprint API creates a linked pending manual job from the current official order without requiring a station on the requesting device', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-09-08T19:03:00.000Z') })
   const env = await makeEnv()
   const cookie = await loginCookie(env)
 

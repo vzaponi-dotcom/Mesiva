@@ -41,18 +41,20 @@ export function d1Adapter(sqlite) {
   }
 }
 
-export function createSettingsDb({ beforeSpecB } = {}) {
+export function createSettingsDb({ beforeSpecB, beforeMigration } = {}) {
   const sqlite = new DatabaseSync(':memory:')
   try {
     const files = readdirSync(migrations).filter((name) => name.endsWith('.sql')).sort()
     // Legacy migrations control their own PRAGMAs for table rebuilds. Apply them
     // verbatim; fixtures are inserted only after the complete pre-B schema.
     for (const file of files.filter((name) => Number(name.slice(0, 4)) < SPEC_B_MIGRATION)) {
+      beforeMigration?.(file,sqlite)
       sqlite.exec(readFileSync(new URL(file, migrations), 'utf8'))
     }
     sqlite.exec('PRAGMA foreign_keys = ON')
     beforeSpecB?.(sqlite)
     for (const file of files.filter((name) => Number(name.slice(0, 4)) >= SPEC_B_MIGRATION)) {
+      beforeMigration?.(file,sqlite)
       sqlite.exec('BEGIN')
       try {
         sqlite.exec(readFileSync(new URL(file, migrations), 'utf8'))

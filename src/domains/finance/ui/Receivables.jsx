@@ -1,3 +1,4 @@
+import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
 import { useEffect, useMemo, useState } from 'react'
 import '../../../../shared/finance.js'
 import '../../../receivables.css'
@@ -27,6 +28,8 @@ import {
 } from '../domain/receivables.js'
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import { formatPaymentSummary, paymentSearchText } from '../domain/paymentPresentation.js'
+import { useFinanceReadModel } from '../application/useFinanceReadModel.js'
+import { useScopedOrderSelection } from '../../../infrastructure/realtime/useScopedOrderSelection.js'
 import { useReceivableClientSelection } from '../application/useReceivableClientSelection.js'
 
 const PRIMARY_VIEWS = ['pending', 'paid']
@@ -77,7 +80,8 @@ const paidEntry = (order) => ({
 })
 
 function Receivables({
-  orders,
+  orders = [],
+  readContext,
   movements = [],
   currency,
   disabled = false,
@@ -104,7 +108,17 @@ function Receivables({
   const [forecastOpen, setForecastOpen] = useState(false)
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
   const [isMobileDetail, setIsMobileDetail] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 820px)').matches)
-  const clientSelection = useReceivableClientSelection()
+  const legacySelection = useReceivableClientSelection()
+  const [quickSearch,setQuickSearch]=useState('')
+  const scoped=Boolean(readContext?.enabled)
+  const reads=useFinanceReadModel({...readContext,surface:'receivables',queryState,quickOpen:quickPaymentOpen,quickSearch})
+  const groupPage=reads.group.data
+  const scopedSelection=useScopedOrderSelection({scopeKey:JSON.stringify([readContext?.accessContextId,scoped?selectedEntryKey:null]),refreshKey:scoped?groupPage:null,
+    loadOrdersByIds:scoped?readContext.loadOrdersByIds:undefined,onError:error=>{if(error?.status===401||error?.status===403||error?.code==='SESSION_CONTEXT_CHANGED')readContext?.onUnauthorized?.(error);else readContext?.onReadError?.(error)},
+    isEligible:order=>buildPendingReceivableEntries([order],today,orderRules).some(entry=>entry.kind==='order')&&(!groupPage?.group?.clientId||order.clientId===groupPage.group.clientId)})
+  const clientSelection=scoped?{selectedOrderIds:scopedSelection.ids,selectedCount:scopedSelection.ids.length,activeGroupKey:selectedEntryKey,selectionLimit:100,selectionLimitReached:scopedSelection.ids.length>=100,
+    clear:scopedSelection.clear,deselectAll:scopedSelection.clear,toggleOrder:id=>scopedSelection.toggle(groupPage?.orders?.find(order=>order.id===id)),
+    activateGroup:()=>true,selectAllVisible:()=>scopedSelection.selectVisible(groupPage?.orders || []),reconcile:()=>{}}:legacySelection
   const normalizedSearch = search.trim().toLowerCase()
   const writeDisabled = disabled || (typeof navigator !== 'undefined' && !navigator.onLine)
 
@@ -129,14 +143,19 @@ function Receivables({
     if (activeView !== 'pending' || displayMode !== 'client') clientSelection.clear()
   }, [activeView, displayMode, clientSelection.clear])
 
-  const summary = useMemo(() => calculateReceivableSummary(orders, today, orderRules), [orders, today])
-  const forecast = useMemo(() => buildReceivablesForecast(orders, today, 7, orderRules), [orders, today])
-  const receivedToday = useMemo(() => calculateReceivedToday(movements, today), [movements, today])
-  const pendingEntries = useMemo(() => buildPendingReceivableEntries(orders, today, orderRules), [orders, today])
-  const quickPaymentEntries = useMemo(() => pendingEntries.filter((entry) => entry.kind === 'order'), [pendingEntries])
-  const allPaidOrders = useMemo(() => getPaidReceivableOrders(orders, orderRules), [orders])
+  const legacySummary = useMemo(() => calculateReceivableSummary(orders, today, orderRules), [orders, today])
+  const legacyForecast = useMemo(() => buildReceivablesForecast(orders, today, 7, orderRules), [orders, today])
+  const legacyReceivedToday = useMemo(() => calculateReceivedToday(movements, today), [movements, today])
+  const legacyPendingEntries = useMemo(() => buildPendingReceivableEntries(orders, today, orderRules), [orders, today])
+  const pendingEntries=scoped?(reads.main.data?.entries || []):legacyPendingEntries
+  const summary=scoped?reads.main.data?.summary:legacySummary
+  const forecast=scoped?reads.main.data?.forecast:legacyForecast
+  const receivedToday=scoped?reads.main.data?.receivedToday:legacyReceivedToday
+  const quickPaymentEntries = useMemo(() => (scoped?(reads.quick.data?.entries || []):pendingEntries).filter((entry) => entry.kind === 'order'), [pendingEntries,scoped,reads.quick.data])
+  const allPaidOrders = useMemo(() => scoped?(reads.main.data?.orders || []):getPaidReceivableOrders(orders, orderRules), [orders,scoped,reads.main.data])
 
   const visiblePendingEntries = useMemo(() => {
+    if(scoped)return pendingEntries
     const filtered = pendingEntries.filter((entry) => {
       if (normalizedSearch && !entrySearchText(entry, getOrderItemsSearchText).includes(normalizedSearch)) return false
       if (timingFilter !== 'all' && entry.timing.status !== timingFilter) return false
@@ -144,16 +163,16 @@ function Receivables({
       return true
     })
     return sortReceivableEntries(filtered, sortMode)
-  }, [pendingEntries, normalizedSearch, timingFilter, exactDateFilter, sortMode])
+  }, [pendingEntries, normalizedSearch, timingFilter, exactDateFilter, sortMode,scoped])
 
   const visibleClientGroups = useMemo(
-    () => sortReceivableGroups(groupReceivableEntriesByClient(visiblePendingEntries), sortMode),
-    [visiblePendingEntries, sortMode],
+    () => scoped?(reads.main.data?.groups || []).map(group=>({...group,orders:[],entries:[],...(group.key===selectedEntryKey&&groupPage?.group?{...groupPage.group,orders:groupPage.orders,entries:groupPage.entries}:{})})):sortReceivableGroups(groupReceivableEntriesByClient(visiblePendingEntries), sortMode),
+    [visiblePendingEntries, sortMode,scoped,reads.main.data,selectedEntryKey,groupPage],
   )
 
-  const visiblePaidOrders = useMemo(() => allPaidOrders
+  const visiblePaidOrders = useMemo(() => scoped?allPaidOrders:allPaidOrders
     .filter((order) => !normalizedSearch || orderSearchText(order, getOrderItemsSearchText).includes(normalizedSearch))
-    .sort((left, right) => String(right.paidAt || '').localeCompare(String(left.paidAt || ''))), [allPaidOrders, normalizedSearch])
+    .sort((left, right) => String(right.paidAt || '').localeCompare(String(left.paidAt || ''))), [allPaidOrders, normalizedSearch,scoped])
 
   const selectedEntry = useMemo(() => {
     if (!selectedEntryKey || (activeView === 'pending' && displayMode === 'client')) return null
@@ -166,18 +185,19 @@ function Receivables({
 
   const selectedClientGroup = useMemo(
     () => activeView === 'pending' && displayMode === 'client'
-      ? visibleClientGroups.find((group) => group.key === selectedEntryKey) || null
+      ? (scoped&&groupPage?.group?{...groupPage.group,orders:groupPage.orders || [],entries:groupPage.entries || []}:visibleClientGroups.find((group) => group.key === selectedEntryKey)) || null
       : null,
-    [activeView, displayMode, selectedEntryKey, visibleClientGroups],
+    [activeView, displayMode, selectedEntryKey, visibleClientGroups,scoped,groupPage],
   )
 
   const selectedClientTotal = useMemo(() => {
+    if(scoped)return scopedSelection.total
     if (!selectedClientGroup) return 0
     const selected = new Set(clientSelection.selectedOrderIds)
     return selectedClientGroup.entries
       .filter((entry) => selected.has(entry.order.id))
       .reduce((sum, entry) => sum + (Number(entry.total) || 0), 0)
-  }, [clientSelection.selectedOrderIds, selectedClientGroup])
+  }, [clientSelection.selectedOrderIds, selectedClientGroup,scoped,scopedSelection.total])
 
   const overlayOpen = Boolean((selectedEntry && mobileDetailOpen && isMobileDetail) || detailOrder || promiseOrder || quickPaymentOpen || forecastOpen)
 
@@ -185,13 +205,13 @@ function Receivables({
     const resolvedSelection = activeView === 'pending' && displayMode === 'client'
       ? selectedClientGroup
       : selectedEntry
-    if (selectedEntryKey && !resolvedSelection) onQueryChange({ selectedEntryKey: null })
-  }, [activeView, displayMode, onQueryChange, selectedClientGroup, selectedEntry, selectedEntryKey])
+    if (!scoped && selectedEntryKey && !resolvedSelection) onQueryChange({ selectedEntryKey: null })
+  }, [activeView, displayMode, onQueryChange, selectedClientGroup, selectedEntry, selectedEntryKey,scoped])
 
   useEffect(() => {
-    if (!selectedClientGroup || clientSelection.activeGroupKey !== selectedClientGroup.key) return
+    if (scoped || !selectedClientGroup || clientSelection.activeGroupKey !== selectedClientGroup.key) return
     clientSelection.reconcile(selectedClientGroup.key, selectedClientGroup.orders.map((order) => order.id))
-  }, [clientSelection.activeGroupKey, clientSelection.reconcile, selectedClientGroup])
+  }, [clientSelection.activeGroupKey, clientSelection.reconcile, selectedClientGroup,scoped])
 
   const selectPrimaryView = (view) => {
     if (!PRIMARY_VIEWS.includes(view)) return
@@ -309,9 +329,11 @@ function Receivables({
     setDetailOrder(order)
   }
 
-  const pendingIsGloballyEmpty = pendingEntries.length === 0
+  const pendingIsGloballyEmpty = scoped?Boolean(summary&&['today','upcoming','overdue'].every(key=>summary[key].count===0)):pendingEntries.length === 0
   const pendingHasActiveFilter = Boolean(normalizedSearch || timingFilter !== 'all' || exactDateFilter)
-  const pendingVisibleCount = displayMode === 'client' ? visibleClientGroups.length : visiblePendingEntries.length
+  const pendingVisibleCount = scoped?(displayMode==='client'?reads.main.data?.matchingGroupCount:reads.main.data?.matchingCount):(displayMode === 'client' ? visibleClientGroups.length : visiblePendingEntries.length)
+
+  if(scoped&&!reads.main.data)return <><AreaNavigation area="finance" /><PageHeader title="A receber" />{reads.main.error?<div role="alert">Não foi possível carregar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<PageSkeleton label="Carregando recebimentos" heading={false} />}</>
 
   const detail = selectedEntry ? (
     <ReceivableDetail
@@ -382,7 +404,7 @@ function Receivables({
                 icon="plus"
                 className="receivables-payment-desktop-action"
                 onClick={() => setQuickPaymentOpen(true)}
-                disabled={writeDisabled || quickPaymentEntries.length === 0 || !onRegisterPayment}
+                disabled={writeDisabled || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
               >
                 Registrar recebimento
               </Button>
@@ -392,7 +414,7 @@ function Receivables({
           <div className="receivables-controls">
             <label className="search-control"><Icon name="search" size={18} /><input type="search" placeholder={activeView === 'pending' && displayMode === 'client' ? 'Buscar cliente, telefone ou pedido' : 'Buscar identificação, pedido ou produto'} value={search} onChange={(event) => patchQuery({ search: event.target.value })} /></label>
             {activeView === 'pending' && <div className="receivables-sort-control"><span>Ordenar</span><SystemSelect label="Ordenar recebimentos" value={sortMode} options={SORT_OPTIONS} onChange={(value) => patchQuery({ sortMode: value })} /></div>}
-            <span className="toolbar-count">{activeView === 'pending' ? pendingVisibleCount : visiblePaidOrders.length} item(ns)</span>
+            <span className="toolbar-count">{activeView === 'pending' ? pendingVisibleCount : (scoped?reads.main.data.matchingCount:visiblePaidOrders.length)} item(ns)</span>
           </div>
 
           {activeView === 'pending' ? (
@@ -402,6 +424,7 @@ function Receivables({
                   <ReceivableClientGroup
                     key={group.key}
                     group={group}
+                    readModel={scoped&&selectedEntryKey===group.key?reads.group:undefined}
                     expanded={selectedEntryKey === group.key}
                     selectedOrderIds={clientSelection.activeGroupKey === group.key ? clientSelection.selectedOrderIds : []}
                     currency={currency}
@@ -414,7 +437,7 @@ function Receivables({
                     promiseDisabled={writeDisabled || !canManagePaymentPromises}
                     selectionLimit={clientSelection.selectionLimit}
                     selectionLimitReached={clientSelection.selectionLimitReached}
-                    disabled={writeDisabled || !canReceivePayments}
+                    disabled={writeDisabled || !canReceivePayments || (scoped&&scopedSelection.validating)}
                   />
                 ))}
                 {!visibleClientGroups.length && <div className="empty-state receivables-empty-state"><Icon name="wallet" size={28} /><strong>{pendingIsGloballyEmpty && !pendingHasActiveFilter ? 'Tudo recebido por aqui' : 'Nenhum recebimento neste filtro'}</strong><span>{pendingIsGloballyEmpty && !pendingHasActiveFilter ? 'Quando houver um pedido pendente, ele aparecerá automaticamente nesta tela.' : 'Tente outro período ou ajuste a busca.'}</span></div>}
@@ -445,12 +468,15 @@ function Receivables({
               {!visiblePaidOrders.length && <div className="empty-state receivables-empty-state"><Icon name="check" size={28} /><strong>{allPaidOrders.length ? 'Nenhum recebimento neste filtro' : 'Nenhum recebimento registrado ainda'}</strong><span>{allPaidOrders.length ? 'Tente outro período ou ajuste a busca.' : 'Os pedidos pagos aparecerão aqui.'}</span></div>}
             </div>
           )}
+          {scoped&&reads.main.error&&<p role="alert">Não foi possível atualizar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></p>}
+          {scoped&&reads.main.hasMore&&<button type="button" disabled={reads.main.status==='loading-next'} onClick={reads.main.loadNext}>Carregar mais recebimentos</button>}
         </section>
 
         <aside className="receivables-detail-panel" aria-label="Detalhes do recebimento">
           {activeView === 'pending' && displayMode === 'client' ? (
             <ReceivableClientPanel
               group={selectedClientGroup}
+              readModel={scoped?{...reads.group,selectedCount:scopedSelection.ids.length,selectedTotal:scopedSelection.total}:undefined}
               selectedOrderIds={clientSelection.selectedOrderIds}
               currency={currency}
               formatOrderDate={formatOrderDate}
@@ -464,7 +490,7 @@ function Receivables({
               promiseDisabled={writeDisabled || !canManagePaymentPromises}
               selectionLimit={clientSelection.selectionLimit}
               selectionLimitReached={clientSelection.selectionLimitReached}
-              disabled={writeDisabled || !canReceivePayments}
+              disabled={writeDisabled || !canReceivePayments || (scoped&&scopedSelection.validating)}
             />
           ) : (detail || <div className="receivable-detail-empty">Selecione um recebimento para ver os detalhes.</div>)}
         </aside>
@@ -476,7 +502,7 @@ function Receivables({
           className="receivables-payment-fab"
           aria-label="Registrar recebimento"
           onClick={() => setQuickPaymentOpen(true)}
-          disabled={writeDisabled || quickPaymentEntries.length === 0 || !onRegisterPayment}
+          disabled={writeDisabled || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
         >
           <Icon name="plus" size={20} />
           <span>Registrar recebimento</span>
@@ -489,7 +515,7 @@ function Receivables({
             <span>{clientSelection.selectedCount} {clientSelection.selectedCount === 1 ? 'pedido selecionado' : 'pedidos selecionados'}</span>
             <strong>{currency(selectedClientTotal)}</strong>
           </div>
-          <Button type="button" className="receivables-client-receive-button" onClick={() => receiveSelectedClientOrders(selectedClientGroup)} disabled={writeDisabled}>
+          <Button type="button" className="receivables-client-receive-button" onClick={() => receiveSelectedClientOrders(selectedClientGroup)} disabled={writeDisabled || (scoped&&scopedSelection.validating)}>
             Receber
           </Button>
         </div>
@@ -525,6 +551,7 @@ function Receivables({
           orderPresentation={orderPresentation}
           open={quickPaymentOpen}
           entries={quickPaymentEntries}
+          readModel={scoped?{...reads.quick,search:quickSearch,onSearchChange:setQuickSearch}:undefined}
           currency={currency}
           disabled={writeDisabled}
           onClose={() => setQuickPaymentOpen(false)}

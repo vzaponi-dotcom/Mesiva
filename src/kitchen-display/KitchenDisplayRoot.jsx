@@ -1,5 +1,6 @@
 import { getKitchenDisplayCompatibilityIssues } from './kitchenDisplayLegacyCompat.js'
-import { Component, StrictMode } from 'react'
+import { createStoredKitchenDisplayRealtimeApi } from './kitchenDisplaySession.js'
+import { Component, StrictMode, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { KitchenDisplayApp } from './KitchenDisplayApp.jsx'
 import './kitchen-display.css'
@@ -33,6 +34,7 @@ export class KitchenDisplayErrorBoundary extends Component {
 }
 
 export function KitchenDisplayRoot() {
+  const realtimeApi=useMemo(()=>createStoredKitchenDisplayRealtimeApi(),[])
   const issues = getKitchenDisplayCompatibilityIssues()
   if (issues.length) {
     return <main className="kds-shell">
@@ -43,7 +45,7 @@ export function KitchenDisplayRoot() {
       </section>
     </main>
   }
-  return <KitchenDisplayApp />
+  return <KitchenDisplayApp realtimeApi={realtimeApi} />
 }
 
 export function mount(container) {

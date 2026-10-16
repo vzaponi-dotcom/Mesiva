@@ -39,8 +39,8 @@ test('operational runtime owns per-collection guards and the global/orders caden
   assert.match(runtime, /export const ORDER_SYNC_INTERVAL_MS = 2_000/)
   assert.match(runtime, /bootstrapSyncInFlightRef/)
   assert.match(runtime, /ordersSyncInFlightRef/)
-  assert.match(runtime, /beginRead\(DATA_COLLECTIONS\)/)
-  assert.match(runtime, /beginRead\(\['orders'\]\)/)
+  assert.match(runtime, /beginRead\(GUARD_COLLECTIONS\)/)
+  assert.match(runtime, /beginRead\(\['orders','operationalCounters'\]\)/)
   assert.match(runtime, /canApply\(token, 'orders'\)/)
 })
 

@@ -35,6 +35,6 @@ test('Financeiro shows the actual pending refund count on desktop and mobile, ne
 test('Financeiro pending badge is wired to the existing official refund list and visibility permission', async () => {
   const { readFileSync } = await import('node:fs')
   const app = readFileSync(new URL('../../App.jsx', import.meta.url), 'utf8')
-  assert.match(app, /finance:\s*canViewFinanceMovements\s*\?\s*pendingRefundOrders\.length\s*:\s*0/)
+  assert.match(app, /finance:\s*canViewFinanceMovements\s*\?\s*readModelEnabled\s*\?\s*operationalCounters\.refunds \|\| 0\s*:\s*pendingRefundOrders\.length\s*:\s*0/)
   assert.match(app, /<NavigationProvider[^>]*navigationBadges=\{navigationBadges\}/)
 })

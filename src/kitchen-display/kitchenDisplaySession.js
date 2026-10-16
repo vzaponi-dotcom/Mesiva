@@ -1,5 +1,6 @@
 import {
   createKitchenDisplayPairingRequest,
+  createKitchenDisplayRealtimeApi,
   readKitchenDisplayPairingStatus,
   readKitchenDisplayState,
   reportKitchenDisplayState,
@@ -117,4 +118,11 @@ export async function bootstrapKitchenDisplay({
   }
 
   return pollKitchenDisplayPairing({ storage, readState, readPairingStatus, createPairingRequest })
+}
+
+export function createStoredKitchenDisplayRealtimeApi({storage=globalThis.sessionStorage,fetchImpl=globalThis.fetch}={}) {
+  return Object.freeze({
+    prepare:options=>createKitchenDisplayRealtimeApi(sessionTokenGet(storage),fetchImpl).prepare(options),
+    renew:(connectionId,options)=>createKitchenDisplayRealtimeApi(sessionTokenGet(storage),fetchImpl).renew(connectionId,options),
+  })
 }

@@ -3,7 +3,7 @@
 // multiply monetary amounts). Keep this aligned with Task 9 read model.
 export const orderGrossReceivedSql = (alias='o') => `(
   COALESCE((SELECT SUM(p.amount_cents) FROM payments p
-    WHERE p.business_id=${alias}.business_id AND p.order_id=${alias}.id),0)
+    WHERE p.business_id=${alias}.business_id AND p.order_id=${alias}.id AND NULLIF(p.id,'') IS NOT NULL),0)
   + COALESCE((SELECT SUM(e.amount_cents) FROM order_settlement_entries e
     WHERE e.business_id=${alias}.business_id AND e.order_id=${alias}.id
       AND e.kind='supplemental_payment'),0)

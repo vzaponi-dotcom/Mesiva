@@ -23,6 +23,22 @@ test('customer profile opens readable order history and collection only with the
   assert.equal(buttonNamed(renderer.root, 'Receber pagamento do Pedido #148'), undefined)
 })
 
+test('Clientes selects an edited supplemental balance together with unpaid orders at the exact due total',async t=>{
+ const h=await workspaceHarness(t)
+ const {default:Surface}=await h.load('/src/app/surfaces/customers/CustomersSurface.jsx')
+ const received=[]
+ const partial={...order,customerIdentityType:'registered_client',total:60,totalCents:6000,netReceivedCents:3000,dueCents:3000,contentRevision:1,paymentId:'paid',paymentStatus:'Parcialmente pago'}
+ const renderer=await h.render(Surface,{clients,orders:[partial,{...order,id:'o2',orderNumber:149,customerIdentityType:'registered_client',total:20,dueCents:2000}],granted:new Set(['clients.view','orders.view','orders.history','payments.receive']),currency:n=>`R$ ${n}`,onRegisterPayment(){},onRegisterClientOrdersPayment:target=>received.push(target)})
+ await act(async()=>buttonNamed(renderer.root,'Abrir perfil de Ana').props.onClick())
+ await act(async()=>buttonNamed(renderer.root,'Receber pagamento').props.onClick())
+ await act(async()=>buttonNamed(renderer.root,'Selecionar todos').props.onClick())
+ assert.match(nodeText(renderer.root),/R\$ 50/)
+ const receive=buttonNamed(renderer.root,'Receber selecionados')
+ assert.ok(receive)
+ await act(async()=>receive.props.onClick())
+ assert.deepEqual(new Set(received[0].orderIds),new Set(['o1','o2']))
+})
+
 test('customers without order access retain registration without fabricated zero purchase metrics', async t => {
   const h = await workspaceHarness(t)
   const { default: Clients } = await h.load('/src/app/surfaces/customers/CustomersSurface.jsx')

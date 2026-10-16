@@ -163,18 +163,23 @@ test('touch long press enters selection at 550ms, cancel events stop it and mous
   const originalClearTimeout = globalThis.clearTimeout
   let sequence = 0
   const timers = new Map()
-  globalThis.setTimeout = (callback, delay) => {
-    const id = ++sequence
-    timers.set(id, { callback, delay })
-    return id
-  }
-  globalThis.clearTimeout = (id) => { timers.delete(id) }
   t.after(() => {
     globalThis.setTimeout = originalSetTimeout
     globalThis.clearTimeout = originalClearTimeout
   })
-
+  // Initialize Vite with real timers; fake only the gesture delay. Capturing
+  // Vite/React timers can deadlock the harness or remove Timeout.unref().
   const { renderer } = await renderProducts(t, { products: [products[0]] })
+  globalThis.setTimeout = (callback, delay, ...args) => {
+    if (delay !== 550) return originalSetTimeout(callback, delay, ...args)
+    const id = ++sequence
+    timers.set(id, { callback, delay })
+    return id
+  }
+  globalThis.clearTimeout = (id) => {
+    if (Number.isInteger(id) && id > 0 && id <= sequence) timers.delete(id)
+    else originalClearTimeout(id)
+  }
   await expandOnlyCategory(renderer)
 
   const row = () => renderer.root.findAllByType('article').find((node) => String(node.props.className || '').startsWith('product-compact-row'))

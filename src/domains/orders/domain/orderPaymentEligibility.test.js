@@ -81,3 +81,12 @@ test('Task 13 partial and overpaid orders use remaining cents, but legacy initia
   assert.equal(canReceiveStandaloneOrder(refund,new Set(['orders.view','payments.receive']),'orders'),false)
   assert.equal(getPendingAmount(pending({total:35,paymentStatus:'Pendente'})),35)
 })
+
+test('client and order surfaces can offer only an official supplemental balance under their real grants',()=>{
+ const partial=pending({paymentId:'p',paymentStatus:'Parcialmente pago',totalCents:6000,netReceivedCents:3000,dueCents:3000,contentRevision:1})
+ const grants=new Set(['orders.view','orders.history','payments.receive'])
+ assert.equal(canReceiveStandaloneOrder(partial,grants,'orders'),true)
+ assert.equal(canReceiveStandaloneOrder(partial,grants,'history'),true)
+ assert.equal(canReceiveStandaloneOrder(partial,new Set(['orders.view']),'orders'),false)
+ assert.equal(canReceiveStandaloneOrder({...partial,tableTabId:'open-tab'},grants,'orders'),false)
+})

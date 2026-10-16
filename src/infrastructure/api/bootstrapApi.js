@@ -1,10 +1,11 @@
 import { apiRequest } from './httpClient.js'
 
 export const createBootstrapApi = ({ request = apiRequest } = {}) => Object.freeze({
-  getBootstrap: (knownEffectiveConfigVersion) => {
+  getBootstrap: (knownEffectiveConfigVersion,{surface,signal}={}) => {
     const params = new URLSearchParams()
+    if(surface)params.set('surface',surface)
     if (knownEffectiveConfigVersion) params.set('knownEffectiveConfigVersion', knownEffectiveConfigVersion)
-    return request(`/api/bootstrap${params.size ? `?${params}` : ''}`)
+    return request(`/api/bootstrap${params.size ? `?${params}` : ''}`,...(signal?[{signal}]:[]))
   },
 })
 

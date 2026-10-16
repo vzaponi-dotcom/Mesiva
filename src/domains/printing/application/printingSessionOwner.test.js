@@ -76,7 +76,7 @@ test('execution finally rejection after expiry preserves server failure reportin
     if (path === '/api/printing/test-jobs') { created++; return json({ job: { id: 'test-job' } }) }
     if (String(path).endsWith('/claim')) return json({ job: { id: 'test-job', copiesRequested: 3 } })
     if (String(path).endsWith('/fail')) { failures++; hold = true; return json({}) }
-    if (String(path).startsWith('/api/printing/jobs?')) return hold ? new Promise((_resolve, reject) => { rejectRead = reject }) : json({ jobs: [] })
+    if (path === '/api/printing/state') return hold ? new Promise((_resolve, reject) => { rejectRead = reject }) : json({ stations: [{ id: 'test-station', platform: 'windows', isPrimary: false }], jobs: [], summary: {} })
     if (path === '/api/printing/stations') return json({ stations: [{ id: 'test-station', platform: 'windows', isPrimary: false }] })
     if (path === '/api/printing/jobs/summary') return json({ summary: {} })
     throw new Error(`Unexpected ${path}`)
@@ -103,7 +103,7 @@ test('rejected old polling request cannot publish an error into the next printin
   let hold = false, rejectRead, current
   const json = (body) => ({ ok: true, json: async () => body })
   globalThis.fetch = async (path) => {
-    if (String(path).startsWith('/api/printing/jobs?')) return hold ? new Promise((_resolve, reject) => { rejectRead = reject }) : json({ jobs: [] })
+    if (path === '/api/printing/state') return hold ? new Promise((_resolve, reject) => { rejectRead = reject }) : json({ stations: [{ id: 'test-station', platform: 'other', isPrimary: false }], jobs: [], summary: {} })
     if (path === '/api/printing/stations') return json({ stations: [{ id: 'test-station', platform: 'other', autoPrintEnabled: false }] })
     if (path === '/api/printing/jobs/summary') return json({ summary: {} })
     throw new Error(`Unexpected ${path}`)
@@ -128,7 +128,7 @@ test('late queue read and mutation from the expired user cannot repopulate the n
   let hold = false, releaseRead, releaseMutation, current
   globalThis.fetch = async (path) => {
     if (String(path).includes('/prioritize')) return new Promise((resolve) => { releaseMutation = () => resolve(json({ job: { id: 'old-mutation' } })) })
-    if (String(path).startsWith('/api/printing/jobs?')) return hold ? new Promise((resolve) => { releaseRead = () => resolve(json({ jobs: [{ id: 'old-read' }] })) }) : json({ jobs: [{ id: 'private-a' }] })
+    if (path === '/api/printing/state') return hold ? new Promise((resolve) => { releaseRead = () => resolve(json({ stations: [], jobs: [{ id: 'old-read' }], summary: { active: 1 } })) }) : json({ stations: [{ id: 'test-station', platform: 'other', isPrimary: false, autoPrintEnabled: false }], jobs: [{ id: 'private-a' }], summary: { active: 1 } })
     if (path === '/api/printing/stations') return json({ stations: [{ id: 'test-station', platform: 'other', isPrimary: false, autoPrintEnabled: false }] })
     if (path === '/api/printing/jobs/summary') return json({ summary: { active: 1 } })
     throw new Error(`Unexpected ${path}`)

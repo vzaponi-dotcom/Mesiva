@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from '../realtime/committedEffects.js'
 import { loadAccountSessionRow, prepareAccountSession, prepareSessionSnapshotAssertion, contextChanged } from '../identity/sessions.js'
 import { commitIdentityStatements } from '../identity/transactions.js'
 import { prepareIdentityAudit } from '../identity/audit.js'
@@ -13,7 +14,7 @@ export async function selectAccountScope(db, context, { scope, businessId = null
   const commitNow = new Date(now.getTime() + Math.max(0, Math.floor(monotonicNow() - startedAt)))
   try {
     await commitIdentityStatements(db, [prepareSessionSnapshotAssertion(db, row, commitNow), ...prepared.statements,
-      db.prepare('UPDATE identity_sessions SET revoked_at = ? WHERE id = ?').bind(commitNow.toISOString(), row.id),
+      registerCommittedEffect(db.prepare('UPDATE identity_sessions SET revoked_at = ? WHERE id = ?').bind(commitNow.toISOString(), row.id),row.business_id?{businessId:row.business_id,topics:[],orderIds:[],invalidations:[{scope:'session',id:row.id}]}:null),
       ...(row.business_session_id ? [db.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND business_id = ?').bind(commitNow.toISOString(), row.business_session_id, row.business_id)] : []),
       prepareIdentityAudit(db, { accountId: context.accountId, sessionId: prepared.value.identitySessionId, action: 'session.selected', now: commitNow }),
     ])

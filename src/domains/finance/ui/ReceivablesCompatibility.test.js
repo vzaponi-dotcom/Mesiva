@@ -51,11 +51,11 @@ test('client navigation passes the canonical customer identity instead of the pr
 })
 
 test('unpaid open table-tabs stay outside standalone receivables, but paid closed tabs may have an edited balance', async () => {
-  const domain = await read('../domain/receivables.js')
+  const domain = await read('../../../../shared/receivableReadRules.js')
   const page = await read('./Receivables.jsx')
 
   assert.match(domain, /\.filter\(\(order\) => !isTableTabOrder\(order\)/)
   assert.match(domain, /Boolean\(order\.paymentId\)/)
   assert.match(domain, /order\.paymentStatus === 'Parcialmente pago'/)
-  assert.match(page, /quickPaymentEntries = useMemo\(\(\) => pendingEntries\.filter/)
+  assert.match(page, /quickPaymentEntries = useMemo\(\(\) => \(scoped\?\(reads\.quick\.data\?\.entries \|\| \[\]\):pendingEntries\)\.filter/)
 })
