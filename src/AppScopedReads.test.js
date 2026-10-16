@@ -7,6 +7,7 @@ const config={paymentMethods:{methods:[{code:'pix',value:'Pix',label:'Pix'}],def
 const session={authenticated:true,authMode:'multi_company',scope:'business',contextId:'scoped-business-context',businessId:'amor-e-sabor',settingsContextId:'scoped-settings-context',account:{id:'account',displayName:'Fictício',email:'ficticio@example.test'},user:{id:'operator',displayName:'Operador',roleName:'Operador'},capabilities}
 const order={id:'history-order',orderNumber:1,client:'Cliente fictício',type:'Retirada',status:'Finalizado',orderDate:'2026-10-15',createdAt:'2026-10-15T12:00:00Z',finishedAt:'2026-10-15T13:00:00Z',paymentStatus:'Pendente',total:20,items:[{id:'item',name:'Prato',quantity:1,unitPrice:20}]}
 async function mount(t,path,{grants=capabilities,failOnce=false,failBootstrap=false}={}){
+ t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-10-15T15:00:00Z')})
  const h=await workspaceHarness(t),calls=[];let failed=false,bootstrapFailure=failBootstrap
  globalThis.fetch=async path=>{
   const url=new URL(String(path),'https://example.test');calls.push(url.pathname+url.search)
