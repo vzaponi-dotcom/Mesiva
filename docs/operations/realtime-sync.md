@@ -82,7 +82,7 @@ O validador mensal recebe operações medidas, mix de dispositivos, métricas re
 node scripts/infra/realtime-budget-report.mjs .wrangler/realtime-budget-input.json .wrangler/realtime-budget-report.json --require-complete
 ```
 
-O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
+O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. `operations` inclui login e descoberta de sessão HTTP, além da preparação/renovação do WebSocket; relatórios antigos sem essas operações precisam de nova coleta. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
 
 O modelo padrão usa cinco dispositivos totais: uma TV, uma estação e uma tela de controle;12h/dia,31dias,5.000 alterações/dia e5.000 conexões/reconexões/mês. O mix de dimensionamento é10%criações,10%finalizações,10%pagamentos e70%transições de impressão. São hipóteses de ensaio, não vendas observadas. Outras composições/volumes precisam de nova projeção.
 
@@ -96,7 +96,7 @@ Fontes de preços: [Workers](https://developers.cloudflare.com/workers/platform/
 
 Conferir SHA e `/release.json`, bootstrap autenticado200, cinco conexões, mudança refletida em outro dispositivo, retomada de foco/rede, revogação e fallback. No DevTools, uma conexão WS e requests temporais documentados são esperados; as recargas gerais de pedidos2s e bootstrap5s devem desaparecer no cliente integrado. Não interpretar o filtro Fetch/XHR como lista completa do canal WS.
 
-Amostras de latência commit→tela em staging têm alvo p95≤2s com canal saudável. CPU/duração/uso agregado devem vir da Cloudflare, distinguindo amostragem/atraso de ingestão. Após release, comparar taxas de leituras por hora durante uso real e projeção para o ciclo; manter o acompanhamento solicitado para15/10 a partir das10h de São Paulo. Não afirmar redução faturada com sistema ocioso.
+Amostras de latência commit→tela em staging têm alvo p95≤2s com canal saudável. CPU/duração/uso agregado devem vir da Cloudflare, distinguindo amostragem/atraso de ingestão. Após release, comparar taxas de leituras por hora durante uso real e projeção para o ciclo; a verificação horária anterior foi removida por solicitação do usuário em16/10; novas coletas são manuais, sem recriar a recorrência. Não afirmar redução faturada com sistema ocioso.
 
 
 ## Estado da validação em 15/10/2026
@@ -158,3 +158,8 @@ Comandas/mesas continuam obtendo detalhes oficiais por ID; o snapshot inclui com
 “Finalizados hoje” usa `/api/reads/orders/kitchen-summary`: status Finalizado, finished_at e dia de São Paulo, incluindo compatibilidade Date.parse de timestamps antigos. Mantém a visibilidade histórica da sessão; orders.view sozinho não ganha contagens de histórico. Os índices0049 limitam a contagem à data e ao subconjunto legado. A mesma invalidação/reconciliação do transporte atualiza esse indicador; o relógio local renova a consulta na mudança de dia.
 
 Atividades abre o pedido autorizado por ID e descarta respostas de contexto anterior. A fila obtém número e identidade do documento persistido no job quando o pedido não está no cache. Documento, segunda via, confirmação do spooler e decisão humana para impressão desconhecida continuam usando os serviços oficiais, sem depender do histórico global.
+
+
+### Continuação financeira em 16/10/2026
+
+A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,225bilhões de leituras no normal e15,048bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 já publicada mantém ambas as flagsfalse; este relatório não aprova ativação nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.

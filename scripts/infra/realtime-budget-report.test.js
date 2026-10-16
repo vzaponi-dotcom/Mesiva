@@ -96,3 +96,16 @@ test('mounted read owners include mount and initial channel reconciliation indep
  assert.equal(counts.degraded.printSummary,122)
  assert.equal(counts.normal.kitchenSummary,64)
 })
+
+
+test('session discovery and sign-in are billed without treating TV reconnects as human logins',()=>{
+ const counts=buildMonthlyWorkload({devices:5,tvDevices:1,connections:10,days:1,hoursPerDay:1,changesPerDay:100,administrativeChangesPerDay:3})
+ for(const mode of ['normal','degraded']){
+  assert.equal(counts[mode].authLogin,8)
+  assert.equal(counts[mode].authSession,28)
+ }
+ const input=sample();delete input.operations.authSession
+ const report=projectMonthlyBudget(input)
+ assert.equal(report.passed,false)
+ assert.equal(report.normal.modeled.rowsRead,null)
+})

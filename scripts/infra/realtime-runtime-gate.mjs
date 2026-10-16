@@ -43,6 +43,7 @@ export function assertRealtimeRuntimeGate(report){
   if(report.fixture?.historicalOrders>=1000)assert.ok(report.operations.historySearch.rowsRead<=report.fixture.historicalOrders*35+5000,'historical search repeatedly scanned the timeline prefix')
   assert.equal(report.historyPreserved,true,'historical orders were dropped')
   for(const op of Object.values(report.operations))for(const field of metrics)assert.ok(Number.isFinite(op[field]) && op[field]>=0,`invalid ${field}`)
+  for(const name of ['authSession','authLogin'])assert.ok(report.operations[name],`${name} HTTP authentication was not measured`)
   assert.ok(report.operations.printState,'combined printing state was not measured')
   for(const field of ['rowsRead','rowsWritten','sqlStatements'])assert.ok(report.operations.printState[field]<=['printStations','printJobs','printSummary'].reduce((sum,name)=>sum+report.operations[name][field],0),`combined printing state increased ${field}`)
   return true
@@ -92,6 +93,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     }
     await db.batch([db.prepare('PRAGMA defer_foreign_keys=ON'),...seed])
     progress('schema-and-identities')
+    await json('authSession','/api/auth/session')
     await json('bootstrapEmpty','/api/bootstrap?surface=orders')
     const ids=await seedOperationalReadFixture(db,{businessId,activeOrders:20,itemsPerOrder:5})
     const pointPath='/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([ids.activeIds[0]]))
@@ -244,6 +246,7 @@ export async function runRealtimeRuntimeGate({devices=5,historicalOrders=10000}=
     await json('printMutation',`/api/printing/attempts/${attempt.id}/events`,{method:'POST',body:{stationId:'gate-station',event:{type:'ERROR',jobName:attempt.spoolJobName,spoolJobId:1}}})
     const nextClaim=await json('printClaim','/api/printing/jobs/claim-next',{method:'POST',body:{stationId:'gate-station'}})
     const historyPreserved=Number(await db.prepare("SELECT COUNT(*) AS n FROM orders WHERE business_id=? AND id LIKE ?").bind(businessId,businessId+':history:%').first('n'))===historicalOrders
+    await json('authLogin','/api/auth/login',{method:'POST',body:{email:'alice@example.test',password:'Fixture password 2026!',deviceMode:'shared'}})
     const report={commit:process.env.GITHUB_SHA || null,workingTree:!process.env.GITHUB_SHA,runtime:'workerd/Wrangler4.128.0',fixture:{devices,historicalOrders,itemsPerOrder:5,terminalPrintJobs:3000},operations,
       financialCandidateHistoryGrowth:operations.receivablesHistory.rowsRead-operations.receivablesSmall.rowsRead,pointReadHistoryGrowth:operations.byIdsHistory.rowsRead-operations.byIdsSmall.rowsRead,scopedBootstrapHistoryGrowth:operations.bootstrapScopedHistory.rowsRead-operations.bootstrapScopedSmall.rowsRead,historyPreserved,attributionPlans,
       invariants:{legacyGlobalPolls,hibernationRecovered,restartConnectedClients,lostEventConvergedClients,convergenceVirtualMs,publicationFailureMutationCount:mutationCount,unchangedHeartbeatNotifications,unknownClaimedAgain:Boolean(nextClaim.job),concurrentClaimWinners:claims.filter(value=>value.job).length},
