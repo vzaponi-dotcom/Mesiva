@@ -10,11 +10,11 @@ Staging medido: mesmo SHA, versão `d23cfb05-abf8-4562-a590-969b9862b3e3`, flags
 
 ## Correção do dimensionamento
 
-O modelo não incluía `GET /api/auth/session` nem `POST /api/auth/login`. O runtime consulta a sessão na montagem e após login/contexto/alteração de credencial; o coordenador pode rediscoverir a sessão em outras abas. Isso é diferente da renovação de autorização do WebSocket, já contabilizada.
+O modelo não incluía `GET /api/auth/session` nem `POST /api/auth/login` e a seleção de empresa. O runtime consulta a sessão na montagem e após login/contexto/alteração de credencial; o coordenador pode rediscoverir a sessão em outras abas. Isso é diferente da renovação de autorização do WebSocket, já contabilizada.
 
-Acrescentamos uma tentativa de login e duas consultas de sessão por conexão humana, mais uma redescoberta por mudança administrativa/dispositivo humano, em ambos os cenários. Trata-se de limite conservador: reconexões normais do socket reaproveitam a sessão. Conexões da TV não viram logins humanos. Não mudamos a frequência real do aplicativo. Falhas de autenticação repetidas ou alternâncias extraordinárias de contexto exigem outro perfil de carga.
+Acrescentamos uma tentativa de login/seleção de empresa e duas consultas de sessão por conexão humana, mais uma seleção/redescoberta por mudança administrativa/dispositivo humano, em ambos os cenários. Trata-se de limite conservador: reconexões normais do socket reaproveitam a sessão. Conexões da TV não viram logins humanos. Não mudamos a frequência real do aplicativo. Falhas de autenticação repetidas ou alternâncias extraordinárias de contexto exigem outro perfil de carga.
 
-O gate HTTP real agora exige ambas as operações, incluindo D1/auth/guards. A fixture local isolada mediu sessão com 76 leituras/1 escrita auxiliar e login com 44 leituras/22 escritas auxiliares. Nenhum secret real integra a fixture. Inputs antigos sem essas operações passam a produzir dimensões desconhecidas em vez de um orçamento aprovado.
+O gate HTTP real agora exige as três operações, incluindo D1/auth/guards. Mede login com várias empresas (`identity`), seleção oficial usando a sessão retornada e login direto em uma empresa (`business`); verifica autenticação, escopo e empresa de cada resposta. O máximo por dimensão dos logins evita usar somente o caminho mais barato. A fixture local isolada mediu sessão com 76 leituras/1 escrita auxiliar, login com 197 leituras/32 escritas auxiliares e seleção com 209 leituras/32 escritas auxiliares. Nenhum secret real integra a fixture. Inputs antigos sem essas operações passam a produzir dimensões desconhecidas em vez de um orçamento aprovado.
 
 ## Projeção D1, antes dos outros serviços da conta
 
@@ -22,8 +22,8 @@ Volume informado: até cinco dispositivos e 51–150 pedidos/dia. Ensaio usa o t
 
 | Cenário | Leituras/mês | Escritas/mês | Requests Worker/mês |
 | --- | ---: | ---: | ---: |
-| Normal | 9.225.240.904 | 15.974.834 | 2.427.068 |
-| Degradado | 15.048.151.120 | 16.537.390 | 2.623.320 |
+| Normal | 9.227.183.974 | 16.222.194 | 2.433.548 |
+| Degradado | 15.050.094.190 | 16.784.750 | 2.629.800 |
 
 O gate funcional passou novamente: cinco clientes, 10 mil pedidos históricos, 50 mil itens, 10 mil auditorias, 3 mil jobs terminais; hibernação/reinício, publicação perdida convergindo em 264 segundos, claim com um vencedor e resultado desconhecido sem reenvio. Isso não mede CPU faturada nem latência commit→tela em cinco navegadores. A projeção pressupõe as flags ativas; não descreve o comportamento atual de produção com flags false.
 
@@ -60,7 +60,7 @@ Fontes primárias de franquias: [Workers](https://developers.cloudflare.com/work
 
 ## Verificação desta entrega
 
-- Testes focados: duas falhas reproduziram a omissão; correção passou 27/27.
+- Testes focados: omissão inicial reproduzida em duas falhas, 27/27 após correção; achado de revisão sobre login operacional reproduzido em três falhas, 28/28 após incluir os dois escopos e seleção oficial.
 - Gate workerd/D1/WebSocket completo: passou, dimensões financeiras externas continuam desconhecidas.
 - Arquitetura, lint e build passaram; lint mantém avisos preexistentes.
-- Suíte completa e CI: resultado será registrado antes da integração. Esta alteração não publica nem ativa flags.
+- Dry-runs de produção/staging e migrations exclusivamente locais passaram, sem migrations pendentes. Suíte completa após a correção de revisão: 3.911/3.911 passaram. CI verde do SHA exato continua obrigatório para integrar; consultar os checks do PR. Esta alteração não publica nem ativa flags.

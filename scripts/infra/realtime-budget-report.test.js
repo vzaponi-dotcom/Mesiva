@@ -102,6 +102,7 @@ test('session discovery and sign-in are billed without treating TV reconnects as
  const counts=buildMonthlyWorkload({devices:5,tvDevices:1,connections:10,days:1,hoursPerDay:1,changesPerDay:100,administrativeChangesPerDay:3})
  for(const mode of ['normal','degraded']){
   assert.equal(counts[mode].authLogin,8)
+  assert.equal(counts[mode].authSelectBusiness,20)
   assert.equal(counts[mode].authSession,28)
  }
  const input=sample();delete input.operations.authSession

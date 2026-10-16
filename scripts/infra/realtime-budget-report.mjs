@@ -21,7 +21,8 @@ export function buildMonthlyWorkload(input={}) {
     printHeartbeat:seconds*w.printerDevices/15,printClaim:seconds*w.printerDevices/2,
     tvReport:seconds*w.tvDevices/5,tvReportChanged:changes*w.tvDevices,
     controlState:seconds*w.controlDevices/5,stationUpsert:humanConnections,authLogin:humanConnections,
-    authSession:humanConnections*2+w.administrativeChangesPerDay*w.days*humans}
+    authSession:humanConnections*2+w.administrativeChangesPerDay*w.days*humans,
+    authSelectBusiness:humanConnections+w.administrativeChangesPerDay*w.days*humans}
   const manager=seconds*(w.printerDevices/5+(humans-w.printerDevices)/30)
   const normalManager=manager+(changes*.8+w.administrativeChangesPerDay*w.days)*humans+humanConnections*2+Math.ceil(seconds*humans/300)
   const degradedManager=manager+humanConnections*2+Math.ceil(seconds*humans/30)
@@ -90,7 +91,7 @@ export function projectMonthlyBudget({operations,workload,stageMetrics={},accoun
     `${counts.workload.hoursPerDay}h/dia,${counts.workload.days}dias,${counts.workload.changesPerDay}mudanças/dia:10%criação,10%finalização,10%pagamento,70%transições impressão; não é volume observado.`,
     'surfaceMix distribui dispositivos humanos; cada owner montado inclui reconciliação/fallback e invalidação por criação/finalização/pagamento (30% das mudanças); printing não publica orders/finance. Acrescenta20mudanças administrativas/dia para todos os owners. Clientes inclui perfil aberto; recebíveis inclui grupo e busca rápida abertos.',
     'Por dia:20páginas históricas,10buscas globais,50detalhes porID e10checks de duplicatas, configuráveis; preparação de ações inclui duas leituras canônicas por pagamento/detalhe.',
-    'Login uma vez e descoberta de sessão duas vezes por conexão humana; redescoberta em cada mudança administrativa por dispositivo humano. Reconexões de socket reutilizam sessão na prática; estas são contagens conservadoras, não frequência observada.',
+    'Login/seleção de empresa uma vez e descoberta de sessão duas vezes por conexão humana; seleção/redescoberta em cada mudança administrativa por dispositivo humano. Reconexões de socket reutilizam sessão na prática; estas são contagens conservadoras, não frequência observada.',
     'Inclui auth/guards medidos em HTTP,claim2s,heartbeat15s,aging5s/30s,presençaTV5s,controle5s,renovação60s e ACK20:1.',
     'Owners de leitura incluem montagem e reconciliação inicial do canal; manager de impressão também soma timer próprio e reconciliação realtime300s/30s, sem presumir coalescência entre essas fontes.',
     'TV pode mudar projeção a cada alteração (limite conservador); heartbeat idêntico não publica.',

@@ -82,7 +82,7 @@ O validador mensal recebe operações medidas, mix de dispositivos, métricas re
 node scripts/infra/realtime-budget-report.mjs .wrangler/realtime-budget-input.json .wrangler/realtime-budget-report.json --require-complete
 ```
 
-O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. `operations` inclui login e descoberta de sessão HTTP, além da preparação/renovação do WebSocket; relatórios antigos sem essas operações precisam de nova coleta. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
+O input deve conter `operations`, `workload`, `stageMetrics` e `accountBaseline`. `operations` inclui login, seleção de empresa e descoberta de sessão HTTP, além da preparação/renovação do WebSocket; relatórios antigos sem essas operações precisam de nova coleta. CPU por operação, duração do DO, crescimento/armazenamento e consumo da conta precisam de evidência agregada sem credenciais. Ausência de dados é desconhecida, nunca zero. Guardar janela de coleta, SHA, origem e limitações junto ao relatório para revisão.
 
 O modelo padrão usa cinco dispositivos totais: uma TV, uma estação e uma tela de controle;12h/dia,31dias,5.000 alterações/dia e5.000 conexões/reconexões/mês. O mix de dimensionamento é10%criações,10%finalizações,10%pagamentos e70%transições de impressão. São hipóteses de ensaio, não vendas observadas. Outras composições/volumes precisam de nova projeção.
 
@@ -162,4 +162,4 @@ Atividades abre o pedido autorizado por ID e descarta respostas de contexto ante
 
 ### Continuação financeira em 16/10/2026
 
-A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,225bilhões de leituras no normal e15,048bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 já publicada mantém ambas as flagsfalse; este relatório não aprova ativação nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.
+A [validação financeira atual](../superpowers/qa/2026-10-16-realtime-financial-validation.md) inclui autenticação e o teto informado de150pedidos/dia. Projeta9,227bilhões de leituras no normal e15,050bilhões no degradado antes do baseline. CPU da estação/TV/mutations, duração, armazenamento e consumo separado da conta continuam pendentes. A versão63d1f148 já publicada mantém ambas as flagsfalse; este relatório não aprova ativação nem garante mensalidade deUS$5. As medições datadas acima permanecem como histórico das etapas anteriores.
