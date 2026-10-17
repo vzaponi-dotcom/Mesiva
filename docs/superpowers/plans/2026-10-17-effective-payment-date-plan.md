@@ -115,9 +115,12 @@
 | Task | Estado inicial | Evidência |
 | --- | --- | --- |
 | 0 | **COMPLETE — documentação** | Spec e plano na branch, commit(s) registrados no PR |
-| 1–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
+| 1 | **COMPLETE / GREEN** | RED: `d4cfb3c`, Validate `39060351817` (shard 8: 3 falhas esperadas, 498 PASS). GREEN: `2f89147`, Validate `39060453305` — SUCCESS (8 shards e validate). |
+| 2–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
 
-Atualizar a tabela com SHA, comando, saída relevante, status de teste e blockers à medida que as tarefas forem implementadas. Antes de alterar um arquivo, verificar o HEAD atual da branch e compatibilidade com PRs concorrentes.
+Atualizar a tabela com SHA, comando, saída relevante, status de teste e blockers à medida que as tarefas forem implementadas.
+
+**Task 1:** `worker/receivedDateValidation.test.js` cobre default, passado, futuro, datas inválidas e virada do dia em São Paulo. `resolveReceivedDate` foi implementado em `worker/paymentValidation.js`. CI GREEN: [run 39060453305](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39060453305), finalizado com sucesso. Escritas de pagamentos ainda não utilizam esse campo; nenhuma migration foi aplicada remotamente. Antes de alterar um arquivo, verificar o HEAD atual da branch e compatibilidade com PRs concorrentes.
 
 ## Referências de baseline
 
