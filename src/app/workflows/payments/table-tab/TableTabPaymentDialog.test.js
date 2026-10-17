@@ -137,3 +137,22 @@ test('Task 9: comanda date defaults to business today, rejects future, survives 
   await act(async()=>r.update(React.createElement(Dialog,props)))
   assert.equal(dateField().props.value,today)
 })
+
+
+test('Task 9: checkout date is part of confirmed payment, not of save-without-payment',async t=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const h=await workspaceHarness(t)
+  const {default:Checkout}=await h.load('/src/app/workflows/payments/CheckoutPaymentComposition.jsx')
+  const calls=[]
+  const r=await h.render(Checkout,{totalCents:4000,paymentOptions:[{code:'pix',value:'Pix',label:'Pix'}],
+    defaultPaymentMethod:'Pix',onConfirm:(...args)=>calls.push(args),onCancel(){}})
+  const date=r.root.findByProps({'aria-label':'Data do recebimento'})
+  assert.equal(date.props.value,getBusinessDate())
+  assert.equal(date.props.max,getBusinessDate())
+  await act(async()=>date.props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>buttonNamed(r.root,'Confirmar recebimento').props.onClick())
+  assert.equal(calls[0][1],'2026-10-15')
+  assert.deepEqual(calls[0][0],[{methodCode:'pix',amountCents:4000}])
+  await act(async()=>r.root.findByProps({'aria-label':'Data do recebimento'}).props.onChange({target:{value:'2999-01-01'}}))
+  assert.ok(buttonNamed(r.root,'Confirmar recebimento').props.disabled)
+})
