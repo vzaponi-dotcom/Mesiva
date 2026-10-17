@@ -117,9 +117,12 @@
 | 0 | **COMPLETE — documentação** | Spec e plano na branch, commit(s) registrados no PR |
 | 1 | **COMPLETE / GREEN** | RED: `d4cfb3c`, Validate `39060351817` (shard 8: 3 falhas esperadas, 498 PASS). GREEN: `2f89147`, Validate `39060453305` — SUCCESS (8 shards e validate). |
 | 2 | **SCHEMA GREEN / compatibilidade legada pendente** | RED: `96b4681`, Validate `39060880038` (2 falhas esperadas). GREEN: migration `4beeda0` + correção no teste `15bf6dd`, Validate `39061309279` SUCCESS. Fallback para recibos legados sem evidência continua obrigatório na Task 7. |
-| 3–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
+| 3 | **COMPLETE / GREEN** | RED: `f18d60c`, Validate [39061962227](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39061962227) — falhas esperadas em API, HTTP e repository. GREEN: `940b075`, Validate [39062122024](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39062122024) **SUCCESS** (8 shards e job validate). Gravação individual, data opcional para cliente legado, tempo real preservado, autorização e não gravação em data inválida. |
+| 4–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
 
 Atualizar a tabela com SHA, comando, saída relevante, status de teste e blockers à medida que as tarefas forem implementadas.
+
+**Task 3:** `worker/paymentRepository.js` aplica `resolveReceivedDate` no fluxo de pedido avulso, grava `received_date` no recibo e o mesmo dia em todos os movimentos, mantém `paid_at`/`created_at` como timestamps factuais e expõe `receivedDate` na resposta do recibo. `worker/index.js` e `src/app/workflows/payments/paymentApi.js` aceitam `receivedDate` opcional; sem data, a regra atual continua válida. Regressões: `worker/paymentRepository.test.js`, `worker/access/projections.test.js`, `src/app/workflows/payments/paymentApi.test.js` — [RED 39061962227](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39061962227), [GREEN 39062122024](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39062122024). **Sem mudança de tela nesta etapa**: seleção visual fica para Task 9. Nenhuma escrita D1 remota.
 
 **Task 2:** `migrations/0052_effective_receipt_date.sql` adiciona coluna nullable, backfill somente com `movement_date` unânime e índice parcial de recibos; `worker/effectiveReceiptDateMigration.test.js` prova clean/upgrade e preservação das linhas. [CI GREEN 39061309279](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39061309279). Não houve migração remota. Tratamento timezone para legado sem movimento, custo D1 e leitores de compatibilidade permanecem pendentes, não declarar Task 2 inteiramente fechada antes dessas evidências.
 
