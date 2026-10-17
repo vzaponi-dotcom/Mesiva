@@ -179,3 +179,35 @@ test('ordinary paid order creation with canonical none adjustment projects its p
   assert.equal(sqlite.prepare('SELECT count(*) n FROM movements WHERE order_id=?').get(data.order.id).n, 1)
 })
 
+
+test('authenticated individual payment route forwards the requested effective day and keeps permission protection', async (t) => {
+  const { env, tokens, active, history, sqlite } = await setup(t)
+  const retroactive = '2026-09-19'
+  const result = await read(env, tokens.operator, `/api/orders/${active.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }],
+    receivedDate: retroactive,
+  })
+  const persisted = sqlite.prepare('SELECT received_date, paid_at FROM payment_receipts WHERE id=?').get(result.receipt.id)
+  assert.equal(persisted.received_date, retroactive)
+  assert.notEqual(persisted.paid_at.slice(0, 10), retroactive)
+  assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").get(result.receipt.id).movement_date, retroactive)
+
+  const denied = await handleRequest(request(tokens.empty, `/api/orders/${history.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }], receivedDate: retroactive,
+  }), env)
+  assert.equal(denied.status, 403)
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 1)
+})
+
+test('individual payment HTTP route rejects a future receipt date without any financial effects', async (t) => {
+  const { env, tokens, active, sqlite } = await setup(t)
+  const future = '9999-12-31'
+  const response = await handleRequest(request(tokens.operator, `/api/orders/${active.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }], receivedDate: future,
+  }), env)
+  assert.equal(response.status, 400)
+  const body = await response.json()
+  assert.equal(body.error.code, 'VALIDATION_ERROR')
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 0)
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-payment'").get().n, 0)
+})
