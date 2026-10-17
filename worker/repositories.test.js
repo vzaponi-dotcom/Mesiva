@@ -170,6 +170,8 @@ class BootstrapDb {
       },
     }
   }
+
+  async batch(statements) { return Promise.all(statements.map(statement => statement.all())) }
 }
 
 test('loadBootstrap scopes every business-owned query and attaches order items and table tabs', async () => {
