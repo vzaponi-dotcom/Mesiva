@@ -1,6 +1,6 @@
 import {readableOrderStatuses} from './financialCandidates.js'
 import {mapOrderItemRow} from '../repositories.js'
-import {PAYMENT_ALLOCATIONS_JSON_SELECT,mapOrderPaymentFields} from '../orderPaymentReadModel.js'
+import {PAYMENT_ALLOCATIONS_JSON_SELECT,PAYMENT_SETTLEMENT_SQL_SELECT,mapOrderPaymentFields} from '../orderPaymentReadModel.js'
 const rows=result=>result.results || []
 // Minimal canonical fields for totals and selection. Historical item payloads are not loaded here.
 export async function readOrderHeaders(db,businessId,{granted,clientId,customersOnly=false,kind,paid=false,searchPayments=false,dateRange}={}){
@@ -16,15 +16,15 @@ export async function readOrderHeaders(db,businessId,{granted,clientId,customers
   if(kind){
     from=`order_financial_candidates c CROSS JOIN orders o${activeOnly?' INDEXED BY orders_business_active_read_id_idx':''} ON o.business_id=c.business_id AND o.id=c.order_id`
     clauses.push('c.business_id=? AND c.kind=?');values.push(businessId,kind)
-    clauses.push(kind==='refund'?"o.status='Cancelado' AND NULLIF(p.id,'') IS NOT NULL AND NULLIF(r.id,'') IS NULL":"o.status<>'Cancelado' AND NULLIF(p.id,'') IS NULL")
+    clauses.push('EXISTS(SELECT 1 FROM order_financial_candidate_source s WHERE s.business_id=o.business_id AND s.order_id=o.id AND s.candidate_kind=c.kind)')
   }
   if(dateRange){clauses.push('o.order_date>=? AND o.order_date<=?');values.push(dateRange.startDate,dateRange.endDate)}
   if(paid&&!activeOnly){from=`payments p CROSS JOIN orders o${activeOnly?' INDEXED BY orders_business_active_read_id_idx':''} ON o.business_id=p.business_id AND o.id=p.order_id`;clauses.push("p.business_id=? AND NULLIF(p.id,'') IS NOT NULL");values.push(businessId)}
   else if(paid)clauses.push("NULLIF(p.id,'') IS NOT NULL")
   const result=await db.prepare(`SELECT o.id,o.order_number,o.client_id,o.client_name_snapshot,o.client_phone_snapshot,
     o.customer_identity_type,o.table_tab_id,o.type,o.order_date,o.status,o.promised_payment_date,
-    o.total_cents,o.created_at,o.finished_at,o.cancelled_at,p.id AS payment_id,p.method AS payment_method,p.paid_at,
-    ${searchPayments?PAYMENT_ALLOCATIONS_JSON_SELECT:'p.receipt_id'},r.id AS refund_movement_id,tr.id AS table_reservation_id,tt.table_identifier
+    o.total_cents,o.content_revision,o.created_at,o.finished_at,o.cancelled_at,p.id AS payment_id,p.amount_cents AS paid_amount_cents,p.method AS payment_method,p.paid_at,
+    ${searchPayments?PAYMENT_ALLOCATIONS_JSON_SELECT:`p.receipt_id,${PAYMENT_SETTLEMENT_SQL_SELECT}`},r.id AS refund_movement_id,tr.id AS table_reservation_id,tt.table_identifier
     FROM ${from}
     ${paid&&!activeOnly?'':'LEFT JOIN payments p ON p.business_id=o.business_id AND p.order_id=o.id'}
     LEFT JOIN movements r ON r.business_id=o.business_id AND r.order_id=o.id AND r.source='order-refund'
@@ -36,7 +36,7 @@ export async function readOrderHeaders(db,businessId,{granted,clientId,customers
     return {id:row.id,orderNumber:Number(row.order_number),clientId:row.client_id ?? null,
       client:identity==='table'&&row.table_identifier?row.client_id&&row.client_name_snapshot?`${row.table_identifier} · ${row.client_name_snapshot}`:row.table_identifier:row.client_name_snapshot,
       clientPhone:row.client_phone_snapshot || '',customerIdentityType:identity,tableTabId:row.table_tab_id ?? null,
-      tableReservationId:row.table_reservation_id ?? null,type:row.type,status:row.status,total:Number(row.total_cents)/100,
+      tableReservationId:row.table_reservation_id ?? null,type:row.type,status:row.status,total:Number(row.total_cents)/100,contentRevision:Number(row.content_revision || 0),
       orderDate:row.order_date,promisedPaymentDate:row.promised_payment_date ?? null,createdAt:row.created_at,
       finishedAt:row.finished_at,cancelledAt:row.cancelled_at,refundMovementId:row.refund_movement_id ?? null,...mapOrderPaymentFields(row),items:[]}
   })

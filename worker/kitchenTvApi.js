@@ -22,6 +22,7 @@ import {
   touchKitchenTvSession,
 } from './kitchenTvRepository.js'
 import { loadKitchenTvState } from './kitchenTvReadRepository.js'
+import { loadOperationalEditSignals, acknowledgeOperationalOrderEdit } from './orderEditSignalsRepository.js'
 import {
   getKitchenTvOrderControlEligibility,
   hideKitchenTvOrder,
@@ -97,7 +98,10 @@ async function loadControlState(db, businessId) {
     loadKitchenTvControl(db, businessId),
     listKitchenTvHiddenOrderIds(db, businessId),
   ])
-  return controlPayload(access, control, hiddenOrderIds)
+  const signals=await loadOperationalEditSignals(db,businessId)
+  const pendingOrderEdits=[...signals.entries()].filter(([,v])=>v.editPending)
+    .map(([orderId,v])=>({orderId,...v}))
+  return {...controlPayload(access, control, hiddenOrderIds),...(pendingOrderEdits.length?{pendingOrderEdits}:{})}
 }
 
 const pageInput = (body) => {
@@ -150,6 +154,14 @@ export async function handleKitchenTvAdminApi(request, env, context, url = new U
   if (url.pathname === '/api/kitchen-tv/control' && request.method === 'GET') {
     requireCapability(context, 'orders.view')
     return json(await loadControlState(env.DB, context.businessId))
+  }
+  const acknowledgeMatch=url.pathname.match(/^\/api\/kitchen-tv\/control\/orders\/([^/]+)\/edits\/([0-9]+)\/acknowledge$/)
+  if (acknowledgeMatch && request.method === 'PATCH') {
+    requireCapability(context, 'orders.kitchen.control')
+    assertSameOriginMutation(request)
+    const orderId=decodeURIComponent(acknowledgeMatch[1]),revision=Number(acknowledgeMatch[2])
+    await acknowledgeOperationalOrderEdit(env.DB,context.businessId,orderId,revision,context.userId,now)
+    return json({orderId,revision,acknowledged:true})
   }
   if (url.pathname === '/api/kitchen-tv/control/page' && request.method === 'PATCH') {
     requireCapability(context, 'orders.kitchen.control')

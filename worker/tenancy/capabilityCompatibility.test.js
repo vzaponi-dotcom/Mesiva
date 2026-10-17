@@ -6,7 +6,7 @@ import { commitIdentityStatements } from '../identity/transactions.js'
 import { withBusinessSessionGuard } from './guardedBusinessDb.js'
 import { handleRequest } from '../index.js'
 
-const futureCapability = 'orders.edit'
+const futureCapability = 'orders.future-capability'
 async function setup(t) {
   const f = await createTenancyFixture(t)
   f.sqlite.prepare('INSERT INTO role_capabilities(business_id,role_id,capability) VALUES(?,?,?)')

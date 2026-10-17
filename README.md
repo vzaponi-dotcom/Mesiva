@@ -16,6 +16,8 @@ A sincronização por avisos WebSocket, fallback HTTP e os temporizadores preser
 
 D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O navegador mantém preferências locais, mas não é a autoridade dos dados de negócio. Escritas não são enfileiradas offline.
 
+A edição de pedidos ativos preserva preços históricos, identidade e recebimentos anteriores. Diferenças são conciliadas por saldo complementar ou devolução manual, inclusive em lotes de clientes; Cozinha/TV identificam o pedido editado e a reimpressão é opcional. Consulte [edição de pedidos e saldo](docs/operations/order-editing.md) para regras e estado de homologação da PR #108.
+
 ## Requisitos
 
 - Node.js 22 e npm.

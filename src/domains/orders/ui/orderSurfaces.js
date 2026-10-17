@@ -29,3 +29,13 @@ export function OrderDetail(props) {
   const Component = loadOrderDetail()
   return React.createElement(Component, props)
 }
+
+const loadOrderEditChanges = () => {
+  const modules = import.meta.glob('./components/OrderEditChanges.jsx', { eager: true })
+  return modules['./components/OrderEditChanges.jsx']?.default
+}
+
+export function OrderEditChanges(props) {
+  const Component = loadOrderEditChanges()
+  return React.createElement(Component, props)
+}

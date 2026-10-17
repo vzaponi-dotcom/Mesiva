@@ -46,6 +46,7 @@ const routes = [
   ['GET','/api/orders','orders.view',200,200],
   ['POST','/api/orders','orders.create',400,400],
   ['PATCH','/api/orders/missing/status','orders.finalize',400,400],
+  ['PATCH','/api/orders/missing','orders.edit',400,400],
   ['POST','/api/orders/missing/payment','payments.receive',400,400],
   ['PATCH','/api/orders/missing/payment-promise','finance.promises.manage',403,404],
   ['POST','/api/orders/missing/cancel','orders.cancel',403,400],

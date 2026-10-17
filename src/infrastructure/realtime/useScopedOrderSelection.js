@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react'
+import {getPendingAmount} from '../../../shared/orderPaymentRead.js'
 const LIMIT=100
 export function useScopedOrderSelection({scopeKey,isEligible=()=>true,refreshKey,loadOrdersByIds,onError=()=>{}}={}){
   const [state,setState]=useState({scopeKey,records:[]}),[checking,setChecking]=useState({scopeKey,pending:false})
@@ -42,6 +43,6 @@ export function useScopedOrderSelection({scopeKey,isEligible=()=>true,refreshKey
     return()=>{cancelled=true;controller?.abort()}
   // Page changes validate only explicitly selected IDs; absence in a page is never deletion.
   },[scopeKey,refreshKey,loadOrdersByIds])
-  return {records,ids:records.map(order=>order.id),total:records.reduce((sum,order)=>sum+Math.max(0,Math.round((Number(order.total)||0)*100)),0)/100,
+  return {records,ids:records.map(order=>order.id),total:records.reduce((sum,order)=>sum+Math.round(getPendingAmount(order)*100),0)/100,
     limit:LIMIT,validating:checking.scopeKey===scopeKey&&checking.pending,toggle,selectVisible,clear}
 }

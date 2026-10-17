@@ -62,7 +62,8 @@ export const createOrderPrintDocument = (input = {}) => ({
     totalCents: nonNegativeInteger(input.totalCents),
   },
   payment: {
-    status: input.payment?.status === 'Pago' ? 'Pago' : 'Pendente',
+    status: ['Pago','Parcialmente pago','Devolução pendente'].includes(input.payment?.status)
+      ? input.payment.status : 'Pendente',
     method: String(input.payment?.method || ''),
   },
   message: ORDER_PRINT_THANK_YOU,

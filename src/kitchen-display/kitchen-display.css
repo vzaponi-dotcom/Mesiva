@@ -769,3 +769,5 @@ button { font: inherit; }
 .kds-board[data-layout-profile="focus"][data-layout-columns="2"] .kds-card__timing {
   font-size: clamp(1.5rem, 2vw, 2.2rem);
 }
+
+.kds-card__meta .order-edited-badge { font-size: .72em; padding: 2px 5px; }

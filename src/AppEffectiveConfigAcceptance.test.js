@@ -26,9 +26,9 @@ const bootstrap = {
   orders: [], tables: [], tableTabs: [], effectiveBusinessConfig,
 }
 
-async function mountOperator(t, initialEntries = ['/pedidos/novo'], initialBootstrap = bootstrap) {
+async function mountOperator(t, initialEntries = ['/pedidos/novo'], initialBootstrap = bootstrap, initialSession = session) {
   const h = await workspaceHarness(t)
-  let currentSession = session, currentBootstrap = initialBootstrap, nextBootstrap
+  let currentSession = initialSession, currentBootstrap = initialBootstrap, nextBootstrap
   globalThis.fetch = async path => {
     const pathname = new URL(path, 'https://delivery.test').pathname
     if (pathname === '/api/bootstrap' && nextBootstrap) {
@@ -38,7 +38,7 @@ async function mountOperator(t, initialEntries = ['/pedidos/novo'], initialBoots
     }
     const data = pathname === '/api/auth/session' ? currentSession
       : pathname === '/api/bootstrap' ? currentBootstrap
-      : pathname === '/api/orders' ? { orders: [] }
+      : pathname === '/api/orders' ? { orders: currentBootstrap.orders || [] }
       : pathname === '/api/printing/stations' ? { stations: [] }
       : pathname === '/api/printing/jobs/summary' ? { summary: {} }
       : pathname === '/api/printing/jobs' ? { jobs: [] } : null
@@ -62,6 +62,28 @@ const selectClient = async renderer => {
   await act(async () => renderer.root.findByProps({ 'aria-label': 'Cliente' }).props.onFocus())
   await act(async () => buttonNamed(renderer.root, 'Ana').props.onClick())
 }
+
+test('opening a paid order editor from the App preserves identity and the official received balance',async t=>{
+ const at=new Date().toISOString()
+ const order={id:'paid-edit',orderNumber:27,clientId:'client',client:'Ana',type:'Retirada',status:'Em preparo',
+  orderDate:at.slice(0,10),createdAt:at,subtotal:30,total:30,totalCents:3000,contentRevision:0,
+  paymentId:'payment',paymentStatus:'Pago',netReceivedCents:3000,grossReceivedCents:3000,dueCents:0,refundDueCents:0,
+  items:[{id:'line',productId:'prod',name:'Suco',category:'Bebidas',size:'Un',quantity:1,unitPrice:30,catalogPrice:30,note:''}]}
+ const {renderer}=await mountOperator(t,['/pedidos'],{...bootstrap,orders:[order],products:[{id:'prod',name:'Suco',category:'Bebidas',size:'Un',price:30}]},{...session,capabilities:[...session.capabilities,'orders.edit','payments.refund']})
+ await act(async()=>renderer.root.findAllByType('button').find(node=>node.props['aria-label']==='Exibir detalhes').props.onClick())
+ await act(async()=>buttonNamed(renderer.root,'Editar pedido').props.onClick())
+ assert.match(nodeText(renderer.root),/Editar pedido #27/)
+ await act(async()=>buttonNamed(renderer.root,'Adicionar mais uma unidade de Suco').props.onClick())
+ const next=renderer.root.findAllByType('button').find(node=>nodeText(node).includes('Revisar pedido'))
+ assert.ok(next)
+ await act(async()=>next.props.onClick())
+ const summary=renderer.root.findByProps({'aria-label':'Resumo financeiro da edição'})
+ for(const label of ['Total anterior','Recebido líquido','Saldo a receber']){
+  const row=summary.findAllByType('div').find(node=>nodeText(node).startsWith(label))
+  assert.match(nodeText(row),/30,00/,label)
+ }
+ assert.equal(buttonNamed(renderer.root,'Salvar e receber').props.disabled,false)
+})
 
 test('fresh and reloaded Operator new-order deep links initialize the confirmed default and pristine draft baseline', async t => {
   const { h, App, renderer, router } = await mountOperator(t)

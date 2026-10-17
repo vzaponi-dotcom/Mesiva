@@ -22,9 +22,10 @@ test('NavigationProvider expõe só navegação e possui um listener app:navigat
   })
   assert.deepEqual(Object.keys(seen.current).sort(), [
     'activeMobileEntry', 'activeTab', 'authenticated', 'closeMore', 'granted', 'implemented',
-    'moreOpen', 'openMore', 'requestNavigation',
+    'moreOpen', 'navigationBadges', 'openMore', 'requestNavigation',
   ].sort())
   assert.equal(seen.current.authenticated, true)
+  assert.deepEqual(seen.current.navigationBadges, {})
   assert.equal(h.activitySnapshot({ ignoreFocus: true }).listeners, before + 1)
   await act(async () => h.window.dispatchEvent(Object.assign(new Event('app:navigate'), { detail: 'clients' })))
   await act(async () => h.window.dispatchEvent(Object.assign(new Event('app:navigate'), { detail: { id: 'clients' } })))

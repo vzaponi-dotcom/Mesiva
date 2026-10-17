@@ -16,6 +16,7 @@ import {readOrderHeaders,readHeaderItems} from './orderHeaders.js'
 import {parseReadLimit,rankPage,readEnum,readSearch,readCalendarDate} from './query.js'
 const orderRules={isOrderCancelled:order=>order.status==='Cancelado',isOrderPaid,getPendingAmount}
 const compactGroup=group=>{const {entries:_,orders:__,...metadata}=group;return metadata}
+const refundAmount=order=>Math.max(0,Number(order.status==='Cancelado'?order.netReceivedCents:order.refundDueCents)||0)/100
 export async function readReceivables(db,businessId,{granted,now=new Date(),...input}={}){
   const view=readEnum(input.view,['pending','paid','refunds'],'pending')
   if(view==='refunds')requireAnyCapability({granted},['finance.movements','finance.movements.manage'])
@@ -34,7 +35,7 @@ export async function readReceivables(db,businessId,{granted,now=new Date(),...i
   if(view==='pending')entries=receivables.sortReceivableEntries(receivables.buildPendingReceivableEntries(headers,today,orderRules).filter(e=>matches(e.order)&&(timing==='all'||e.timing.status===timing)&&(!exactDateFilter||e.expectedDate===exactDateFilter)),sort)
   else{
     const candidates=view==='paid'?receivables.getPaidReceivableOrders(headers,orderRules):headers
-    entries=candidates.filter(matches).sort((a,b)=>String(b.paidAt || '').localeCompare(String(a.paidAt || ''))).map(order=>({key:`${view==='paid'?'paid':'refund'}:${order.id}`,kind:'order',order,orders:[order],label:order.client || 'Pedido sem identificação',total:Number(order.total || 0),timing:{status:view==='paid'?'paid':'refund',daysOverdue:0}}))
+    entries=candidates.filter(matches).sort((a,b)=>String(b.paidAt || '').localeCompare(String(a.paidAt || ''))).map(order=>({key:`${view==='paid'?'paid':'refund'}:${order.id}`,kind:'order',order,orders:[order],label:order.client || 'Pedido sem identificação',total:view==='refunds'?refundAmount(order):Number(order.total || 0),timing:{status:view==='paid'?'paid':'refund',daysOverdue:0}}))
   }
   const groups=receivables.sortReceivableGroups(receivables.groupReceivableEntriesByClient(entries),sort)
   const group=groupKey?groups.find(g=>g.key===groupKey):null
@@ -48,7 +49,7 @@ export async function readReceivables(db,businessId,{granted,now=new Date(),...i
   const official=new Map(projectOrderList(await listOrdersByIds(db,businessId,page.map(e=>e.order.id)),granted).map(o=>[o.id,o]))
   const finalEntries=page.filter(entry=>{
     const order=official.get(entry.order.id)
-    return order && (view==='pending'?receivables.buildPendingReceivableEntries([order],today,orderRules).length===1: view==='paid'?order.status!=='Cancelado'&&isOrderPaid(order):order.status==='Cancelado'&&isOrderPaid(order)&&!order.refundMovementId)
+    return order && (view==='pending'?receivables.buildPendingReceivableEntries([order],today,orderRules).length===1: view==='paid'?order.status!=='Cancelado'&&isOrderPaid(order):refundAmount(order)>0)
   }).map(entry=>({...entry,order:official.get(entry.order.id),orders:[official.get(entry.order.id)]}))
   return {entries:finalEntries,orders:finalEntries.map(e=>e.order),groups:[],group:group?compactGroup(group):null,summary,forecast,receivedToday,queryKey,nextCursor,completeWithinScope:false,matchingCount:entries.length,matchingGroupCount:groups.length}
 }

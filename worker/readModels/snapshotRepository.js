@@ -5,6 +5,7 @@ import {listTables} from '../tableRepository.js'
 import {projectBootstrap} from '../access/projections.js'
 import {loadFinanceSettings} from '../financeRepository.js'
 import {requireReadSurface} from './query.js'
+import {listFinancialCandidateIds} from './financialCandidates.js'
 const rows=result=>Array.isArray(result?.results)?result.results:[]
 export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted=new Set(),effectiveBusinessConfig,currentTiming=effectiveBusinessConfig?.operations?.timing,now=new Date()}={}){
   requireReadSurface(granted,surface)
@@ -17,6 +18,7 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
   const operationalOrders=granted.has('orders.view')?rows(await db.prepare("SELECT id,status,created_at,scheduled_for FROM orders WHERE business_id=? AND status IN ('Em preparo','Agendado') ORDER BY created_at DESC,id DESC").bind(businessId).all()).map(row=>({id:row.id,status:row.status,createdAt:row.created_at,scheduledFor:row.scheduled_for ?? null})):[]
   const openTableTabIds=granted.has('comandas.view')?rows(await db.prepare("SELECT id FROM table_tabs WHERE business_id=? AND status='open' ORDER BY id").bind(businessId).all()).map(row=>row.id):[]
   const counters={orders:getOperationalOrderCount(operationalOrders,now,currentTiming),comandas:openTableTabIds.length}
+  if(granted.has('finance.movements'))counters.refunds=(await listFinancialCandidateIds(db,businessId,{kind:'refund',granted})).length
   const tableScope=['new-order','tables','comandas'].includes(surface)
   if(tableScope && granted.has('tables.view'))payload.tables=await listTables(db,businessId)
   if(tableScope && granted.has('comandas.view')){

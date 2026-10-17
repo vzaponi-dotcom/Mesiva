@@ -12,7 +12,12 @@ import NewOrderStepIndicator from './components/NewOrderStepIndicator'
 import PageHeader from '../../../shared/ui/PageHeader'
 import {
   addCartItem,
+  addEditCartItem,
+  buildOrderEditPayload,
   buildOrderPayload,
+  commitEditCartItemNote,
+  decrementEditCartProduct,
+  updateEditCartItem,
   calculateOrderPreview,
   commitCartItemNote,
   decrementCartProduct,
@@ -56,6 +61,7 @@ function NewOrder({
   tables = [],
   mode = 'create',
   reservationContext = null,
+  orderContext = null,
   initialDraft = null,
   initialType = 'Entrega',
   initialTableId = '',
@@ -65,6 +71,8 @@ function NewOrder({
   canCreateClients = true,
   canAdjustOrders = true,
   canBackdateOrders = true,
+  canReceivePayments = false,
+  canRefundPayments = false,
   renderPaymentComposition,
   modalityOptions,
   defaultModality,
@@ -75,6 +83,7 @@ function NewOrder({
   onDraftDirtyChange,
 }) {
   const editReservationMode = mode === 'edit-reservation'
+  const editOrderMode = mode === 'edit-order'
   const activeModalityOptions = editReservationMode
     ? ORDER_TYPE_OPTIONS.filter((option) => option.value === 'Local')
     : (modalityOptions === undefined ? ORDER_TYPE_OPTIONS : modalityOptions)
@@ -84,7 +93,7 @@ function NewOrder({
     : activeModalityValues.has(initialType)
       ? initialType
       : activeModalityOptions[0]?.value || (modalityOptions === undefined ? initialType : '')
-  const initialStep = editReservationMode ? NEW_ORDER_STEPS.CUSTOMER : (initialTableId ? NEW_ORDER_STEPS.PRODUCTS : NEW_ORDER_STEPS.CUSTOMER)
+  const initialStep = editOrderMode ? NEW_ORDER_STEPS.PRODUCTS : editReservationMode ? NEW_ORDER_STEPS.CUSTOMER : (initialTableId ? NEW_ORDER_STEPS.PRODUCTS : NEW_ORDER_STEPS.CUSTOMER)
   const [currentStep, setCurrentStep] = useState(initialStep)
   const [maxReachedStep, setMaxReachedStep] = useState(initialStep)
   const initialClientId = initialDraft?.clientId || ''
@@ -167,7 +176,7 @@ function NewOrder({
     ? { type: 'table', tableId: selectedTableId, ...(localClientId ? { clientId: localClientId } : {}) }
     : { type: 'registered_client', clientId }
   const identityValidation = validateCustomerIdentity(type, customerIdentity)
-  const modalityNeedsReview = !activeModalityValues.has(type)
+  const modalityNeedsReview = !editOrderMode && !activeModalityValues.has(type)
   const selectedModalityOption = ORDER_TYPE_OPTIONS.find((option) => option.value === type)
     || { value: type, label: type }
   const visibleModalityOptions = modalityNeedsReview && type
@@ -224,10 +233,14 @@ function NewOrder({
   const itemsSubtotal = getOrderItemsSubtotal(items)
   const selectedClient = clients.find((client) => client.id === clientId) ?? null
   const selectedLocalClient = clients.find((client) => client.id === localClientId) ?? null
-  const customerSummary = type === 'Local'
+  const customerSummary = editOrderMode ? (orderContext?.customerLabel || initialDraft?.customerLabel || 'Cliente') : type === 'Local'
     ? `${selectedTable?.name || 'Mesa'}${selectedLocalClient?.name ? ` · ${selectedLocalClient.name}` : ''}`
     : `${selectedClient?.name || 'Cliente'} · ${type}`
-  const stepAccess = getNewOrderStepAccess({
+  const stepAccess = editOrderMode ? {
+    [NEW_ORDER_STEPS.CUSTOMER]: false,
+    [NEW_ORDER_STEPS.PRODUCTS]: true,
+    [NEW_ORDER_STEPS.REVIEW]: itemCount > 0,
+  } : getNewOrderStepAccess({
     identityValid: identityValidation.ok,
     orderDate,
     itemCount,
@@ -237,6 +250,7 @@ function NewOrder({
   const canContinueCustomer = stepAccess.products && !modalityNeedsReview
 
   const navigateStep = (targetStep) => {
+    if (editOrderMode && targetStep === NEW_ORDER_STEPS.CUSTOMER) return
     if (!canNavigateToNewOrderStep({
       targetStep,
       currentStep,
@@ -397,7 +411,7 @@ function NewOrder({
     updateQuickClient(patch.phone === undefined ? patch : { ...patch, phone: formatPhone(patch.phone) })
   }
 
-  const save = async (paymentAllocations, bypassManualPrintWarning = false) => {
+  const save = async (paymentAllocations, bypassManualPrintWarning = false, intent = 'save') => {
     if (disabled || !canSubmit) return false
     if (editReservationMode
       && reservationContext?.hasManualPrintHistory
@@ -407,7 +421,9 @@ function NewOrder({
     }
 
     setCheckoutError('')
-    const result = await onSubmit(buildOrderPayload(numericDraft, paymentAllocations))
+    const result = editOrderMode
+      ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
+      : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations))
     if (result?.code === 'POLICY_CHANGED') {
       setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
       await onPolicyChanged?.()
@@ -430,9 +446,9 @@ function NewOrder({
 
   const cartProps = {
     items, currency, disabled,
-    onUpdate: (lineId, patch) => setItems((current) => updateCartItem(current, lineId, patch)),
+    onUpdate: (lineId, patch) => setItems((current) => editOrderMode ? updateEditCartItem(current,lineId,patch) : updateCartItem(current,lineId,patch)),
     onNoteChange: (lineId, note) => setItems((current) => editCartItemNote(current, lineId, note)),
-    onNoteCommit: (lineId) => setItems((current) => commitCartItemNote(current, lineId)),
+    onNoteCommit: (lineId) => setItems((current) => editOrderMode ? commitEditCartItemNote(current,lineId) : commitCartItemNote(current,lineId)),
     onRemove: (lineId) => setItems((current) => removeCartItem(current, lineId)),
   }
   const contextProps = { displayName: type === 'Local' ? customerSummary : selectedClient?.name || 'A definir', type, orderDate, scheduledFor: scheduleMode === 'scheduled' && scheduleValid ? draft.scheduledFor : null }
@@ -441,12 +457,12 @@ function NewOrder({
     <div className="new-order-refined">
       <PageHeader
         eyebrow="Do atendimento ao pedido"
-        title={editReservationMode ? 'Editar reserva' : 'Nova venda'}
-        description={editReservationMode
+        title={editOrderMode ? `Editar pedido #${orderContext?.orderNumber || ''}` : editReservationMode ? 'Editar reserva' : 'Nova venda'}
+        description={editOrderMode ? 'Revise os itens sem alterar o atendimento original.' : editReservationMode
           ? `Atualize a reserva${reservationContext?.orderNumber ? ` do pedido #${reservationContext.orderNumber}` : ''} e revise antes de salvar.`
           : 'Um pedido bem organizado começa aqui.'}
         actions={<Button type="button" variant="secondary" onClick={onCancel} disabled={disabled}>
-          {editReservationMode ? 'Cancelar edição' : 'Cancelar venda'}
+          {editReservationMode || editOrderMode ? 'Cancelar edição' : 'Cancelar venda'}
         </Button>}
       />
 
@@ -473,7 +489,7 @@ function NewOrder({
       )}
 
       {checkoutError && <div className="new-order-error" role="alert">{checkoutError}</div>}
-      {!orderDateAllowed && <div className="new-order-error" role="alert">Selecione uma data de hoje ou futura para continuar.</div>}
+      {!editOrderMode && !orderDateAllowed && <div className="new-order-error" role="alert">Selecione uma data de hoje ou futura para continuar.</div>}
       {(policyReviewError || modalityNeedsReview) && (
         <div className="new-order-error" role="alert">
           {policyReviewError || (!type
@@ -553,9 +569,10 @@ function NewOrder({
             subtotal={itemsSubtotal}
             cartProps={cartProps}
             contextProps={contextProps}
-            onAdd={(product) => setItems((current) => addCartItem(current, product, ''))}
-            onDecrease={(productId) => setItems((current) => decrementCartProduct(current, productId))}
-            onBack={() => navigateStep(NEW_ORDER_STEPS.CUSTOMER)}
+            editOrderMode={editOrderMode}
+            onAdd={(product) => setItems((current) => editOrderMode ? addEditCartItem(current,product) : addCartItem(current,product,''))}
+            onDecrease={(productId) => setItems((current) => editOrderMode ? decrementEditCartProduct(current,productId) : decrementCartProduct(current,productId))}
+            onBack={editOrderMode ? undefined : () => navigateStep(NEW_ORDER_STEPS.CUSTOMER)}
             onReview={() => navigateStep(NEW_ORDER_STEPS.REVIEW)}
           />
         )}
@@ -563,19 +580,20 @@ function NewOrder({
         {currentStep === NEW_ORDER_STEPS.REVIEW && (
           <NewOrderReviewStep
             contextProps={contextProps}
-            onEditCustomer={() => navigateStep(NEW_ORDER_STEPS.CUSTOMER)}
+            onEditCustomer={editOrderMode ? undefined : () => navigateStep(NEW_ORDER_STEPS.CUSTOMER)}
             customerSummary={customerSummary}
             itemCount={itemCount}
             disabled={disabled}
             canAdjustOrders={canAdjustOrders}
+            editOrderMode={editOrderMode}
             onBack={() => navigateStep(NEW_ORDER_STEPS.PRODUCTS)}
             cartProps={{
               items,
               currency,
               disabled,
-              onUpdate: (lineId, patch) => setItems((current) => updateCartItem(current, lineId, patch)),
+              onUpdate: (lineId, patch) => setItems((current) => editOrderMode ? updateEditCartItem(current,lineId,patch) : updateCartItem(current,lineId,patch)),
               onNoteChange: (lineId, note) => setItems((current) => editCartItemNote(current, lineId, note)),
-              onNoteCommit: (lineId) => setItems((current) => commitCartItemNote(current, lineId)),
+              onNoteCommit: (lineId) => setItems((current) => editOrderMode ? commitEditCartItemNote(current,lineId) : commitCartItemNote(current,lineId)),
               onRemove: (lineId) => setItems((current) => removeCartItem(current, lineId)),
             }}
             checkoutProps={{
@@ -586,9 +604,14 @@ function NewOrder({
               canSubmit,
               onDeliveryFeeChange: setDeliveryFee,
               onAdjustmentChange: handleAdjustmentChange,
+              editOrderMode,
+              orderContext,
+              canReceivePayments,
+              canRefundPayments,
               onSavePending: () => save(),
-              onSavePaid: (paymentAllocations) => save(paymentAllocations),
-               allowImmediatePayment: type !== 'Local',
+              onSavePaid: (paymentAllocations) => editOrderMode ? save(undefined, false, 'receive') : save(paymentAllocations),
+              onSaveRefund: () => save(undefined, false, 'refund'),
+               allowImmediatePayment: !editOrderMode && type !== 'Local',
                renderPaymentComposition,
              }}
           />

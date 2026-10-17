@@ -7,6 +7,8 @@ export const isOrderFinished = (order) => TERMINAL_STATUSES.has(order?.status)
 export const isOrderActive = (order) => !isOrderFinished(order)
 
 export const getOrderRefundState = (order) => {
+  if(isOrderCancelled(order) && Number.isSafeInteger(order?.netReceivedCents))
+    return order.netReceivedCents>0 ? 'pending' : order.paymentId ? 'refunded' : 'none'
   if (!isOrderCancelled(order) || order?.paymentStatus !== 'Pago') return 'none'
   if (order?.refundState === 'refunded' || order?.refundedAt || order?.refundMovementId) return 'refunded'
   return 'pending'

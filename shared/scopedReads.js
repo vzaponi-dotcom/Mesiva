@@ -23,7 +23,7 @@ export function getScopedOperationalState(payload){
   const descriptor=payload.readModel,counters=descriptor.counters || {orders:0,comandas:0}
   const orders=descriptor.operationalOrders || [],tabs=descriptor.openTableTabIds ?? null
   const validId=value=>typeof value==='string'&&value.length>0&&value.length<=256
-  if(![counters.orders,counters.comandas].every(value=>Number.isSafeInteger(value)&&value>=0)
+  if(![counters.orders,counters.comandas,...(counters.refunds===undefined?[]:[counters.refunds])].every(value=>Number.isSafeInteger(value)&&value>=0)
     || !Array.isArray(orders) || new Set(orders.map(order=>order?.id)).size!==orders.length
     || orders.some(order=>!validId(order?.id)||!['Em preparo','Agendado'].includes(order.status)
       || order.createdAt!==undefined&&typeof order.createdAt!=='string' || order.scheduledFor!==undefined&&order.scheduledFor!==null&&typeof order.scheduledFor!=='string')

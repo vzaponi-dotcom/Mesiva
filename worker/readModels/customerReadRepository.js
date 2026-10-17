@@ -8,6 +8,7 @@ import {sha256Hex} from '../auth.js'
 import {buildClientRelationships,filterAndSortClients} from '../../shared/customerReadRules.js'
 import {readOrderHeaders,readHeaderItems} from './orderHeaders.js'
 import {parseReadLimit,rankPage,readEnum,readSearch} from './query.js'
+import {getPendingAmount} from '../../shared/orderPaymentRead.js'
 const withoutOrders=profile=>{const {orders:_,...summary}=profile;return summary}
 const completeHistory=granted=>granted.has('orders.view')&&granted.has('orders.history')
 export async function readCustomers(db,businessId,{granted,now=new Date(),...input}={}){
@@ -33,7 +34,7 @@ export async function readCustomerRelationship(db,businessId,id,{granted,now=new
     const purchases=await readHeaderItems(db,businessId,profile.orders.filter(order=>order.status!=='Cancelado'))
     profile={...profile,favorites:buildClientRelationships([client],purchases,{now}).get(id).favorites}
   }
-  const eligible=order=>filter==='pending'?order.paymentStatus!=='Pago'&&order.status!=='Cancelado':filter==='finished'?order.status==='Finalizado':filter==='cancelled'?order.status==='Cancelado':true
+  const eligible=order=>filter==='pending'?getPendingAmount(order)>0&&order.status!=='Cancelado':filter==='finished'?order.status==='Finalizado':filter==='cancelled'?order.status==='Cancelado':true
   const selected=profile.orders.filter(eligible)
   const queryKey=await sha256Hex(JSON.stringify([businessId,'client',id,filter,[...granted].sort()]))
   const {page,nextCursor}=rankPage(selected,{queryKey,cursor:input.cursor,limit:parseReadLimit(input.limit)})

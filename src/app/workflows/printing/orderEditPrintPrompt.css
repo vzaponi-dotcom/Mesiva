@@ -1,0 +1,90 @@
+
+.order-edit-print-modal {
+  width: min(470px, calc(100vw - 24px));
+  background: var(--surface);
+}
+.order-edit-print-modal .modal-header {
+  padding: 17px 20px;
+}
+.order-edit-print-modal .modal-header h2 {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+.order-edit-print-modal .modal-body {
+  padding: 20px;
+}
+.order-edit-print-layout {
+  display: grid;
+  gap: 17px;
+}
+.order-edit-print-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--text);
+}
+.order-edit-print-check {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  color: var(--success);
+  background: var(--success-soft);
+}
+.order-edit-print-message strong {
+  display: block;
+  font-size: .95rem;
+  line-height: 1.35;
+}
+.order-edit-print-message p {
+  margin: 5px 0 0;
+  font-size: .875rem;
+  line-height: 1.48;
+}
+.order-edit-print-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  font-size: .79rem;
+  line-height: 1.4;
+}
+.order-edit-print-hint svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.order-edit-print-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.order-edit-print-actions .button {
+  min-height: 44px;
+  white-space: normal;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .order-edit-print-modal .modal-header {
+    padding: 15px 16px;
+  }
+  .order-edit-print-modal .modal-body {
+    padding: 17px 16px;
+  }
+  .order-edit-print-layout {
+    gap: 14px;
+  }
+  .order-edit-print-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .order-edit-print-actions .button {
+    width: 100%;
+  }
+}

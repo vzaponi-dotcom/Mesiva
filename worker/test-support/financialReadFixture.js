@@ -15,7 +15,8 @@ export async function financialReadFixture(t,count=115){
 }
 export function pay(sqlite,orderId){
   const at=now.toISOString(),receipt='receipt-'+orderId
-  sqlite.prepare('INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES(?,?,1000,?,?)').run(receipt,businessId,at,at)
-  sqlite.prepare("INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES(?,?,?,'Pix',1000,?)").run('allocation-'+orderId,businessId,receipt,at)
-  sqlite.prepare('INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES(?,?,?,?,1000,?,?)').run('payment-'+orderId,businessId,orderId,receipt,at,at)
+  const total=sqlite.prepare('SELECT total_cents FROM orders WHERE business_id=? AND id=?').get(businessId,orderId).total_cents
+  sqlite.prepare('INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES(?,?,?,?,?)').run(receipt,businessId,total,at,at)
+  sqlite.prepare("INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES(?,?,?,'Pix',?,?)").run('allocation-'+orderId,businessId,receipt,total,at)
+  sqlite.prepare('INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES(?,?,?,?,?,?,?)').run('payment-'+orderId,businessId,orderId,receipt,total,at,at)
 }

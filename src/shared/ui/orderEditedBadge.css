@@ -1,0 +1,19 @@
+.status-badge.order-edited-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+  border-radius: var(--badge-radius);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: .7rem;
+  font-weight: var(--badge-font-weight);
+  line-height: 1.25;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.order-edited-badge svg { flex: 0 0 auto; }

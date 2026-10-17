@@ -38,7 +38,16 @@ class D1Sqlite {
         note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
       );
       CREATE TABLE payments (
-        id TEXT PRIMARY KEY, business_id TEXT NOT NULL, order_id TEXT NOT NULL, method TEXT NOT NULL, paid_at TEXT NOT NULL
+        id TEXT PRIMARY KEY, business_id TEXT NOT NULL, order_id TEXT NOT NULL, method TEXT NOT NULL, paid_at TEXT NOT NULL,
+        amount_cents INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE order_settlement_entries (
+        id TEXT PRIMARY KEY, business_id TEXT, order_id TEXT, kind TEXT,
+        amount_cents INTEGER, receipt_id TEXT, movement_id TEXT
+      );
+      CREATE TABLE movements (
+        id TEXT PRIMARY KEY, business_id TEXT, order_id TEXT, source TEXT, type TEXT,
+        value_cents INTEGER, deleted_at TEXT
       );
       CREATE TABLE table_tabs (id TEXT PRIMARY KEY, business_id TEXT NOT NULL, table_identifier TEXT NOT NULL);
       CREATE TABLE tables (
@@ -127,7 +136,8 @@ test('reprint API creates a linked pending manual job from the current official 
   assert.equal(created.status, 201)
   const original = (await created.json()).job
   env.DB.sqlite.prepare("UPDATE print_jobs SET status = 'printed', copies_printed = 1, processed_at = ? WHERE id = ?")
-    .run('2026-09-08T19:01:00.000Z', original.id)
+    // A printed job should remain within the queue's 30-day retention window.
+    .run(new Date().toISOString(), original.id)
   const countBefore = env.DB.sqlite.prepare('SELECT count(*) AS count FROM print_jobs').get().count
 
   env.DB.sqlite.prepare(`UPDATE orders SET client_name_snapshot = ?, client_address_snapshot = ?

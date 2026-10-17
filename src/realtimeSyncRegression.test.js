@@ -14,7 +14,8 @@ test('operation indicators use domain selectors without new network or polling l
   assert.match(app, /getOperationalOrderCount/)
   assert.match(app, /getOpenComandaCount/)
   assert.match(app, /businessId={sessionContext\?\.businessId/)
-  assert.match(app, /navigationBadges={{\s*orders:/)
+  assert.match(app, /const navigationBadges = \{\s*orders:/)
+  assert.match(app, /navigationBadges=\{navigationBadges\}/)
   assert.match(app, /currentTiming={currentTiming}/)
   for (const path of ['./app/shell/AppTopBar.jsx', './app/shell/navigationBadges.js', './domains/table-service/domain/comandaActivity.js']) {
     const source = await read(path)

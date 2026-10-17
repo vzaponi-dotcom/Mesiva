@@ -36,7 +36,7 @@ export function buildClientRelationships(clients, orders, { now = new Date() } =
     const history = [...(grouped.get(client.id) || [])].sort((a, b) => clientOrderDate(b).localeCompare(clientOrderDate(a)) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
     const purchases = history.filter(order => order.status !== 'Cancelado')
     const totalCents = purchases.reduce((sum, order) => sum + cents(order.total), 0)
-    const pendingCents = purchases.reduce((sum, order) => sum + (order.paymentStatus === 'Pago' ? 0 : cents(order.total)), 0)
+    const pendingCents = purchases.reduce((sum, order) => sum + (Number.isSafeInteger(order.dueCents) ? Math.max(0,order.dueCents) : order.paymentStatus === 'Pago' ? 0 : cents(order.total)), 0)
     const lastPurchase = purchases.map(clientOrderDate).filter(Boolean).sort().at(-1) || null
     const daysSincePurchase = lastPurchase ? Math.max(0, Math.round((Date.parse(businessDate(now)) - Date.parse(lastPurchase)) / 86400000)) : null
     const purchaseDates = purchases.map(clientOrderDate).filter(Boolean)

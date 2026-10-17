@@ -1,7 +1,7 @@
 import { APPLICATION_CAPABILITIES } from '../../shared/settingsAccess.js'
 
 const OPERATOR_CAPABILITIES = Object.freeze([
-  'orders.view', 'orders.history', 'orders.create', 'orders.finalize', 'orders.discount', 'comandas.view',
+  'orders.view', 'orders.history', 'orders.create', 'orders.edit', 'orders.finalize', 'orders.discount', 'comandas.view',
   'payments.receive', 'clients.view', 'clients.create', 'clients.update', 'products.view',
   'tables.view', 'printing.queue', 'printing.execute', 'printing.station.view', 'preferences.local',
 ])

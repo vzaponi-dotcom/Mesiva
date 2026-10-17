@@ -2,12 +2,14 @@ import { useCallback, useRef, useState } from 'react'
 import {
   createNewOrderDraftController,
   createReservationEditDraftContext,
+  createOrderEditDraftContext,
 } from './newOrderDraft.js'
 
 export function useNewOrderDraft({
   getAccessOwner = () => null,
   submitOrder,
   submitReservationEdit,
+  submitOrderEdit,
   refreshReservation,
   canSubmit,
   commitOfficialEffects,
@@ -26,6 +28,7 @@ export function useNewOrderDraft({
   accessOwnerRef.current = getAccessOwner
   const submitOrderRef = useRef(submitOrder)
   const submitReservationEditRef = useRef(submitReservationEdit)
+  const submitOrderEditRef = useRef(submitOrderEdit)
   const refreshReservationRef = useRef(refreshReservation)
   const canSubmitRef = useRef(canSubmit)
   const commitOfficialEffectsRef = useRef(commitOfficialEffects)
@@ -36,6 +39,7 @@ export function useNewOrderDraft({
 
   submitOrderRef.current = submitOrder
   submitReservationEditRef.current = submitReservationEdit
+  submitOrderEditRef.current = submitOrderEdit
   refreshReservationRef.current = refreshReservation
   canSubmitRef.current = canSubmit
   commitOfficialEffectsRef.current = commitOfficialEffects
@@ -68,6 +72,11 @@ export function useNewOrderDraft({
     return open(context)
   }, [open])
 
+  const openOrderEdit = useCallback((order, options) => {
+    const context=createOrderEditDraftContext(order,options)
+    return context ? open(context) : null
+  },[open])
+
   const discard = useCallback(() => {
     clearPending()
     const next = controllerRef.current.discard()
@@ -88,16 +97,18 @@ export function useNewOrderDraft({
     return next
   }, [clearPending])
 
-  const submit = useCallback(async (payload) => {
+  const submit = useCallback(async (payload, { intent = 'save' } = {}) => {
     const accessOwner = accessOwnerRef.current()
     const token = controllerRef.current.beginSubmit()
     const ownsSubmit = () => accessOwner === accessOwnerRef.current() && controllerRef.current.isCurrent(token)
     if (!token || pendingRef.current || !canSubmitRef.current(payload, token.context)) return false
 
     const editMode = token.context.mode === 'edit-reservation'
+    const editOrderMode = token.context.mode === 'edit-order'
     const reservationContext = token.context.reservationContext
     if (editMode && (!reservationContext?.id || !submitReservationEditRef.current)) return false
-    if (!editMode && !submitOrderRef.current) return false
+    if (editOrderMode && (!token.context.orderContext?.id || !submitOrderEditRef.current)) return false
+    if (!editMode && !editOrderMode && !submitOrderRef.current) return false
 
     pendingRef.current = true
     setCheckoutPending(true)
@@ -107,13 +118,18 @@ export function useNewOrderDraft({
             reservationContext.id,
             { ...payload, expectedRevision: reservationContext.expectedRevision },
           )
-        : await submitOrderRef.current(payload, token.idempotencyKey)
+        : editOrderMode
+          ? await submitOrderEditRef.current(token.context.orderContext.id,{
+              ...payload,mutationId:token.idempotencyKey,
+              expectedContentRevision:token.context.orderContext.expectedContentRevision,
+            })
+          : await submitOrderRef.current(payload, token.idempotencyKey)
 
       if (!ownsSubmit()) return false
       if (commitOfficialEffectsRef.current(result) === false) return false
-      await onCommittedRef.current(result, token.context)
+      await onCommittedRef.current(result, token.context, intent)
       if (!ownsSubmit()) return false
-      onSuccessRef.current(result.order, token.context)
+      onSuccessRef.current(result.order, token.context, intent)
       pendingRef.current = false
       setCheckoutPending(false)
       controllerRef.current.complete(token)
@@ -129,12 +145,15 @@ export function useNewOrderDraft({
 
       const retryableCreateConflict = error?.status === 409
         && !editMode
+        && !editOrderMode
         && !token.context.expectedTableTabId
         && payload?.type === 'Local'
         && Boolean(payload?.scheduledFor)
 
       if (error?.status === 409) {
-        if (editMode && refreshReservationRef.current) {
+        if (editOrderMode) {
+          await onConflictRef.current?.(token.context,error)
+        } else if (editMode && refreshReservationRef.current) {
           const refreshed = await refreshReservationRef.current(reservationContext.id)
           if (accessOwner !== accessOwnerRef.current()) return false
           if (ownsSubmit() && refreshed) {
@@ -154,7 +173,7 @@ export function useNewOrderDraft({
         }
       }
 
-      if (accessOwner === accessOwnerRef.current() && (ownsSubmit() || editMode)) onErrorRef.current(error)
+      if (accessOwner === accessOwnerRef.current() && (ownsSubmit() || editMode || editOrderMode)) onErrorRef.current(error)
       if (retryableCreateConflict) {
         return {
           ok: false,
@@ -167,7 +186,7 @@ export function useNewOrderDraft({
       if (ownsSubmit()) {
         pendingRef.current = false
         setCheckoutPending(false)
-      } else if (editMode && accessOwner === accessOwnerRef.current()) {
+      } else if ((editMode || editOrderMode) && accessOwner === accessOwnerRef.current()) {
         pendingRef.current = false
         setCheckoutPending(false)
       }
@@ -181,6 +200,7 @@ export function useNewOrderDraft({
     checkoutPending,
     open,
     openReservationEdit,
+    openOrderEdit,
     discard,
     setDirty,
     submit,

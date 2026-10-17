@@ -22,7 +22,44 @@ const cloneItems = (items = []) => items.map((item, index) => ({
   unitPrice: Number(item.unitPrice || 0),
   quantity: Math.max(1, Number(item.quantity) || 1),
   note: item.note || '',
+  ...(Object.hasOwn(item,'persistedItemId') ? { persistedItemId: item.persistedItemId } : {}),
 }))
+
+export const createOrderEditDraftContext = (order, {returnDestination='orders'}={}) => {
+  if (!order?.id || order.status !== 'Em preparo' || order.tableReservationStatus === 'reserved') return null
+  return {
+    mode:'edit-order', returnDestination, tableId:'', expectedTableTabId:'',
+    orderContext:{
+      id:order.id,orderNumber:Number(order.orderNumber),
+      expectedContentRevision:Number(order.contentRevision || 0),
+      originalTotal:Number(order.total || 0),
+      totalCents:Number.isSafeInteger(order.totalCents) ? order.totalCents : Math.round(Number(order.total || 0)*100),
+      netReceivedCents:Number.isSafeInteger(order.netReceivedCents) ? order.netReceivedCents : Math.round(Number(order.paidAmount || 0)*100),
+      paid:Boolean(order.paymentId),
+      paymentId:order.paymentId || null,
+      tableTabId:order.tableTabId || null,
+      customerLabel:order.client || 'Cliente',
+    },
+    initialDraft:{
+      clientId:order.clientId || '', localClientId:order.clientId || '',
+      selectedTableId:'', customerLabel:order.client || 'Cliente',
+      type:order.type, orderDate:order.orderDate || '',
+      scheduleMode:order.scheduledFor ? 'scheduled' : 'now',
+      scheduledTime:order.scheduledFor ? formatScheduledTime(order.scheduledFor) : '',
+      items:(order.items || []).map(item=>({
+        lineId:item.id,persistedItemId:item.id,productId:item.productId,
+        name:item.name,category:item.category || '',size:item.size || '',
+        unitPrice:Number(item.unitPrice || 0),quantity:Math.max(1,Number(item.quantity) || 1),
+        note:item.note || '',
+      })),
+      deliveryFee:Number(order.deliveryFee || 0),
+      adjustment:{
+        type:order.adjustment?.type || 'none',mode:order.adjustment?.mode || 'fixed',
+        value:Number(order.adjustment?.value || 0),reason:order.adjustment?.reason || '',
+      },
+    },
+  }
+}
 
 export const createReservationEditDraftContext = (detail, {
   returnDestination = 'comandas',
@@ -66,6 +103,7 @@ export const createReservationEditDraftContext = (detail, {
 const cloneContext = (context) => context ? ({
   ...context,
   reservationContext: context.reservationContext ? { ...context.reservationContext } : null,
+  orderContext: context.orderContext ? { ...context.orderContext } : null,
   initialDraft: context.initialDraft ? {
     ...context.initialDraft,
     items: cloneItems(context.initialDraft.items),
@@ -79,8 +117,13 @@ const normalizeContext = ({
   tableId = '',
   expectedTableTabId = '',
   reservationContext = null,
+  orderContext = null,
   initialDraft = null,
 } = {}) => {
+  if (mode === 'edit-order') {
+    return cloneContext({mode,returnDestination,tableId:'',expectedTableTabId:'',orderContext,
+      reservationContext:null,initialDraft})
+  }
   if (mode === 'edit-reservation') {
     return cloneContext({
       mode: 'edit-reservation',
@@ -101,6 +144,7 @@ const normalizeContext = ({
     tableId,
     expectedTableTabId,
     reservationContext: null,
+    orderContext: null,
     initialDraft: initialDraft?.clientId ? { clientId: initialDraft.clientId, localClientId: initialDraft.localClientId || initialDraft.clientId } : null,
   }
 }
@@ -123,7 +167,7 @@ export const createNewOrderDraftController = ({ randomUUID = () => crypto.random
         generation,
         context: normalized,
         dirty: false,
-        idempotencyKey: normalized.mode === 'create' ? randomUUID() : null,
+        idempotencyKey: ['create','edit-order'].includes(normalized.mode) ? randomUUID() : null,
       }
       return snapshot()
     },
@@ -151,7 +195,7 @@ export const createNewOrderDraftController = ({ randomUUID = () => crypto.random
         generation,
         context: normalized,
         dirty: false,
-        idempotencyKey: normalized.mode === 'create' ? randomUUID() : null,
+        idempotencyKey: ['create','edit-order'].includes(normalized.mode) ? randomUUID() : null,
       }
       return snapshot()
     },

@@ -1,5 +1,5 @@
 const LEGACY_CAPABILITIES = [
-  'orders.view', 'orders.history', 'orders.analysis', 'comandas.view', 'printing.queue',
+  'orders.view', 'orders.history', 'orders.analysis', 'orders.edit', 'comandas.view', 'printing.queue',
   'finance.overview', 'finance.receivables', 'finance.movements', 'reports.view', 'reports.export', 'clients.view', 'products.view',
   'tables.view', 'printing.settings', 'preferences.local', 'orders.create', 'orders.finalize',
   'orders.kitchen.control', 'orders.cancel', 'orders.discount', 'orders.backdate', 'payments.receive', 'payments.refund', 'comandas.transfer',

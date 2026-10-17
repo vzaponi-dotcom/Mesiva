@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import '../../../order-operations.css'
 import '../../../order-operations-compact.css'
 import '../../../kitchen-refined.css'
+import './order-edit-banner.css'
 import Button from '../../../shared/ui/Button'
 import CancelOrderDialog from './components/CancelOrderDialog'
 import ConfirmationDialog from '../../../shared/ui/ConfirmationDialog'
 import Icon from '../../../shared/ui/Icon'
+import OrderEditedBadge from '../../../shared/ui/OrderEditedBadge.jsx'
 import KitchenTicket from './components/KitchenTicket'
 import OrderDetail from './components/OrderDetail'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -74,7 +76,7 @@ function FutureScheduledOrderCard({
       </header>
       <div className="kitchen-ticket-customer">
         <span><Icon name={futureAttendanceIcons[order.type] || 'local'} size={16} />{order.type}</span>
-        <span className="kitchen-ticket-id">{formatOrderDisplayNumber(order)}</span>
+        <span className="kitchen-ticket-id">{formatOrderDisplayNumber(order)}</span>{Number(order.operationalRevision) > 0 && <OrderEditedBadge />}
       </div>
       <p className="kitchen-ticket-items">{buildKitchenItemSummary(order)}</p>
       <div className="kitchen-ticket-timing">
@@ -93,7 +95,7 @@ function FutureScheduledOrderCard({
 }
 
 
-function Orders({ finishedTodayCount,orders, officialOrders = orders, now, currentTiming, search, onSearchChange, currency, onNewOrder, onFinalizeOrder, onCancelOrder, onEditReservation, onRegisterPayment, paymentDisabled = false, paymentOptions, cancellationOptions = [], cancellationRevision = null, onNavigatePrintQueue, printQueueActiveCount = 0, granted, newOrderIds = new Set(), soundEnabled = true, onSoundEnabledChange, printing, onToast, canCreateOrders = true, canFinalizeOrders = true, canCancelOrders = true, canRefundPayments = true, canUseLocalPreferences = true, canViewPrintQueue = true, canForcePrinting = false, canExecutePrinting = true }) {
+function Orders({ finishedTodayCount,orders, officialOrders = orders, now, currentTiming, search, onSearchChange, currency, onNewOrder, onFinalizeOrder, onCancelOrder, onEditReservation, onEditOrder, onRegisterPayment, paymentDisabled = false, paymentOptions, cancellationOptions = [], cancellationRevision = null, onNavigatePrintQueue, printQueueActiveCount = 0, granted, newOrderIds = new Set(), soundEnabled = true, onSoundEnabledChange, printing, onToast, canCreateOrders = true, canEditOrders = false, canFinalizeOrders = true, canCancelOrders = true, canRefundPayments = true, canUseLocalPreferences = true, canViewPrintQueue = true, canForcePrinting = false, canExecutePrinting = true }) {
   const [queueFilter, setQueueFilter] = useState('all')
   const [pendingAction, setPendingAction] = useState(null)
   const [detailOrderId, setDetailOrderId] = useState(null)
@@ -207,6 +209,7 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
                   onFinalize={canFinalizeOrders ? (order) => { setFinalizeCandidate(order); return true } : undefined}
                   onCancel={canCancelOrders ? (order) => { setCancelOrder(order); return true } : undefined}
                 />
+                
               </div>
             ))}
             {!preparing.length && <div className="kitchen-queue-empty"><Icon name="preparation" size={24} /><strong>{queueFilter === 'late' ? 'Nenhum pedido em atraso nesta busca.' : 'Nenhum pedido em preparo agora.'}</strong><span>{search ? 'Nenhum resultado nesta fila para a busca atual.' : 'Novos pedidos aparecem aqui automaticamente.'}</span></div>}
@@ -231,6 +234,7 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
                     onDetails={(order) => setDetailOrderId(order.id)}
                     onCancel={canCancelOrders ? (order) => { setCancelOrder(order); return true } : undefined}
                   />
+                  
                 </div>
               ))}
               {!queueModel.scheduled.length && <div className="kitchen-queue-empty"><Icon name="clock" size={24} /><strong>Nenhum pedido agendado aguardando preparo.</strong><span>{search ? 'Nenhum resultado nesta fila para a busca atual.' : 'Os próximos pedidos agendados aparecem aqui.'}</span></div>}
@@ -269,7 +273,7 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
         </aside>
       </section>
 
-      {detailOrder && <OrderDetail order={detailOrder} currency={currency} printing={printing} printJob={detailPrintJob} onClose={() => setDetailOrderId(null)} onRequestCancel={canCancelOrders ? () => { if (!canCancelOrders) return; setDetailOrderId(null); setCancelOrder(detailOrder) } : undefined} canCancelOrders={canCancelOrders} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} canRegisterPayment={canReceiveStandaloneOrder(detailOrder, granted, 'orders')} registerPaymentDisabled={paymentDisabled || actionsDisabled} onRegisterPayment={registerPaymentFromDetail} onToast={onToast} />}
+      {detailOrder && <OrderDetail order={detailOrder} currency={currency} printing={printing} printJob={detailPrintJob} onClose={() => setDetailOrderId(null)} onEditOrder={canEditOrders ? (order) => { setDetailOrderId(null); return onEditOrder?.(order) } : undefined} canEditOrders={canEditOrders} onRequestCancel={canCancelOrders ? () => { if (!canCancelOrders) return; setDetailOrderId(null); setCancelOrder(detailOrder) } : undefined} canCancelOrders={canCancelOrders} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} canRegisterPayment={canReceiveStandaloneOrder(detailOrder, granted, 'orders')} registerPaymentDisabled={paymentDisabled || actionsDisabled} onRegisterPayment={registerPaymentFromDetail} onToast={onToast} />}
       {canFinalizeOrders && finalizeCandidate && (
         <ConfirmationDialog
           title="Confirmar finalização"

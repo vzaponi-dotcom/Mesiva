@@ -7,6 +7,8 @@ import { OrderTicketPreview, PrintStatusBadge } from '../../../printing/index.js
 import PaymentBadge from '../PaymentBadge.jsx'
 import OrderPaymentStatus from './OrderPaymentStatus.jsx'
 import Icon from '../../../../shared/ui/Icon.jsx'
+import OrderEditedBadge from '../../../../shared/ui/OrderEditedBadge.jsx'
+import OrderEditChanges from './OrderEditChanges.jsx'
 import './order-detail-redesigned.css'
 import { actorLabel } from '../../../../shared/actorLabel.js'
 import StatusBadge from '../../../../shared/ui/StatusBadge'
@@ -39,7 +41,7 @@ const formatPrintTimestamp = (value) => {
 
 const PHYSICAL_PRINT_ACTIONS = new Set(['print', 'preview', 'pdf', 'second-copy', 'retry', 'reprint', 'historical-reprint'])
 
-function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCancel, canCancelOrders = true, canExecutePrinting = true, canForcePrinting = false, canRegisterPayment = false, registerPaymentDisabled = false, onRegisterPayment, onToast, initialPrintingOpen = false }) {
+function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCancel, onEditOrder, canEditOrders = false, canCancelOrders = true, canExecutePrinting = true, canForcePrinting = false, canRegisterPayment = false, registerPaymentDisabled = false, onRegisterPayment, onToast, initialPrintingOpen = false }) {
   const [previewDocument, setPreviewDocument] = useState(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [confirmReprint, setConfirmReprint] = useState(false)
@@ -124,10 +126,16 @@ function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCa
     return null
   })()
 
+  const showEditAction = canEditOrders && order.status === 'Em preparo'
+    && order.tableReservationStatus !== 'reserved' && Boolean(onEditOrder)
+  const showCancelAction = canCancelOrders && order.status !== 'Cancelado' && Boolean(onRequestCancel)
+  const latestItemChanges = Array.isArray(order.editSummary?.items) ? order.editSummary.items : []
+
   return (
     <>
-      <Modal title={`Detalhes do ${formatOrderDisplayNumber(order)}`} className="order-detail-modal" onClose={onClose} footer={<div className="order-detail-dialog-actions">
-        {canCancelOrders && order.status !== 'Cancelado' && onRequestCancel && <Button type="button" variant="secondary" className="order-detail-cancel-action" onClick={() => { if (canCancelOrders) onRequestCancel?.() }}>Cancelar pedido</Button>}
+      <Modal title={`Detalhes do ${formatOrderDisplayNumber(order)}`} className="order-detail-modal" onClose={onClose} footer={<div className={`order-detail-dialog-actions${showEditAction ? ' has-edit-action' : ''}${showCancelAction ? ' has-cancel-action' : ''}`}>
+        {showEditAction && <Button type="button" variant="secondary" className="order-detail-edit-action" icon="edit" onClick={() => onEditOrder(order)}>Editar pedido</Button>}
+        {showCancelAction && <Button type="button" variant="secondary" className="order-detail-cancel-action" onClick={() => { if (canCancelOrders) onRequestCancel?.() }}>Cancelar pedido</Button>}
         <div className="order-detail-dialog-primary-actions">{!showPaymentAction && <Button type="button" variant="secondary" onClick={onClose}>Fechar detalhes</Button>}
           {showPaymentAction && <Button type="button" disabled={registerPaymentDisabled} onClick={() => { if (!registerPaymentDisabled) onRegisterPayment?.() }}>Registrar pagamento</Button>}
         </div>
@@ -145,9 +153,13 @@ function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCa
             </div>
               <div className="order-detail-badges">
                 <StatusBadge status={order.status} />
+                {Number(order.operationalRevision) > 0 && <OrderEditedBadge />}
                 {order.status === 'Cancelado' ? <OrderPaymentStatus order={order} /> : <PaymentBadge order={order} />}
                 {printJob && <PrintStatusBadge job={printJob} />}
               </div>
+            {Number(order.operationalRevision) > 0 && latestItemChanges.length > 0 && (
+              <OrderEditChanges changes={latestItemChanges} />
+            )}
             <div className="order-detail-meta">
               <div><span>Criado em</span><strong>{formatPrintTimestamp(order.createdAt)}</strong></div>
               {order.finishedAt && order.status !== 'Cancelado' && <div><span>Finalizado em</span><strong>{formatPrintTimestamp(order.finishedAt)}</strong></div>}

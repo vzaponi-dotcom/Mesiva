@@ -682,3 +682,29 @@ test('board-profile packing skips one oversized blocked card and still fills lat
   assert.equal(result.remainingSlots, 0)
   assert.equal(result.overflow, 1)
 })
+
+test('edited orders use exactly the same original item-only card layout as ordinary orders', () => {
+  const profile = resolveKitchenBoardCandidates({ viewportWidth: 1280, viewportHeight: 720 })
+    .find(({ id, columns }) => id === 'focus' && columns === 2)
+  const items = [
+    item('[TESTE] Prato Executivo Un'),
+    item('[TESTE] Prato feito comercial Família'),
+    item('[TESTE] Marmita Churrasco M'),
+    item('[TESTE] Sanduíche de Frango'),
+  ]
+  const editSummary = { items: [
+    { kind: 'removed', before: { name: '[TESTE] Marmita Frango P', quantity: 1 }, after: null },
+    { kind: 'modified', before: { name: 'Marmita Churrasco', quantity: 1, note: '' }, after: { name: 'Marmita Churrasco', quantity: 1, note: 'Sem churras' } },
+    { kind: 'added', before: null, after: { name: 'Sanduíche de Frango', quantity: 1 } },
+  ] }
+  const options = { viewportWidth: 1280, viewportHeight: 720, boardProfile: profile }
+  const ordinary = getKitchenCardContentMetrics(items, options)
+  const edited = getKitchenCardContentMetrics(items, { ...options, editSummary })
+  assert.deepEqual(edited, ordinary, 'revision history must not resize TV cards')
+
+  const packed = packKitchenDisplaySlots([
+    { order: { id: 'normal', items } },
+    { order: { id: 'edited', items, operationalRevision: 2, editSummary } },
+  ], options)
+  assert.deepEqual(packed.cards.map(card => card.contentMetrics), [ordinary, ordinary])
+})

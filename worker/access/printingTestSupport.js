@@ -36,7 +36,16 @@ export class D1Sqlite {
         note TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
       );
       CREATE TABLE payments (
-        id TEXT PRIMARY KEY, business_id TEXT NOT NULL, order_id TEXT NOT NULL, method TEXT NOT NULL, paid_at TEXT NOT NULL
+        id TEXT PRIMARY KEY, business_id TEXT NOT NULL, order_id TEXT NOT NULL, method TEXT NOT NULL, paid_at TEXT NOT NULL,
+        amount_cents INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE order_settlement_entries (
+        id TEXT PRIMARY KEY, business_id TEXT, order_id TEXT, kind TEXT,
+        amount_cents INTEGER, receipt_id TEXT, movement_id TEXT
+      );
+      CREATE TABLE movements (
+        id TEXT PRIMARY KEY, business_id TEXT, order_id TEXT, source TEXT, type TEXT,
+        value_cents INTEGER, deleted_at TEXT
       );
       CREATE TABLE table_tabs (
         id TEXT PRIMARY KEY, business_id TEXT NOT NULL, table_identifier TEXT NOT NULL, tab_number INTEGER

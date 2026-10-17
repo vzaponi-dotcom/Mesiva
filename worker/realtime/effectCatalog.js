@@ -18,6 +18,8 @@ add(['settings.kitchen-tv.revoked'],['settings','kitchen-tv'],{invalidateBusines
 add(['table-tab.transferred','table.created','table.updated','tables.reordered'],['orders','tables','reservations','finance'])
 add(['order.cancelled'],['orders','tables','reservations','finance','kitchen-tv','printing'])
 add(['order.created','order.finalized','order.payment-promise.updated','order.price.adjusted'],['orders','kitchen-tv'])
+add(['order.edited'],['orders','tables','reservations','finance','kitchen-tv','printing','clients'])
+add(['payment.supplemental-received','payment.partial-refunded'],['orders','tables','finance','clients'])
 export const EFFECT_CATALOG=Object.freeze(catalog)
 export function topicsForCommittedEvent({action,resourceType,resourceId,outcome='success'}) {
   const topics=outcome==='success'?[...(catalog[action]?.topics || [])]:[]

@@ -56,13 +56,13 @@ test('failed payment rolls back source and candidates and triggers preserve oute
   const cancelled=await f.db.batch([f.db.prepare("UPDATE orders SET status='Cancelado' WHERE id='rollback'"),f.db.prepare('SELECT changes() AS n')])
   assert.equal(cancelled[1].results[0].n,1);assertSource(f.sqlite)
 })
-test('legacy falsey payment IDs and soft-deleted refunds keep the current official read semantics',t=>{
+test('legacy falsey payment IDs stay unpaid and deleted refunds no longer reduce canonical net',t=>{
   const f=createSettingsDb();t.after(f.close);order(f.sqlite,'legacy')
   payment(f.sqlite,null,'legacy');assertSource(f.sqlite);assert.equal(keys(f.sqlite)[0].kind,'unpaid')
   f.sqlite.exec("UPDATE payments SET id='valid-id' WHERE order_id='legacy'");assertSource(f.sqlite);assert.deepEqual(keys(f.sqlite),[])
   f.sqlite.exec("UPDATE orders SET status='Cancelado' WHERE id='legacy'");refund(f.sqlite,'soft-refund','legacy')
   f.sqlite.exec("UPDATE movements SET deleted_at='2026-10-15' WHERE id='soft-refund'")
-  assertSource(f.sqlite);assert.deepEqual(keys(f.sqlite),[])
+  assertSource(f.sqlite);assert.equal(keys(f.sqlite)[0].kind,'refund')
 })
 test('composite candidate ownership rejects another tenant and reads revalidate authoritative paid state',async t=>{
   const f=createSettingsDb();t.after(f.close);order(f.sqlite,'owned')

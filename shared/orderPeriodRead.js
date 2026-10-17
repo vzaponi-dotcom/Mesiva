@@ -20,4 +20,3 @@ export const filterOrdersByPeriod = (orders, period = '30d', now = new Date()) =
     .filter((order) => !isOrderCancelled(order))
     .filter((order) => dates.has(order?.orderDate))
 }
-

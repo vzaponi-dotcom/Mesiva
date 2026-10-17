@@ -475,6 +475,46 @@ test('TV control reads the canonical print document without widening the Printin
   assert.doesNotMatch(printingIndex, /getOrderPrintDocument/)
 })
 
+test('TV control uses shared structured edit changes in an initially expanded mobile sheet', async (t) => {
+  const edited = {
+    ...orders[0],
+    operationalRevision: 3,
+    editSummary: { items: [
+      { kind: 'removed', before: { name: 'Prato feito comercial', quantity: 2, note: 'Sem sal' }, after: null },
+      { kind: 'modified', before: { name: 'Marmita', quantity: 1, note: 'Sem cebola' }, after: { name: 'Marmita', quantity: 3, note: 'Com salada' } },
+      { kind: 'added', before: null, after: { name: 'Suco', quantity: 1, note: '' } },
+    ] },
+  }
+  const { screen } = await render(t, { orderFixtures: [edited, ...orders.slice(1)] })
+  const card = screen.root.findAllByType('button').find((node) => String(node.props['aria-label'] || '').startsWith('Pedido #501,'))
+  await act(async () => card.props.onClick())
+  const sheet = screen.root.findByProps({ role: 'dialog' })
+  const panel = sheet.findAll((node) => node.type === 'details' && String(node.props.className || '').split(/\s+/).includes('kitchen-tv-control-edit-review'))
+  assert.equal(panel.length, 1)
+  assert.equal(panel[0].type, 'details')
+  assert.equal(panel[0].props.open, true)
+  const rows = panel[0].findAll((node) => String(node.props.className || '').split(/\s+/).includes('order-edit-change-row'))
+  assert.equal(rows.length, 3)
+  assert.deepEqual(rows.map(row => row.props['data-kind']), ['removed', 'updated', 'added'])
+  const content = nodeText(panel[0])
+  for (const value of ['Últimas alterações', '3 alterações', 'Prato feito comercial', 'Marmita', 'Suco', 'Removido', 'Alterado', 'Adicionado', 'Quantidade', 'Observação alterada', 'Antes', 'Depois', 'Sem cebola', 'Com salada']) {
+    assert.ok(content.includes(value), value)
+  }
+  assert.equal(panel[0].findAll(node => node.type === 'ul').length, 0)
+  assert.ok(buttonNamed(sheet, 'Retirar da TV'))
+  assert.match(nodeText(sheet), /Snapshot da impressão/)
+})
+
+test('TV control does not show an empty edit-history panel when only a revision is known', async (t) => {
+  const edited = { ...orders[0], operationalRevision: 1, editSummary: { items: [] } }
+  const { screen } = await render(t, { orderFixtures: [edited, ...orders.slice(1)] })
+  const card = screen.root.findAllByType('button').find((node) => String(node.props['aria-label'] || '').startsWith('Pedido #501,'))
+  await act(async () => card.props.onClick())
+  const sheet = screen.root.findByProps({ role: 'dialog' })
+  assert.equal(sheet.findAll((node) => node.type === 'details' && String(node.props.className || '').split(/\s+/).includes('kitchen-tv-control-edit-review')).length, 0)
+  assert.ok(buttonNamed(sheet, 'Retirar da TV'))
+})
+
 test('control refreshes another device change by hint without the two-second poll',async t=>{
   const listeners=new Set(),realtime={state:'live',subscribeInvalidations(fn){listeners.add(fn);return()=>listeners.delete(fn)}}
   let reads=0,next=freshState

@@ -2,6 +2,7 @@ import Button from '../../../../shared/ui/Button.jsx'
 import Modal from '../../../../shared/ui/Modal.jsx'
 import { formatOrderDisplayNumber } from '../../../../../shared/orderDisplayNumber.js'
 import PaymentCompositionEditor from '../PaymentCompositionEditor.jsx'
+import {getPendingAmount} from '../../../../../shared/orderPaymentRead.js'
 import './client-orders-payment.css'
 
 export default function ClientOrdersPaymentDialog({ dialog, currency }) {
@@ -26,7 +27,7 @@ export default function ClientOrdersPaymentDialog({ dialog, currency }) {
               {dialog.orders.map((order) => (
                 <li key={order.id} className="client-orders-payment-summary-item">
                   <span className="client-orders-payment-summary-order">{formatOrderDisplayNumber(order)}</span>
-                  <span className="client-orders-payment-summary-amount">{currency(order.total || 0)}</span>
+                  <span className="client-orders-payment-summary-amount">{currency(getPendingAmount(order))}</span>
                 </li>
               ))}
             </ul>

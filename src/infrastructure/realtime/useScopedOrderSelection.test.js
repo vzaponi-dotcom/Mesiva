@@ -34,3 +34,9 @@ test('selection enforces 100 and eligibility and rejects late validation from an
  await act(async()=>release?.(orders.slice(0,100)))
  assert.deepEqual(h.value.ids,[])
 })
+
+test('selection sums canonical outstanding cents for previously paid edited orders',async t=>{
+ const h=await mount(t,{scopeKey:'A:c',isEligible:()=>true})
+ await act(async()=>h.value.selectVisible([{id:'partial',total:95,dueCents:1500},{id:'unpaid',total:20,dueCents:2000}]))
+ assert.equal(h.value.total,35)
+})

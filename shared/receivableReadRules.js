@@ -39,9 +39,9 @@ const groupKey = (order) => {
 }
 
 export const getPendingReceivableOrders = (orders = [], orderRules) => {
-  const { isOrderCancelled, isOrderPaid } = requireOrderRules(orderRules)
+  const { isOrderCancelled, getPendingAmount } = requireOrderRules(orderRules)
   return (Array.isArray(orders) ? orders : [])
-    .filter((order) => !isOrderCancelled(order) && !isOrderPaid(order) && !isReservationOrder(order))
+    .filter((order) => !isOrderCancelled(order) && getPendingAmount(order) > 0 && !isReservationOrder(order))
 }
 
 export const getPaidReceivableOrders = (orders = [], orderRules) => {
@@ -110,7 +110,10 @@ export const formatTableIdentifierLabel = (value) => {
 export const buildPendingReceivableEntries = (orders = [], today, orderRules) => {
   const { getPendingAmount } = requireOrderRules(orderRules)
   return getPendingReceivableOrders(orders, orderRules)
-    .filter((order) => !isTableTabOrder(order))
+    // Open tabs are paid via the comanda. If that shared receipt was already
+    // settled, a later edit can leave a per-order supplemental balance.
+    .filter((order) => !isTableTabOrder(order)
+      || (Boolean(order.paymentId) && order.paymentStatus === 'Parcialmente pago'))
     .map((order) => ({
       key: `order:${order.id}`,
       kind: 'order',

@@ -1,6 +1,6 @@
 import { hasCapability } from '../../../app/access.js'
 
-import {isOrderPaid} from '../../../../shared/orderPaymentRead.js'
+import {isOrderPaid,hasSupplementalBalance} from '../../../../shared/orderPaymentRead.js'
 export {isOrderPaid,getPendingAmount} from '../../../../shared/orderPaymentRead.js'
 
 const sourceCapability = Object.freeze({
@@ -26,6 +26,8 @@ export function canReceiveStandaloneOrder(order, granted, source) {
     && hasCapability(granted, viewCapability)
     && hasCapability(granted, 'payments.receive')
     && !isOrderPaid(order)
+    // The workflow sends an existing payment balance only to the supplemental writer.
+    && (!order.paymentId || hasSupplementalBalance(order))
     && order.status !== 'Cancelado'
     && !hasTableRelationship(order),
   )

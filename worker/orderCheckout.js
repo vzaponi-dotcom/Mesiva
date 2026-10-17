@@ -31,7 +31,7 @@ const percentageToBasisPoints = (value) => {
   return Math.round(number * 100)
 }
 
-const validateAdjustment = (value = {}) => {
+export const validateOrderAdjustment = (value = {}) => {
   const type = value?.type ?? 'none'
   if (!['none', 'discount', 'surcharge'].includes(type)) {
     throw checkoutError('adjustment.type', 'Tipo de ajuste inválido.')
@@ -105,7 +105,7 @@ export const validateCheckoutInput = (body = {}, idempotencyKey, now = new Date(
     throw checkoutError('deliveryFee', 'Taxa de entrega só pode ser usada em pedidos de entrega.')
   }
 
-  const adjustment = validateAdjustment(body.adjustment)
+  const adjustment = validateOrderAdjustment(body.adjustment)
   if (body.paymentMethod !== undefined) {
     throw checkoutError('paymentMethod', 'Use paymentAllocations para receber o pedido.')
   }

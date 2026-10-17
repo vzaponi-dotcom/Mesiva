@@ -43,7 +43,7 @@ test('surface capabilities and counters cannot reveal operational data to a hist
   const response=await handleRequest(f.request('/api/bootstrap?surface=history'),f.env)
   assert.equal(response.status,200)
   const payload=await response.json()
-  assert.deepEqual(payload.readModel.counters,{orders:0,comandas:0})
+  assert.deepEqual(payload.readModel.counters,{orders:0,comandas:0,refunds:0})
   assert.equal(Object.hasOwn(payload,'orders'),false)
 })
 

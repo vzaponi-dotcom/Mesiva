@@ -6,6 +6,7 @@ import Icon from '../../../shared/ui/Icon'
 import StatusBadge from '../../../shared/ui/StatusBadge'
 import { clientOrderDate } from '../domain/clientList.js'
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
+import {getPendingAmount} from '../../../../shared/orderPaymentRead.js'
 
 const dateLabel = value => value ? value.split('-').reverse().join('/') : 'Sem compras'
 const sourceFor = order => ['Finalizado', 'Cancelado', 'Entregue', 'Despachado'].includes(order.status) ? 'history' : 'orders'
@@ -51,7 +52,7 @@ export default function ClientRelationshipPanel({ readModel,client, profile, com
   }
   const selectedOrders = readModel?scopedSelection.records:selectable.filter(order => selectedIds.includes(order.id))
   const currentIds = selectedOrders.map(order => order.id)
-  const selectedTotal = selectedOrders.reduce((sum, order) => sum + Math.round(Number(order.total) * 100), 0) / 100
+  const selectedTotal = selectedOrders.reduce((sum, order) => sum + Math.round(getPendingAmount(order) * 100), 0) / 100
   const selectionEnabled = tab === 'orders' && orderFilter === 'pending' && typeof onRegisterClientOrdersPayment === 'function' && (selectable.length > 0 || scopedSelection.ids.length > 0)
   const toggleSelection = id => {if(readModel){if(disabled)return;return scopedSelection.toggle(profile.orders.find(order=>order.id===id))} if (disabled || !selectable.some(order => order.id === id)) return; setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : current.length < 100 ? [...current, id] : current) }
   const receiveSelected = () => {
@@ -64,7 +65,7 @@ export default function ClientRelationshipPanel({ readModel,client, profile, com
     setDetailId(null)
     onRegisterPayment(order.id, sourceFor(order))
   }
-  const filtered = readModel?profile.orders:profile.orders.filter(order => orderFilter === 'pending' ? order.paymentStatus !== 'Pago' && order.status !== 'Cancelado' : orderFilter === 'finished' ? ['Finalizado', 'Entregue', 'Despachado'].includes(order.status) : orderFilter === 'cancelled' ? order.status === 'Cancelado' : true)
+  const filtered = readModel?profile.orders:profile.orders.filter(order => orderFilter === 'pending' ? getPendingAmount(order)>0 && order.status !== 'Cancelado' : orderFilter === 'finished' ? ['Finalizado', 'Entregue', 'Despachado'].includes(order.status) : orderFilter === 'cancelled' ? order.status === 'Cancelado' : true)
   const visibleDetail=profile.orders.find(order=>order.id===detailId)
   const detail=visibleDetail || (readModel && pointDetail?.owner===readModel?.ownerKey&&pointDetail?.order?.id===detailId?pointDetail.order:null)
   const loadDetail=readModel?.loadOrderById,detailRevision=readModel?.data

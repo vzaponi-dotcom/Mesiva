@@ -1,4 +1,5 @@
 import { loadOperations } from './operationSettingsRepository.js'
+import { loadOperationalEditSignals } from './orderEditSignalsRepository.js'
 import { loadKitchenTvControl } from './kitchenTvControlRepository.js'
 
 const rows = (result) => Array.isArray(result?.results) ? result.results : []
@@ -33,11 +34,12 @@ const ACTIVE_ITEMS_SELECT = `SELECT i.order_id, i.quantity, i.name_snapshot, i.s
   ORDER BY i.created_at ASC, i.id ASC`
 
 export async function loadKitchenTvState(db, businessId) {
-  const [operations, control, ordersResult, itemsResult] = await Promise.all([
+  const [operations, control, ordersResult, itemsResult, signals] = await Promise.all([
     loadOperations(db, businessId),
     loadKitchenTvControl(db, businessId),
     db.prepare(ACTIVE_ORDERS_SELECT).bind(businessId).all(),
     db.prepare(ACTIVE_ITEMS_SELECT).bind(businessId).all(),
+    loadOperationalEditSignals(db,businessId),
   ])
   const itemsByOrder = new Map()
   for (const row of rows(itemsResult)) {
@@ -63,6 +65,7 @@ export async function loadKitchenTvState(db, businessId) {
       createdAt: row.created_at,
       scheduledFor: row.scheduled_for,
       items: itemsByOrder.get(row.id) ?? [],
+      ...(signals.get(row.id) || {}),
     })),
   }
 }
