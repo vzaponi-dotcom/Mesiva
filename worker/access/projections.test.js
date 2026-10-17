@@ -211,3 +211,44 @@ test('individual payment HTTP route rejects a future receipt date without any fi
   assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 0)
   assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-payment'").get().n, 0)
 })
+
+
+test('table-tab and client-batch HTTP payments forward the chosen effective date to their shared receipts',async(t)=>{
+  const {env,tokens,history,local,db,input,now,sqlite}=await setup(t)
+  const second=await createOrder(db,BUSINESS,input('date-batch-order'),now)
+  await updateOrderStatus(db,BUSINESS,second.id,now)
+  const date='2026-09-19'
+  const group=await read(env,tokens.operator,'/api/clients/client/receivables/payment','POST',{
+    orderIds:[history.id,second.id],allocations:[{methodCode:'pix',amountCents:5000}],
+    mutationId:'date-http-client',receivedDate:date,
+  })
+  const table=await read(env,tokens.operator,`/api/table-tabs/${local.tableTabId}/payment`,'POST',{
+    allocations:[{methodCode:'cash',amountCents:2500}],receivedDate:date,
+  })
+  for(const result of [group,table]){
+    assert.equal(result.receipt.receivedDate,date)
+    assert.equal(sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date,date)
+    assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").get(result.receipt.id).movement_date,date)
+  }
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,2)
+})
+
+test('table and client payment routes reject future effective date without side effects',async(t)=>{
+  const {env,tokens,history,local,db,input,now,sqlite}=await setup(t)
+  const second=await createOrder(db,BUSINESS,input('future-batch-order'),now)
+  await updateOrderStatus(db,BUSINESS,second.id,now)
+  for(const [path,payload] of [
+    ['/api/clients/client/receivables/payment',{
+      orderIds:[history.id,second.id],allocations:[{methodCode:'pix',amountCents:5000}],mutationId:'future-client',receivedDate:'9999-12-31',
+    }],
+    [`/api/table-tabs/${local.tableTabId}/payment`,{
+      allocations:[{methodCode:'cash',amountCents:2500}],receivedDate:'9999-12-31',
+    }],
+  ]){
+    const response=await handleRequest(request(tokens.operator,path,'POST',payload),env)
+    assert.equal(response.status,400)
+    assert.equal((await response.json()).error.code,'VALIDATION_ERROR')
+  }
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,0)
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM movements').get().n,0)
+})
