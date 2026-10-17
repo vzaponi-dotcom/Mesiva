@@ -697,18 +697,18 @@ test('navigation cache restores each surface snapshot without reading again on r
  assert.equal(h.getCurrent().surfaceState,'ready')
 })
 
-test('navigation cache never restores a snapshot after local data changed or the company changed',async t=>{
+test('navigation cache preserves unrelated changes but resets on company switch',async t=>{
  const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);return scoped(surface,[])}}})
  await act(async()=>h.getCurrent().refreshBootstrap())
  await act(async()=>h.update({surface:'clients'}))
  await act(async()=>h.getCurrent().applyOfficialEffects({client:{id:'new-client'}}))
  await act(async()=>h.update({surface:'orders'}))
- assert.deepEqual(calls,['orders','clients','orders'])
+ assert.deepEqual(calls,['orders','clients'])
  await act(async()=>h.update({accessContextId:'B'}))
  assert.equal(h.getCurrent().bootstrapState,'idle')
  assert.deepEqual(h.getCurrent().orders,[])
  await act(async()=>h.getCurrent().refreshBootstrap())
- assert.equal(calls.length,4)
+ assert.equal(calls.length,3)
 })
 
 
