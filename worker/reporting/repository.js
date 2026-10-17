@@ -6,6 +6,22 @@ import { getOperationalDurationMinutes, getOrderLateAt } from '../../shared/orde
 
 const hourInBusiness = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hourCycle: 'h23' })
 const terminal = new Set(['Finalizado', 'Entregue', 'Despachado'])
+
+// The UNION keeps dated receipts indexable while retaining NULL historical rows
+// via the existing paid_at index and DST-aware São Paulo UTC boundaries.
+const receiptPeriod = (businessId,{from,to})=>{
+  const [utcFrom,utcTo]=businessDateRangeUtc(from,to)
+  return {
+    sql:`WITH period_receipts AS (
+      SELECT id,business_id,total_cents,paid_at,received_date FROM payment_receipts
+      WHERE business_id=? AND received_date>=? AND received_date<=?
+      UNION ALL
+      SELECT id,business_id,total_cents,paid_at,received_date FROM payment_receipts
+      WHERE business_id=? AND received_date IS NULL AND paid_at>=? AND paid_at<?
+    )`,
+    values:[businessId,from,to,businessId,utcFrom,utcTo],
+  }
+}
 const enrichDetail = (row) => {
   const order = {
     status: row.status, createdAt: row.created_at, finishedAt: row.finished_at,
@@ -62,7 +78,7 @@ export function createReportingRepository(db) {
       return results
     },
     async loadOverview(businessId, query) {
-      const [paidFrom, paidTo] = businessDateRangeUtc(query.from, query.to)
+      const receiptRange=receiptPeriod(businessId,query)
       const { sql, values } = buildOrderFilters(businessId, query)
       const { results: orders } = await db.prepare(`
         SELECT o.id, o.order_date, o.type, o.status, o.total_cents, o.table_tab_id,
@@ -81,10 +97,9 @@ export function createReportingRepository(db) {
           SELECT o.id FROM orders o WHERE ${sql}
         )
       `).bind(businessId, ...values).all()
-      const { results: receipts } = await db.prepare(`
-        SELECT total_cents FROM payment_receipts
-        WHERE business_id = ? AND paid_at >= ? AND paid_at < ? ORDER BY paid_at, id
-      `).bind(businessId, paidFrom, paidTo).all()
+      const { results: receipts } = await db.prepare(`${receiptRange.sql}
+        SELECT total_cents FROM period_receipts ORDER BY paid_at, id
+      `).bind(...receiptRange.values).all()
       const { results: refunds } = await db.prepare(`
         SELECT value_cents FROM movements
         WHERE business_id = ? AND source IN ('order-refund','order-edit-refund') AND deleted_at IS NULL
@@ -102,7 +117,7 @@ export function createReportingRepository(db) {
       return results
     },
     async loadSales(businessId, query) {
-      const [paidFrom, paidTo] = businessDateRangeUtc(query.from, query.to)
+      const receiptRange=receiptPeriod(businessId,query)
       const { sql, values } = buildOrderFilters(businessId, query)
       const { results: orders } = await db.prepare(`SELECT o.id, o.order_date, o.status, o.total_cents, o.delivery_fee_cents,
         o.table_tab_id, o.customer_identity_type, o.promised_payment_date, o.adjustment_type, o.adjustment_amount_cents,
@@ -116,18 +131,23 @@ export function createReportingRepository(db) {
       const methodWhere = query.paymentMethod ? 'AND (pa.method_code = ? OR pa.method_label = ? COLLATE NOCASE)' : ''
       const methodValues = query.paymentMethod ? [query.paymentMethod, query.paymentMethod] : []
       const { results: receipts } = query.paymentMethod
-        ? await db.prepare(`SELECT r.id, r.paid_at,
-          (SELECT SUM(pa.amount_cents) FROM payment_allocations pa
-            WHERE pa.business_id = r.business_id AND pa.receipt_id = r.id ${methodWhere}) AS total_cents
-          FROM payment_receipts r WHERE r.business_id = ? AND r.paid_at >= ? AND r.paid_at < ?
-          AND EXISTS (SELECT 1 FROM payment_allocations pa WHERE pa.business_id = r.business_id
-            AND pa.receipt_id = r.id ${methodWhere})`)
-          .bind(...methodValues, businessId, paidFrom, paidTo, ...methodValues).all()
-        : await db.prepare('SELECT id, total_cents, paid_at FROM payment_receipts WHERE business_id = ? AND paid_at >= ? AND paid_at < ?').bind(businessId, paidFrom, paidTo).all()
-      const { results: allocations } = await db.prepare(`SELECT pa.receipt_id, pa.method_code, pa.method_label, pa.amount_cents
-        FROM payment_allocations pa JOIN payment_receipts r ON r.business_id = pa.business_id AND r.id = pa.receipt_id
-        WHERE pa.business_id = ? AND r.paid_at >= ? AND r.paid_at < ? ${methodWhere}`)
-        .bind(businessId, paidFrom, paidTo, ...methodValues).all()
+        ? await db.prepare(`${receiptRange.sql}
+          SELECT r.id,r.paid_at,r.received_date,
+            (SELECT SUM(pa.amount_cents) FROM payment_allocations pa
+              WHERE pa.business_id=r.business_id AND pa.receipt_id=r.id ${methodWhere}) AS total_cents
+          FROM period_receipts r
+          WHERE EXISTS (SELECT 1 FROM payment_allocations pa WHERE pa.business_id=r.business_id
+            AND pa.receipt_id=r.id ${methodWhere})`)
+          .bind(...receiptRange.values,...methodValues,...methodValues).all()
+        : await db.prepare(`${receiptRange.sql}
+          SELECT id,total_cents,paid_at,received_date FROM period_receipts`)
+          .bind(...receiptRange.values).all()
+      const { results: allocations } = await db.prepare(`${receiptRange.sql}
+        SELECT pa.receipt_id,pa.method_code,pa.method_label,pa.amount_cents
+        FROM period_receipts r JOIN payment_allocations pa
+          ON pa.business_id=r.business_id AND pa.receipt_id=r.id
+        WHERE pa.business_id=? ${methodWhere}`)
+        .bind(...receiptRange.values,businessId,...methodValues).all()
       const { results: payments } = await db.prepare(`SELECT order_id, amount_cents FROM payments WHERE business_id = ? AND order_id IN (SELECT o.id FROM orders o WHERE ${sql})`).bind(businessId, ...values).all()
       const { results: refunds } = await db.prepare("SELECT value_cents, movement_date FROM movements WHERE business_id = ? AND source IN ('order-refund','order-edit-refund') AND deleted_at IS NULL AND movement_date BETWEEN ? AND ?").bind(businessId, query.from, query.to).all()
       return { orders, receipts, allocations, payments, refunds }
