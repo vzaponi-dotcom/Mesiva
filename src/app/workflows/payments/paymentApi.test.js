@@ -34,3 +34,18 @@ test('Task 14 supplementary settlement posts exact mutation and money snapshot',
  assert.deepEqual(calls.map(([url,options])=>[url,options.method,JSON.parse(options.body)]),
    [['/api/orders/order%201/supplemental-payment','POST',payload]])
 })
+
+test('single-order API includes an explicitly chosen receipt date without changing legacy payloads', async () => {
+  const calls = []
+  const api = createPaymentApi({
+    request: async (...args) => { calls.push(args); return {} },
+    json: (method, body) => ({ method, body: JSON.stringify(body) }),
+  })
+  const allocations = [{ methodCode: 'pix', amountCents: 5000 }]
+  await api.registerOrderPayment('first', allocations, { receivedDate: '2026-10-15' })
+  await api.registerOrderPayment('second', allocations)
+  assert.deepEqual(calls.map(([,options]) => JSON.parse(options.body)), [
+    { allocations, receivedDate: '2026-10-15' },
+    { allocations },
+  ])
+})
