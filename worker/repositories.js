@@ -423,6 +423,19 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
           pendingTableTab = tableTab
         }
       }
+      if (!clientId && !pendingTableTab) {
+        const previous = await db.prepare(`SELECT client_id, client_name_snapshot, client_phone_snapshot, client_address_snapshot
+          FROM orders
+          WHERE business_id = ? AND table_tab_id = ? AND customer_identity_type = 'table'
+            AND client_id IS NOT NULL AND status <> 'Cancelado'
+          ORDER BY created_at ASC, order_number ASC LIMIT 1`).bind(businessId, tableTab.id).first()
+        if (previous) {
+          clientId = previous.client_id
+          clientSnapshot = previous.client_name_snapshot
+          clientPhoneSnapshot = previous.client_phone_snapshot || ''
+          clientAddressSnapshot = previous.client_address_snapshot || ''
+        }
+      }
       if (!clientSnapshot) clientSnapshot = tableTab.tableIdentifier
       tableTabId = tableTab.id
       tableIdentifier = tableTab.tableIdentifier
