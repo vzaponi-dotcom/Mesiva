@@ -175,7 +175,7 @@ const authenticatedApi = async (request, env) => {
   response.headers.set('cache-control', 'no-store')
   if (timing) {
     timing.finalize = performance.now() - finalizeStarted
-    response.headers.set('server-timing', ['auth','config','snapshot','finalize','total']
+    response.headers.set('server-timing', ['auth','config','snapshot','snapCommon','snapRefunds','snapTables','snapOrders','snapOther','finalize','total']
       .map(key => `${key};dur=${(key === 'total' ? performance.now() - timing.started : timing[key] || 0).toFixed(1)}`).join(', '))
   }
   return response
@@ -219,7 +219,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url, tim
     const snapshotStarted = timing && performance.now()
     const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
       ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,currentTiming:effectiveBusinessConfig.operations?.timing,
-        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
+        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig,timing})
       : await loadBootstrap(
       env.DB,
       session.businessId,
