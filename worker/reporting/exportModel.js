@@ -19,6 +19,7 @@ export const EXPORT_COLUMNS = Object.freeze({
   pendingCents: 'Pendente',
   paymentState: 'Situação financeira',
   payment_label: 'Forma de pagamento',
+  payment_received_dates: 'Data(s) do recebimento',
   promised_payment_date: 'Promessa de pagamento',
   durationMinutes: 'Duração (min)',
   onTime: 'Prazo',
