@@ -40,7 +40,7 @@ As medidas abaixo foram conferidas nos quatro arquivos importados do patch biná
 - [x] Tamanhos, SHA-256 e SHA-1 dos blobs Git conferidos: quatro correspondências com o manifesto.
 - [x] Links relativos habilitados para os quatro arquivos verificados, preservando o histórico v1.0.
 - [x] [Índice geral](../../README.md), [Design System](../DESIGN_SYSTEM.md), instruções dos agentes e índice histórico atualizados para refletir a importação.
-- [ ] Conferir CI e revisão do commit final antes de qualquer integração.
+- [x] Validação da importação em `8c223138`: 8/8 shards e job `validate` aprovados no [CI #39054383291](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39054383291); 151 links locais verificados (incluindo uma âncora), zero ausentes. Este registro documental posterior exige seu próprio CI antes de considerar a PR pronta.
 
 **Sem autorização automática de merge ou deploy.** Mudanças documentais não implicam nova versão do software ou publicação remota.
 
