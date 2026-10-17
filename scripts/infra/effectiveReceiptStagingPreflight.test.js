@@ -1,6 +1,27 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
+test('Task 11: audit blocks impossible financial dates and invalid legacy timestamps on real SQLite', async t => {
+  const {createSettingsDb}=await import('../../worker/test-support/settingsDb.js')
+  const {auditEffectiveReceipts}=await import('./effective-receipt-staging-preflight.mjs')
+  const f=createSettingsDb()
+  t.after(f.close)
+  const query=async sql=>f.sqlite.prepare(sql).all().map(row=>({...row}))
+  for (const [id,day,paidAt] of [
+    ['impossible','2026-02-30','2026-10-17T15:00:00.000Z'],
+    ['month','2026-13-01','2026-10-17T15:00:00.000Z'],
+    ['timestamp',null,'2026-10-17Txx:yy:zz'],
+    ['timestamp-day',null,'2026-02-30T15:00:00.000Z'],
+    ['offset',null,'2026-10-17T00:30:00-03:00'],
+    ['sql-timestamp',null,'2026-10-17 03:30:00'],
+  ]) {
+    f.sqlite.prepare('INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES(?,?,?,?,?,?)')
+      .run(id,'amor-e-sabor',100,paidAt,day,'2026-10-17T15:00:00.000Z')
+    await assert.rejects(auditEffectiveReceipts({query,log(){}}), /BLOCKED/, id)
+    f.sqlite.prepare('DELETE FROM payment_receipts WHERE id=?').run(id)
+  }
+})
+
 test('Task 11: pre-migration audit never queries a column absent before migration 0052', async () => {
   const { buildReceiptAuditSql, auditEffectiveReceipts } = await import('./effective-receipt-staging-preflight.mjs')
   const preSql=buildReceiptAuditSql(false),postSql=buildReceiptAuditSql(true)

@@ -11,11 +11,13 @@ const KNOWN=new Set([
   'BLOCKED_conflicting_movements','BLOCKED_invalid_movement_date',
   'BLOCKED_movement_amount_mismatch','BLOCKED_receipt_movement_mismatch',
   'BLOCKED_invalid_paid_at',
+  'BLOCKED_invalid_received_date',
 ])
 const DAY="'[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'"
 
 export function buildReceiptAuditSql(hasReceivedDate) {
   const checks=hasReceivedDate ? [
+    "WHEN r.received_date IS NOT NULL AND (r.received_date NOT GLOB "+DAY+" OR date(r.received_date,'+0 days') IS NULL OR date(r.received_date,'+0 days')<>r.received_date) THEN 'BLOCKED_invalid_received_date'",
     "WHEN r.received_date IS NOT NULL AND m.movement_count > 0 AND m.min_day <> r.received_date THEN 'BLOCKED_receipt_movement_mismatch'",
     "WHEN r.received_date IS NOT NULL THEN 'canonical'",
   ] : []
@@ -27,10 +29,12 @@ export function buildReceiptAuditSql(hasReceivedDate) {
     'GROUP BY business_id,receipt_id',
     '), receipt_audit AS ( SELECT CASE',
     "WHEN m.movement_count > 0 AND (m.min_day IS NULL OR m.min_day<>m.max_day) THEN 'BLOCKED_conflicting_movements'",
-    "WHEN m.movement_count > 0 AND m.min_day NOT GLOB "+DAY+" THEN 'BLOCKED_invalid_movement_date'",
+    "WHEN m.movement_count > 0 AND (m.min_day NOT GLOB "+DAY+" OR date(m.min_day,'+0 days') IS NULL OR date(m.min_day,'+0 days')<>m.min_day) THEN 'BLOCKED_invalid_movement_date'",
     "WHEN m.movement_count > 0 AND m.movement_cents<>r.total_cents THEN 'BLOCKED_movement_amount_mismatch'",
     ...checks,
-    "WHEN m.movement_count IS NULL AND (r.paid_at IS NULL OR LENGTH(r.paid_at)<19 OR SUBSTR(r.paid_at,1,10) NOT GLOB "+DAY+") THEN 'BLOCKED_invalid_paid_at'",
+    // Period readers compare UTC timestamps lexically; other valid formats need
+    // operator review too, rather than silently selecting the wrong business day.
+    "WHEN m.movement_count IS NULL AND (r.paid_at IS NULL OR strftime('%Y-%m-%dT%H:%M:%fZ',r.paid_at) IS NOT r.paid_at OR date(SUBSTR(r.paid_at,1,10),'+0 days')<>SUBSTR(r.paid_at,1,10)) THEN 'BLOCKED_invalid_paid_at'",
     "WHEN m.movement_count IS NULL THEN 'legacy_no_movement'",
     "ELSE 'consensus_legacy' END classification",
     'FROM payment_receipts r LEFT JOIN movement_audit m',
