@@ -400,3 +400,30 @@ test('Task 7: 100 orders linked to one dated receipt never multiply received tot
   assert.deepEqual((await repo.loadSales('a',query)).receipts.map(x=>x.total_cents),[10000])
   assert.deepEqual((await repo.loadSales('a',query)).allocations.map(x=>x.amount_cents),[10000])
 })
+
+
+test('Task 7: report period lookup remains indexable with 10k receipts and no duplicated financial value',async t=>{
+  const {createReportingRepository}=await import('./repository.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('a','a','A','2020-01-01','2020-01-01')")
+  const insert=sqlite.prepare("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES(?,'a',100,?,?,?)")
+  for(let i=0;i<10000;i++){
+    const at='2020-01-01T15:00:00.000Z'
+    insert.run('historic-'+i,at,i%2===0?'2020-01-01':null,at)
+  }
+  insert.run('target','2026-10-17T15:00:00.000Z','2026-10-15','2026-10-17T15:00:00.000Z')
+  const details=[],prepare=db.prepare
+  db.prepare=sql=>({bind:(...values)=>{
+    if(sql.includes('period_receipts')){
+      details.push(...sqlite.prepare('EXPLAIN QUERY PLAN '+sql).all(...values).map(row=>row.detail))
+    }
+    return prepare(sql).bind(...values)
+  }})
+  const repo=createReportingRepository(db)
+  const query={from:'2026-10-15',to:'2026-10-15'}
+  assert.deepEqual((await repo.loadOverview('a',query)).receipts.map(r=>r.total_cents),[100])
+  assert.deepEqual((await repo.loadSales('a',query)).receipts.map(r=>r.total_cents),[100])
+  assert.ok(details.some(d=>d.includes('payment_receipts_business_received_date_idx')),details.join('\n'))
+  assert.ok(details.some(d=>d.includes('payment_receipts_business_paid_idx')),details.join('\n'))
+  assert.ok(!details.some(d=>/SCAN payment_receipts(?:\b|$)/i.test(d)),details.join('\n'))
+})
