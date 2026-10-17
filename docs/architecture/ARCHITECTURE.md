@@ -1,8 +1,8 @@
 # Mesiva — Arquitetura atual do sistema
 
 - **Tipo:** documentação viva da arquitetura implementada.
-- **Versão:** v0.1 — 13/10/2026.
-- **Baseline verificada:** `master@e595f7ed2a801fde6ffab231194788430cc53316`; mesma base dos documentos iniciais da [PR #109](https://github.com/vzaponi-dotcom/Mesiva/pull/109).
+- **Versão:** v0.2 — atualização focal em 17/10/2026 (baseline inicial 13/10/2026).
+- **Baselines:** arquitetura geral originalmente inspecionada em `master@e595f7ed2a801fde6ffab231194788430cc53316`; atualização de sincronização, consultas e orçamento examinada em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d` e nos runbooks correntes. As demais áreas não foram reauditas integralmente.
 - **Estado da evidência:** inspeção de código, configuração de build/ambientes, checker e workflows. **Não** representa auditoria de cada módulo, execução de testes, inspeção de recursos Cloudflare remotos ou confirmação do SHA publicado em produção.
 
 Este documento responde **como** a Mesiva está organizada e por onde os dados passam. [PRD](../product/PRD.md) responde **o que** ela faz; [Business Rules](../product/BUSINESS_RULES.md) registra **invariantes de negócio**; [AGENTS.md](../../AGENTS.md) rege **como trabalhar**. Para atribuição detalhada de responsáveis e pontos de entrada, consulte o [Module Map](MODULE_MAP.md), sem duplicar esta visão geral.
@@ -110,12 +110,12 @@ O [App](../../src/App.jsx) compõe [`useSessionRuntime`](../../src/app/runtime/s
 
 1. O cliente de sessão descobre autenticação e empresa/plataforma ativa; mudança de contexto invalida o estado operacional anterior.
 2. O cliente HTTP do contexto fixa `X-Mesiva-Context` e `credentials: same-origin` **na criação da requisição**. Retorno `SESSION_CONTEXT_CHANGED` aciona reconciliação da sessão.
-3. A API `GET /api/bootstrap` devolve projeções autorizadas de dados e, quando pertinente, configuração efetiva; o frontend aplica resultados mediante guardas de sincronização/versão.
-4. O runtime oferece refresh quando janela recupera foco/visibilidade e polling de dados. Na baseline, os intervalos declarados são **5 segundos** para sincronização global e **2 segundos** para pedidos **quando essas subscrições estão habilitadas**.
+3. A API `GET /api/bootstrap` preserva o contrato legado; com `OPERATIONAL_READ_MODELS_ENABLED` habilitado, um `surface` seleciona o snapshot autorizado à tela. `worker/readModels/snapshotRepository.js` limita coleções completas ao escopo declarado em `readModel.completeCollections`, distinguindo coleções operacionais e totais da página.
+4. O runtime oferece avisos WebSocket quando `REALTIME_ENABLED` está habilitado, com reconciliação/fallback HTTP e invalidação por tópicos. Subscripções legadas de **5 segundos** (global) e **2 segundos** (pedidos) permanecem condicionais, não representam necessariamente consultas contínuas em todas as telas. A existência das flags no código não comprova seu estado em cada ambiente ou o custo efetivamente faturado. Foco/retorno visível não deve duplicar silenciosamente owners de dados.
 5. Mutations aplicam efeitos oficiais recebidos da API, sem converter um resultado obsoleto de sessão/empresa em sucesso para a nova sessão.
 6. Sem conexão, UI sinaliza indisponibilidade e bloqueia escritas pertinentes; **não há fila de mutações offline autoritativas**.
 
-Fontes: [`useSessionRuntime.js`](../../src/app/runtime/session/useSessionRuntime.js), [`contextHttpClient.js`](../../src/infrastructure/api/contextHttpClient.js), [`useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js), [`worker/index.js`](../../worker/index.js), [`README.md`](../../README.md).
+Fontes: [`useSessionRuntime.js`](../../src/app/runtime/session/useSessionRuntime.js), [`contextHttpClient.js`](../../src/infrastructure/api/contextHttpClient.js), [`useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js), [`snapshotRepository.js`](../../worker/readModels/snapshotRepository.js), [`useScopedQuery.js`](../../src/infrastructure/realtime/useScopedQuery.js), [`worker/index.js`](../../worker/index.js), [runbook realtime](../operations/realtime-sync.md) e [`README.md`](../../README.md).
 
 ## 4. Worker: roteamento, segurança e persistência
 
@@ -154,6 +154,18 @@ Fontes: [`sessions.js`](../../worker/identity/sessions.js), [`businessContext.js
 - Preferências de navegador em [`src/infrastructure/storage/`](../../src/infrastructure/storage/) têm finalidade local, e não substituem registros D1.
 
 Fontes: [`wrangler.jsonc`](../../wrangler.jsonc), [`repositories.js`](../../worker/repositories.js), [`orderCheckout.js`](../../worker/orderCheckout.js), [`paymentRepository.js`](../../worker/paymentRepository.js), [`effectiveBusinessConfig.js`](../../worker/effectiveBusinessConfig.js), [`businessLogoStorage.js`](../../worker/businessLogoStorage.js).
+
+### 4.4 Economia de consultas, sincronização e orçamento Cloudflare
+
+**Invariante de engenharia, não regra financeira do produto:** o [AGENTS.md](../../AGENTS.md#economia-de-recursos-cloudflare--regra-para-futuras-melhorias) estabelece projetar a menor quantidade necessária de consultas, escritas, requests e processamento sem comprometer consistência, isolamento, auditoria, pagamentos ou impressão.
+
+- **Leitura por necessidade e permissão:** a TV obtém apenas candidatos ativos e itens pertinentes em [`kitchenTvReadRepository.js`](../../worker/kitchenTvReadRepository.js); a Cozinha administrativa pode consultar pedidos ativos por [`orderReadRepository.js`](../../worker/orderReadRepository.js); APIs de [`worker/readModels/`](../../worker/readModels/) suportam snapshots por superfície e histórico/financeiro paginados, com agregados oficiais não limitados à página. Evitar carregar todos os pedidos e itens em cada atualização.
+- **Sincronização por eventos, não por varredura:** o hub de [`worker/realtime/`](../../worker/realtime/) avisa sobre mudanças confirmadas, enquanto o HTTP/D1 permanece autoridade; o [`useScopedQuery.js`](../../src/infrastructure/realtime/useScopedQuery.js) reaproveita owners/invalidações sem criar polling por consulta. Fallback/reconciliação existem para recuperar eventos perdidos. O cache em memória por empresa/contexto tem invalidação de mutações, revisão e sessão; não substitui autorização nem permite reutilização após troca de empresa.
+- **Custo SQL e escrituração:** filtrar por empresa, verificar índices/planos, volume efetivo de `rows_read` **e** `rows_written`; índices podem aumentar custo de manutenção em escritas. Requests de leitura podem conter validações auxiliares de sessão e não devem ser assumidos como zero writes; comparar caminhos completos de API quando exigido. Evitar N+1, joins que iniciam pelo histórico, polling concorrente e novos logs sem necessidade.
+- **Gates e dimensionamento:** mudanças no caminho quente devem comparar baseline e nova consulta com **mesmos candidatos, permissões e volume de histórico**, medir D1 em workerd e contabilizar Workers/CPU, Durable Objects, R2, armazenamento, requests, falhas e modo degradado. [`operational-read-d1-benchmark.mjs`](../../scripts/infra/operational-read-d1-benchmark.mjs) e [`realtime-runtime-gate.mjs`](../../scripts/infra/realtime-runtime-gate.mjs) são entradas dos gates; não bastam, isolados, para provar economia mensal. Consulte [orçamento operacional D1](../operations/operational-data-read-budget.md), [sincronização e custo Cloudflare](../operations/realtime-sync.md) e [incidente de leitura na impressão](../operations/printing-d1-read-incident.md).
+- **Tecnologia alternativa requer evidência:** avaliar cache versionado, índices/consultas diferentes, Durable Objects, R2, replicação ou particionamento somente após medir gargalo e comparar custo total, consistência, segurança, migrations, manutenção e rollback. Não considerar réplica D1 como redução automática de linhas faturáveis nem acrescentar serviço apenas por expectativa de economia.
+
+A arquitetura com flags, caches e caminhos legados exige conferir **SHA, configuração efetiva do ambiente e métricas reais** antes de declarar algo publicado, desligado ou financeiramente aprovado. O [roteiro de custo e escala](../superpowers/plans/2026-10-14-mesiva-scale-roadmap.md) contém hipóteses de carga e margens de planejamento, não garantias de franquia de cobrança.
 
 ## 5. Fluxos entre frontend, API e serviços
 

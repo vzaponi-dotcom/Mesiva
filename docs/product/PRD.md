@@ -1,8 +1,8 @@
 # PRD — Mesiva | Visão do produto e escopo implementado
 
 - **Tipo:** documento vivo de produto (Product Requirements Document).
-- **Versão:** v0.2 — revisão em 13/10/2026 (edição inicial: 12/10/2026).
-- **Baseline conferida:** `master@e595f7ed2a801fde6ffab231194788430cc53316`.
+- **Versão:** v0.3 — atualização focal em 17/10/2026 (consolidação inicial de 12–13/10/2026).
+- **Baselines:** levantamento inicial `master@e595f7ed2a801fde6ffab231194788430cc53316`; mudanças desta revisão verificadas em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d` (PRs #108, #117, #118 e contratos operacionais/realtime atuais). **Não** representa reauditoria exaustiva dos demais módulos.
 - **Status:** consolidação inicial baseada em [README](../../README.md), [AGENTS.md](../../AGENTS.md), navegação e módulos do repositório; não é homologação funcional completa de cada tela.
 - **Idioma:** português do Brasil.
 
@@ -40,7 +40,7 @@ Esses são **contextos funcionais**, não uma matriz de cargos/perfis ou permiss
 | --- | --- | --- |
 | **Acesso, conta e empresas** | Login por e-mail/senha, recuperação de acesso, convites, vínculo e seleção de empresa; administração de equipe e registros de atividades | `src/domains/access/`, `src/domains/companies/`, `worker/access/`, `worker/identity/` |
 | **Administração Mesiva** | Visualização e gestão de empresas; suspensão, retomada, exclusão recuperável/restauração e ações autorizadas sobre vínculos/convites | `src/domains/platform/`, `worker/platform/` |
-| **Pedidos e cozinha** | Novo pedido, acompanhamento do preparo, histórico, agendamentos, detalhes, cancelamentos e estados de pagamento distintos dos operacionais | `src/domains/orders/`, `src/app/navigation/registry.js` |
+| **Pedidos e cozinha** | Novo pedido, acompanhamento do preparo, histórico, agendamentos, detalhes, edição de pedidos ativos, cancelamentos e filtros independentes de situação/modalidade na Cozinha; pagamentos continuam distintos dos estados operacionais | `src/domains/orders/`, `src/app/navigation/registry.js` |
 | **TV da Cozinha e controle** | Painel independente da TV, pareamento/compatibilidade, navegação por páginas e controle a partir do Gestor; filtros por modalidade e visibilidade específicos do painel | `src/kitchen-display/`, `src/app/surfaces/kitchen-tv-control/`, `worker/kitchenTvApi.js` |
 | **Mesas, comandas e reservas** | Gestão de mesas, consumo por comanda, reservas e fluxos associados a pagamentos/transferências, conforme permissões | `src/domains/table-service/`, `src/app/workflows/payments/table-tab/` |
 | **Clientes** | Cadastro, consulta e relacionamento; histórico e recebimento elegível de pedidos de clientes | `src/domains/customers/`, `src/app/workflows/payments/client-orders/` |
@@ -68,6 +68,9 @@ O domínio dos pedidos define essas modalidades em [`orderTypeOptions.js`](../..
 - **Salvar pedido** preserva o recebimento pendente; **Salvar e receber** registra pagamento conforme elegibilidade e permissão.
 - Status de pagamento e status operacional/preparo são independentes: receber não finaliza automaticamente o preparo.
 - Pedidos associados a comanda seguem o fluxo de recebimento da comanda. Regras de elegibilidade excluem pedidos já pagos ou cancelados dos fluxos inadequados.
+- Na **Cozinha administrativa**, os filtros de situação (`Todos`/`Atrasados`) e modalidade (`Todas`/`Entrega`/`Retirada`/`Mesa`) são combináveis com a busca. `Mesa` corresponde a `Local`; o filtro modifica a lista visível e não cria outra modalidade no banco (PR #117).
+- Em pedidos `Local` de comanda aberta, o cliente identificado no lançamento anterior é reutilizado quando o novo lançamento não escolhe outro cliente. A **TV** recebe `Mesa · Cliente` quando há mesa e cliente identificados, ou somente o nome da mesa quando não há cliente. A TV tem projeção própria; não confundir com o filtro de Cozinha (PR #118).
+- Pedidos ativos elegíveis podem ser **editados** com revisão e autorização; itens já existentes preservam o preço histórico, enquanto novos itens usam preço válido do catálogo. Diferenças positivas/negativas são conciliadas pelo saldo ou devolução oficial, sem reabrir uma comanda quitada nem criar pedido novo (PR #108).
 - A TV e seu controle podem mudar a **exibição** dos pedidos sem, por isso, cancelar ou finalizar o pedido oficial.
 
 Este resumo não substitui o catálogo detalhado de [regras de negócio vigentes](BUSINESS_RULES.md), com fontes e condições de exceção. Antes de uma implementação, reconferir também código e testes da branch/SHA.
@@ -98,6 +101,10 @@ Estes requisitos expressam **capacidades já identificadas**, não novas solicit
 | RF-06 | Oferecer consulta de relatórios e exportação CSV/XLSX/PDF a quem possuir a capacidade correspondente. | `src/domains/reporting/ui/ReportingExportMenu.jsx` |
 | RF-07 | Distinguir job de impressão confirmado, falho ou de resultado incerto, preservando tratamento de atenção. | `src/domains/printing/application/printJobRunner.js`; runbook Windows/QZ |
 | RF-08 | Separar administração global Mesiva das capacidades concedidas nas empresas. | `src/domains/platform/ui/PlatformRoutes.jsx`; runbook multiempresa |
+| RF-09 | Filtrar a Cozinha por situação e modalidade sem mutar o pedido nem transformar `Mesa` em quarta modalidade interna. | `src/domains/orders/ui/Orders.jsx`; `src/domains/orders/domain/kitchenQueue.test.js` (PR #117) |
+| RF-10 | Manter cliente identificado entre pedidos da mesma comanda e exibir a identidade contextual `Mesa · Cliente` na TV, sem expor atributos adicionais no card. | `worker/repositories.js`; `worker/kitchenTvReadRepository.js`; testes correspondentes (PR #118) |
+| RF-11 | Editar pedido elegível preservando preços históricos, revisão e conciliação oficial do saldo; recebimento ou devolução não altera automaticamente o estado de preparo. | `worker/orderEditValidation.js`; `worker/orderEditRepository.js`; `docs/operations/order-editing.md` (PR #108) |
+| RF-12 | Quando os read models por superfície estiverem habilitados, carregar somente o escopo necessário e consultar histórico/financeiro por filtros/páginas, preservando totais oficiais e acesso a registros antigos. | `worker/readModels/snapshotRepository.js`; `src/infrastructure/realtime/useScopedQuery.js`; `docs/operations/realtime-sync.md` |
 
 As restrições, exceções e invariantes ficam no [BUSINESS_RULES.md](BUSINESS_RULES.md). **Não** replicar integralmente essa lógica no PRD.
 
@@ -120,6 +127,8 @@ As jornadas abaixo conectam módulos existentes; **não** substituem testes de c
 - Preferências locais podem permanecer no dispositivo; não usar `localStorage` como autoridade para autenticação, preços, pagamentos ou estados oficiais.
 - Escritas de negócio não são enfileiradas offline. Uma interface offline não deve simular confirmação definitiva de gravação.
 - O backend valida contexto da empresa, identidade, permissões e valores relevantes. Não confiar em botões ocultos como defesa única.
+
+**Eficiência sem redução funcional:** leituras por superfície, candidatos ativos, consultas por IDs, paginação de histórico/financeiro e cache contextual podem reduzir carregamentos desnecessários. Os dados e totais oficiais continuam sendo calculados/revalidados no servidor; coleções parciais não autorizam inferir exclusão ou zerar pendências. A disponibilidade desses mecanismos depende das flags, da rota e do SHA implantado. Referências: [orçamento D1](../operations/operational-data-read-budget.md) e [sincronização e orçamento Cloudflare](../operations/realtime-sync.md). O impacto financeiro mensal **não** é dedutível apenas desses mecanismos ou de testes locais.
 
 ### 5.2 Interfaces e dispositivos
 
@@ -163,6 +172,8 @@ Não classificar uma funcionalidade como “planejada” apenas por existir uma 
 - [Registro de navegação](../../src/app/navigation/registry.js), [entrada do aplicativo](../../src/main.jsx) e [camada de composição](../../src/App.jsx).
 - [Domínios de frontend](../../src/domains/), [workflows de pagamento](../../src/app/workflows/payments/) e [entrada da API](../../worker/entry.js).
 - [Operação multiempresa](../operations/multi-company-production.md), [políticas de configuração](../operations/spec-b-settings.md) e [impressão física](../operations/windows-qz-tray-printing.md).
+- [Edição de pedidos e saldo](../operations/order-editing.md), [orçamento D1](../operations/operational-data-read-budget.md) e [sincronização e custo Cloudflare](../operations/realtime-sync.md).
+- [PR #117 — filtros de Cozinha](https://github.com/vzaponi-dotcom/Mesiva/pull/117) e [PR #118 — identidade Mesa/Cliente na TV](https://github.com/vzaponi-dotcom/Mesiva/pull/118).
 - [Refinamento da marca](../operations/2026-10-02-mesiva-logo-refinement.md).
 - [Arquitetura atual](../architecture/ARCHITECTURE.md) e [fluxo de release](../release-and-migration-runbook.md).
 
