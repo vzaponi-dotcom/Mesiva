@@ -104,8 +104,7 @@ export const listTableReservations = async (db, businessId, filters = {}) => {
   return rows(result).map(mapTableReservationRow)
 }
 
-export const listNextTableReservations = async (db, businessId) => {
-  const result = await db.prepare(`${reservationSelect}
+export const prepareNextTableReservations = (db, businessId) => db.prepare(`${reservationSelect}
     WHERE tr.business_id = ?
       AND tr.status = 'reserved'
       AND NOT EXISTS (
@@ -119,9 +118,10 @@ export const listNextTableReservations = async (db, businessId) => {
             OR (earlier.scheduled_for = tr.scheduled_for AND earlier.id < tr.id)
           )
       )
-    ORDER BY tr.scheduled_for ASC, tr.id ASC`).bind(businessId).all()
-  return rows(result).map(mapTableReservationRow)
-}
+    ORDER BY tr.scheduled_for ASC, tr.id ASC`).bind(businessId)
+
+export const listNextTableReservations = async (db, businessId) =>
+  rows(await prepareNextTableReservations(db, businessId).all()).map(mapTableReservationRow)
 
 export const loadNextTableReservationForTable = async (db, businessId, tableId) => {
   const row = await db.prepare(`${reservationSelect}
