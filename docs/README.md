@@ -32,7 +32,9 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 
 ### Identidade visual: referências e conciliação pendente
 
-- [Guia oficial de identidade visual Mesiva v1.0 (Drive, 23/09/2026)](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) — direção da marca e regras de aplicação aprovadas naquela edição.
+**Edição v1.1 aprovada em 17/10/2026:** a atualização editorial do guia Mesiva foi aprovada pelo proprietário, consolidando os vetores, a assinatura “Pessoas. Sabor. Evolução.” e a distinção entre as cores do guia e do SVG. Foram preparados PDF e Word oficiais (10 páginas). **Publicação na pasta oficial do Drive ainda pendente:** os links abaixo continuam apontando à edição v1.0 histórica até que os arquivos v1.1 sejam enviados e verificados. Não inventar links nem sobrescrever a v1.0.
+
+- [Guia de identidade visual Mesiva v1.0 — histórico no Drive (23/09/2026)](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) — direção inicial preservada; não utilizar mockups históricos como ativos de produção.
 - [Refinamento do logo e slogan (02/10/2026)](operations/2026-10-02-mesiva-logo-refinement.md) — registra vetores, versões clara/escura, ícones e a assinatura em português adotados posteriormente.
 - [Ícones e publicações](operations/2026-10-02-github-releases-and-mesiva-icons.md) e [referência visual de Cozinha/Comandas](mesiva-kitchen-visual.md) — mudanças e contexto adicionais.
 - Ativos da aplicação: `public/brand/`. **Não** reconstruir/recolorir a marca por aproximação.
