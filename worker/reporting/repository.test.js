@@ -427,3 +427,35 @@ test('Task 7: report period lookup remains indexable with 10k receipts and no du
   assert.ok(details.some(d=>d.includes('payment_receipts_business_paid_idx')),details.join('\n'))
   assert.ok(!details.some(d=>/SCAN payment_receipts(?:\b|$)/i.test(d)),details.join('\n'))
 })
+
+
+test('Task 8: reporting detail retains effective financial day per original and supplemental receipt while ordering by registration',async t=>{
+  const {createReportingRepository}=await import('./repository.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  sqlite.exec(`
+    INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('r8','r8','R8','2026-10-01','2026-10-01');
+    INSERT INTO orders(id,business_id,order_number,client_name_snapshot,type,order_date,status,subtotal_cents,total_cents,created_at)
+      VALUES('order-r8','r8',8,'Ana','Entrega','2026-10-17','Finalizado',9500,9500,'2026-10-17T09:00:00Z');
+    INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES
+      ('original-r8','r8',8000,'2026-10-17T10:00:00Z','2026-10-14','2026-10-17T10:00:00Z'),
+      ('extra-r8','r8',1500,'2026-10-17T12:00:00Z','2026-10-15','2026-10-17T12:00:00Z');
+    INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES
+      ('original-pix','r8','original-r8','Pix',8000,'2026-10-17T10:00:00Z'),
+      ('extra-pix','r8','extra-r8','Pix',1000,'2026-10-17T12:00:00Z'),
+      ('extra-cash','r8','extra-r8','Dinheiro',500,'2026-10-17T12:00:00Z');
+    INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES
+      ('payment-r8','r8','order-r8','original-r8',8000,'2026-10-17T10:00:00Z','2026-10-17T10:00:00Z');
+    INSERT INTO order_settlement_entries(id,business_id,order_id,kind,amount_cents,receipt_id,mutation_id,created_at) VALUES
+      ('supp-r8','r8','order-r8','supplemental_payment',1500,'extra-r8','supp-r8','2026-10-17T12:00:00Z');
+  `)
+  const repo=createReportingRepository(db)
+  const result=await repo.getOrderDetail('r8','order-r8')
+  assert.deepEqual(result.paymentAllocations.map(x=>[x.receipt_id,x.received_date,x.paid_at,x.amount_cents]),[
+    ['original-r8','2026-10-14','2026-10-17T10:00:00Z',8000],
+    ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',1000],
+    ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',500],
+  ])
+  assert.equal(result.grossReceivedCents,9500)
+  assert.equal((await repo.getOrderDetail('r8','absent')),null)
+  assert.equal((await repo.getOrderDetail('amor-e-sabor','order-r8')),null)
+})
