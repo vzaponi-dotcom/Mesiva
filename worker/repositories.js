@@ -10,7 +10,7 @@ import { formatOrderDisplayNumber } from '../shared/orderDisplayNumber.js'
 import { formatProductPresentation } from '../shared/productCatalog.js'
 import { mapMovementRow, loadFinanceSettings } from './financeRepository.js'
 import { calculateCheckoutTotals } from './orderCheckout.js'
-import { assertPaymentAllocationTotal, validatePaymentAllocations } from './paymentValidation.js'
+import { assertPaymentAllocationTotal, resolveReceivedDate, validatePaymentAllocations } from './paymentValidation.js'
 import { prepareAutomaticPrintJobStatement } from './orderPrintingRepository.js'
 import { listTables, requireExpectedOpenTableTab, reserveNextTableTabNumber } from './tableRepository.js'
 import { centsToMoney } from './validation.js'
@@ -340,6 +340,14 @@ const legacyCheckoutInput = (input) => ({
 export const createOrder = async (db, businessId, rawInput, now = new Date()) => {
   const input = Array.isArray(rawInput.items) && rawInput.items.length ? rawInput : legacyCheckoutInput(rawInput)
   const idempotencyKey = input.idempotencyKey || crypto.randomUUID()
+  if (input.receivedDate !== undefined && input.paymentAllocations == null) {
+    throw Object.assign(new Error('A data do recebimento só pode ser informada quando houver pagamento.'), {
+      status: 400, code: 'VALIDATION_ERROR', field: 'receivedDate',
+    })
+  }
+  // Validate before any writes, including the order number sequence allocation.
+  // An omitted date is intentionally left unresolved until a new receipt is written.
+  if (input.receivedDate !== undefined) resolveReceivedDate(input.receivedDate, now)
 
   const existing = await db.prepare('SELECT id FROM orders WHERE business_id = ? AND idempotency_key = ? LIMIT 1').bind(businessId, idempotencyKey).first()
   if (existing?.id) return loadOrderById(db, businessId, existing.id)
@@ -598,12 +606,12 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
     const receiptId = crypto.randomUUID()
     const paymentId = crypto.randomUUID()
     const paidAt = now.toISOString()
-    const movementDate = getBusinessDate(now)
+    const movementDate = resolveReceivedDate(input.receivedDate, now)
     const description = `${formatOrderDisplayNumber({ orderNumber }).replace('Pedido', 'Pagamento pedido')} · ${clientSnapshot}`
     const movementStatements = []
     statements.push(db.prepare(`INSERT INTO payment_receipts
-      (id, business_id, table_tab_id, total_cents, paid_at, created_at)
-      VALUES (?, ?, NULL, ?, ?, ?)`).bind(receiptId, businessId, totals.totalCents, paidAt, paidAt))
+      (id, business_id, table_tab_id, total_cents, paid_at, received_date, created_at)
+      VALUES (?, ?, NULL, ?, ?, ?, ?)`).bind(receiptId, businessId, totals.totalCents, paidAt, movementDate, paidAt))
     for (const allocation of paymentAllocations) {
       const allocationId = crypto.randomUUID()
       const methodLabel = paymentLabels.get(allocation.methodCode)
