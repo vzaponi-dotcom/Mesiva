@@ -147,3 +147,30 @@ test('Task 12 standalone payment cannot bypass an open table tab', async () => {
   assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payments').get().n,0)
   assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payment_receipts').get().n,0)
 })
+
+
+test('table-tab settlement dates one shared mixed receipt for all orders without changing close time', async () => {
+  const db = new TableTabPaymentDb()
+  db.sqlite.prepare("INSERT INTO orders(id,business_id,client_name_snapshot,customer_identity_type,table_tab_id,type,order_date,status,subtotal_cents,total_cents,created_at) VALUES('order-2',?,'Mesa 1','table','tab-1','Local','2026-09-12','Em preparo',1500,1500,?)").run(BUSINESS,ISO)
+  const registeredAt = NOW.toISOString()
+  const result = await registerTableTabPayment(db, BUSINESS, 'tab-1', [
+    { methodCode: 'pix', amountCents: 2500 }, { methodCode: 'cash', amountCents: 1500 },
+  ], NOW, { receivedDate: '2026-09-10' })
+  assert.equal(result.receipt.receivedDate,'2026-09-10')
+  assert.equal(result.payments.length,2)
+  assert.equal(db.sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date,'2026-09-10')
+  assert.deepEqual(db.sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").all(result.receipt.id).map(x=>x.movement_date),['2026-09-10','2026-09-10'])
+  assert.equal(db.sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,1)
+  assert.equal(db.sqlite.prepare('SELECT SUM(value_cents) n FROM movements WHERE receipt_id=?').get(result.receipt.id).n,4000)
+  assert.equal(db.sqlite.prepare("SELECT closed_at FROM table_tabs WHERE id='tab-1'").get().closed_at, registeredAt)
+  assert.equal(db.sqlite.prepare('SELECT paid_at FROM payment_receipts WHERE id=?').get(result.receipt.id).paid_at,registeredAt)
+})
+
+test('table-tab future receipt date rejects atomically and preserves open tab', async () => {
+  const db=new TableTabPaymentDb()
+  await assert.rejects(registerTableTabPayment(db,BUSINESS,'tab-1',pix,NOW,{receivedDate:'2026-09-13'}),
+    {status:400,code:'VALIDATION_ERROR',field:'receivedDate'})
+  assert.equal(db.sqlite.prepare("SELECT status FROM table_tabs WHERE id='tab-1'").get().status,'open')
+  for(const table of ['payment_receipts','payment_allocations','payments','movements'])
+    assert.equal(db.sqlite.prepare('SELECT COUNT(*) n FROM '+table).get().n,0)
+})
