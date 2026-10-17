@@ -15,6 +15,7 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
   const tabScope=tableScope && granted.has('comandas.view')
   const clientScope=surface==='new-order' && granted.has('clients.view')
   const productScope=['new-order','products'].includes(surface) && granted.has('products.view')
+  const tabOrders=tabScope && (granted.has('orders.view') || granted.has('orders.history'))
   const common=await db.batch([
     db.prepare(`SELECT b.id,b.name,
     CASE WHEN bp.logo_object_key IS NOT NULL THEN 1 ELSE 0 END AS has_logo,
@@ -24,6 +25,9 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
     ...(granted.has('comandas.view')?[db.prepare("SELECT id FROM table_tabs WHERE business_id=? AND status='open' ORDER BY id").bind(businessId)]:[]),
     ...(tabScope?[db.prepare(`SELECT id,table_id,table_identifier,tab_number,status,opened_at,closed_at
        FROM table_tabs WHERE business_id=? AND status='open' ORDER BY opened_at DESC,id DESC`).bind(businessId)]:[]),
+    ...(tabOrders?[db.prepare(`SELECT o.id FROM table_tabs tabs CROSS JOIN orders o
+      ON o.business_id=tabs.business_id AND o.table_tab_id=tabs.id
+      WHERE tabs.business_id=? AND tabs.status='open' ORDER BY o.created_at DESC,o.id DESC`).bind(businessId)]:[]),
     ...(clientScope?[db.prepare('SELECT id,name,phone,address FROM clients WHERE business_id=? ORDER BY name COLLATE NOCASE ASC').bind(businessId)]:[]),
     ...(productScope?[db.prepare(`SELECT id,category,size,presentation_type,presentation_value,presentation_unit,name,price_cents
       FROM products WHERE business_id=? AND active=1 ORDER BY name COLLATE NOCASE ASC`).bind(businessId)]:[]),
@@ -40,16 +44,14 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
   mark('snapRefunds')
   if(tableScope && granted.has('tables.view'))payload.tables=await listTables(db,businessId)
   if(tabScope)payload.tableTabs=rows(common[index++]).map(mapTableTabRow)
+  const selectedTabOrders=tabOrders?rows(common[index++]).map(row=>row.id):[]
   mark('snapTables')
   let orderScope=null
   if(surface==='orders'){
     payload.orders=await listActiveOrders(db,businessId);orderScope='active'
-  }else if(tableScope && granted.has('comandas.view') && (granted.has('orders.view') || granted.has('orders.history'))){
-    const selected=await db.prepare(`SELECT o.id FROM table_tabs tabs CROSS JOIN orders o
-      ON o.business_id=tabs.business_id AND o.table_tab_id=tabs.id
-      WHERE tabs.business_id=? AND tabs.status='open' ORDER BY o.created_at DESC,o.id DESC`).bind(businessId).all()
+  }else if(tabOrders){
     const currentTabIds=new Set(payload.tableTabs.map(tab=>tab.id))
-    payload.orders=(await listOrdersByIds(db,businessId,rows(selected).map(row=>row.id))).filter(order=>currentTabIds.has(order.tableTabId))
+    payload.orders=(await listOrdersByIds(db,businessId,selectedTabOrders)).filter(order=>currentTabIds.has(order.tableTabId))
     orderScope='open-tabs'
   }
   mark('snapOrders')
