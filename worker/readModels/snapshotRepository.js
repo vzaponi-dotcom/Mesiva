@@ -9,14 +9,20 @@ import {listFinancialCandidateIds} from './financialCandidates.js'
 const rows=result=>Array.isArray(result?.results)?result.results:[]
 export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted=new Set(),effectiveBusinessConfig,currentTiming=effectiveBusinessConfig?.operations?.timing,now=new Date()}={}){
   requireReadSurface(granted,surface)
-  const business=await db.prepare(`SELECT b.id,b.name,
+  const common=await db.batch([
+    db.prepare(`SELECT b.id,b.name,
     CASE WHEN bp.logo_object_key IS NOT NULL THEN 1 ELSE 0 END AS has_logo,
     CASE WHEN bp.logo_object_key IS NOT NULL THEN bp.logo_updated_at ELSE NULL END AS logo_version
-    FROM businesses b LEFT JOIN business_profiles bp ON bp.business_id=b.id WHERE b.id=? LIMIT 1`).bind(businessId).first()
+    FROM businesses b LEFT JOIN business_profiles bp ON bp.business_id=b.id WHERE b.id=? LIMIT 1`).bind(businessId),
+    ...(granted.has('orders.view')?[db.prepare("SELECT id,status,created_at,scheduled_for FROM orders WHERE business_id=? AND status IN ('Em preparo','Agendado') ORDER BY created_at DESC,id DESC").bind(businessId)]:[]),
+    ...(granted.has('comandas.view')?[db.prepare("SELECT id FROM table_tabs WHERE business_id=? AND status='open' ORDER BY id").bind(businessId)]:[]),
+  ])
+  const business=common[0]?.results?.[0]
   const payload={business:business?{id:business.id,name:business.name,hasLogo:Boolean(business.has_logo),logoVersion:business.has_logo?(business.logo_version??null):null}:{id:businessId,name:'Estabelecimento',hasLogo:false,logoVersion:null}}
   if(effectiveBusinessConfig)payload.effectiveBusinessConfig=effectiveBusinessConfig
-  const operationalOrders=granted.has('orders.view')?rows(await db.prepare("SELECT id,status,created_at,scheduled_for FROM orders WHERE business_id=? AND status IN ('Em preparo','Agendado') ORDER BY created_at DESC,id DESC").bind(businessId).all()).map(row=>({id:row.id,status:row.status,createdAt:row.created_at,scheduledFor:row.scheduled_for ?? null})):[]
-  const openTableTabIds=granted.has('comandas.view')?rows(await db.prepare("SELECT id FROM table_tabs WHERE business_id=? AND status='open' ORDER BY id").bind(businessId).all()).map(row=>row.id):[]
+  let index=1
+  const operationalOrders=granted.has('orders.view')?rows(common[index++]).map(row=>({id:row.id,status:row.status,createdAt:row.created_at,scheduledFor:row.scheduled_for ?? null})):[]
+  const openTableTabIds=granted.has('comandas.view')?rows(common[index++]).map(row=>row.id):[]
   const counters={orders:getOperationalOrderCount(operationalOrders,now,currentTiming),comandas:openTableTabIds.length}
   if(granted.has('finance.movements'))counters.refunds=(await listFinancialCandidateIds(db,businessId,{kind:'refund',granted})).length
   const tableScope=['new-order','tables','comandas'].includes(surface)
