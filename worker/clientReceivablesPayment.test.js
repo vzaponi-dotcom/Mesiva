@@ -485,3 +485,42 @@ test('Task 12 shared client receipt keeps distinct order credits without multipl
   assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payments WHERE order_id IN ('o1','o2')").get().n,2)
   assert.equal(db.sqlite.prepare("SELECT count(*) n FROM payment_receipts WHERE id=?").get(receipt.receipt.id).n,1)
 })
+
+
+test('client mixed batch receives one retroactive date across a shared receipt without inflating revenue', async () => {
+  const db=new ClientReceivablesDb()
+  const result=await registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],split69,NOW,
+    {mutationId:'retro-batch',receivedDate:'2026-09-24'})
+  assert.equal(result.receipt.receivedDate,'2026-09-24')
+  assert.equal(result.receipt.paidAt,ISO)
+  assert.equal(result.payments.length,2)
+  assert.equal(db.sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date,'2026-09-24')
+  assert.deepEqual(db.sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").all(result.receipt.id).map(r=>r.movement_date),['2026-09-24','2026-09-24'])
+  assert.equal(db.sqlite.prepare('SELECT SUM(value_cents) n FROM movements WHERE receipt_id=?').get(result.receipt.id).n,6900)
+  assert.deepEqual(counts(db),{receipts:1,allocations:2,payments:2,movements:2})
+  const replay=await registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],split69,new Date(+NOW+86400000),
+    {mutationId:'retro-batch',receivedDate:'2026-09-24'})
+  assert.equal(replay.receipt.id,result.receipt.id)
+  assert.equal(replay.receipt.receivedDate,'2026-09-24')
+  await assert.rejects(
+    registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],split69,NOW,
+      {mutationId:'retro-batch',receivedDate:'2026-09-25'}),
+    {status:409,code:'CLIENT_RECEIVABLES_PAYMENT_CONFLICT'})
+  assert.deepEqual(counts(db),{receipts:1,allocations:2,payments:2,movements:2})
+})
+
+test('client batch excludes invalid future date and preserves old idempotent replays across midnight', async () => {
+  const db=new ClientReceivablesDb()
+  await assert.rejects(registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],pix69,NOW,
+    {mutationId:'reject-future',receivedDate:'2026-09-27'}),
+    {status:400,code:'VALIDATION_ERROR',field:'receivedDate'})
+  assert.deepEqual(counts(db),{receipts:0,allocations:0,payments:0,movements:0})
+  const first=await registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],pix69,NOW,
+    {mutationId:'legacy-retry'})
+  assert.equal(first.receipt.receivedDate,'2026-09-26')
+  const replay=await registerClientOrdersPayment(db,BUSINESS,'c1',['o1','o2'],pix69,new Date(+NOW+86400000),
+    {mutationId:'legacy-retry'})
+  assert.equal(replay.receipt.id,first.receipt.id)
+  assert.equal(replay.receipt.receivedDate,'2026-09-26')
+  assert.deepEqual(counts(db),{receipts:1,allocations:1,payments:2,movements:1})
+})
