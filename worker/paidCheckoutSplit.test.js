@@ -82,3 +82,50 @@ test('paid checkout replay returns the original receipt without duplicating fina
   assert.equal(db.all('SELECT * FROM movements').length, 2)
   assert.equal(db.all('SELECT * FROM print_jobs').length, 1)
 })
+
+
+test('checkout split payment applies chosen financial day without changing the order business date or registration timestamps', async () => {
+  const db=setup()
+  const result=await createOrder(db,BUSINESS,input({idempotencyKey:'dated-checkout',receivedDate:'2026-09-19'}),NOW)
+  const receipt=db.all('SELECT * FROM payment_receipts')[0]
+  const payment=db.all('SELECT * FROM payments')[0]
+  const order=db.all('SELECT * FROM orders')[0]
+  const movements=db.all("SELECT * FROM movements WHERE source='order-payment'")
+  assert.equal(result.paymentStatus,'Pago')
+  assert.equal(order.order_date,'2026-09-21')
+  assert.equal(receipt.received_date,'2026-09-19')
+  assert.equal(receipt.paid_at,NOW.toISOString())
+  assert.equal(receipt.created_at,NOW.toISOString())
+  assert.equal(payment.paid_at,NOW.toISOString())
+  assert.equal(movements.length,2)
+  assert.ok(movements.every(m=>m.movement_date==='2026-09-19' && m.created_at===NOW.toISOString()))
+  assert.equal(movements.reduce((sum,m)=>sum+m.value_cents,0),8000)
+  assert.equal(db.all('SELECT * FROM print_jobs').length,1)
+})
+
+test('checkout defaults to business day for old clients and replay never rewrites original receipt or prints again',async()=>{
+  const db=setup()
+  const first=await createOrder(db,BUSINESS,input({idempotencyKey:'checkout-replay-date',receivedDate:'2026-09-19'}),NOW)
+  const receipt=db.all('SELECT id,received_date FROM payment_receipts')[0]
+  const again=await createOrder(db,BUSINESS,input({idempotencyKey:'checkout-replay-date',receivedDate:'2026-09-20'}),new Date(+NOW+86400000))
+  assert.equal(again.id,first.id)
+  assert.deepEqual(db.all('SELECT id,received_date FROM payment_receipts').map(r=>({...r})),[{...receipt}])
+  assert.equal(db.all('SELECT * FROM print_jobs').length,1)
+  assert.equal(db.all('SELECT * FROM movements').length,2)
+  const legacy=await createOrder(db,BUSINESS,input({idempotencyKey:'checkout-default-date',paymentAllocations:[{methodCode:'pix',amountCents:8000}]}),
+    new Date('2026-09-22T02:30:00.000Z'))
+  assert.equal(db.sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=(SELECT receipt_id FROM payments WHERE order_id=?)').get(legacy.id).received_date,'2026-09-21')
+})
+
+test('checkout rejects invalid or unpaid receipt dates before creating financial, order or print rows', async()=>{
+  for(const [receivedDate,paid] of [['2026-09-22',true],[null,true],['2026-09-19',false]]) {
+    const db=setup()
+    await assert.rejects(createOrder(db,BUSINESS,input({
+      idempotencyKey:'invalid-checkout-date',
+      paymentAllocations:paid?[{methodCode:'pix',amountCents:8000}]:null,
+      receivedDate,
+    }),NOW),{status:400,code:'VALIDATION_ERROR',field:'receivedDate'})
+    for(const table of ['orders','payment_receipts','payment_allocations','payments','movements','print_jobs'])
+      assert.equal(db.all(`SELECT * FROM ${table}`).length,0,table)
+  }
+})
