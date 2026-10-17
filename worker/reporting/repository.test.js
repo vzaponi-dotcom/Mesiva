@@ -445,15 +445,15 @@ test('Task 8: reporting detail retains effective financial day per original and 
       ('extra-cash','r8','extra-r8','Dinheiro',500,'2026-10-17T12:00:00Z');
     INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES
       ('payment-r8','r8','order-r8','original-r8',8000,'2026-10-17T10:00:00Z','2026-10-17T10:00:00Z');
-    INSERT INTO order_settlement_entries(id,business_id,order_id,kind,amount_cents,receipt_id,mutation_id,created_at) VALUES
-      ('supp-r8','r8','order-r8','supplemental_payment',1500,'extra-r8','supp-r8','2026-10-17T12:00:00Z');
+    INSERT INTO order_settlement_entries(id,business_id,order_id,kind,amount_cents,receipt_id,mutation_id,actor_name,created_at) VALUES
+      ('supp-r8','r8','order-r8','supplemental_payment',1500,'extra-r8','supp-r8','Operador','2026-10-17T12:00:00Z');
   `)
   const repo=createReportingRepository(db)
   const result=await repo.getOrderDetail('r8','order-r8')
   assert.deepEqual(result.paymentAllocations.map(x=>[x.receipt_id,x.received_date,x.paid_at,x.amount_cents]),[
     ['original-r8','2026-10-14','2026-10-17T10:00:00Z',8000],
-    ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',1000],
     ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',500],
+    ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',1000],
   ])
   assert.equal(result.grossReceivedCents,9500)
   const exported=await repo.listDetail('r8',{from:'2026-10-17',to:'2026-10-17',page:1,pageSize:20,withFinancialDates:true})
