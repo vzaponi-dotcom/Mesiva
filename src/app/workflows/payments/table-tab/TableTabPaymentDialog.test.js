@@ -158,3 +158,44 @@ test('Task 9: checkout date is part of confirmed payment, not of save-without-pa
   await act(async()=>r.root.findByProps({'aria-label':'Data do recebimento'}).props.onChange({target:{value:'2999-01-01'}}))
   assert.ok(buttonNamed(r.root,'Confirmar recebimento').props.disabled)
 })
+
+test('Task 9: standalone and client dialogs render the same controlled financial date, blocking invalid submissions',async t=>{
+  const h=await workspaceHarness(t)
+  const {default:OrderDialog}=await h.load('/src/app/workflows/payments/order/OrderPaymentDialog.jsx')
+  const {default:ClientDialog}=await h.load('/src/app/workflows/payments/client-orders/ClientOrdersPaymentDialog.jsx')
+  const allocation=[{methodCode:'pix',amountCents:1500}]
+  const options=[{code:'pix',value:'Pix',label:'Pix'}]
+  for(const [Component,extra] of [
+    [OrderDialog,{order:{id:'o1',client:'Ana',orderNumber:1},supplemental:true}],
+    [ClientDialog,{orders:[{id:'o1',orderNumber:1,total:15}],clientName:'Ana'}],
+  ]){
+    const dates=[]
+    const dialog={...extra,totalCents:1500,allocations:allocation,setAllocations(){},
+      paymentOptions:options,composition:{valid:true},receivedDate:'2026-10-15',
+      dateValid:true,setReceivedDate:value=>dates.push(value),submit(){},onClose(){}}
+    const r=await h.render(Component,{dialog,currency:v=>String(v)})
+    const input=r.root.findByProps({'aria-label':'Data do recebimento'})
+    assert.equal(input.props.value,'2026-10-15')
+    assert.equal(input.props.max,getBusinessDate())
+    await act(async()=>input.props.onChange({target:{value:'2026-10-14'}}))
+    assert.deepEqual(dates,['2026-10-14'])
+    await act(async()=>r.update(React.createElement(Component,{dialog:{...dialog,dateValid:false},currency:v=>String(v)})))
+    assert.ok(buttonNamed(r.root,Component===OrderDialog?'Confirmar pagamento':'Confirmar recebimento').props.disabled)
+    await act(async()=>r.unmount())
+  }
+})
+
+test('Task 9: post-edit supplemental payment forwards its chosen date without changing refund flow',async t=>{
+  const h=await workspaceHarness(t)
+  const {default:Dialog}=await h.load('/src/app/workflows/payments/order/OrderEditSettlementDialog.jsx')
+  const calls=[]
+  const order={id:'after-edit',contentRevision:2,totalCents:9500,netReceivedCents:8000,dueCents:1500,refundDueCents:0,paymentId:'old'}
+  const r=await h.render(Dialog,{order,stage:'receive',source:'edit',
+    canReceivePayments:true,paymentOptions:[{code:'pix',value:'Pix',label:'Pix'}],
+    defaultPaymentMethod:'Pix',onReceive:(...args)=>calls.push(args),onClose(){}})
+  const date=r.root.findByProps({'aria-label':'Data do recebimento'})
+  await act(async()=>date.props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>buttonNamed(r.root,'Confirmar recebimento').props.onClick())
+  assert.deepEqual(calls[0][1],'2026-10-15')
+  assert.deepEqual(calls[0][0],[{methodCode:'pix',amountCents:1500}])
+})
