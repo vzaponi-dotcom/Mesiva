@@ -77,11 +77,11 @@ test('TV shows table and client on the first, second and third order of a comand
     INSERT INTO clients (id, business_id, name, created_at, updated_at)
       VALUES ('client-hugo', '${BUSINESS}', 'Hugo', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
     INSERT INTO tables (id, business_id, name, name_key, sort_order, is_active, created_at, updated_at)
-      VALUES ('mesa-2', '${BUSINESS}', 'Mesa 2', 'MESA 2', 2, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
-             ('mesa-3', '${BUSINESS}', 'Mesa 3', 'MESA 3', 3, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
+      VALUES ('mesa-2', '${BUSINESS}', 'Mesa KDS 2', 'MESA KDS 2', 2, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
+             ('mesa-3', '${BUSINESS}', 'Mesa KDS 3', 'MESA KDS 3', 3, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
     INSERT INTO table_tabs (id, business_id, table_id, table_identifier, tab_number, status, opened_at, created_at, updated_at)
-      VALUES ('comanda-2', '${BUSINESS}', 'mesa-2', 'Mesa 2', 2, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
-             ('comanda-3', '${BUSINESS}', 'mesa-3', 'Mesa 3', 3, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
+      VALUES ('comanda-2', '${BUSINESS}', 'mesa-2', 'Mesa KDS 2', 2, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
+             ('comanda-3', '${BUSINESS}', 'mesa-3', 'Mesa KDS 3', 3, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
   `)
   const addOrder = sqlite.prepare(`INSERT INTO orders (
     id, business_id, client_id, client_name_snapshot, customer_identity_type, table_tab_id,
@@ -91,17 +91,17 @@ test('TV shows table and client on the first, second and third order of a comand
     addOrder.run(`hugo-${number}`, BUSINESS, 'client-hugo', 'Hugo', 'comanda-2',
       `2026-09-22T18:0${number}:00.000Z`, 1043 + number)
   }
-  addOrder.run('no-name', BUSINESS, null, 'Mesa 3', 'comanda-3', '2026-09-22T18:04:00.000Z', 1047)
+  addOrder.run('no-name', BUSINESS, null, 'Mesa KDS 3', 'comanda-3', '2026-09-22T18:04:00.000Z', 1047)
 
   const state = await repository.loadKitchenTvState(db, BUSINESS)
   for (const number of [1, 2, 3]) {
     const order = state.orders.find((entry) => entry.id === `hugo-${number}`)
-    assert.equal(order.client, 'Mesa 2 · Hugo')
+    assert.equal(order.client, 'Mesa KDS 2 · Hugo')
     assert.equal(order.type, 'Local')
     assert.equal(Object.hasOwn(order, 'tableIdentifier'), false)
     assert.equal(Object.hasOwn(order, 'clientId'), false)
   }
-  assert.equal(state.orders.find((order) => order.id === 'no-name').client, 'Mesa 3')
+  assert.equal(state.orders.find((order) => order.id === 'no-name').client, 'Mesa KDS 3')
   assert.equal(state.orders.find((order) => order.id === 'active-now').client, 'Ana Souza')
 })
 
