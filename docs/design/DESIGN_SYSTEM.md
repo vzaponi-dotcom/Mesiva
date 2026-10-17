@@ -1,11 +1,11 @@
 # Mesiva — Design System e aplicação visual no produto
 
 - **Tipo:** documentação viva da identidade aplicada ao produto, tokens, temas, componentes e critérios de revisão.
-- **Versão:** v0.1 — consolidação documental em 13/10/2026.
-- **Baseline de implementação inspecionada:** `master@e595f7ed2a801fde6ffab231194788430cc53316`.
+- **Versão:** v0.2 — revisão focal em 17/10/2026 (consolidação inicial 13/10/2026).
+- **Baselines de implementação:** inspeção original em `master@e595f7ed2a801fde6ffab231194788430cc53316`; temas, CSS, assets SVG e componentes de Cozinha/TV reconferidos em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d`. Não equivale à reauditoria visual de todas as telas.
 - **Fontes de marca:** [Guia oficial de identidade visual v1.0 — PDF (23/09/2026)](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view), [edição Word](https://docs.google.com/document/d/1JAhAgcuIa7sR8yK7sqX9SF_q1S993qj_/edit), [refinamento aprovado de logo (02/10/2026)](../operations/2026-10-02-mesiva-logo-refinement.md) e [atualização de ícones (02/10/2026)](../operations/2026-10-02-github-releases-and-mesiva-icons.md).
 - **Escopo:** documentação da direção aprovada no guia, decisões posteriores registradas e **implementação observável no repositório**; não é redesign, auditoria WCAG completa ou homologação de dispositivos.
-- **Situação normativa:** **conciliação formal do guia v1.0 com os ativos aprovados em 02/10 ainda pendente**. Este documento expõe diferenças sem reescrever o guia nem decidir novas versões da marca.
+- **Situação normativa:** **conciliação formal do guia v1.0 com os ativos aprovados em 02/10 ainda pendente**. A revisão focal confrontou o PDF v1.0 disponibilizado no projeto, o registro de refinamento de 02/10, os SVGs e os tokens existentes: não revoga as cinco divergências nem substitui a aprovação de nova versão do guia Word/PDF.
 
 **Para agentes:** este arquivo responde **como apresentar** o produto, não substitui o [PRD](../product/PRD.md), as [regras de negócio](../product/BUSINESS_RULES.md), a [arquitetura](../architecture/ARCHITECTURE.md), o [mapa de módulos](../architecture/MODULE_MAP.md) ou as [instruções operacionais](../../AGENTS.md). **Não alterar** SVGs, paleta, comportamento, permissões, rotas ou produção apenas com base nesta consolidação.
 
@@ -169,6 +169,8 @@ Outros componentes internos dos domínios devem ser localizados no [Module Map](
 - **Mobile:** breakpoint observado em **820 px**; lateral ocultada, topo e navegação inferior mantidos, fundo da página e overlay respeitando safe-area. Consultar [`mobile-foundation.css`](../../src/mobile-foundation.css), [`AppTopBar.jsx`](../../src/app/shell/AppTopBar.jsx) e [`mobile-navigation.css`](../../src/mobile-navigation.css).
 - **Cozinha no admin:** priorizar cartões de preparo, observações, agendamentos e indicadores. Atraso, agendamento e finalização usam estados funcionais separados de `--brand`. Layout adapta colunas conforme espaço; consultar [`kitchen-refined.css`](../../src/kitchen-refined.css) e [referência de Cozinha/Comandas](../mesiva-kitchen-visual.md).
 - **Comandas, mesas, financeiro e configurações:** priorizar nomes, valores, meios de pagamento e menus **sem corte**. Reorganizar em telas pequenas; não esconder nome de método de pagamento nem desativar uma ação por falta de espaço.
+- **Cozinha após PR #117:** filtros de situação e modalidade são independentes; seleção precisa ser percebida pelo estado do controle, não só pela cor. Não misturar esses filtros com o controle sincronizado da TV. Referência: [`Orders.jsx`](../../src/domains/orders/ui/Orders.jsx).
+- **Pedido editado (PR #108):** o [`OrderEditedBadge`](../../src/shared/ui/OrderEditedBadge.jsx) usa ícone e texto **Editado**, enquanto [`OrderEditChanges`](../../src/domains/orders/ui/components/OrderEditChanges.jsx) revela **Últimas alterações** no detalhe. Preservar leitura, revisão e significado do estado sem confundi-lo com novo pedido, confirmação de impressão ou pagamento.
 - **Estados globais:** loading, vazio, erro, desconexão/offline, desabilitado, atenção e confirmação devem ser **distinguíveis**. Não presumir que o uso da cor correta garante a mensagem correta.
 
 ### 6.2 TV da Cozinha: superfície visual própria
@@ -177,6 +179,8 @@ A TV em `/cozinha-tv` tem bootstrap e CSS independentes ([`src/kitchen-display/`
 
 - Prioridade: ler pedidos à distância, número/nome, modalidade, observações, horário, agendados, atrasados e conexão.
 - Filtros e paginação pertencem ao controle sincronizado com a TV, não a um status novo de pedido.
+- **Identidade contextual (PR #118):** o cabeçalho do pedido local com cliente identificado exibe **`Mesa · Cliente`** conforme a projeção oficial do Worker. Se não houver cliente, manter o nome da mesa. Não retirar a informação da mesa por economia de espaço nem tentar remediar o dado apenas em CSS/JSX.
+- **Histórico de edição (PR #108):** selo **Editado** e indicações de alterações devem ser visualmente distinguíveis do alerta de pedido recém-chegado.
 - Compatibilidade depende do navegador/firmware; a tela de erro de compatibilidade deve permanecer legível e utilizável.
 - Revisões visuais da TV exigem QA em dispositivo real quando possível; não tratar screenshots do desktop como homologação de todas as Smart TVs.
 

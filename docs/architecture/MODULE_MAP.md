@@ -1,8 +1,8 @@
 # Mesiva — Mapa de módulos e responsabilidades
 
 - **Tipo:** documentação viva de localização de código, ownership funcional e contratos de integração.
-- **Versão:** v0.1 — 13/10/2026.
-- **Baseline:** `master@e595f7ed2a801fde6ffab231194788430cc53316`, mesma referência do [PRD](../product/PRD.md), [Business Rules](../product/BUSINESS_RULES.md) e [Architecture](ARCHITECTURE.md).
+- **Versão:** v0.2 — atualização focal em 17/10/2026 (edição inicial 13/10/2026).
+- **Baselines:** mapa inicial em `master@e595f7ed2a801fde6ffab231194788430cc53316`; owners de edição, snapshots, realtime e TV reconferidos em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d`. Não equivale a reauditoria de todos os exports.
 - **Escopo verificado:** árvore do repositório, os **10 `src/domains/*/index.js` públicos**, adaptadores de API, composição da aplicação, testes de contratos selecionados e checker de imports.
 - **Limite:** este é um mapa de **primeira leitura**, não uma lista completa de todos os exports/funções/rotas nem um grafo de dependências calculado sobre todos os arquivos. Os caminhos são da baseline indicada; uma nova branch precisa reconferi-los.
 
@@ -16,6 +16,10 @@ Use este documento para saber **onde começar e o que não mover**. A [arquitetu
 | Seleção de empresa e aceitação de convite multiempresa | [`companies/`](../../src/domains/companies/) | [`worker/tenancy/`](../../worker/tenancy/), [`worker/identity/`](../../worker/identity/) |
 | Administração global Mesiva: cadastro/gestão de empresas e vínculos | [`platform/`](../../src/domains/platform/) | [`worker/platform/`](../../worker/platform/) |
 | Novo pedido, cozinha, histórico, cancelamento e promessas | [`orders/`](../../src/domains/orders/) | [`worker/orderCheckout.js`](../../worker/orderCheckout.js), [`worker/orderCancellation.js`](../../worker/orderCancellation.js), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js) |
+| Editar pedido em preparo, mostrar alterações, calcular saldo complementar/devolução | [`orders/`](../../src/domains/orders/), [workflows de pagamentos](../../src/app/workflows/payments/) | [`worker/orderEditRepository.js`](../../worker/orderEditRepository.js), [`worker/orderEditValidation.js`](../../worker/orderEditValidation.js), [`worker/orderPaymentReadModel.js`](../../worker/orderPaymentReadModel.js) |
+| Filtros da Cozinha e nome `Mesa · Cliente` na TV | [`Orders.jsx`](../../src/domains/orders/ui/Orders.jsx), [TV separada](../../src/kitchen-display/) | [`worker/repositories.js`](../../worker/repositories.js), [`worker/kitchenTvReadRepository.js`](../../worker/kitchenTvReadRepository.js) |
+| Bootstrap por superfície, consultas históricas/financeiras e cache contextual | [runtime da aplicação](../../src/app/runtime/data/), [scoped query](../../src/infrastructure/realtime/useScopedQuery.js) | [`worker/readModels/`](../../worker/readModels/), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js) |
+| Avisos WebSocket, invalidação, fallback e orçamento Cloudflare | [`src/infrastructure/realtime/`](../../src/infrastructure/realtime/), [contratos scoped](../../shared/scopedReads.js) | [`worker/realtime/`](../../worker/realtime/), [gates de leitura D1](../../scripts/infra/operational-read-d1-benchmark.mjs) |
 | Mesas, comandas, transferência, reservas e chegada | [`table-service/`](../../src/domains/table-service/) | [`worker/tableRepository.js`](../../worker/tableRepository.js), [`worker/tableReservationApi.js`](../../worker/tableReservationApi.js) |
 | Clientes, busca, cadastro, duplicidade e relacionamento | [`customers/`](../../src/domains/customers/) | [`worker/repositories.js`](../../worker/repositories.js), [`worker/index.js`](../../worker/index.js) |
 | Produtos, preço e apresentação no catálogo | [`catalog/`](../../src/domains/catalog/) | [`worker/repositories.js`](../../worker/repositories.js), [`shared/productCatalog.js`](../../shared/productCatalog.js) |
@@ -68,14 +72,16 @@ O índice público não deve ser tratado como inventário completo de todas as f
 
 ### 3.4 `orders` — pedidos, preparo, histórico e ações de pedido
 
-**Responsabilidade:** carrinho, novo pedido, cozinha, histórico, detalhes, cancelamento, reembolso exibido, elegibilidade de recebimento, agendamentos e chegada de pedidos operacionais.
+**Responsabilidade:** carrinho, novo pedido, cozinha (incluindo filtros de situação e modalidade), histórico, detalhes, edição de pedido elegível, cancelamento, reembolso exibido, elegibilidade de recebimento, agendamentos e chegada de pedidos operacionais.
 
 - **API pública:** [`src/domains/orders/index.js`](../../src/domains/orders/index.js): `Orders`, `OrderHistory`, `OrderDetail`, `NewOrderRoute`, `useNewOrderDraft`, `useOrderCommands`, `ordersApi`, `createOrdersApi`, regras puras de status/itens/recebimento, políticas operacionais/cancelamento e contrato de cozinha.
 - **UI:** [`ui/Orders.jsx`](../../src/domains/orders/ui/Orders.jsx), [`ui/NewOrder.jsx`](../../src/domains/orders/ui/NewOrder.jsx), [`ui/components/OrderDetail.jsx`](../../src/domains/orders/ui/components/OrderDetail.jsx) e [`ui/components/KitchenTicket.jsx`](../../src/domains/orders/ui/components/KitchenTicket.jsx).
 - **Lógica/adaptador:** [`domain/orderCart.js`](../../src/domains/orders/domain/orderCart.js), [`domain/orderPaymentEligibility.js`](../../src/domains/orders/domain/orderPaymentEligibility.js), [`application/useOrderCommands.js`](../../src/domains/orders/application/useOrderCommands.js), [`infrastructure/ordersApi.js`](../../src/domains/orders/infrastructure/ordersApi.js).
-- **Servidor:** [`worker/orderCheckout.js`](../../worker/orderCheckout.js), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js), [`worker/orderCancellation.js`](../../worker/orderCancellation.js) e [`worker/index.js`](../../worker/index.js).
+- **Servidor:** [`worker/orderCheckout.js`](../../worker/orderCheckout.js), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js), [`worker/orderCancellation.js`](../../worker/orderCancellation.js), [`worker/orderEditRepository.js`](../../worker/orderEditRepository.js), [`worker/orderEditValidation.js`](../../worker/orderEditValidation.js), [`worker/orderPaymentReadModel.js`](../../worker/orderPaymentReadModel.js) e [`worker/index.js`](../../worker/index.js).
+- **Edição e conciliação:** a interface de detalhes mostra [`OrderEditChanges`](../../src/domains/orders/ui/components/OrderEditChanges.jsx); status visual em [`OrderEditedBadge`](../../src/shared/ui/OrderEditedBadge.jsx). A edição mantém identidade/preço histórico, mas saldo e recebimento pertencem ao Worker e aos [workflows de pagamento](../../src/app/workflows/payments/). Consulte [runbook de edição](../operations/order-editing.md).
+- **Fila da Cozinha:** filtros independentes de situação/modalidade em [`Orders.jsx`](../../src/domains/orders/ui/Orders.jsx) agem sobre a projeção, não sobre o status persistido do pedido.
 - **Fronteira:** Pedidos pode consumir contratos públicos do **Catálogo** e de **Clientes**, mas não importa os workflows transversais de pagamento de `src/app/`. A validação de preços, gravação e capabilities ocorre no Worker, não apenas no carrinho.
-- **Contrato com TV:** [`kitchenDisplayPublic.js`](../../src/domains/orders/kitchenDisplayPublic.js) expõe modelo de fila e detecção de chegadas sem carregar o app administrativo inteiro.
+- **Contrato com TV:** [`kitchenDisplayPublic.js`](../../src/domains/orders/kitchenDisplayPublic.js) expõe modelo de fila e detecção de chegadas sem carregar o app administrativo inteiro. A TV consulta [`kitchenTvReadRepository.js`](../../worker/kitchenTvReadRepository.js), que compõe a identidade da mesa/cliente com dados oficiais; o checkout reutiliza cliente de comanda aberta quando não foi escolhido outro explicitamente em [`repositories.js`](../../worker/repositories.js). Não formatar apenas no JSX para encobrir perda de identidade no backend.
 
 ### 3.5 `table-service` — mesas, comandas, reservas e ocupação
 
@@ -143,14 +149,17 @@ O índice público não deve ser tratado como inventário completo de todas as f
 | [`src/app/navigation/registry.js`](../../src/app/navigation/registry.js) | Destinos, paths, grupos e capabilities de navegação | Adicionar/alterar menu, deep link ou acesso por tela |
 | [`src/app/navigation/adminRouter.jsx`](../../src/app/navigation/adminRouter.jsx) | Roteador administrativo | Mudanças de navegação/Routing do admin |
 | [`src/app/runtime/session/useSessionRuntime.js`](../../src/app/runtime/session/useSessionRuntime.js) | Descoberta/seleção de sessão e geração de contexto | Login, troca de empresa, perda de grants, invalidação |
-| [`src/app/runtime/data/useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js) | Bootstrap, collections, polling e aplicação protegida de efeitos | Refresh, dados obsoletos, sincronização, 401/409 |
+| [`src/app/runtime/data/useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js) | Bootstrap legado ou por superfície, coleções parciais declaradas, efeitos protegidos e fallback | Refresh/reconciliação, dados obsoletos, transição de sessão, 401/409 |
 | [`src/app/workflows/payments/`](../../src/app/workflows/payments/) | Recebimento de pedido, comanda, lote de cliente; editor/composição | Qualquer implementação de pagamento dividido/quitação |
 | [`src/app/workflows/refunds/`](../../src/app/workflows/refunds/) | Coordenação de registro de estorno | Cancelamento pago e estorno posterior |
 | [`src/app/surfaces/settings/`](../../src/app/surfaces/settings/) | Agrupamento de configurações operacionais e componentes de apresentação | Formulários, navegação, revisão e integrações de políticas |
 | [`src/app/policy-editing/`](../../src/app/policy-editing/) | Orquestração de drafts, conflitos, salvamento e recuperação | Mudanças em políticas versionadas |
 | [`src/app/surfaces/kitchen-tv-control/`](../../src/app/surfaces/kitchen-tv-control/) | Controle da TV **dentro do admin** | Filtrar/paginar/ocultar pedidos na TV |
 | [`src/kitchen-display/`](../../src/kitchen-display/) | Aplicação da TV independente do admin | Pareamento, compatibilidade, renderização/alertas |
-| [`src/infrastructure/api/`](../../src/infrastructure/api/) | HTTP com contexto, bootstrap e configuração efetiva | Adaptadores, cabeçalhos, erros, cancelamentos |
+| [`src/infrastructure/realtime/`](../../src/infrastructure/realtime/) | Hub cliente WebSocket, invalidação, cache por contexto e leitura scoped | Eventos, singleflight/dirty, retomada, consultas paginadas, fallback, sem novo polling por tela |
+| [`worker/readModels/`](../../worker/readModels/) | Snapshots/consultas oficiais por superfície, histórico, clientes e financeiro | Restringir leituras ao consumidor, totais independentes da página, permissões e regressões D1 |
+| [`worker/realtime/`](../../worker/realtime/) | Hub e publicações de avisos pós-commit, com flags de ativação | Segurança por empresa, tópicos, leases, hibernação e orçamentos |
+| [`src/infrastructure/api/`](../../src/infrastructure/api/) | HTTP com contexto, bootstrap e configuração efetiva; [`scopedReadsApi`](../../src/infrastructure/api/scopedReadsApi.js) | Adaptadores, cabeçalhos, erros, cancelamentos e queries por filtro/ID |
 | [`src/infrastructure/qz/`](../../src/infrastructure/qz/) | Transporte da impressão física Windows/QZ | Conexão QZ e observação da impressora |
 | [`src/shared/ui/`](../../src/shared/ui/) | Componentes genéricos reutilizáveis | Buttons, modais, badges, campos, layout |
 | [`shared/`](../../shared/) | Contratos comuns entre UI e Worker | Modalidades, timing, políticas, formatos e estados comuns |
@@ -173,6 +182,12 @@ As regras de elegibilidade de pedido pertencem a [`orders`](../../src/domains/or
 
 [`src/main.jsx`](../../src/main.jsx) escolhe [`KitchenDisplayRoot.jsx`](../../src/kitchen-display/KitchenDisplayRoot.jsx) para `/cozinha-tv` e [`AdminBootstrap.jsx`](../../src/admin/AdminBootstrap.jsx) para a aplicação administrativa. A TV usa [`worker/kitchenTvApi.js`](../../worker/kitchenTvApi.js) e o modelo público de Pedidos em [`kitchenDisplayPublic.js`](../../src/domains/orders/kitchenDisplayPublic.js). **Não** importar `src/App.jsx`, as superfícies administrativas ou dependências pesadas de PDF/QZ na TV. O checker impõe restrições particulares à montagem da TV.
 
+### 4.3 Consultas scoped e orçamento de recursos
+
+`src/app/runtime/data/` é o owner de bootstrap/sincronização do admin; [`useScopedQuery.js`](../../src/infrastructure/realtime/useScopedQuery.js) implementa owners de consultas paginadas, invalidações e cache contextual, enquanto [`scopedReadsApi.js`](../../src/infrastructure/api/scopedReadsApi.js) encapsula as rotas HTTP. No Worker, [`snapshotRepository.js`](../../worker/readModels/snapshotRepository.js) define o escopo de cada superfície e `worker/readModels/` concentra os repositórios de histórico, clientes e financeiro. `shared/scopedReads.js` define o contrato de `completeCollections` e metadados de escopo. Verificar se o modo scoped/realtime está **efetivamente habilitado no ambiente**, não inferir das importações.
+
+Para nova funcionalidade, **reutilizar o owner** e a consulta autorizada existentes antes de criar timer, listagem integral, `SELECT` ou gravação repetida. A resposta paginada não substitui totais autoritativos nem torna registro ausente equivalente a excluído. Medir `rows_read`, `rows_written`, requests, CPU/DO e carga com histórico crescente quando a mudança afetar consumo; incluir fallback e impressão, sem eliminar tickers físicos necessários. Fontes: [diretriz de custo](../../AGENTS.md#economia-de-recursos-cloudflare--regra-para-futuras-melhorias), [orçamento D1](../operations/operational-data-read-budget.md) e [realtime](../operations/realtime-sync.md).
+
 ## 5. Backend: orientação por contrato (sem falsas equivalências)
 
 O backend **não segue a mesma estrutura de diretórios** que `src/domains/`. Seu dispatcher [`worker/index.js`](../../worker/index.js) delega famílias de rotas e também implementa rotas operacionais diretamente.
@@ -182,13 +197,15 @@ O backend **não segue a mesma estrutura de diretórios** que `src/domains/`. Se
 | Entrada/runtime e classificação de rotas | [`worker/entry.js`](../../worker/entry.js), [`worker/index.js`](../../worker/index.js), [`worker/tenancy/routePolicy.js`](../../worker/tenancy/routePolicy.js) |
 | Sessão, empresa, autorização e guardas de gravação | [`worker/identity/sessions.js`](../../worker/identity/sessions.js), [`worker/tenancy/businessContext.js`](../../worker/tenancy/businessContext.js), [`worker/tenancy/guardedBusinessDb.js`](../../worker/tenancy/guardedBusinessDb.js), [`worker/access/authorization.js`](../../worker/access/authorization.js) |
 | Cadastro e gestão administrativa de empresas | [`worker/platform/`](../../worker/platform/) |
-| Pedido, agendamento, cancelamento e leitura | [`worker/orderCheckout.js`](../../worker/orderCheckout.js), [`worker/orderCancellation.js`](../../worker/orderCancellation.js), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js) |
+| Pedido, agendamento, cancelamento, edição, conciliação e leitura | [`worker/orderCheckout.js`](../../worker/orderCheckout.js), [`worker/orderCancellation.js`](../../worker/orderCancellation.js), [`worker/orderEditRepository.js`](../../worker/orderEditRepository.js), [`worker/orderPaymentReadModel.js`](../../worker/orderPaymentReadModel.js), [`worker/orderReadRepository.js`](../../worker/orderReadRepository.js) |
+| Read models e busca/paginação scoped | [`worker/readModels/`](../../worker/readModels/), [`shared/scopedReads.js`](../../shared/scopedReads.js) |
+| Avisos realtime, permissão e fallback | [`worker/realtime/`](../../worker/realtime/), [`src/infrastructure/realtime/`](../../src/infrastructure/realtime/) |
 | Comanda e reserva | [`worker/tableRepository.js`](../../worker/tableRepository.js), [`worker/tableReservationApi.js`](../../worker/tableReservationApi.js), [`worker/tableReservationArrival.js`](../../worker/tableReservationArrival.js) |
 | Pagamentos/financeiro | [`worker/paymentRepository.js`](../../worker/paymentRepository.js), [`worker/financeRepository.js`](../../worker/financeRepository.js) |
 | Relatórios | [`worker/reporting/`](../../worker/reporting/) |
 | Políticas versionadas/configuração efetiva | [`worker/settingsApi.js`](../../worker/settingsApi.js), [`worker/effectiveBusinessConfig.js`](../../worker/effectiveBusinessConfig.js) |
 | Fila, estação e impressão | [`worker/orderPrintingApi.js`](../../worker/orderPrintingApi.js), [`worker/orderPrintingRepository.js`](../../worker/orderPrintingRepository.js), [`worker/printAttemptRepository.js`](../../worker/printAttemptRepository.js) |
-| Pareamento/projeção/controle da TV | [`worker/kitchenTvApi.js`](../../worker/kitchenTvApi.js), [`worker/kitchenTvControlRepository.js`](../../worker/kitchenTvControlRepository.js) |
+| Pareamento/projeção/controle da TV | [`worker/kitchenTvApi.js`](../../worker/kitchenTvApi.js), [`worker/kitchenTvControlRepository.js`](../../worker/kitchenTvControlRepository.js), [`worker/kitchenTvReadRepository.js`](../../worker/kitchenTvReadRepository.js) |
 | Schema persistido | [`migrations/`](../../migrations/); recursos D1/R2 em [`wrangler.jsonc`](../../wrangler.jsonc) |
 
 Regras de preço, pagamento, empresa, permissões e status persistidos são **validadas no Worker**. Testar apenas um hook/frontend não demonstra que o contrato HTTP e a persistência estejam corretos.
@@ -200,7 +217,7 @@ A coluna de testes indica **pontos de partida existentes**, não que uma suíte 
 | Área | Testes/checagens de referência |
 | --- | --- |
 | Domínios e limites globais | [`scripts/architecture/check-import-boundaries.mjs`](../../scripts/architecture/check-import-boundaries.mjs), [`src/infrastructure/api/c10ApiOwnership.test.js`](../../src/infrastructure/api/c10ApiOwnership.test.js) |
-| Pedidos | [`src/domains/orders/ordersPublicContract.test.js`](../../src/domains/orders/ordersPublicContract.test.js), [`worker/orderCheckout.test.js`](../../worker/orderCheckout.test.js) |
+| Pedidos/filtros/edição | [`src/domains/orders/ordersPublicContract.test.js`](../../src/domains/orders/ordersPublicContract.test.js), [`src/domains/orders/domain/kitchenQueue.test.js`](../../src/domains/orders/domain/kitchenQueue.test.js), [`worker/orderCheckout.test.js`](../../worker/orderCheckout.test.js), [`worker/orderEditRepository.test.js`](../../worker/orderEditRepository.test.js) |
 | Clientes | [`src/domains/customers/customersPublicContract.test.js`](../../src/domains/customers/customersPublicContract.test.js), [`worker/clientUniqueness.test.js`](../../worker/clientUniqueness.test.js) |
 | Catálogo | [`src/domains/catalog/catalogPublicContract.test.js`](../../src/domains/catalog/catalogPublicContract.test.js), [`worker/productValidation.test.js`](../../worker/productValidation.test.js) |
 | Comandas e reservas | [`src/domains/table-service/tableServicePublicContract.test.js`](../../src/domains/table-service/tableServicePublicContract.test.js), [`worker/tableRepository.test.js`](../../worker/tableRepository.test.js), [`worker/tableReservationArrival.test.js`](../../worker/tableReservationArrival.test.js) |
@@ -208,7 +225,8 @@ A coluna de testes indica **pontos de partida existentes**, não que uma suíte 
 | Relatórios | [`src/domains/reporting/reportingBoundary.test.js`](../../src/domains/reporting/reportingBoundary.test.js), [`worker/reporting/api.test.js`](../../worker/reporting/api.test.js) |
 | Impressão | [`src/domains/printing/printingPublicContract.test.js`](../../src/domains/printing/printingPublicContract.test.js), [`worker/orderPrintingRepository.test.js`](../../worker/orderPrintingRepository.test.js) |
 | Acesso, conta e plataforma | [`worker/identity/sessions.test.js`](../../worker/identity/sessions.test.js), [`worker/platform/businessesApi.test.js`](../../worker/platform/businessesApi.test.js), [`worker/tenancy/routePolicy.test.js`](../../worker/tenancy/routePolicy.test.js) |
-| TV da Cozinha | [`worker/kitchenTvControlRepository.test.js`](../../worker/kitchenTvControlRepository.test.js), [`src/kitchen-display/`](../../src/kitchen-display/) |
+| TV da Cozinha | [`worker/kitchenTvControlRepository.test.js`](../../worker/kitchenTvControlRepository.test.js), [`worker/kitchenTvReadRepository.test.js`](../../worker/kitchenTvReadRepository.test.js), [`src/kitchen-display/`](../../src/kitchen-display/) |
+| Snapshots, cache, realtime e custo | [`worker/readModels/api.test.js`](../../worker/readModels/api.test.js), [`src/infrastructure/realtime/useScopedQuery.test.js`](../../src/infrastructure/realtime/useScopedQuery.test.js), [`scripts/infra/operational-read-d1-benchmark.mjs`](../../scripts/infra/operational-read-d1-benchmark.mjs), [`scripts/infra/realtime-runtime-gate.mjs`](../../scripts/infra/realtime-runtime-gate.mjs) |
 | CI abrangente | [`.github/workflows/validate.yml`](../../.github/workflows/validate.yml): testes Node, arquitetura, lint, build, Worker dry-run e gates D1 |
 
 **Validação física** de QZ/impressora e de compatibilidade da TV exige homologação no dispositivo; scripts Node/CI não a substituem. Consultar [`AGENTS.md`](../../AGENTS.md) e o [runbook de release](../release-and-migration-runbook.md).
@@ -217,7 +235,7 @@ A coluna de testes indica **pontos de partida existentes**, não que uma suíte 
 
 1. **Localize o cenário** pela tabela da seção 1 e leia o `index.js` do domínio afetado.
 2. **Siga do componente para a lógica e o contrato HTTP**: UI → aplicação → domínio/adaptador → dispatcher/handler Worker → repositório/migration. Nem toda alteração usa todas as camadas; não criar camadas vazias.
-3. **Inspecione consumidores** do contrato público e o fluxo transversal. Se houver preço, pagamento, empresa, impressão ou reserva, revise [Business Rules](../product/BUSINESS_RULES.md).
+3. **Inspecione consumidores** do contrato público e o fluxo transversal. Se houver preço, pagamento, empresa, impressão ou reserva, revise [Business Rules](../product/BUSINESS_RULES.md). Se tocar consultas, frequência de refresh, cache, SQL ou Worker, examine os owners scoped/realtime e o [orçamento Cloudflare](../../AGENTS.md#economia-de-recursos-cloudflare--regra-para-futuras-melhorias) antes de acrescentar reads/writes.
 4. **Altere o owner correto**, preserve fronteiras de imports e inclua testes da menor superfície que prove a mudança; amplie para contrato/integração quando necessário.
 5. **Execute os gates** pertinentes (no mínimo testes afetados, checker, lint e build quando aplicáveis). Siga a matriz de QA para alterações com hardware.
 6. **Atualize documentação viva afetada** no mesmo PR, sem alterar specs/planos históricos silenciosamente. Não efetue merge/deploy sem autorização.
