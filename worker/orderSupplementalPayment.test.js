@@ -147,3 +147,74 @@ test('Task 16: a finalized order with an outstanding edit balance can be settled
  assert.equal(count(s,'payments'),1)
  assert.equal(count(s,'order_settlement_entries'),1)
 })
+
+
+test('Task 6: complementary split payment records the selected financial date without changing the original receipt',async t=>{
+  const {s,db}=fixture(t)
+  const original=s.prepare("SELECT * FROM payment_receipts WHERE id='old-receipt'").get()
+  const oldPayment=s.prepare("SELECT * FROM payments WHERE id='old-payment'").get()
+  const result=await registerOrderSupplementalPayment(db,BIZ,'order-1',
+    {...request('retro-split',split),receivedDate:'2026-10-10'},NOW)
+  assert.equal(result.receipt.receivedDate,'2026-10-10')
+  assert.equal(result.receipt.paidAt,STAMP)
+  assert.equal(s.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date,'2026-10-10')
+  const movements=s.prepare('SELECT movement_date,created_at,value_cents FROM movements WHERE receipt_id=? ORDER BY value_cents').all(result.receipt.id)
+  assert.deepEqual(movements.map(m=>m.movement_date),['2026-10-10','2026-10-10'])
+  assert.deepEqual(movements.map(m=>m.value_cents),[500,1000])
+  assert.ok(movements.every(m=>m.created_at===STAMP))
+  assert.deepEqual(s.prepare("SELECT * FROM payment_receipts WHERE id='old-receipt'").get(),original)
+  assert.deepEqual(s.prepare("SELECT * FROM payments WHERE id='old-payment'").get(),oldPayment)
+  assert.equal(s.prepare("SELECT order_date FROM orders WHERE id='order-1'").get().order_date,'2026-10-12')
+  assert.equal(count(s,'payments'),1)
+  assert.equal(count(s,'order_settlement_entries'),1)
+})
+
+test('Task 6: absent receipt date defaults to business today, future and malformed dates do not write',async t=>{
+  const {s,db}=fixture(t)
+  for(const [n,receivedDate] of [null,'2026-10-13','2026-02-30','2026-10-10T12:00:00Z',' 2026-10-10 ',42].entries()){
+    await assert.rejects(
+      registerOrderSupplementalPayment(db,BIZ,'order-1',{...request('bad-date-'+n),receivedDate},NOW),
+      {status:400,code:'VALIDATION_ERROR',field:'receivedDate'},
+    )
+  }
+  assert.equal(count(s,'payment_receipts'),1)
+  assert.equal(count(s,'order_settlement_entries'),0)
+  assert.equal(count(s,'movements'),0)
+  const result=await registerOrderSupplementalPayment(db,BIZ,'order-1',request('legacy-no-date'),NOW)
+  assert.equal(result.receipt.receivedDate,'2026-10-12')
+  assert.equal(s.prepare('SELECT movement_date FROM movements WHERE receipt_id=?').get(result.receipt.id).movement_date,'2026-10-12')
+})
+
+test('Task 6: replay preserves explicit date and legacy omitted date across midnight and rejects conflicting date',async t=>{
+  const {s,db}=fixture(t)
+  const chosen={...request('explicit-replay'),receivedDate:'2026-10-10'}
+  const first=await registerOrderSupplementalPayment(db,BIZ,'order-1',chosen,NOW)
+  const nextDay=new Date('2026-10-13T15:00:00.000Z')
+  const repeat=await registerOrderSupplementalPayment(db,BIZ,'order-1',chosen,nextDay)
+  assert.equal(repeat.receipt.id,first.receipt.id)
+  assert.equal(repeat.receipt.receivedDate,'2026-10-10')
+  await assert.rejects(registerOrderSupplementalPayment(db,BIZ,'order-1',
+    {...chosen,receivedDate:'2026-10-11'},nextDay),{status:409,code:'ORDER_SUPPLEMENTAL_CONFLICT'})
+  await assert.rejects(registerOrderSupplementalPayment(db,BIZ,'order-1',
+    request('explicit-replay'),nextDay),{status:409,code:'ORDER_SUPPLEMENTAL_CONFLICT'})
+  assert.equal(count(s,'payment_receipts'),2)
+  assert.equal(count(s,'movements'),1)
+})
+
+test('Task 6: omitted date replay remains stable after midnight even with an uncertain first response',async t=>{
+  const {s,db}=fixture(t)
+  const originalBatch=db.batch.bind(db)
+  let lost=true
+  db.batch=async statements=>{
+    const result=await originalBatch(statements)
+    if(lost){lost=false;throw new Error('network response lost after commit')}
+    return result
+  }
+  const payload=request('legacy-next-day')
+  const first=await registerOrderSupplementalPayment(db,BIZ,'order-1',payload,NOW)
+  const nextDay=await registerOrderSupplementalPayment(db,BIZ,'order-1',payload,new Date('2026-10-13T15:00:00.000Z'))
+  assert.equal(nextDay.receipt.id,first.receipt.id)
+  assert.equal(nextDay.receipt.receivedDate,'2026-10-12')
+  assert.equal(count(s,'payment_receipts'),2)
+  assert.equal(count(s,'movements'),1)
+})
