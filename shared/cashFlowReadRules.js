@@ -19,12 +19,6 @@ const normalizedSearchText = (value) => String(value ?? '')
   .toLocaleLowerCase('pt-BR')
   .trim()
 
-const parseDate = (value) => {
-  if (!value) return null
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
 export const getFinancePeriodRange = (period = { key: 'today' }, today) => {
   const key = period?.key ?? 'today'
   if (key === 'custom') return { startDate: period.startDate, endDate: period.endDate }
@@ -94,8 +88,7 @@ export const hasFinanceSecondaryFilters = (filters = {}) => [
 
 export const calculateReceivedToday = (movements = [], dateValue = getBusinessDate()) =>
   (Array.isArray(movements) ? movements : []).reduce((total, movement) => {
-    const createdAt = parseDate(movement?.createdAt)
-    if (!createdAt || getBusinessDate(createdAt) !== dateValue) return total
+    if (!isActiveMovement(movement) || movementDateOf(movement) !== dateValue) return total
     const value = Math.max(0, Number(movement?.value) || 0)
     if (movement?.type === 'entrada' && movement?.source === 'order-payment') return total + value
     if (movement?.type === 'saida' && movement?.source === 'order-refund') return total - value
