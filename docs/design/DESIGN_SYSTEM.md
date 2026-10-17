@@ -31,7 +31,7 @@
 | **DV-04** | `src/index.css` ainda contém cores vermelhas da variante **Clássico** e `src/brand.css` / `BrandLogo.jsx` preservam representações legadas. | Não tratá-las como nova marca Mesiva nem removê-las sem rastrear usos. O app suporta seleção **Clássico/Mesiva**; a marca Mesiva usa `public/brand/`. |
 | **DV-05** | Guia v1.0 não define família exata do lettering do logo; registro de outubro descreve contornos vetorizados e geração do slogan. | **Não** recriar o lettering com uma fonte “parecida”, nem distribuir fontes. A tipografia da **interface** permanece a pilha funcional vigente, distinta do desenho do logotipo. |
 
-**Pendência explícita:** validar se existe uma **edição posterior do guia oficial no Drive** antes de declarar DV-01–DV-05 resolvidas. Este PR não modifica Drive, nem cria ou aprova novos logos.
+**Atualização de governança (17/10/2026):** o proprietário aprovou a **edição documental v1.1** do guia em Word/PDF (10 páginas), que formaliza os vetores, variantes, ícones e slogan aprovados anteriormente. As DV-01–DV-05 acima descrevem a divergência **histórica** entre a edição v1.0 e os ativos de outubro. A v1.1 registra essas diferenças; isso não autoriza recolorir ativos, apagar o tema Clássico, criar logo novo ou declarar certificação de acessibilidade. **Falta publicar e verificar os dois arquivos v1.1 na pasta oficial do Drive**; até lá, os links do cabeçalho ainda representam a v1.0. Nenhuma publicação no Drive foi efetuada nesta PR.
 
 ## 2. Identidade da marca
 
