@@ -4,6 +4,7 @@ import React from 'react'
 import { act } from 'react-test-renderer'
 import { workspaceHarness, nodeText, buttonNamed } from '../../../../test-support/renderWorkspace.js'
 import { comandaDetail, deferred } from '../../../../test-support/comandaFixtures.js'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 
 test('mounted mobile payment and method sheet release locks together and preserve nested focus', async (t) => {
   const h = await workspaceHarness(t, { mobile: true })
@@ -47,14 +48,14 @@ for (const mobile of [false, true]) test(`full payment dialog uses official meth
   const props = { open: true, detail: comandaDetail, currency: (v) => v.toFixed(2), onClose() {}, onConfirm: (...args) => { calls.push(args); return pending.promise } }
   const r = await h.render(Dialog, props)
   assert.match(nodeText(r.root), /123.45/)
-  assert.equal(r.root.findAllByType('input').length, 1, 'full payment starts with one editable allocation')
+  assert.equal(r.root.findAllByType('input').length, 2, 'one editable allocation and one financial date field')
   assert.equal(nodeText(r.root.findByProps({ role: 'combobox' })), 'Pix')
   await act(async () => r.root.findByProps({ role: 'combobox' }).props.onClick())
   assert.deepEqual(r.root.findAllByProps({ role: 'option' }).map(nodeText), ['Pix', 'Dinheiro', 'Cartão de débito', 'Cartão de crédito', 'Transferência', 'Outro'])
   await act(async () => buttonNamed(r.root, 'Dinheiro').props.onClick())
   const submit = r.root.findByType('form').props.onSubmit
   await act(async () => { void submit({ preventDefault() {} }); void submit({ preventDefault() {} }) })
-  assert.deepEqual(calls, [['tab-42', [{ methodCode: 'cash', amountCents: 12345 }]]])
+  assert.deepEqual(calls, [['tab-42', [{ methodCode: 'cash', amountCents: 12345 }], {receivedDate:getBusinessDate()}]])
   assert.ok(buttonNamed(r.root, 'Confirmar pagamento').props.disabled)
   await act(async () => pending.resolve(false))
   assert.ok(!buttonNamed(r.root, 'Confirmar pagamento').props.disabled, 'failed payment permits retry')
@@ -109,6 +110,7 @@ test('whole-table dialog submits a structured Dinheiro + Pix composition instead
       { methodCode: 'cash', amountCents: 3000 },
       { methodCode: 'pix', amountCents: 5000 },
     ],
+    {receivedDate:getBusinessDate()},
   ]])
 })
 
