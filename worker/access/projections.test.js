@@ -252,3 +252,36 @@ test('table and client payment routes reject future effective date without side 
   assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,0)
   assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM movements').get().n,0)
 })
+
+
+test('paid checkout HTTP route persists a distinct financial date while keeping commercial day and print job',async(t)=>{
+  const {env,tokens,sqlite}=await setup(t)
+  const commercialDay=getBusinessDate(new Date())
+  const data=await read(env,tokens.operator,'/api/orders','POST',{
+    customerIdentity:{type:'registered_client',clientId:'client'},type:'Retirada',
+    orderDate:commercialDay,items:[{productId:'product',quantity:1}],
+    paymentAllocations:[{methodCode:'pix',amountCents:2500}],receivedDate:'2026-09-19',
+  })
+  const receipt=sqlite.prepare('SELECT r.received_date,r.paid_at FROM payment_receipts r JOIN payments p ON p.receipt_id=r.id WHERE p.order_id=?').get(data.order.id)
+  assert.equal(data.order.orderDate,commercialDay)
+  assert.equal(receipt.received_date,'2026-09-19')
+  assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE source='order-payment' AND order_id=?").get(data.order.id).movement_date,'2026-09-19')
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM print_jobs WHERE order_id=?').get(data.order.id).n,1)
+})
+
+test('checkout HTTP rejects future date and effective date on unpaid orders without persisting effects',async(t)=>{
+  const {env,tokens,sqlite}=await setup(t)
+  for(const body of [
+    {paymentAllocations:[{methodCode:'pix',amountCents:2500}],receivedDate:'9999-12-31'},
+    {paymentAllocations:null,receivedDate:'2026-09-19'},
+  ]){
+    const response=await handleRequest(request(tokens.operator,'/api/orders','POST',{
+      customerIdentity:{type:'registered_client',clientId:'client'},type:'Retirada',
+      orderDate:getBusinessDate(new Date()),items:[{productId:'product',quantity:1}],...body,
+    }),env)
+    assert.equal(response.status,400)
+    assert.equal((await response.json()).error.code,'VALIDATION_ERROR')
+  }
+  for(const table of ['payment_receipts','payments','movements','print_jobs'])
+    assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM '+table).get().n,0)
+})
