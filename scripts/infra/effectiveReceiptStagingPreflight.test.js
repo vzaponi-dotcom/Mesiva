@@ -47,3 +47,28 @@ test('Task 11: schema mismatch and zero rows cannot be mistaken for successful a
   await assert.rejects(auditEffectiveReceipts({query:async sql=>sql.startsWith('PRAGMA')
     ? [{name:'id'},{name:'business_id'},{name:'paid_at'}] : [],log() {}}),/missing|rows|audit/i)
 })
+
+
+test('Task 11: audit query runs on real SQLite schema both immediately before and after migration 0052',async t=>{
+  const {createSettingsDb}=await import('../../worker/test-support/settingsDb.js')
+  const {buildReceiptAuditSql}=await import('./effective-receipt-staging-preflight.mjs')
+  let checkedBefore=false
+  const f=createSettingsDb({beforeMigration(file,sqlite){
+    if(!file.startsWith('0052_'))return
+    checkedBefore=true
+    const columns=sqlite.prepare('PRAGMA table_info(payment_receipts)').all()
+    assert.ok(!columns.some(x=>x.name==='received_date'))
+    const empty=sqlite.prepare(buildReceiptAuditSql(false)).all().map(x=>({...x}))
+    assert.deepEqual(empty,[{classification:'empty',receipts:0}])
+  }})
+  t.after(f.close)
+  assert.ok(checkedBefore,'0052 preflight boundary was not reached')
+  const after=f.sqlite.prepare(buildReceiptAuditSql(true)).all().map(x=>({...x}))
+  assert.deepEqual(after,[{classification:'empty',receipts:0}])
+  f.sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('preflight-a','preflight-a','A','2026-10-17','2026-10-17')")
+  f.sqlite.exec("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES('date-a','preflight-a',500,'2026-10-17T15:00:00.000Z','2026-10-15','2026-10-17T15:00:00.000Z'),('null-b','preflight-a',300,'2018-12-01T02:30:00.000Z',NULL,'2018-12-01T02:30:00.000Z')")
+  assert.deepEqual(f.sqlite.prepare(buildReceiptAuditSql(true)).all().map(x=>({...x})),[
+    {classification:'canonical',receipts:1},
+    {classification:'legacy_no_movement',receipts:1},
+  ])
+})
