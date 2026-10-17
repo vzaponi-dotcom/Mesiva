@@ -14,6 +14,17 @@ test('empty scoped bootstrap declares only active orders and no historical colle
   assert.equal(Object.hasOwn(result,'movements'),false)
   assert.equal(Object.hasOwn(result,'tableTabs'),false)
 })
+test('common snapshot reads share one guarded batch and preserve counters', async t => {
+  const { db } = setup(t), load = await read()
+  const batch = db.batch.bind(db), lengths = []
+  db.batch = async statements => { lengths.push(statements.length); return batch(statements) }
+  const result = await load(db, businessId, { surface: 'clients', granted: new Set(['orders.view', 'comandas.view']) })
+  assert.deepEqual(lengths, [3])
+  assert.deepEqual(result.readModel.counters, { orders: 0, comandas: 0 })
+  assert.deepEqual(result.readModel.operationalOrders, [])
+  assert.deepEqual(result.readModel.openTableTabIds, [])
+})
+
 test('active selection stays indexed at 10k and 100k terminal orders with old and future active candidates',async t=>{
   const {db,sqlite}=setup(t),load=await read()
   const active=await seedOperationalReadFixture(db,{businessId,activeOrders:3})
