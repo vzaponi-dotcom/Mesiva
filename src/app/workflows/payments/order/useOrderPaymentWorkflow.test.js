@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import React from 'react'
 import TestRenderer, { act } from 'react-test-renderer'
 import { useOrderPaymentWorkflow } from './useOrderPaymentWorkflow.js'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 
 const deferred = () => {
   let resolve
@@ -143,7 +144,7 @@ test('double submit sends one canonical allocation request and applies plural au
     first = probe.getLatest().dialog.submit()
     assert.equal(await probe.getLatest().dialog.submit(), false)
   })
-  assert.deepEqual(calls, [[source.id, [{ methodCode: 'pix', amountCents: 4000 }]]])
+  assert.deepEqual(calls, [[source.id, [{ methodCode: 'pix', amountCents: 4000 }], {receivedDate:getBusinessDate()}]])
 
   const official = { ...paidEffects(source), deletedOrderIds: ['hidden-order'] }
   await act(async () => {
