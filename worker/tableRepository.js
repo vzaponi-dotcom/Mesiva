@@ -126,18 +126,18 @@ LEFT JOIN (
   ON tab_summary.business_id = open_tabs.business_id
  AND tab_summary.table_tab_id = open_tabs.id`
 
-export const listTables = async (db, businessId) => {
-  const [result, reservations] = await db.batch([
-    db.prepare(`${tableSelect}
+export const prepareTableReads = (db, businessId) => [
+  db.prepare(`${tableSelect}
     WHERE tables.business_id = ?
     ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId),
-    prepareNextTableReservations(db, businessId),
-  ])
+  prepareNextTableReservations(db, businessId),
+]
+export const projectTableReads = ([result, reservations]) => {
   const tables = (result.results || []).map(mapTableRow)
-  const nextReservations = (reservations.results || []).map(mapTableReservationRow)
-  const reservationByTableId = new Map(nextReservations.map((reservation) => [reservation.tableId, reservation]))
-  return tables.map((table) => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
+  const reservationByTableId = new Map((reservations.results || []).map(mapTableReservationRow).map(reservation => [reservation.tableId, reservation]))
+  return tables.map(table => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
 }
+export const listTables = async (db, businessId) => projectTableReads(await db.batch(prepareTableReads(db, businessId)))
 
 export const loadTableById = async (db, businessId, tableId) => {
   const row = await db.prepare(`${tableSelect}
