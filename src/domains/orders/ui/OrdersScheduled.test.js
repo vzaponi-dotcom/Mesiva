@@ -49,7 +49,7 @@ test('orders page composes the approved kitchen heading, actions, counters, and 
 test('orders page wires primary and cancellation actions by capability while keeping global counts independent from search results', async () => {
   const source = await read('./Orders.jsx')
   const preparingBlock = source.slice(source.indexOf('preparing.map'), source.indexOf('kitchen-scheduled-heading'))
-  const scheduledBlock = source.slice(source.indexOf('queueModel.scheduled.map'), source.indexOf('!queueModel.scheduled.length'))
+  const scheduledBlock = source.slice(source.indexOf('scheduled.map'), source.indexOf('!scheduled.length'))
   assert.match(source, /onDetails=\{\(order\) => setDetailOrderId\(order\.id\)\}/)
   assert.match(preparingBlock, /disabled=\{actionsDisabled\}/)
   assert.match(preparingBlock, /onFinalize=\{canFinalizeOrders \? \(order\) => \{ setFinalizeCandidate\(order\); return true \} : undefined\}/)
@@ -60,13 +60,13 @@ test('orders page wires primary and cancellation actions by capability while kee
   assert.doesNotMatch(source, /(?:preparing|scheduled)\.length[^\n]*StatCard/)
 })
 
-test('scheduled order details keep cancellation available and do not introduce editing', async () => {
+test('scheduled order details keep cancellation available and allow authorized editing of active orders', async () => {
   const source = await read('./Orders.jsx')
 
   assert.match(source, /<OrderDetail[\s\S]*onRequestCancel=\{canCancelOrders \? \(\) =>/)
   assert.doesNotMatch(source, /isScheduledWaiting\(detailOrder, now\)\s*\?\s*undefined/)
-  assert.doesNotMatch(source, /Editar pedido/)
-  assert.doesNotMatch(source, /onEditOrder/)
+  assert.match(source, /onEditOrder=\{canEditOrders \?/)
+  assert.match(source, /canEditOrders=\{canEditOrders\}/)
 })
 
 test('legacy waiting-window copy is absent from application source', async () => {

@@ -70,3 +70,7 @@ Não use o retorno da conexão para despejar backlog. Jobs submetidos, em `SPOOL
 Jobs terminais podem ser consultados pelos filtros **Impresso** e **Descartado** da tabela principal e são removidos com segurança após 30 dias. O pedido histórico permanece a fonte para reimpressão: se o job antigo já tiver sido removido, **Reimprimir** cria um novo job manual a partir do pedido; se existir, o novo job mantém o vínculo de auditoria com ele.
 
 Este runbook não autoriza deploy de produção. A homologação física aprovada permanece o checkpoint operacional antes de qualquer liberação.
+
+## Consumo D1 da manutenção da fila
+
+Para diagnóstico de leituras, índices e medição de recuperação, consulte [o incidente de leituras D1](printing-d1-read-incident.md). A manutenção deve começar pelos estados/tentativas candidatos; não correlacione cada trabalho histórico com todas as tentativas da empresa.

@@ -1,5 +1,6 @@
 import Button from '../../../../shared/ui/Button.jsx'
 import Icon from '../../../../shared/ui/Icon.jsx'
+import OrderEditedBadge from '../../../../shared/ui/OrderEditedBadge.jsx'
 import KitchenTicketNotes from './KitchenTicketNotes.jsx'
 import StatusBadge from '../../../../shared/ui/StatusBadge.jsx'
 import { buildKitchenItemSummary, buildKitchenTimingCopy } from '../../domain/kitchenTicket.js'
@@ -26,7 +27,7 @@ function KitchenTicket({ entry, now, currentTiming, disabled = false, highlighte
     <header className="kitchen-ticket-header">
       <div className="kitchen-ticket-identity">
         <strong className="kitchen-ticket-customer-name">{order.client || 'Cliente não identificado'}</strong>
-        <div className="kitchen-ticket-customer"><span className="kitchen-ticket-id">{formatOrderDisplayNumber(order)}</span><span><Icon name={attendanceIcons[order.type] || 'local'} size={14} />{order.type}</span></div>
+        <div className="kitchen-ticket-customer"><span className="kitchen-ticket-id">{formatOrderDisplayNumber(order)}</span>{Number(order.operationalRevision) > 0 && <OrderEditedBadge />}<span><Icon name={attendanceIcons[order.type] || 'local'} size={14} />{order.type}</span></div>
       </div>
       <div className="kitchen-ticket-timing">
         <StatusBadge status={status} label={statusLabel} />

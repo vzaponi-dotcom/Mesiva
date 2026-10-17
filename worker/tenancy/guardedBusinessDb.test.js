@@ -56,3 +56,38 @@ test('display report cannot write state for a suspended company', async t => {
   await assert.rejects(reportKitchenTvDisplay(f.db,f.businesses.A,{appliedRevision:0,currentPage:1,pageCount:1,viewportWidth:1280,viewportHeight:720,visibleOrderIds:[]},f.now))
   assert.equal(f.sqlite.prepare('SELECT count(*) n FROM kitchen_tv_display_control WHERE business_id=?').get(f.businesses.A).n,0)
 })
+
+
+test('read-only batches validate the same session snapshot without assertion-table writes',async t=>{
+  const f=await createManagementFixture(t),guarded=withBusinessSessionGuard(f.db,f.contexts.aliceA,{now:f.now})
+  const before=f.sqlite.prepare('SELECT total_changes() AS n').get().n
+  const results=await guarded.batch([
+    guarded.prepare('SELECT name FROM businesses WHERE id=?').bind(f.businesses.A),
+    guarded.prepare('SELECT COUNT(*) AS n FROM businesses'),
+  ])
+  assert.equal(results[0].results[0].name,'Company A');assert.ok(results[1].results[0].n>0)
+  assert.equal(f.sqlite.prepare('SELECT total_changes() AS n').get().n,before)
+})
+
+for(const change of ['suspend','grants','revoke'])test(`read-only session guard rejects ${change} winning before its batch`,async t=>{
+  const f=await createManagementFixture(t),batch=f.db.batch.bind(f.db)
+  const guarded=withBusinessSessionGuard(f.db,f.contexts.aliceA,{now:f.now})
+  f.db.batch=async statements=>{
+    if(change==='suspend')f.sqlite.prepare("UPDATE businesses SET lifecycle_status='suspended' WHERE id=?").run(f.businesses.A)
+    if(change==='grants')f.sqlite.prepare("DELETE FROM role_capabilities WHERE role_id=(SELECT role_id FROM users WHERE id=?)").run(f.members.aliceA)
+    if(change==='revoke')f.sqlite.prepare('UPDATE identity_sessions SET revoked_at=? WHERE id=?').run(f.now.toISOString(),f.contexts.aliceA.identitySessionId)
+    return batch(statements)
+  }
+  await assert.rejects(guarded.prepare('SELECT name FROM businesses WHERE id=?').bind(f.businesses.A).first(),{status:409})
+})
+
+test('unclassified SQL and mixed mutations retain transactional assertions and changes()',async t=>{
+  const f=await createManagementFixture(t),guarded=withBusinessSessionGuard(f.db,f.contexts.aliceA,{now:f.now})
+  const before=f.sqlite.prepare('SELECT total_changes() AS n').get().n
+  const result=await guarded.batch([
+    guarded.prepare('WITH value(name) AS (SELECT ?) UPDATE businesses SET name=(SELECT name FROM value) WHERE id=?').bind('Changed',f.businesses.A),
+    guarded.prepare('SELECT changes() AS n'),
+  ])
+  assert.equal(result[0].meta.changes,1);assert.equal(result[1].results[0].n,1)
+  assert.equal(f.sqlite.prepare('SELECT total_changes() AS n').get().n-before,3)
+})

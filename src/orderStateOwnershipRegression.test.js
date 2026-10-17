@@ -33,7 +33,7 @@ test('central cancellation applies authoritative effects through the operational
   assert.match(commands, /onSuccess\(payload\?\.refundNow \? 'Pedido cancelado e estorno registrado' : 'Pedido cancelado com sucesso'\)/)
   assert.ok(commands.indexOf('applyOfficialEffects(result)') < commands.indexOf("onSuccess(payload?.refundNow"))
   assert.match(runtime, /const applyOfficialEffects = useCallback/)
-  assert.match(runtime, /if \(order\) setOrders\(\(current\) => upsertById\(current, order\)\)/)
+  assert.match(runtime, /if \(order\) commitOrders\(\(current\) => upsertById\(current, order\)\)/)
   assert.match(runtime, /if \(movement\) setMovements\(\(current\) => upsertById\(current, movement\)\)/)
   assert.match(runtime, /if \(tableTab\) setTableTabs\(\(current\) => upsertById\(current, tableTab\)\)/)
 })

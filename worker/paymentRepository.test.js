@@ -157,7 +157,7 @@ test('policy change immediately before commit rolls back receipt, allocations, p
   assert.equal(db.sqlite.prepare('SELECT count(*) AS n FROM settings_tx_assertions').get().n, 0)
 })
 
-test('standalone payment preserves the existing close-table-tab-if-settled behavior', async () => {
+test('Task 12 requires open table tab settlement through its own payment flow', async () => {
   const db = new PaymentDb()
   const timestamp = NOW.toISOString()
   db.sqlite.prepare(`INSERT INTO tables
@@ -169,15 +169,13 @@ test('standalone payment preserves the existing close-table-tab-if-settled behav
     customerIdentity: { type: 'table', tableId: 'table-1', clientId: null },
   }), NOW)
 
-  const result = await registerOrderPayment(
+  await assert.rejects(registerOrderPayment(
     db,
     BUSINESS,
     tableOrder.id,
     [{ methodCode: 'pix', amountCents: 8000 }],
     new Date(+NOW + 7_000),
-  )
-
-  assert.equal(result.tableTab.id, tableOrder.tableTabId)
-  assert.equal(result.tableTab.status, 'closed')
-  assert.equal(db.sqlite.prepare('SELECT status FROM table_tabs WHERE id = ?').get(tableOrder.tableTabId).status, 'closed')
+  ), {status:409,code:'TABLE_TAB_PAYMENT_REQUIRED'})
+  assert.equal(db.sqlite.prepare('SELECT status FROM table_tabs WHERE id = ?').get(tableOrder.tableTabId).status, 'open')
+  assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payments').get().n,0)
 })

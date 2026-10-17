@@ -1,3 +1,4 @@
+import { createRealtimeApi } from '../infrastructure/realtime/realtimeApi.js'
 export const KITCHEN_TV_SESSION_HEADER = 'x-kitchen-tv-session'
 
 export class KitchenDisplayHttpError extends Error {
@@ -61,4 +62,12 @@ export const reportKitchenDisplayState = (
     },
     body: JSON.stringify(report),
   }, fetchImpl)
+}
+
+export const createKitchenDisplayRealtimeApi=(sessionTokenOrFetch=null,maybeFetch=globalThis.fetch)=>{
+  const fetchImpl=typeof sessionTokenOrFetch==='function'?sessionTokenOrFetch:maybeFetch
+  const sessionToken=typeof sessionTokenOrFetch==='string'?sessionTokenOrFetch.trim():''
+  return createRealtimeApi({basePath:'/api/kitchen-tv/realtime',request:(path,options)=>requestJson(path,{
+    ...options,headers:{'content-type':'application/json',...(sessionToken?{[KITCHEN_TV_SESSION_HEADER]:sessionToken}:{})},
+  },fetchImpl)})
 }

@@ -323,3 +323,26 @@ test('create reservation conflict keeps the same draft, exposes the server messa
   assert.equal(probe.getLatest().context, null)
   probe.unmount()
 })
+
+test('Task 14 saved edit commits before presenting its independent financial intent', async()=>{
+ const events=[]
+ const probe=await mountProbe({
+   getAccessOwner:()=> 'owner',
+   submitOrderEdit:async(id,payload)=>{events.push(['saved',id,payload.mutationId]);return {order:{id,totalCents:9500,dueCents:1500}}},
+   canSubmit:()=>true,
+   commitOfficialEffects:()=>{events.push(['effects']);return true},
+   onCommitted:async(_result,_context,intent)=>events.push(['settlement-offer',intent]),
+   onSuccess:()=>events.push(['saved-not-paid']),
+   onError:error=>{throw error},
+ })
+ await act(async()=>probe.getLatest().open({mode:'edit-order',
+   orderContext:{id:'o-14',expectedContentRevision:0,originalTotal:80},
+   initialDraft:{items:[]}}))
+ let success
+ await act(async()=>{success=await probe.getLatest().submit({items:[]},{intent:'receive'})})
+ assert.equal(success,true)
+ assert.equal(events[0][0],'saved')
+ assert.deepEqual(events.slice(1),[['effects'],['settlement-offer','receive'],['saved-not-paid']])
+ assert.equal(probe.getLatest().context,null)
+ probe.unmount()
+})

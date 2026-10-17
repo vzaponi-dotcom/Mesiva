@@ -319,3 +319,63 @@ test('Receivables opens the same workflow with the latest default and without op
   assert.deepEqual(probe.getLatest().dialog.allocations, [{ methodCode: 'pix', amountCents: 4000 }])
   probe.unmount()
 })
+
+test('Task 13/16 legacy full-payment is blocked for partial, while its due is collected only by supplement', async () => {
+  const probe=await mountWorkflow({orders:[
+    order('partial',{paymentId:'pay-partial',paymentStatus:'Parcialmente pago',dueCents:1500,total:95}),
+    order('refund',{paymentId:'pay-refund',paymentStatus:'Devolução pendente',dueCents:0,total:65}),
+    order('unpaid',{paymentStatus:'Pendente',dueCents:3000,total:30}),
+  ]})
+  await act(async()=>{
+    assert.equal(probe.getLatest().open('partial','orders'),false)
+    assert.equal(probe.getLatest().open('partial',null),false)
+    assert.equal(probe.getLatest().open('refund',null),false)
+    assert.equal(probe.getLatest().open('unpaid',null),true)
+  })
+  assert.equal(probe.getLatest().dialog.composition.totalCents,3000)
+  probe.unmount()
+})
+
+test('Task 16: saved partial order can later receive only the due balance from Receivables',async()=>{
+ const source=order('partial-later',{paymentId:'original',paymentStatus:'Parcialmente pago',
+   total:95,totalCents:9500,netReceivedCents:8000,dueCents:1500,contentRevision:3})
+ const calls=[]
+ const probe=await mountWorkflow({orders:[source],granted:new Set(['payments.receive']),
+   api:{
+     registerOrderPayment:()=>{throw Error('legacy full-payment endpoint must not run')},
+     registerSupplementalPayment:async(id,payload)=>{calls.push({id,payload});return paidEffects(source,payload.allocations)},
+   }})
+ await act(async()=>assert.equal(probe.getLatest().open(source.id),true))
+ assert.equal(probe.getLatest().dialog.totalCents,1500)
+ assert.deepEqual(probe.getLatest().dialog.allocations,[{methodCode:'pix',amountCents:1500}])
+ await act(async()=>assert.equal(await probe.getLatest().dialog.submit(),true))
+ assert.equal(calls.length,1)
+ assert.equal(calls[0].id,source.id)
+ assert.equal(calls[0].payload.expectedContentRevision,3)
+ assert.equal(calls[0].payload.expectedTotalCents,9500)
+ assert.equal(calls[0].payload.expectedNetReceivedCents,8000)
+ assert.deepEqual(calls[0].payload.allocations,[{methodCode:'pix',amountCents:1500}])
+ assert.equal(typeof calls[0].payload.mutationId,'string')
+ assert.deepEqual(probe.errors,[])
+ probe.unmount()
+})
+test('refund-due is never offered as collection and official partial uses its supplemental workflow on any source',async()=>{
+ const partial=order('partial',{paymentId:'p1',paymentStatus:'Parcialmente pago',
+   total:95,totalCents:9500,netReceivedCents:8000,dueCents:1500,contentRevision:2})
+ const refund=order('refund',{paymentId:'p2',paymentStatus:'Devolução pendente',
+   total:65,totalCents:6500,netReceivedCents:8000,dueCents:0})
+ const probe=await mountWorkflow({orders:[partial,refund]})
+ await act(async()=>assert.equal(probe.getLatest().open('partial','orders'),true))
+ assert.equal(probe.getLatest().dialog.supplemental,true)
+ await act(async()=>probe.getLatest().close())
+ await act(async()=>{
+   assert.equal(probe.getLatest().open('refund'),false)
+   assert.equal(probe.getLatest().open('partial'),true)
+ })
+ probe.unmount()
+})
+
+test('canonical snapshot getter resolves a paged order even when the last render had no global order',async()=>{
+  const h=await mountWorkflow({orders:[],props:{getOfficialOrders:()=>[order('remote',{status:'Finalizado'})]}})
+  try{await act(async()=>assert.equal(h.getLatest().open('remote','history'),true));assert.equal(h.getLatest().dialog.order.id,'remote')}finally{h.unmount()}
+})

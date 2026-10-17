@@ -159,3 +159,34 @@ export const buildOrderPayload = (draft = {}, paymentAllocations) => {
   if (draft.scheduledFor) payload.scheduledFor = draft.scheduledFor
   return payload
 }
+
+export const addEditCartItem = (items,product) => {
+  const presentation=formatProductPresentation(product)
+  return [...items,{lineId:crypto.randomUUID(),persistedItemId:null,
+    productId:product.id,name:product.name,category:product.category || '',
+    size:presentation==='Unidade'?'Un':presentation,
+    unitPrice:Number(product.price)||0,quantity:1,note:''}]
+}
+export const updateEditCartItem = (items,lineId,patch={}) => items.map(item=>item.lineId===lineId
+  ? {...item,quantity:patch.quantity===undefined?item.quantity:Math.max(1,Math.trunc(Number(patch.quantity)||1)),
+      note:patch.note===undefined?item.note:normalizeItemNote(patch.note)}:item)
+export const commitEditCartItemNote = (items,lineId) => items.map(item=>item.lineId===lineId
+  ? {...item,note:normalizeItemNote(item.note)}:item)
+export const decrementEditCartProduct = (items,productId) => {
+  const matching=items.filter(item=>item.productId===productId)
+  if(!matching.length)return items
+  const target=matching.find(item=>!item.persistedItemId)||matching[0]
+  if(Number(target.quantity)<=1)return items.filter(item=>item.lineId!==target.lineId)
+  return items.map(item=>item.lineId===target.lineId?{...item,quantity:Number(item.quantity)-1}:item)
+}
+export const buildOrderEditPayload = draft => ({
+  items:(draft.items||[]).map(item=>item.persistedItemId
+    ? {id:item.persistedItemId,quantity:Math.max(1,Math.trunc(Number(item.quantity)||1)),note:normalizeItemNote(item.note)}
+    : {productId:item.productId,quantity:Math.max(1,Math.trunc(Number(item.quantity)||1)),note:normalizeItemNote(item.note)}),
+  deliveryFee:draft.type==='Entrega'?toNonNegativeNumber(draft.deliveryFee):0,
+  adjustment:{
+    type:draft.adjustment?.type||'none',mode:draft.adjustment?.mode||'fixed',
+    value:toNonNegativeNumber(draft.adjustment?.value),
+    reason:cleanSpaces(draft.adjustment?.reason).slice(0,200),
+  },
+})

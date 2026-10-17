@@ -133,7 +133,7 @@ try {
   const upgradedProbe = await startProbe(upgradePersist)
   const upgraded = await requestProbe(upgradedProbe.origin, '/print-context/verify-upgrade')
   await stopProbe(upgradedProbe)
-  assertPreservedPrintContext(legacy.snapshot, upgraded.preservedSnapshot, await readFile(join(fullMigrations, '0039_tenant_reference_guards.sql'), 'utf8'))
+  assertPreservedPrintContext(legacy.snapshot, upgraded.preservedSnapshot, await readFile(join(fullMigrations, '0039_tenant_reference_guards.sql'), 'utf8'), await readFile(join(fullMigrations, '0042_print_recovery_candidate_indexes.sql'), 'utf8'), await readFile(join(fullMigrations, '0044_print_summary_retention_indexes.sql'), 'utf8'))
 
   const cleanPersist = join(temp, 'clean-state')
   await run(['d1', 'migrations', 'apply', 'DB', '--local', '--config', configPath, '--persist-to', cleanPersist])

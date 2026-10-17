@@ -125,3 +125,24 @@ test('cancel clears both editor and duplicate state', async () => {
 
   h.renderer.unmount()
 })
+
+test('scoped editor consults authoritative duplicate names outside the loaded page before persisting',async()=>{
+  const h=await mount({clients:[],lookupDuplicates:async()=>({name:clients[0],phone:null})})
+  try{
+    await act(async()=>h.editor.openNewClient())
+    await act(async()=>h.editor.updateDraft({name:'Ana Souza'}))
+    await act(async()=>assert.equal(await h.editor.submit(),false))
+    assert.equal(h.calls.created.length,0);assert.equal(h.editor.duplicateDialog.client.id,'ana')
+  }finally{h.renderer.unmount()}
+})
+test('closing a draft during duplicate lookup never persists or reopens its obsolete confirmation',async()=>{
+  let release
+  const h=await mount({clients:[],lookupDuplicates:()=>new Promise(resolve=>{release=resolve})})
+  try{
+    await act(async()=>h.editor.openNewClient());await act(async()=>h.editor.updateDraft({name:'New'}))
+    let pending;await act(async()=>{pending=h.editor.submit()})
+    await act(async()=>h.editor.cancel())
+    await act(async()=>{release({name:null,phone:null});await pending})
+    assert.equal(h.calls.created.length,0);assert.equal(h.editor.isOpen,false)
+  }finally{h.renderer.unmount()}
+})

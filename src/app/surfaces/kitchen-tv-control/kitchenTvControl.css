@@ -983,3 +983,20 @@
   color: var(--muted);
   font-size: .7rem;
 }
+
+/* O histórico da TV reutiliza o mesmo painel do detalhe do pedido.
+   Somente o limite de rolagem precisa ser específico do modal da TV. */
+.kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review {
+  min-width: 0;
+  margin: 0;
+}
+.kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review .order-edit-history-content {
+  max-height: min(44vh, 340px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 420px) {
+  .kitchen-tv-control-action-sheet .kitchen-tv-control-edit-review .order-edit-history-content {
+    max-height: min(38vh, 270px);
+  }
+}

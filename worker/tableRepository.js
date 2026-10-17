@@ -1,5 +1,6 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
-import { listNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
+import { mapTableReservationRow, prepareNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
 
 const TABLE_NAME_MAX_LENGTH = 60
 
@@ -110,39 +111,38 @@ LEFT JOIN (
     orders.business_id,
     orders.table_tab_id,
     COUNT(*) AS order_count,
-    COALESCE(SUM(order_item_totals.item_count), 0) AS item_count,
+    COALESCE(SUM((SELECT SUM(quantity) FROM order_items
+      WHERE order_items.business_id = orders.business_id AND order_items.order_id = orders.id)), 0) AS item_count,
     COALESCE(SUM(orders.total_cents), 0) AS total_cents
-  FROM orders
+  FROM table_tabs candidate_tabs
+  CROSS JOIN orders
+    ON orders.business_id = candidate_tabs.business_id AND orders.table_tab_id = candidate_tabs.id
   LEFT JOIN payments
-    ON payments.order_id = orders.id
-   AND payments.business_id = orders.business_id
-  LEFT JOIN (
-    SELECT business_id, order_id, COALESCE(SUM(quantity), 0) AS item_count
-    FROM order_items
-    GROUP BY business_id, order_id
-  ) order_item_totals
-    ON order_item_totals.business_id = orders.business_id
-   AND order_item_totals.order_id = orders.id
-  WHERE orders.status <> 'Cancelado' AND payments.id IS NULL
+    ON payments.order_id = orders.id AND payments.business_id = orders.business_id
+  WHERE candidate_tabs.business_id = ? AND candidate_tabs.status = 'open'
+    AND orders.status <> 'Cancelado' AND payments.id IS NULL
   GROUP BY orders.business_id, orders.table_tab_id
 ) tab_summary
   ON tab_summary.business_id = open_tabs.business_id
  AND tab_summary.table_tab_id = open_tabs.id`
 
-export const listTables = async (db, businessId) => {
-  const result = await db.prepare(`${tableSelect}
+export const prepareTableReads = (db, businessId) => [
+  db.prepare(`${tableSelect}
     WHERE tables.business_id = ?
-    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId).all()
+    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId),
+  prepareNextTableReservations(db, businessId),
+]
+export const projectTableReads = ([result, reservations]) => {
   const tables = (result.results || []).map(mapTableRow)
-  const nextReservations = await listNextTableReservations(db, businessId)
-  const reservationByTableId = new Map(nextReservations.map((reservation) => [reservation.tableId, reservation]))
-  return tables.map((table) => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
+  const reservationByTableId = new Map((reservations.results || []).map(mapTableReservationRow).map(reservation => [reservation.tableId, reservation]))
+  return tables.map(table => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
 }
+export const listTables = async (db, businessId) => projectTableReads(await db.batch(prepareTableReads(db, businessId)))
 
 export const loadTableById = async (db, businessId, tableId) => {
   const row = await db.prepare(`${tableSelect}
     WHERE tables.business_id = ? AND tables.id = ?
-    LIMIT 1`).bind(businessId, tableId).first()
+    LIMIT 1`).bind(businessId, businessId, tableId).first()
   const table = mapTableRow(row)
   if (!table) return null
   return {
@@ -195,7 +195,7 @@ export const getOrCreateOpenTableTabByTableId = async (db, businessId, tableId, 
   const id = crypto.randomUUID()
   const timestamp = now.toISOString()
   const tabNumber = await reserveNextTableTabNumber(db, businessId, now)
-  await db.prepare(`INSERT OR IGNORE INTO table_tabs (
+  await registerCommittedEffect(db.prepare(`INSERT OR IGNORE INTO table_tabs (
     id, business_id, table_id, table_identifier, tab_number, status, opened_at, closed_at, created_at, updated_at
   ) VALUES (?, ?, ?, ?, ?, 'open', ?, NULL, ?, ?)`).bind(
     id,
@@ -206,7 +206,7 @@ export const getOrCreateOpenTableTabByTableId = async (db, businessId, tableId, 
     timestamp,
     timestamp,
     timestamp,
-  ).run()
+  ),{businessId,topics:['tables'],orderIds:[]}).run()
 
   row = await selectOpen()
   if (!row) throw domainError(500, 'TABLE_TAB_CREATE_FAILED', 'Não foi possível abrir a comanda da mesa.')

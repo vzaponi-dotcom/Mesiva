@@ -123,6 +123,19 @@
 .new-order-refined .new-order-total-final strong { font-size: 1.6rem; font-weight: 700; letter-spacing: -.04em; white-space: nowrap; }
 .new-order-refined .new-order-checkout-actions { display: grid; grid-template-columns: 1fr; }
 .new-order-payment-hint { margin: 0; font-size: .72rem; color: var(--muted); line-height: 1.6; }
+
+.new-order-refined .new-order-settlement-preview { display: grid; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.new-order-refined .new-order-settlement-preview>div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; }
+.new-order-refined .new-order-settlement-preview strong { text-align: right; white-space: normal; overflow-wrap: anywhere; color: var(--text); }
+.new-order-edit-settlement-dialog,.order-edit-settlement-dialog { min-width: 0; max-width: 100%; }
+.order-edit-settlement-dialog .payment-summary-card { display: grid; gap: 8px; }
+.order-edit-settlement-dialog .payment-summary-card>div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.order-edit-settlement-dialog .form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 600px) {
+  .new-order-refined .new-order-checkout-actions>.button { min-width: 0; width: 100%; white-space: normal; }
+  .order-edit-settlement-dialog .form-actions>.button { min-width: 0; flex: 1 1 170px; white-space: normal; }
+}
+
 .new-order-mobile-checkout { display: none; }
 .new-order-cart-sheet .new-order-cart-summary { position: static; display: block; box-shadow: none; border: 0; }
 @media (min-width:821px) and (max-width:1150px) {

@@ -1,0 +1,53 @@
+.kitchen-order-edit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 34px;
+  margin: 4px 0 0;
+  padding: 3px 4px 3px 9px;
+  border: 1px solid rgba(245, 158, 11, .50);
+  border-left: 3px solid #f59e0b;
+  border-radius: 7px;
+  background: rgba(245, 158, 11, .09);
+  color: var(--text);
+}
+.kitchen-order-edit-banner strong {
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .015em;
+  white-space: nowrap;
+}
+.kitchen-order-edit-banner button {
+  min-height: 30px;
+  border: 1px solid rgba(245, 158, 11, .38);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.kitchen-order-edit-banner button:hover:not(:disabled) {
+  background: rgba(245, 158, 11, .15);
+}
+.kitchen-order-edit-banner button:focus-visible {
+  outline: 2px solid var(--primary-control-ring, #f59e0b);
+  outline-offset: 2px;
+}
+.kitchen-order-edit-banner button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+@media (max-width: 520px) {
+  .kitchen-order-edit-banner {
+    width: 100%;
+    gap: 6px;
+  }
+  .kitchen-order-edit-banner button { min-height: 36px; }
+}

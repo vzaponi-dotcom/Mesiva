@@ -2,6 +2,7 @@ import { useMutationOwner } from '../../../runtime/session/useMutationOwner.js'
 import { useCallback, useRef, useState } from 'react'
 import {
   canReceiveStandaloneOrder,
+  getPendingAmount,
   isOrderCancelled,
 } from '../../../../domains/orders/index.js'
 import {
@@ -11,13 +12,16 @@ import {
   toPaymentAllocations,
 } from '../paymentComposition.js'
 import { paymentApi } from '../paymentApi.js'
+import {hasSupplementalBalance as isSupplementalDue} from '../../../../../shared/orderPaymentRead.js'
 
 const operationalSources = new Set(['orders', 'history'])
-const orderTotalCents = (order) => Math.max(0, Math.round((Number(order?.total) || 0) * 100))
+const orderTotalCents = (order) => isSupplementalDue(order)
+  ? order.dueCents : Math.max(0, Math.round((Number(order?.total) || 0) * 100))
 
 export function useOrderPaymentWorkflow({
   api = paymentApi,
   orders = [],
+  getOfficialOrders,
   granted = new Set(),
   canReceivePayments = false,
   writesBlocked = false,
@@ -38,14 +42,19 @@ export function useOrderPaymentWorkflow({
   const [, forceRender] = useState(0)
 
   const getOrder = useCallback(
-    (orderId) => orders.find((order) => order.id === orderId) ?? null,
-    [orders],
+    (orderId) => (getOfficialOrders?.() ?? orders).find((order) => order.id === orderId) ?? null,
+    [orders,getOfficialOrders],
   )
 
   const isEligible = useCallback((order, source) => {
     if (!order || !canReceivePayments) return false
     if (operationalSources.has(source)) return canReceiveStandaloneOrder(order, granted, source)
-    return order.paymentStatus !== 'Pago' && !isOrderCancelled(order)
+    // An edited, partially paid order can be settled later from A receber.
+    // The legacy writer is reserved for originally unpaid orders.
+    if (isSupplementalDue(order)) return true
+    return order.paymentStatus === 'Pendente'
+      && !order.paymentId && getPendingAmount(order) > 0
+      && !isOrderCancelled(order)
   }, [canReceivePayments, granted])
 
   const clearRequestKey = useCallback((owner) => {
@@ -76,6 +85,11 @@ export function useOrderPaymentWorkflow({
       submitting: false,
       requestKey: null,
       allocations: null,
+      supplemental: isSupplementalDue(order),
+      mutationId: crypto.randomUUID(),
+      expectedContentRevision: order.contentRevision,
+      expectedTotalCents: order.totalCents,
+      expectedNetReceivedCents: order.netReceivedCents,
     }
     dialogOwnerRef.current = owner
     setDialogOwner(owner)
@@ -108,7 +122,15 @@ export function useOrderPaymentWorkflow({
     forceRender((value) => value + 1)
 
     try {
-      const result = await api.registerOrderPayment(owner.orderId, owner.allocations)
+      const result = owner.supplemental
+        ? await api.registerSupplementalPayment(owner.orderId,{
+          mutationId:owner.mutationId,
+          expectedContentRevision:owner.expectedContentRevision,
+          expectedTotalCents:owner.expectedTotalCents,
+          expectedNetReceivedCents:owner.expectedNetReceivedCents,
+          allocations:owner.allocations,
+        })
+        : await api.registerOrderPayment(owner.orderId, owner.allocations)
       if (!ownsMutation() || owner.guard !== getSyncGuard()) return false
 
       if (applyOfficialEffects(result) === false) return false
@@ -119,7 +141,7 @@ export function useOrderPaymentWorkflow({
           ? `Pagamento recebido via ${paymentMethodLabel(paymentOptions, accepted[0].methodCode)}`
           : `Pagamento recebido em ${accepted.length} formas`
         close(owner)
-        onSuccess(message)
+        onSuccess(owner.supplemental ? message.replace('Pagamento recebido','Saldo complementar recebido') : message)
       }
       return true
     } catch (error) {
@@ -163,6 +185,7 @@ export function useOrderPaymentWorkflow({
   const dialog = dialogOwner && eligible ? {
     order,
     totalCents,
+    supplemental:Boolean(dialogOwner.supplemental),
     allocations,
     setAllocations,
     paymentOptions,

@@ -36,3 +36,11 @@ test('default bootstrap API preserves HTTP status/code/message semantics', { con
     return true
   })
 })
+
+test('bootstrap scoped query and cancellation reuse the contextual client',async()=>{
+  const calls=[],controller=new AbortController()
+  const api=createBootstrapApi({request:async(...args)=>{calls.push(args);return {ok:true}}})
+  await api.getBootstrap('version/one',{surface:'orders',signal:controller.signal})
+  assert.equal(calls[0][0],'/api/bootstrap?surface=orders&knownEffectiveConfigVersion=version%2Fone')
+  assert.equal(calls[0][1].signal,controller.signal)
+})

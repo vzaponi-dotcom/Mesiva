@@ -170,6 +170,8 @@ class BootstrapDb {
       },
     }
   }
+
+  async batch(statements) { return Promise.all(statements.map(statement => statement.all())) }
 }
 
 test('loadBootstrap scopes every business-owned query and attaches order items and table tabs', async () => {
@@ -192,7 +194,7 @@ test('loadBootstrap scopes every business-owned query and attaches order items a
   }])
   assert.deepEqual(result.movements, [])
 
-  const movementRead = db.calls.find((call) => call.sql.includes('FROM movements m'))
+  const movementRead = db.calls.find((call) => call.sql.includes('LEFT JOIN business_finance_categories fc'))
   assert.ok(movementRead, 'bootstrap must load finance movements')
   assert.match(movementRead.sql, /m\.receipt_id/)
   assert.match(movementRead.sql, /m\.payment_allocation_id/)

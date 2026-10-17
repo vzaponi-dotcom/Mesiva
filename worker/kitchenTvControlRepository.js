@@ -1,3 +1,4 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { auditedMutation } from './access/audit.js'
 import { isScheduledWaiting } from '../shared/orderTiming.js'
 import { normalizeKitchenTvModality } from '../shared/kitchenTvModality.js'
@@ -65,6 +66,9 @@ export async function setKitchenTvRequestedModality(db, businessId, modality, no
 
 export async function reportKitchenTvDisplay(db, businessId, report, now = new Date()) {
   const reportedAt = now.toISOString()
+  const previous=(await loadKitchenTvControl(db,businessId)).telemetry
+  const projection=value=>[value?.appliedRevision,value?.currentPage,value?.pageCount,value?.viewportWidth,value?.viewportHeight,value?.visibleOrderIds]
+  const changed=JSON.stringify(projection(previous))!==JSON.stringify(projection(report))
   const statement = db.prepare(`INSERT INTO kitchen_tv_display_control (
       business_id, revision, requested_page, updated_at,
       reported_revision, reported_page, reported_page_count,
@@ -90,6 +94,7 @@ export async function reportKitchenTvDisplay(db, businessId, report, now = new D
       JSON.stringify(report.visibleOrderIds),
       reportedAt,
     )
+  registerCommittedEffect(statement,changed?{businessId,topics:['kitchen-tv'],orderIds:[]}:null)
   await commitIdentityStatements(db,[prepareIdentityAssertion(db,crypto.randomUUID(),"SELECT EXISTS(SELECT 1 FROM businesses WHERE id=? AND lifecycle_status='enabled')",[businessId]),statement])
   return loadKitchenTvControl(db, businessId)
 }

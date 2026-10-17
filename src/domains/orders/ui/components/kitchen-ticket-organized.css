@@ -46,6 +46,14 @@
   font-size: .75rem;
   color: var(--muted);
 }
+/* Generic ticket span colors must not mute the semantic Editado badge. */
+.kitchen-page .kitchen-ticket-organized .kitchen-ticket-customer > .order-edited-badge {
+  color: var(--warning);
+  flex: 0 0 auto;
+}
+.kitchen-page .kitchen-ticket-organized .kitchen-ticket-customer .order-edited-badge span {
+  color: inherit;
+}
 .kitchen-page .kitchen-ticket-organized .kitchen-ticket-id { opacity: 1; font-size: inherit; }
 .kitchen-page .kitchen-ticket-organized .kitchen-ticket-timing {
   display: flex;
@@ -145,6 +153,10 @@
 }
 .kitchen-page .kitchen-ticket-organized .ticket-label-short { display: none; }
 @media (max-width: 640px) {
+  /* Keep order number and Editado visible; put modality below if space is tight. */
+  .kitchen-page .kitchen-ticket-organized .kitchen-ticket-customer > span:last-child:not(.order-edited-badge) {
+    flex-basis: 100%;
+  }
   .kitchen-page .kitchen-ticket-organized .kitchen-ticket-header { padding: 14px 14px 0; gap: 10px; }
   .kitchen-page .kitchen-ticket-organized.kitchen-ticket-overdue .kitchen-ticket-timing strong { white-space: nowrap; overflow-wrap: normal; }
   .kitchen-page .kitchen-ticket-organized .kitchen-ticket-items { padding: 14px; }

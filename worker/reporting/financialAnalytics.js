@@ -3,17 +3,22 @@ import { getBusinessDate } from '../../shared/finance.js'
 const empty = () => ({ amountCents: 0, count: 0 })
 
 export function calculateReceivables(orders, payments, today = getBusinessDate(new Date())) {
-  const paid = new Set(payments.map((payment) => payment.order_id))
+  const paymentsByOrder = new Map()
+  for(const p of payments || []) paymentsByOrder.set(p.order_id,(paymentsByOrder.get(p.order_id)||0)+Number(p.amount_cents||0))
   const buckets = { overdue: empty(), today: empty(), upcoming: empty() }
   let amountCents = 0
   let count = 0
   for (const order of orders) {
     // Match the Finance receivables list: paid is the existence of a payment,
     // and an open table tab is not a standalone receivable.
-    if (order.status === 'Cancelado' || paid.has(order.id)
+    if (order.status === 'Cancelado'
       || order.table_reservation_id
       || (order.customer_identity_type === 'table' && order.table_tab_id)) continue
-    const amount = Number(order.total_cents || 0)
+    const gross = Number.isSafeInteger(order.gross_received_cents)
+      ? order.gross_received_cents : paymentsByOrder.get(order.id) || 0
+    const refunded = Number.isSafeInteger(order.refunded_cents)
+      ? order.refunded_cents : 0
+    const amount = Math.max(0,Number(order.total_cents || 0) - (gross-refunded))
     if (amount <= 0) continue
     const expectedDate = order.promised_payment_date || order.order_date || today
     const timing = expectedDate < today ? 'overdue' : expectedDate > today ? 'upcoming' : 'today'

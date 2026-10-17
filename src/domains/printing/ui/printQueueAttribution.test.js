@@ -9,3 +9,7 @@ test('print attribution uses server actors and ignores an old label without evid
   assert.equal(historical.requestedBy, 'Autor não identificado'); assert.equal(historical.audit.actor, 'Autor não identificado')
   assert.equal(getPrintJobDetails(null).audit.actor, 'Autor não identificado')
 })
+
+test('historical job detail retains its snapshotted display number with no global order cache',()=>{
+ assert.equal(getPrintJobDetails({type:'order',orderId:'old',document:{order:{id:'old',number:'42'}}}).title,'Pedido #42')
+})

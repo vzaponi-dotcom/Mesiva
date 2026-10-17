@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   DEFAULT_PRINT_QUEUE_QUERY,
+  sortPrintQueueJobsForDisplay,
   togglePrintQueueSort,
   updatePrintQueueQuery,
 } from './printQueueQuery.js'
@@ -41,4 +42,9 @@ test('changing an operational filter resets only the page and retains the fixed 
     ...DEFAULT_PRINT_QUEUE_QUERY,
     page: 2,
   })
+})
+
+test('document snapshots preserve order number sorting when historical orders are outside the loaded cache',()=>{
+ const jobs=[{id:'a',type:'order',orderId:'old-a',document:{order:{id:'old-a',number:'20'}}},{id:'b',type:'order',orderId:'old-b',document:{order:{id:'old-b',number:'3'}}}]
+ assert.deepEqual(sortPrintQueueJobsForDisplay(jobs,{sortBy:'orderNumber',sortDir:'asc',orders:[]}).map(job=>job.id),['b','a'])
 })

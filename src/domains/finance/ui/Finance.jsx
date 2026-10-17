@@ -8,7 +8,7 @@ import StatCard from '../../../shared/ui/StatCard'
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import { groupFinanceMovementsForDisplay } from '../domain/movementPresentation.js'
 
-function Finance({ totals, movements, currency, onAddMovement, onEditMovement, onDeleteMovement, onConfigureOpeningBalance, pendingRefundOrders = [], onRequestRefund, formatCancellationDate = () => 'Data não informada', canManageMovements = true, canRefundPayments = true }) {
+function Finance({ movementReadModel,refundReadModel,totals, movements, currency, onAddMovement, onEditMovement, onDeleteMovement, onConfigureOpeningBalance, pendingRefundOrders = [], onRequestRefund, formatCancellationDate = () => 'Data não informada', canManageMovements = true, canRefundPayments = true }) {
   const [movementPendingDelete, setMovementPendingDelete] = useState(null)
   const writeDisabled = typeof navigator !== 'undefined' && !navigator.onLine
   const displayMovements = groupFinanceMovementsForDisplay(movements)
@@ -32,22 +32,30 @@ function Finance({ totals, movements, currency, onAddMovement, onEditMovement, o
         <StatCard label="Saídas" value={currency(totals.exits)} helper="Despesas registradas" icon="arrow-down" tone="danger" />
         <StatCard label="Saldo" value={currency(totals.balance)} helper="Entradas menos saídas" icon="wallet" tone={totals.balance >= 0 ? 'neutral' : 'danger'} />
       </section>
+      {refundReadModel?.status==='loading'&&<p role="status">Carregando estornos…</p>}
+      {refundReadModel?.error&&<p role="alert">Não foi possível carregar os estornos.<button type="button" onClick={refundReadModel.reload}>Tentar novamente</button></p>}
       {pendingRefundOrders.length > 0 && (
         <section className="surface-card pending-refunds-surface">
-          <div className="section-heading"><div><span className="section-kicker">Atenção</span><h2>Estornos pendentes</h2></div><span className="toolbar-count">{pendingRefundOrders.length} pendente(s)</span></div>
+          <div className="section-heading"><div><span className="section-kicker">Atenção</span><h2>Estornos pendentes</h2></div><span className="toolbar-count">{refundReadModel?refundReadModel.data.matchingCount:pendingRefundOrders.length} pendente(s)</span></div>
           <div className="pending-refund-list">
             {pendingRefundOrders.map((order) => (
               <article className="pending-refund-row" key={order.id}>
-                <div className="pending-refund-main"><strong>{formatOrderDisplayNumber(order)} · {order.client}</strong><span>Cancelado em {formatCancellationDate(order.cancelledAt)}</span></div>
-                <strong className="pending-refund-value">{currency(order.paidAmount || order.total || 0)}</strong>
-                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>Registrar estorno</Button>}
+                <div className="pending-refund-main"><strong>{formatOrderDisplayNumber(order)} · {order.client}</strong>
+                  <span>{order.status === 'Cancelado'
+                    ? `Cancelado em ${formatCancellationDate(order.cancelledAt)}`
+                    : 'Devolução pendente após edição'}</span></div>
+                <strong className="pending-refund-value">{currency(order.status !== 'Cancelado'
+                  ? Number(order.refundDueCents || 0) / 100
+                  : Number.isSafeInteger(order.netReceivedCents) ? order.netReceivedCents / 100 : (order.paidAmount || order.total || 0))}</strong>
+                {canRefundPayments && <Button type="button" variant="secondary" className="button-danger-outline" onClick={() => { if (canRefundPayments) onRequestRefund?.(order) }} disabled={writeDisabled}>{order.status === 'Cancelado' ? 'Registrar estorno' : 'Registrar devolução'}</Button>}
               </article>
             ))}
           </div>
+          {refundReadModel?.hasMore&&<button type="button" disabled={refundReadModel.status==='loading-next'} onClick={refundReadModel.loadNext}>Carregar mais estornos</button>}
         </section>
       )}
       <section className="surface-card">
-        <div className="section-heading"><div><span className="section-kicker">Histórico</span><h2>Movimentações</h2></div><span className="toolbar-count">{displayMovements.length} registro(s)</span></div>
+        <div className="section-heading"><div><span className="section-kicker">Histórico</span><h2>Movimentações</h2></div><span className="toolbar-count">{movementReadModel?movementReadModel.data.summary.count:displayMovements.length} registro(s)</span></div>
         <div className="movement-list">
           {displayMovements.map((movement) => (
             <article className="movement-row" key={movement.id}>
@@ -84,6 +92,8 @@ function Finance({ totals, movements, currency, onAddMovement, onEditMovement, o
             </article>
           ))}
         </div>
+        {movementReadModel?.error&&<p role="alert">Não foi possível atualizar as movimentações.<button type="button" onClick={movementReadModel.reload}>Tentar novamente</button></p>}
+        {movementReadModel?.hasMore&&<button type="button" disabled={movementReadModel.status==='loading-next'} onClick={movementReadModel.loadNext}>Carregar mais movimentações</button>}
         {!displayMovements.length && <div className="empty-state"><Icon name="finance" size={28} /><strong>Nenhuma movimentação registrada</strong><span>Registre uma entrada ou saída para começar o controle.</span></div>}
       </section>
       {movementPendingDelete && <ConfirmationDialog title="Excluir movimentação?" message={`A movimentação “${movementPendingDelete.description}” será removida do histórico visível.`} confirmLabel="Excluir movimentação" onConfirm={async () => { const deleted = await onDeleteMovement?.(movementPendingDelete.id); if (deleted !== false) setMovementPendingDelete(null) }} onClose={() => setMovementPendingDelete(null)} disabled={writeDisabled} />}

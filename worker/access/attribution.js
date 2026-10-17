@@ -3,6 +3,8 @@ const actor = row => ({type:row.actor_type,userId:row.actor_user_id,displayName:
 
 // IDs have already passed operational read authorization. Sequential chunks
 // reserve a bind for the tenant; rank limits output to the needed snapshots.
+// Pin the existing resource index: action IN + window ordering can otherwise
+// make SQLite scan the entire tenant action history for a single requested ID.
 export async function loadOrderAttributions(db,businessId,orderIds) {
   const ids=[...new Set(orderIds)],result=new Map(ids.map(id=>[id,{createdBy:unknown(),finalizedBy:unknown(),paidBy:unknown()}]))
   for(let offset=0;offset<ids.length;offset+=99) {
@@ -10,7 +12,7 @@ export async function loadOrderAttributions(db,businessId,orderIds) {
     const {results}=await db.prepare(`SELECT resource_id,action,actor_type,actor_user_id,actor_name FROM (
       SELECT resource_id,action,actor_type,actor_user_id,actor_name,
       ROW_NUMBER() OVER (PARTITION BY resource_id,action ORDER BY occurred_at DESC,rowid DESC) AS rank
-      FROM audit_events WHERE business_id=? AND resource_type='order' AND result='success'
+      FROM audit_events INDEXED BY audit_events_resource_time_idx WHERE business_id=? AND resource_type='order' AND result='success'
       AND action IN ('order.created','order.finalized','payment.received') AND resource_id IN (${chunk.map(()=>'?').join(',')})
     ) WHERE rank=1`).bind(businessId,...chunk).all()
     for(const row of results) result.get(row.resource_id)[{'order.created':'createdBy','order.finalized':'finalizedBy','payment.received':'paidBy'}[row.action]]=actor(row)
@@ -25,12 +27,12 @@ export async function loadPrintAttributions(db,businessId,jobIds) {
     const {results}=await db.prepare(`SELECT resource_id,slot,actor_type,actor_user_id,actor_name FROM (
       SELECT resource_id,'lastActionBy' AS slot,actor_type,actor_user_id,actor_name,
       ROW_NUMBER() OVER (PARTITION BY resource_id ORDER BY occurred_at DESC,rowid DESC) AS rank
-      FROM audit_events WHERE business_id=? AND resource_type='print-job' AND resource_id IN (${chunk.map(()=>'?').join(',')})
+      FROM audit_events INDEXED BY audit_events_resource_time_idx WHERE business_id=? AND resource_type='print-job' AND resource_id IN (${chunk.map(()=>'?').join(',')})
     ) WHERE rank=1`).bind(businessId,...chunk).all()
     for(const row of results) result.get(row.resource_id).lastActionBy=actor(row)
     const first=await db.prepare(`SELECT resource_id,actor_type,actor_user_id,actor_name FROM (
       SELECT resource_id,actor_type,actor_user_id,actor_name,ROW_NUMBER() OVER (PARTITION BY resource_id ORDER BY occurred_at,rowid) AS rank
-      FROM audit_events WHERE business_id=? AND resource_type='print-job' AND action IN ('printing.requested','printing.reprint.requested')
+      FROM audit_events INDEXED BY audit_events_resource_time_idx WHERE business_id=? AND resource_type='print-job' AND action IN ('printing.requested','printing.reprint.requested')
       AND resource_id IN (${chunk.map(()=>'?').join(',')})
     ) WHERE rank=1`).bind(businessId,...chunk).all()
     for(const row of first.results) result.get(row.resource_id).requestedBy=actor(row)

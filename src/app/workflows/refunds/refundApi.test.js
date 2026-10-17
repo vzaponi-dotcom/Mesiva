@@ -22,3 +22,14 @@ test('refundApi posts the existing refund payload', async () => {
   assert.equal(calls[0][1].method, 'POST')
   assert.deepEqual(JSON.parse(calls[0][1].body), { refundMethod: 'Dinheiro' })
 })
+
+test('Task 14 manual partial refund posts an exact amount with durable mutation identity',async()=>{
+ const calls=[]
+ const api=createRefundApi({request:async(...args)=>{calls.push(args);return {}},
+   json:(method,body)=>({method,body:JSON.stringify(body)})})
+ const payload={mutationId:'refund-1',expectedContentRevision:4,expectedTotalCents:6500,
+   expectedNetReceivedCents:8000,amountCents:1000,refundMethod:'Pix'}
+ await api.registerPartialRefund('order 1',payload)
+ assert.deepEqual(calls.map(([url,options])=>[url,options.method,JSON.parse(options.body)]),
+   [['/api/orders/order%201/partial-refund','POST',payload]])
+})

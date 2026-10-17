@@ -1,0 +1,92 @@
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history {
+  margin: 2px 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 11px 13px;
+  list-style: none;
+  cursor: pointer;
+}
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary::-webkit-details-marker { display: none; }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+  border-radius: 10px;
+}
+.order-edit-history-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  font-size: .8125rem;
+  font-weight: 600;
+}
+.order-edit-history-heading svg { flex: 0 0 auto; color: var(--warning); }
+.order-edit-history-count { flex-shrink: 0; color: var(--muted); font-size: .75rem; font-weight: 400; }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary > svg:last-child { flex-shrink: 0; color: var(--muted); }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history[open] > summary { margin-bottom: 0; border-bottom: 1px solid var(--border); }
+:is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history[open] > summary > svg:last-child { transform: rotate(180deg); }
+.order-edit-history-content { padding: 12px; }
+.order-edit-history-hint { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.4; }
+.order-edit-change-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.order-edit-change-row {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+.order-edit-change-heading { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; min-width: 0; }
+.order-edit-change-name { color: var(--text); font-size: .8125rem; font-weight: 600; overflow-wrap: anywhere; }
+.order-edit-change-tag {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: var(--badge-radius);
+  background: color-mix(in srgb, var(--text) 9%, var(--surface));
+  color: var(--text);
+  font-size: .6875rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.order-edit-change-row[data-kind="added"] .order-edit-change-tag {
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  color: var(--success);
+}
+.order-edit-change-row[data-kind="removed"] .order-edit-change-tag {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  color: var(--danger);
+}
+.order-edit-change-facts { display: grid; gap: 7px; min-width: 0; }
+.order-edit-change-quantity { display: flex; gap: 12px; align-items: center; justify-content: space-between; font-size: .75rem; }
+.order-edit-change-quantity > span:first-child { color: var(--muted); }
+.order-edit-change-quantity strong { font-size: .8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.order-edit-change-compare { display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.order-edit-change-compare > span { color: var(--muted); }
+.order-edit-change-compare svg { color: var(--muted); }
+.order-edit-change-notes { display: grid; gap: 6px; padding-top: 9px; border-top: 1px solid var(--border); }
+.order-edit-change-notes-heading { font-size: .75rem; font-weight: 500; color: var(--text); }
+.order-edit-change-note-row { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 8px; align-items: start; }
+.order-edit-change-note-row > span { color: var(--muted); font-size: .6875rem; padding-top: 2px; }
+.order-edit-change-note-row p { margin: 0; color: var(--text); font-size: .75rem; line-height: 1.45; overflow-wrap: anywhere; }
+.order-edit-change-single-note { margin: 0; font-size: .75rem; line-height: 1.45; overflow-wrap: anywhere; }
+.order-edit-change-single-note > span { color: var(--muted); }
+@media (max-width: 640px) {
+  .order-edit-history-content { padding: 9px; }
+  .order-edit-change-row { padding: 10px; }
+  :is(.order-detail-redesigned, .kitchen-tv-control-action-sheet) .order-detail-edit-history > summary { flex-wrap: wrap; gap: 8px; }
+  .order-edit-history-heading { flex: 1 1 auto; }
+  .order-edit-change-heading { align-items: flex-start; gap: 6px 8px; }
+}

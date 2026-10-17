@@ -90,6 +90,29 @@ test('automatic local print snapshot preserves table and optional customer ident
   }), 'Mesa 7 · Joao')
 })
 
+test('second and third orders on a named comanda retain its customer identity', async () => {
+  const db = seed()
+  seedTableSeven(db)
+  const now = new Date('2026-09-03T23:31:00.000Z')
+  const add = (key, customerIdentity, expectedTableTabId) => createOrder(db, 'amor-e-sabor', input({
+    customerIdentity, type: 'Local', paymentAllocations: null, idempotencyKey: key, expectedTableTabId,
+  }), now)
+
+  const first = await add('named-comanda-1', { type: 'table', tableId: 'table-7', clientId: 'c2' })
+  for (const number of [2, 3]) {
+    const order = await add(`named-comanda-${number}`, { type: 'table', tableId: 'table-7' }, first.tableTabId)
+    assert.equal(order.client, 'Mesa 7 · Joao')
+    assert.equal(order.clientId, 'c2')
+    const job = db.all(`SELECT snapshot_json FROM print_jobs WHERE order_id = '${order.id}'`)[0]
+    assert.equal(JSON.parse(job.snapshot_json).customer.name, 'Mesa 7 · Joao')
+  }
+
+  const explicit = await add('named-comanda-4', { type: 'table', tableId: 'table-7', clientId: 'c1' }, first.tableTabId)
+  assert.equal(explicit.client, 'Mesa 7 · Maria')
+  const otherTable = await add('other-table-1', { type: 'table', tableId: 'table-1' })
+  assert.equal(otherTable.client, 'Mesa 1')
+})
+
 test('automatic local print snapshot preserves a table without a customer', async () => {
   assert.equal(await automaticSnapshotCustomerName({
     customerIdentity: { type: 'table', tableId: 'table-7' },

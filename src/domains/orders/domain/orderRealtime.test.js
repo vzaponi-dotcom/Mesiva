@@ -71,3 +71,13 @@ test('operational count excludes terminal and legacy finished statuses', () => {
     { id: 'dispatched', status: 'Despachado' },
   ], now), 1)
 })
+
+test('a revision change on the same order ID never triggers another new-order arrival',()=>{
+ const now=new Date('2026-10-10T18:00:00.000Z')
+ const first=[{id:'o1',status:'Em preparo',createdAt:'2026-10-10T17:00:00.000Z',operationalRevision:0}]
+ const established=detectOperationalArrivals(undefined,first,now,new Set())
+ const changed=[{...first[0],operationalRevision:3,editPending:true}]
+ const next=detectOperationalArrivals(established.currentIds,changed,now,new Set())
+ assert.deepEqual(next.newIds,[])
+ assert.deepEqual([...next.currentIds],['o1'])
+})

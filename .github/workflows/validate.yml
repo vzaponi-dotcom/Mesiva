@@ -6,6 +6,8 @@ on:
     branches:
       - master
       - feature/spec-b-settings-policies
+      # PR #108: validate every new feature-branch SHA without manual dispatch.
+      - feature/order-editing-and-financial-reconciliation
   workflow_dispatch:
 
 jobs:
@@ -70,8 +72,30 @@ jobs:
       - name: Validate Spec B D1 clean install and upgrade
         run: node scripts/infra/spec-b-d1-gate.mjs
 
+      - name: Validate printing recovery D1 read budget
+        run: node scripts/infra/print-recovery-d1-benchmark.mjs
+
+      - name: Validate operational D1 read budget
+        run: node scripts/infra/operational-read-d1-benchmark.mjs
       - name: Validate operation profile D1 clean install and upgrade
         run: node scripts/infra/operation-profile-d1-gate.mjs
 
       - name: Validate company management D1 clean install and upgrade
         run: node scripts/infra/company-management-d1-gate.mjs
+
+      - name: Validate order editing D1 upgrade from 0041
+        run: node scripts/infra/order-editing-d1-gate.mjs
+
+      - name: Validate real WebSocket runtime and authenticated D1 metering
+        env:
+          REALTIME_GATE_REPORT: .wrangler/realtime-runtime-gate-report.json
+          REALTIME_GATE_PROGRESS: '1'
+        run: node scripts/infra/realtime-runtime-gate.mjs
+
+      - name: Upload sanitized realtime runtime report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-runtime-report
+          path: .wrangler/realtime-runtime-gate-report.json
+          if-no-files-found: ignore

@@ -51,7 +51,7 @@ export const getPrintJobDetails = (job, { order, stations = [], stationReady = t
   return {
     title: job?.type === 'table-tab' && job?.document?.tableTab?.number
       ? `Comanda #${job.document.tableTab.number}`
-      : formatOrderDisplayNumber(order),
+      : formatOrderDisplayNumber(order || {orderNumber:job?.document?.order?.number}),
     identity: getIdentity(job?.document),
     status: getPrintQueueLabel(state),
     origin: job?.trigger === 'automatic' ? 'Automático' : ['manual', 'reprint'].includes(job?.trigger) ? 'Manual/Reimpressão' : null,

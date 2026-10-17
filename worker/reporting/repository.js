@@ -1,4 +1,5 @@
 import { businessDateRangeUtc } from './businessDate.js'
+import {orderGrossReceivedSql,orderRefundedSql,orderDueSql} from './settlementSql.js'
 import { buildOrderFilters } from './orderFilters.js'
 import { getBusinessDate } from '../../shared/finance.js'
 import { getOperationalDurationMinutes, getOrderLateAt } from '../../shared/orderTiming.js'
@@ -13,13 +14,22 @@ const enrichDetail = (row) => {
   const durationMinutes = terminal.has(row.status) && !row.is_backdated ? getOperationalDurationMinutes(order) : null
   const lateAt = durationMinutes === null ? null : getOrderLateAt(order)
   const onTime = lateAt ? new Date(row.finished_at) <= lateAt : null
-  const paidCents = Number(row.paid_cents || 0)
+  const grossReceivedCents = Number(row.gross_received_cents ?? row.paid_cents ?? 0)
+  const refundedCents = Number(row.refunded_cents || 0)
+  const netReceivedCents = grossReceivedCents - refundedCents
+  const dueCents = Math.max(0,Number(row.total_cents || 0) - netReceivedCents)
+  const refundDueCents = Math.max(0,netReceivedCents - Number(row.total_cents || 0))
   const pendingCents = row.status !== 'Cancelado'
     && !row.table_reservation_id
-    && !(row.customer_identity_type === 'table' && row.table_tab_id)
-    ? Math.max(0, Number(row.total_cents || 0) - paidCents) : 0
+    && !(row.customer_identity_type === 'table' && row.table_tab_id) ? dueCents : 0
+  const paymentStatus = refundDueCents > 0 ? 'Devolução pendente'
+    : dueCents > 0 ? (grossReceivedCents ? 'Parcialmente pago' : 'Pendente')
+    : grossReceivedCents ? 'Pago' : 'Pendente'
   const created = new Date(row.created_at)
-  return { ...row, durationMinutes, onTime, paidCents, pendingCents, businessDate: Number.isNaN(created.getTime()) ? null : getBusinessDate(created) }
+  return { ...row, durationMinutes, onTime, paymentStatus,
+    paidCents:grossReceivedCents,grossReceivedCents,refundedCents,netReceivedCents,
+    dueCents,refundDueCents,pendingCents,
+    businessDate:Number.isNaN(created.getTime()) ? null : getBusinessDate(created) }
 }
 
 const compareDetail = (sort) => (left, right) => {
@@ -57,6 +67,8 @@ export function createReportingRepository(db) {
       const { results: orders } = await db.prepare(`
         SELECT o.id, o.order_date, o.type, o.status, o.total_cents, o.table_tab_id,
           o.customer_identity_type, o.promised_payment_date, o.adjustment_type, o.adjustment_amount_cents,
+          ${orderGrossReceivedSql('o')} AS gross_received_cents,
+          ${orderRefundedSql('o')} AS refunded_cents,
           tr.id AS table_reservation_id
         FROM orders o
         LEFT JOIN table_reservations tr
@@ -75,7 +87,7 @@ export function createReportingRepository(db) {
       `).bind(businessId, paidFrom, paidTo).all()
       const { results: refunds } = await db.prepare(`
         SELECT value_cents FROM movements
-        WHERE business_id = ? AND source = 'order-refund' AND deleted_at IS NULL
+        WHERE business_id = ? AND source IN ('order-refund','order-edit-refund') AND deleted_at IS NULL
           AND movement_date >= ? AND movement_date <= ?
       `).bind(businessId, query.from, query.to).all()
       return { orders, payments, receipts, refunds }
@@ -94,6 +106,8 @@ export function createReportingRepository(db) {
       const { sql, values } = buildOrderFilters(businessId, query)
       const { results: orders } = await db.prepare(`SELECT o.id, o.order_date, o.status, o.total_cents, o.delivery_fee_cents,
         o.table_tab_id, o.customer_identity_type, o.promised_payment_date, o.adjustment_type, o.adjustment_amount_cents,
+        ${orderGrossReceivedSql('o')} AS gross_received_cents,
+        ${orderRefundedSql('o')} AS refunded_cents,
         tr.id AS table_reservation_id
         FROM orders o
         LEFT JOIN table_reservations tr
@@ -115,7 +129,7 @@ export function createReportingRepository(db) {
         WHERE pa.business_id = ? AND r.paid_at >= ? AND r.paid_at < ? ${methodWhere}`)
         .bind(businessId, paidFrom, paidTo, ...methodValues).all()
       const { results: payments } = await db.prepare(`SELECT order_id, amount_cents FROM payments WHERE business_id = ? AND order_id IN (SELECT o.id FROM orders o WHERE ${sql})`).bind(businessId, ...values).all()
-      const { results: refunds } = await db.prepare("SELECT value_cents, movement_date FROM movements WHERE business_id = ? AND source = 'order-refund' AND deleted_at IS NULL AND movement_date BETWEEN ? AND ?").bind(businessId, query.from, query.to).all()
+      const { results: refunds } = await db.prepare("SELECT value_cents, movement_date FROM movements WHERE business_id = ? AND source IN ('order-refund','order-edit-refund') AND deleted_at IS NULL AND movement_date BETWEEN ? AND ?").bind(businessId, query.from, query.to).all()
       return { orders, receipts, allocations, payments, refunds }
     },
     async loadProductLines(businessId, query) {
@@ -138,12 +152,18 @@ export function createReportingRepository(db) {
         o.customer_identity_type, o.table_tab_id, o.promised_payment_date,
         o.scheduled_for, o.is_backdated, o.created_at, o.finished_at, o.timing_policy_snapshot_json,
         tr.id AS table_reservation_id,
-        (SELECT SUM(pay.amount_cents) FROM payments pay
-          WHERE pay.business_id = o.business_id AND pay.order_id = o.id) AS paid_cents,
+        ${orderGrossReceivedSql('o')} AS paid_cents,
+        ${orderRefundedSql('o')} AS refunded_cents,
         (SELECT GROUP_CONCAT(DISTINCT COALESCE(pa.method_label, pa.method_code))
-          FROM payments pay2 JOIN payment_allocations pa
-            ON pa.business_id = pay2.business_id AND pa.receipt_id = pay2.receipt_id
-          WHERE pay2.business_id = o.business_id AND pay2.order_id = o.id) AS payment_label
+          FROM payment_allocations pa
+          WHERE pa.business_id = o.business_id AND pa.receipt_id IN (
+            SELECT pay2.receipt_id FROM payments pay2
+            WHERE pay2.business_id = o.business_id AND pay2.order_id = o.id
+            UNION
+            SELECT e.receipt_id FROM order_settlement_entries e
+            WHERE e.business_id = o.business_id AND e.order_id = o.id
+              AND e.kind = 'supplemental_payment'
+          )) AS payment_label
         FROM orders o
         LEFT JOIN table_reservations tr
           ON tr.business_id = o.business_id AND tr.order_id = o.id
@@ -229,8 +249,8 @@ export function createReportingRepository(db) {
         o.scheduled_for, o.is_backdated, o.created_at, o.finished_at,
         o.cancelled_at, o.cancel_reason, o.cancel_reason_note, cr.label AS cancel_reason_label,
         o.timing_policy_snapshot_json, tr.id AS table_reservation_id,
-        (SELECT SUM(pay.amount_cents) FROM payments pay
-          WHERE pay.business_id = o.business_id AND pay.order_id = o.id) AS paid_cents
+        ${orderGrossReceivedSql('o')} AS paid_cents,
+        ${orderRefundedSql('o')} AS refunded_cents
         FROM orders o
         LEFT JOIN business_cancel_reasons cr
           ON cr.business_id = o.business_id AND cr.id = o.cancel_reason
@@ -251,10 +271,13 @@ export function createReportingRepository(db) {
         JOIN (
           SELECT DISTINCT receipt_id FROM payments
           WHERE business_id = ? AND order_id = ? AND receipt_id IS NOT NULL
+          UNION
+          SELECT DISTINCT receipt_id FROM order_settlement_entries
+          WHERE business_id = ? AND order_id = ? AND kind='supplemental_payment' AND receipt_id IS NOT NULL
         ) receipts ON receipts.receipt_id = pa.receipt_id
         WHERE pa.business_id = ?
         ORDER BY r.paid_at, pa.id
-      `).bind(businessId, id, businessId).all()
+      `).bind(businessId, id, businessId, id, businessId).all()
 
       let clientContext = null
       if (row.client_id) {
@@ -277,22 +300,9 @@ export function createReportingRepository(db) {
                   AND NOT (o.customer_identity_type = 'table' AND o.table_tab_id IS NOT NULL)
                   AND NOT EXISTS (
                     SELECT 1 FROM table_reservations pending_reservation
-                    WHERE pending_reservation.business_id = o.business_id
-                      AND pending_reservation.order_id = o.id
+                    WHERE pending_reservation.business_id=o.business_id AND pending_reservation.order_id=o.id
                   )
-                THEN CASE
-                  WHEN o.total_cents - COALESCE((
-                    SELECT SUM(pay.amount_cents)
-                    FROM payments pay
-                    WHERE pay.business_id = o.business_id AND pay.order_id = o.id
-                  ), 0) > 0
-                  THEN o.total_cents - COALESCE((
-                    SELECT SUM(pay.amount_cents)
-                    FROM payments pay
-                    WHERE pay.business_id = o.business_id AND pay.order_id = o.id
-                  ), 0)
-                  ELSE 0
-                END
+                THEN ${orderDueSql('o')}
                 ELSE 0
               END) AS pending_cents
             FROM orders o
@@ -307,8 +317,8 @@ export function createReportingRepository(db) {
               o.customer_identity_type, o.table_tab_id, o.promised_payment_date,
               o.scheduled_for, o.is_backdated, o.created_at, o.finished_at,
               o.timing_policy_snapshot_json, tr.id AS table_reservation_id,
-              (SELECT SUM(pay.amount_cents) FROM payments pay
-                WHERE pay.business_id = o.business_id AND pay.order_id = o.id) AS paid_cents
+              ${orderGrossReceivedSql('o')} AS paid_cents,
+        ${orderRefundedSql('o')} AS refunded_cents
             FROM orders o
             LEFT JOIN table_reservations tr
               ON tr.business_id = o.business_id AND tr.order_id = o.id

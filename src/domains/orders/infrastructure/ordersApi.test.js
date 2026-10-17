@@ -58,3 +58,28 @@ test('orders api preserves an explicit checkout idempotency key and payload', as
   assert.equal(calls[0][1].headers['content-type'], 'application/json')
   assert.deepEqual(JSON.parse(calls[0][1].body), payload)
 })
+
+test('orders by IDs adapter encodes IDs and retains the owning HTTP context',async()=>{
+  const {createContextHttpClient}=await import('../../../infrastructure/api/contextHttpClient.js')
+  const ids=['order / 1','order&2'],calls=[]
+  const contextClient=createContextHttpClient({context:{contextId:'owner-context'},fetchImpl:async(path,options)=>{
+    calls.push({path,options});return Response.json({orders:[{id:ids[0]}]})
+  }})
+  const api=createOrdersApi({request:contextClient.request})
+  assert.equal(typeof api.getOrdersByIds,'function','missing getOrdersByIds')
+  const payload=await api.getOrdersByIds(ids)
+  const url=new URL(calls[0].path,'https://example.test')
+  assert.equal(url.pathname,'/api/orders/by-ids')
+  assert.deepEqual(JSON.parse(url.searchParams.get('ids')),ids)
+  assert.equal(new Headers(calls[0].options.headers).get('X-Mesiva-Context'),'owner-context')
+  assert.equal(calls[0].options.credentials,'same-origin')
+  assert.deepEqual(payload,{orders:[{id:ids[0]}]})
+})
+
+test('point order reads propagate cancellation through the existing HTTP client',async()=>{
+  const controller=new AbortController(),calls=[]
+  const api=createOrdersApi({request:async(...args)=>{calls.push(args);return {orders:[]}}})
+  await api.getOrdersByIds(['order'],{signal:controller.signal})
+  assert.equal(calls[0][1].signal,controller.signal)
+  assert.deepEqual(JSON.parse(new URL(calls[0][0],'https://example.test').searchParams.get('ids')),['order'])
+})

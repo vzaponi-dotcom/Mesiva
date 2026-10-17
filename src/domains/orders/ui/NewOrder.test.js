@@ -331,6 +331,9 @@ test('edit-reservation wizard starts clean from the official snapshot and does n
 })
 
 test('reservation conflict renders the specific server guidance instead of a generic checkout error', async (t) => {
+  // Keep the fixture in the future: a hard-coded 2026-10-10 becomes invalid
+  // once that day passes, and blocks checkout before the conflict can be tested.
+  const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const harness = await workspaceHarness(t)
   const { default: NewOrder } = await harness.load('/src/domains/orders/ui/NewOrder.jsx')
   const renderer = await harness.render(NewOrder, {
@@ -339,7 +342,7 @@ test('reservation conflict renders the specific server guidance instead of a gen
       type: 'Local',
       selectedTableId: 'table-2',
       localClientId: '',
-      orderDate: '2026-10-10',
+      orderDate: futureDate,
       scheduleMode: 'scheduled',
       scheduledTime: '20:30',
       items: [{

@@ -1,0 +1,2 @@
+# D1 SQL and parser regression checks require LF on Windows checkouts too.
+migrations/*.sql text eol=lf

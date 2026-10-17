@@ -160,3 +160,9 @@ test('printing API exposes the safe operational bulk discard adapter', async () 
   ])
   assert.deepEqual(JSON.parse(calls[0][1].body), { actorLabel: 'Operador' })
 })
+
+
+test('printing state uses one contextual HTTP request', async () => {
+ const calls=await captureCalls(async()=>{await client.getPrintState()})
+ assert.deepEqual(calls.map(([path,options])=>[path,options?.method||'GET',options?.credentials]),[['/api/printing/state','GET','same-origin']])
+})

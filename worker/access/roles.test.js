@@ -7,7 +7,7 @@ import { normalizeLogin, seedBuiltinRoles, loadRoleGrants } from './roles.js'
 const BUSINESS = 'amor-e-sabor'
 const NOW = new Date('2026-09-30T12:00:00.000Z')
 const OPERATOR_GRANTS = [
-  'orders.view', 'orders.history', 'orders.create', 'orders.finalize', 'orders.discount', 'comandas.view',
+  'orders.view', 'orders.history', 'orders.create', 'orders.edit', 'orders.finalize', 'orders.discount', 'comandas.view',
   'payments.receive', 'clients.view', 'clients.create', 'clients.update', 'products.view',
   'tables.view', 'printing.queue', 'printing.execute', 'printing.station.view', 'preferences.local',
 ]

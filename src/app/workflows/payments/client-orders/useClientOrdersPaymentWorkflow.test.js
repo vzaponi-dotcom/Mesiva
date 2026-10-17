@@ -159,6 +159,18 @@ test('client-orders workflow opens only an eligible 2..100 order selection from 
   probe.unmount()
 })
 
+test('mixed client selection charges outstanding amounts and keeps a mutation key for retry',async()=>{
+ const calls=[]
+ const probe=await mountWorkflow({orders:[order('o1',{total:95,dueCents:1500,paymentId:'p1',paymentStatus:'Parcialmente pago'}),order('o2')],api:{registerClientOrdersPayment:async(...args)=>{calls.push(args);throw Object.assign(new Error('Try again'),{status:503})}}})
+ await act(async()=>probe.getLatest().open({clientId:'c1',orderIds:['o1','o2']}))
+ assert.equal(probe.getLatest().dialog.totalCents,3500)
+ await act(async()=>probe.getLatest().dialog.submit())
+ await act(async()=>probe.getLatest().dialog.submit())
+ assert.ok(calls[0][3].mutationId)
+ assert.equal(calls[0][3].mutationId,calls[1][3].mutationId)
+ probe.unmount()
+})
+
 test('double submit sends one atomic client payment request and applies authoritative plural effects once', async () => {
   const source = [order('o1'), order('o2')]
   const pending = deferred()
@@ -179,7 +191,8 @@ test('double submit sends one atomic client payment request and applies authorit
     first = probe.getLatest().dialog.submit()
     assert.equal(await probe.getLatest().dialog.submit(), false)
   })
-  assert.deepEqual(calls, [['c1', ['o1', 'o2'], [{ methodCode: 'pix', amountCents: 6900 }]]])
+  assert.deepEqual(calls.map(args=>args.slice(0,3)), [['c1', ['o1', 'o2'], [{ methodCode: 'pix', amountCents: 6900 }]]])
+  assert.equal(typeof calls[0][3].mutationId,'string')
 
   const official = { ...paidEffects(source, [{ methodCode: 'pix', amountCents: 6900 }]), deletedOrderIds: ['hidden-order'] }
   await act(async () => {
@@ -206,7 +219,7 @@ test('client-orders workflow preserves split composition and sends canonical all
   assert.equal(probe.getLatest().dialog.composition.valid, true)
   await act(async () => assert.equal(await probe.getLatest().dialog.submit(), true))
 
-  assert.deepEqual(probe.calls, [[
+  assert.deepEqual(probe.calls.map(args=>args.slice(0,3)), [[
     'c1',
     ['o1', 'o2'],
     [

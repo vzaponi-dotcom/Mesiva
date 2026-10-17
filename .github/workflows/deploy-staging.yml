@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - feature/account-menu-company-context
+      - codex/orders-modality-filters-2026-10-17
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy staging Worker
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/feature/account-menu-company-context' || (github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/feature/orders-history-ui-polish' || github.ref == 'refs/heads/feature/clients-relationship' || github.ref == 'refs/heads/codex/settings-home-refinement' || github.ref == 'refs/heads/codex/printing-background-self-recovery' || github.ref == 'refs/heads/codex/administracao-empresas'))
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/feature/account-menu-company-context' || (github.event_name == 'push' && github.ref == 'refs/heads/codex/orders-modality-filters-2026-10-17') || (github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/feature/orders-history-ui-polish' || github.ref == 'refs/heads/feature/clients-relationship' || github.ref == 'refs/heads/codex/settings-home-refinement' || github.ref == 'refs/heads/codex/printing-background-self-recovery' || github.ref == 'refs/heads/codex/administracao-empresas' || github.ref == 'refs/heads/codex/d1-print-recovery' || github.ref == 'refs/heads/codex/operational-read-budget' || github.ref == 'refs/heads/codex/realtime-budget' || github.ref == 'refs/heads/codex/printing-state-budget' || github.ref == 'refs/heads/codex/realtime-financial-validation' || github.ref == 'refs/heads/codex/navigation-cache-selective-invalidation' || github.ref == 'refs/heads/feature/order-editing-and-financial-reconciliation'))
     runs-on: ubuntu-latest
     environment: staging
     env:

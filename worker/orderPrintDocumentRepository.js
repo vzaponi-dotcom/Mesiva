@@ -1,4 +1,5 @@
 import { createOrderPrintDocument } from '../shared/orderPrintDocument.js'
+import {mapOrderPaymentFields,PAYMENT_SETTLEMENT_SQL_SELECT} from './orderPaymentReadModel.js'
 
 const rows = (result) => Array.isArray(result?.results) ? result.results : []
 
@@ -25,7 +26,9 @@ export const loadOrderPrintDocument = async (db, businessId, orderId) => {
       o.created_at,
       b.name AS business_name,
       p.id AS payment_id,
-      p.method AS payment_method
+      p.method AS payment_method,
+      p.amount_cents AS paid_amount_cents,
+      ${PAYMENT_SETTLEMENT_SQL_SELECT}
     FROM orders o
     JOIN businesses b ON b.id = o.business_id
     LEFT JOIN table_tabs tt ON tt.id = o.table_tab_id AND tt.business_id = o.business_id
@@ -80,7 +83,7 @@ export const loadOrderPrintDocument = async (db, businessId, orderId) => {
     },
     totalCents: Number(order.total_cents) || 0,
     payment: {
-      status: order.payment_id ? 'Pago' : 'Pendente',
+      status: mapOrderPaymentFields(order).paymentStatus,
       method: order.payment_id ? (order.payment_method || '') : '',
     },
   })

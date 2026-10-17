@@ -123,7 +123,7 @@ test('summary and forecast partition pending amounts by expected payment date', 
   assert.deepEqual(forecast.later, { amount: 70, count: 1 })
 })
 
-test('pending receivable entries omit every table-tab order', () => {
+test('pending receivable entries omit unpaid open table-tab orders', () => {
   const entries = buildPendingReceivableEntries([
     datedPending({ id: 'delivery', customerIdentityType: 'registered_client' }),
     datedPending({ id: 'tab-1', client: 'Mesa 04', clientId: null, customerIdentityType: 'table', tableTabId: 'tab-1' }),
@@ -401,4 +401,40 @@ test('future delivery and pickup remain forecast receivables by future orderDate
   assert.deepEqual(forecast.days[2], { date: '2026-09-09', amount: 60, count: 1 })
   assert.deepEqual(forecast.days[5], { date: '2026-09-12', amount: 45, count: 1 })
   assert.equal(forecast.days.reduce((sum, day) => sum + day.amount, 0), 105)
+})
+
+test('Task 13 receivables include only outstanding cents and omit refund-only balances', async () => {
+  // Finance receives an injected Orders rule contract; the domain must not
+  // import Orders directly, including from tests.
+  const rules={
+    isOrderCancelled: o=>o.status==='Cancelado',
+    isOrderPaid: o=>o.paymentStatus==='Pago',
+    getPendingAmount: o=>Number.isSafeInteger(o.dueCents)
+      ? Math.max(0,o.dueCents)/100
+      : o.paymentStatus==='Pago' ? 0 : Math.max(0,Number(o.total)||0),
+  }
+  const partial=order('partial',{total:95,paymentId:'p1',paymentStatus:'Parcialmente pago',dueCents:1500})
+  const unpaid=order('unpaid',{total:30,paymentStatus:'Pendente',dueCents:3000})
+  const overpaid=order('overpaid',{total:65,paymentId:'p2',paymentStatus:'Devolução pendente',dueCents:0,refundDueCents:1500})
+  const pending=getPendingReceivableOrders([partial,unpaid,overpaid],rules)
+  assert.deepEqual(pending.map(o=>o.id),['partial','unpaid'])
+  const entries=buildPendingReceivableEntries([partial,unpaid,overpaid],'2026-10-12',rules)
+  assert.deepEqual(entries.map(e=>e.total),[15,30])
+  assert.equal(calculateReceivableSummary([partial,unpaid,overpaid],'2026-10-12',rules).today.amount,45)
+  assert.equal(groupPendingOrders([partial,unpaid,overpaid],rules)[0].total,45)
+})
+
+test('Task 16 paid closed-comanda order with an edited amount owes an actionable individual due',()=>{
+ const rules={
+   isOrderCancelled:o=>o.status==='Cancelado',
+   isOrderPaid:o=>o.paymentStatus==='Pago',
+   getPendingAmount:o=>Number.isSafeInteger(o.dueCents)?o.dueCents/100:Math.max(0,Number(o.total)||0),
+ }
+ const openTab=order('open-tab',{customerIdentityType:'table',clientId:null,tableTabId:'tab-open',
+   paymentStatus:'Pendente',dueCents:5000,total:50})
+ const paidTab=order('closed-tab-edit',{customerIdentityType:'table',clientId:null,tableTabId:'tab-closed',
+   paymentId:'paid-shared',paymentStatus:'Parcialmente pago',dueCents:1500,total:95})
+ const other=order('ordinary',{customerIdentityType:'registered_client',dueCents:3000,total:30})
+ const entries=buildPendingReceivableEntries([openTab,paidTab,other],'2026-10-12',rules)
+ assert.deepEqual(entries.map(e=>[e.order.id,e.total]),[['closed-tab-edit',15],['ordinary',30]])
 })

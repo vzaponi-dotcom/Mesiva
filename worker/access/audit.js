@@ -1,4 +1,6 @@
 import { apiError } from '../http.js'
+import { registerCommittedEffect } from '../realtime/committedEffects.js'
+import { effectForCommittedEvent } from '../realtime/effectCatalog.js'
 
 // A fresh facade per request; never mutate the shared environment or D1 binding.
 export function withAuditContext(db, context) {
@@ -20,12 +22,12 @@ export function prepareAuditEvent(db, context, { action, resourceType = null, re
   if (['shared','personal'].includes(metadata.deviceMode)) safe.deviceMode = metadata.deviceMode
   if (['legacy','enrollment','user_only'].includes(metadata.authMode)) safe.authMode = metadata.authMode
   if (context.stationId) safe.stationId = context.stationId
-  return db.prepare(`INSERT INTO audit_events
+  return registerCommittedEffect(db.prepare(`INSERT INTO audit_events
     (id,business_id,occurred_at,actor_type,actor_user_id,actor_name,session_id,action,resource_type,resource_id,result,metadata_json)
     SELECT ?,?,?,?,?,?,?,?,?,?,?,? ${onlyIfChanged ? 'WHERE changes() > 0' : ''}`)
     .bind(crypto.randomUUID(),context.businessId,now.toISOString(),actorType,actorType === 'user' ? context.userId : null,
       actorType === 'system' ? 'Sistema' : actorType === 'legacy' ? 'Acesso legado' : context.displayName,
-      context.sessionId || null,action,resourceType,resourceId,outcome,JSON.stringify(safe))
+      context.sessionId || null,action,resourceType,resourceId,outcome,JSON.stringify(safe)), effectForCommittedEvent(context.businessId,{action,resourceType,resourceId,outcome}))
 }
 
 export const businessEvent = (db,businessId,event) => prepareAuditEvent(db,auditContext(db,businessId),event)
@@ -41,10 +43,10 @@ export function prepareAuditSelection(db,businessId,event,selectSql,bindings=[],
     ? "CASE WHEN selected.station_id IS NULL THEN '{}' ELSE json_object('stationId',selected.station_id) END"
     : '?'
   const metadataBindings = stationFromSelection ? [] : [JSON.stringify(context.stationId?{stationId:context.stationId}:{})]
-  return db.prepare(`INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_user_id,actor_name,session_id,action,resource_type,resource_id,result,metadata_json)
+  return registerCommittedEffect(db.prepare(`INSERT INTO audit_events(id,business_id,occurred_at,actor_type,actor_user_id,actor_name,session_id,action,resource_type,resource_id,result,metadata_json)
     SELECT ? || selected.id,?,?,?,?,?,?,?,?,selected.id,?,${metadataSql} FROM (${selectSql}) selected`)
     .bind(`${crypto.randomUUID()}:`,businessId,(event.now||new Date()).toISOString(),type,type==='user'?context.userId:null,
-      type==='system'?'Sistema':type==='legacy'?'Acesso legado':context.displayName,context.sessionId||null,event.action,event.resourceType,event.outcome||'success',...metadataBindings,...bindings)
+      type==='system'?'Sistema':type==='legacy'?'Acesso legado':context.displayName,context.sessionId||null,event.action,event.resourceType,event.outcome||'success',...metadataBindings,...bindings),effectForCommittedEvent(businessId,event))
 }
 
 // Explicitly called at a repository mutation boundary. D1 returns the original

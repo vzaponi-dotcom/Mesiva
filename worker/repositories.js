@@ -1,4 +1,6 @@
+import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
+import { LATEST_OPERATIONAL_EDIT_JOIN, OPERATIONAL_EDIT_SELECT_FIELDS, projectOperationalEdit } from './orderEditSignalsRepository.js'
 import { formatClientPhone, normalizeClientPhone } from '../shared/clientIdentity.js'
 import { projectBootstrap } from './access/projections.js'
 import { getBusinessDate } from '../shared/finance.js'
@@ -82,6 +84,9 @@ export const mapOrderRow = (row, items = []) => {
   return {
     id: row.id,
     orderNumber: Number(row.order_number),
+    ...projectOperationalEdit(row),
+    contentRevision: Number(row.content_revision || 0),
+    lastEditedAt: row.last_edited_at ?? null,
     clientId: row.client_id ?? null,
     client,
     clientPhone: row.client_phone_snapshot || '',
@@ -131,7 +136,7 @@ export const mapOrderRow = (row, items = []) => {
 }
 
 const productSelectFields = 'id, category, size, presentation_type, presentation_value, presentation_unit, name, price_cents'
-const orderSelect = `SELECT o.id, o.order_number, o.client_id, o.client_name_snapshot, o.client_phone_snapshot, o.client_address_snapshot, o.customer_identity_type, o.table_tab_id, o.type, o.order_date, o.status, o.scheduled_for, o.promised_payment_date, o.is_backdated, o.subtotal_cents, o.delivery_fee_cents, o.adjustment_type, o.adjustment_mode, o.adjustment_value, o.adjustment_amount_cents, o.adjustment_reason, o.total_cents, o.created_at, o.finished_at, o.cancelled_at, o.cancel_reason, o.cancel_reason_note, cr.label AS cancel_reason_label, o.timing_policy_snapshot_json, p.id AS payment_id, p.method AS payment_method, p.paid_at, ${PAYMENT_ALLOCATIONS_JSON_SELECT}, p.amount_cents AS paid_amount_cents, r.id AS refund_movement_id, r.created_at AS refund_created_at, tt.table_identifier AS table_identifier, tr.id AS table_reservation_id, tr.status AS table_reservation_status, tr.table_id AS reservation_table_id, COALESCE(rt.name, tr.table_name_snapshot) AS reservation_table_name, tr.revision AS reservation_revision FROM orders o LEFT JOIN payments p ON p.order_id = o.id AND p.business_id = o.business_id LEFT JOIN movements r ON r.order_id = o.id AND r.business_id = o.business_id AND r.source = 'order-refund' LEFT JOIN business_cancel_reasons cr ON cr.business_id = o.business_id AND cr.id = o.cancel_reason LEFT JOIN table_tabs tt ON tt.id = o.table_tab_id AND tt.business_id = o.business_id LEFT JOIN table_reservations tr ON tr.order_id = o.id AND tr.business_id = o.business_id LEFT JOIN tables rt ON rt.id = tr.table_id AND rt.business_id = tr.business_id`
+const orderSelect = `SELECT o.id, o.order_number, o.client_id, o.client_name_snapshot, o.client_phone_snapshot, o.client_address_snapshot, o.customer_identity_type, o.table_tab_id, o.type, o.order_date, o.status, o.scheduled_for, o.promised_payment_date, o.is_backdated, o.subtotal_cents, o.delivery_fee_cents, o.adjustment_type, o.adjustment_mode, o.adjustment_value, o.adjustment_amount_cents, o.adjustment_reason, o.total_cents, o.content_revision, o.last_edited_at, o.created_at, o.finished_at, o.cancelled_at, o.cancel_reason, o.cancel_reason_note, cr.label AS cancel_reason_label, o.timing_policy_snapshot_json, p.id AS payment_id, p.method AS payment_method, p.paid_at, ${PAYMENT_ALLOCATIONS_JSON_SELECT}, p.amount_cents AS paid_amount_cents, r.id AS refund_movement_id, r.created_at AS refund_created_at, tt.table_identifier AS table_identifier, tr.id AS table_reservation_id, tr.status AS table_reservation_status, tr.table_id AS reservation_table_id, COALESCE(rt.name, tr.table_name_snapshot) AS reservation_table_name, tr.revision AS reservation_revision, ${OPERATIONAL_EDIT_SELECT_FIELDS} FROM orders o LEFT JOIN payments p ON p.order_id = o.id AND p.business_id = o.business_id LEFT JOIN movements r ON r.order_id = o.id AND r.business_id = o.business_id AND r.source = 'order-refund' LEFT JOIN business_cancel_reasons cr ON cr.business_id = o.business_id AND cr.id = o.cancel_reason LEFT JOIN table_tabs tt ON tt.id = o.table_tab_id AND tt.business_id = o.business_id LEFT JOIN table_reservations tr ON tr.order_id = o.id AND tr.business_id = o.business_id LEFT JOIN tables rt ON rt.id = tr.table_id AND rt.business_id = tr.business_id ${LATEST_OPERATIONAL_EDIT_JOIN}`
 const itemSelect = `SELECT id, order_id, product_id, name_snapshot, category_snapshot, size_snapshot, quantity, catalog_price_cents, unit_price_cents, price_reason, note, created_at FROM order_items`
 const productSnapshotSize = (row) => {
   const presentation = formatProductPresentation(mapProductRow(row))
@@ -151,7 +156,7 @@ export const loadBootstrap = async (db, businessId, effectiveBusinessConfig, gra
   const clientsResult = await db.prepare(`SELECT id, name, phone, address FROM clients WHERE business_id = ? ORDER BY name COLLATE NOCASE ASC`).bind(businessId).all()
   const productsResult = await db.prepare(`SELECT ${productSelectFields} FROM products WHERE business_id = ? AND active = 1 ORDER BY name COLLATE NOCASE ASC`).bind(businessId).all()
   const ordersResult = await db.prepare(`${orderSelect} WHERE o.business_id = ? ORDER BY o.created_at DESC`).bind(businessId).all()
-  const itemsResult = await db.prepare(`${itemSelect} WHERE business_id = ? ORDER BY created_at ASC`).bind(businessId).all()
+  const itemsResult = await db.prepare(`${itemSelect} WHERE business_id = ? ORDER BY created_at ASC, rowid ASC`).bind(businessId).all()
   const tableTabsResult = await db.prepare(`SELECT id, table_id, table_identifier, tab_number, status, opened_at, closed_at FROM table_tabs WHERE business_id = ? ORDER BY opened_at DESC`).bind(businessId).all()
   const tables = await listTables(db, businessId)
   const movementsResult = await db.prepare(`SELECT m.id, m.type, m.category, m.description, m.value_cents, m.source, m.order_id, m.payment_id,
@@ -319,7 +324,7 @@ const TABLE_RESERVATION_DURATION_MINUTES = 120
 export const loadOrderById = async (db, businessId, id) => {
   const row = await db.prepare(`${orderSelect} WHERE o.id = ? AND o.business_id = ? LIMIT 1`).bind(id, businessId).first()
   if (!row) return null
-  const itemsResult = await db.prepare(`${itemSelect} WHERE order_id = ? AND business_id = ? ORDER BY created_at ASC`).bind(id, businessId).all()
+  const itemsResult = await db.prepare(`${itemSelect} WHERE order_id = ? AND business_id = ? ORDER BY created_at ASC, rowid ASC`).bind(id, businessId).all()
   return mapOrderRow(row, rows(itemsResult).map(mapOrderItemRow))
 }
 
@@ -418,6 +423,19 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
           pendingTableTab = tableTab
         }
       }
+      if (!clientId && !pendingTableTab) {
+        const previous = await db.prepare(`SELECT client_id, client_name_snapshot, client_phone_snapshot, client_address_snapshot
+          FROM orders
+          WHERE business_id = ? AND table_tab_id = ? AND customer_identity_type = 'table'
+            AND client_id IS NOT NULL AND status <> 'Cancelado'
+          ORDER BY created_at ASC, order_number ASC LIMIT 1`).bind(businessId, tableTab.id).first()
+        if (previous) {
+          clientId = previous.client_id
+          clientSnapshot = previous.client_name_snapshot
+          clientPhoneSnapshot = previous.client_phone_snapshot || ''
+          clientAddressSnapshot = previous.client_address_snapshot || ''
+        }
+      }
       if (!clientSnapshot) clientSnapshot = tableTab.tableIdentifier
       tableTabId = tableTab.id
       tableIdentifier = tableTab.tableIdentifier
@@ -505,6 +523,7 @@ export const createOrder = async (db, businessId, rawInput, now = new Date()) =>
     idempotencyKey,
   )
 
+  if(tableTabId || pendingReservation)registerCommittedEffect(orderStatement,{businessId,topics:['tables','reservations'],orderIds:[]})
   const contactSnapshotStatement = db.prepare(`UPDATE orders SET client_phone_snapshot = ?, client_address_snapshot = ?
     WHERE id = ? AND business_id = ?`).bind(clientPhoneSnapshot, clientAddressSnapshot, orderId, businessId)
   const policyTxId = crypto.randomUUID()
@@ -706,7 +725,8 @@ export const updateOrderStatus = async (db, businessId, id, now = new Date()) =>
     'coalesce((SELECT revision FROM business_operation_settings WHERE business_id = ?), 0) = ?',
     [businessId, operations.revision])
   const stateGuard = prepareSettingsAssertion(db, txId, 'state',
-    "EXISTS (SELECT 1 FROM orders WHERE id = ? AND business_id = ? AND status = 'Em preparo')", [id, businessId])
+    "EXISTS (SELECT 1 FROM orders WHERE id = ? AND business_id = ? AND status = 'Em preparo' AND content_revision = ? AND total_cents = ?)",
+    [id,businessId,Number(order.contentRevision||0),Math.round(Number(order.total||0)*100)])
   const update = db.prepare(`UPDATE orders SET status = 'Finalizado', finished_at = COALESCE(finished_at, ?),
     timing_policy_snapshot_json = COALESCE(timing_policy_snapshot_json, ?)
     WHERE id = ? AND business_id = ? AND status = 'Em preparo'`).bind(
@@ -734,8 +754,8 @@ export const closeTableTabIfSettled = async (db, businessId, tableTabId, now = n
   if (Number(pending?.count || 0) > 0) return null
 
   const timestamp = now.toISOString()
-  await db.prepare(`UPDATE table_tabs SET status = 'closed', closed_at = COALESCE(closed_at, ?), updated_at = ?
-    WHERE id = ? AND business_id = ? AND status = 'open'`).bind(timestamp, timestamp, tableTabId, businessId).run()
+  await registerCommittedEffect(db.prepare(`UPDATE table_tabs SET status = 'closed', closed_at = COALESCE(closed_at, ?), updated_at = ?
+    WHERE id = ? AND business_id = ? AND status = 'open'`).bind(timestamp, timestamp, tableTabId, businessId),{businessId,topics:['tables'],orderIds:[]}).run()
   const row = await db.prepare(`SELECT id, table_id, table_identifier, tab_number, status, opened_at, closed_at FROM table_tabs
     WHERE id = ? AND business_id = ? LIMIT 1`).bind(tableTabId, businessId).first()
   return row ? mapTableTabRow(row) : null

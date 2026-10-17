@@ -1,13 +1,22 @@
+import {readModelsEnabled,handleReadModelsApi} from './readModels/api.js'
+import {loadSurfaceSnapshot} from './readModels/snapshotRepository.js'
+import { withCommittedEffects, publishCommittedEffect } from './realtime/committedEffects.js'
+import { realtimeEnabled, handleHumanRealtimeApi, handleRealtimeUpgrade } from './realtime/api.js'
 import { clearSessionCookie, createSession, revokeSession, sessionCookie, SESSION_MAX_AGE, verifyPin } from './auth.js'
 import { authenticateHumanRequest, loadAuthMode } from './access/sessions.js'
 import { handleEmailAuthApi, loginWithEmail } from './access/emailAuthApi.js'
 import { recordSecurityEvent, withAuditContext } from './access/audit.js'
+import { withFinanceMutationGuard } from './access/financeMutationGuard.js'
 import { attachOperationalAttributions } from './access/attribution.js'
 import { createManualMovement, softDeleteManualMovement, updateManualMovement, upsertFinanceSettings } from './financeRepository.js'
 import { parseFinanceSettingsInput, parseManualMovementInput } from './financeValidation.js'
 import { apiError, assertSameOriginMutation, handleError, json, readJson } from './http.js'
 import { cancelOrder, registerOrderRefund } from './orderCancellation.js'
 import { validateCheckoutInput } from './orderCheckout.js'
+import { validateOrderEditInput } from './orderEditValidation.js'
+import { updateExistingOrder } from './orderEditRepository.js'
+import { registerOrderSupplementalPayment } from './orderSupplementalPayment.js'
+import { registerOrderPartialRefund } from './orderPartialRefund.js'
 import { handlePrintingApi } from './orderPrintingApi.js'
 import { handleSettingsApi } from './settingsApi.js'
 import { resolveSettingsAccess } from './settingsAccess.js'
@@ -16,7 +25,7 @@ import { projectMutationEffects, projectOrderList } from './access/projections.j
 import { printingActor } from './access/printingAuthorization.js'
 import { loadEffectiveBusinessConfig } from './effectiveBusinessConfig.js'
 import { createManualTableTabPrintJob, loadAutomaticPrintJobForOrder } from './orderPrintingRepository.js'
-import { listOrders } from './orderReadRepository.js'
+import { listOrders, listOrdersByIds } from './orderReadRepository.js'
 import { loadMovementsByOrderSource, loadTableTabById } from './orderWriteEffects.js'
 import { loadOpenTableTabDetail } from './tableTabDetailRepository.js'
 import { updateOrderPaymentPromise } from './orderPaymentPromise.js'
@@ -38,7 +47,7 @@ import { handleCompanyInvitationsApi } from './tenancy/invitationsApi.js'
 import { handlePlatformBusinessesApi } from './platform/businessesApi.js'
 import { classifyApiRoute, multiCompanyEnabled, resolveRequestContext } from './tenancy/routePolicy.js'
 import { requireBusinessContext } from './tenancy/businessContext.js'
-import { authenticateAccountRequest, contextChanged } from './identity/sessions.js'
+import { authenticateAccountRequest, contextChanged, getRoleGrantsSnapshot } from './identity/sessions.js'
 import { withBusinessSessionGuard } from './tenancy/guardedBusinessDb.js'
 
 // Shared with the infrastructure CLI; never sourced from a request or CLI flag.
@@ -85,6 +94,7 @@ const validateResponseSession = async (request, env, session, response) => {
     const current = await authenticateAccountRequest(request, env)
     if (!current || current.contextId !== session.contextId || current.accountId !== session.accountId
       || current.businessId !== session.businessId || current.userId !== session.userId || current.roleId !== session.roleId
+      || getRoleGrantsSnapshot(current) !== getRoleGrantsSnapshot(session)
       || current.roleVersion !== session.roleVersion || [...current.granted].sort().join('\n') !== [...session.granted].sort().join('\n')) throw contextChanged()
     return response
   }
@@ -136,10 +146,10 @@ const tablePatchInput = (body) => {
 }
 
 const authenticatedApi = async (request, env) => {
+  const url = new URL(request.url)
   const session = await resolveRequestContext(request, env)
   if (multiCompanyEnabled(env)) requireBusinessContext(request, session)
   else if (!session || session.businessId !== BUSINESS_ID) throw apiError(401, 'UNAUTHENTICATED', 'Sua sessão expirou. Entre novamente.')
-  const url = new URL(request.url)
   const context = await resolveBusinessSettingsContext(env, session)
   if (session.userId && session.authMode === 'enrollment' && !url.pathname.startsWith('/api/access/')) {
     await recordSecurityEvent(env.DB,{businessId:context.businessId,context,action:'access.denied',result:'denied'})
@@ -166,7 +176,12 @@ const authenticatedApi = async (request, env) => {
 const dispatchAuthenticatedApi = async (request, env, session, context, url) => {
   env = { ...env, DB: withAuditContext(multiCompanyEnabled(env) ? withBusinessSessionGuard(env.DB, session) : env.DB, context) }
   const effectsJson = (payload, init) => json(projectMutationEffects(payload, context.granted), init)
+  const financeDb = withFinanceMutationGuard(env.DB, context)
 
+  const realtimeResponse=await handleHumanRealtimeApi(request,env,session,url)
+  if(realtimeResponse)return realtimeResponse
+  const readModelsResponse=await handleReadModelsApi(request,env,context,url)
+  if(readModelsResponse)return readModelsResponse
   const accessResponse = await handleAccessApi(request, env, context, url)
   if (accessResponse) return accessResponse
 
@@ -191,7 +206,10 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
     const effectiveBusinessConfig = await loadEffectiveBusinessConfig(env.DB, session.businessId, context.granted, context.userId)
     const knownVersion = url.searchParams.get('knownEffectiveConfigVersion')
-    const bootstrap = await loadBootstrap(
+    const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
+      ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,currentTiming:effectiveBusinessConfig.operations?.timing,
+        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
+      : await loadBootstrap(
       env.DB,
       session.businessId,
       knownVersion === effectiveBusinessConfig.version ? undefined : effectiveBusinessConfig,
@@ -270,17 +288,29 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'payments.receive')
     requireCapability(context, 'clients.view')
     assertSameOriginMutation(request)
-    const { orderIds, allocations } = await readJson(request)
+    const { orderIds, allocations, mutationId } = await readJson(request)
     const result = await registerClientOrdersPayment(
-      env.DB,
+      financeDb,
       session.businessId,
       decodeURIComponent(clientReceivablesPaymentMatch[1]),
       validateReceivableOrderIds(orderIds),
       validatePaymentAllocations(allocations),
+      new Date(),
+      {mutationId},
     )
     return effectsJson(result, { status: 201 })
   }
 
+  if (url.pathname === '/api/orders/by-ids' && request.method === 'GET') {
+    requireAnyCapability(context, ['orders.view', 'orders.history'])
+    let ids
+    try { ids = JSON.parse(url.searchParams.get('ids')) } catch {
+      throw apiError(400, 'INVALID_ORDER_IDS', 'Informe uma lista válida de pedidos.')
+    }
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !id.trim() || id.length > 200)
+      || new Set(ids).size > 99) throw apiError(400, 'INVALID_ORDER_IDS', 'Informe até 99 pedidos válidos.')
+    return json({ orders: projectOrderList(await listOrdersByIds(env.DB, session.businessId, ids), context.granted) })
+  }
   if (url.pathname === '/api/orders' && request.method === 'GET') {
     requireAnyCapability(context, ['orders.view', 'orders.history'])
     return json({ orders: projectOrderList(await listOrders(env.DB, session.businessId), context.granted) })
@@ -305,13 +335,23 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     if (order.tableTabId || reservation) response.tables = await listTables(env.DB, session.businessId)
     return effectsJson(response, { status: 201 })
   }
+  const editOrderMatch = url.pathname.match(/^\/api\/orders\/([^/]+)$/)
+  if (editOrderMatch && request.method === 'PATCH') {
+    requireCapability(context, 'orders.edit')
+    assertSameOriginMutation(request)
+    const body = validateOrderEditInput(await readJson(request))
+    const result = await updateExistingOrder(financeDb, session.businessId,
+      decodeURIComponent(editOrderMatch[1]), body,
+      {allowAdjustment:context.granted.has('orders.discount')})
+    return effectsJson({order:result.order})
+  }
   const statusMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/status$/)
   if (statusMatch && request.method === 'PATCH') {
     requireCapability(context, 'orders.finalize')
     assertSameOriginMutation(request)
     const body = await readJson(request)
     if (body.status !== 'Finalizado') throw apiError(400, 'INVALID_STATUS', 'Transição de status inválida.')
-    const order = await updateOrderStatus(env.DB, session.businessId, decodeURIComponent(statusMatch[1]))
+    const order = await updateOrderStatus(financeDb, session.businessId, decodeURIComponent(statusMatch[1]))
     if (!order) throw apiError(404, 'ORDER_NOT_FOUND', 'Pedido não encontrado.')
     return effectsJson({ order })
   }
@@ -320,8 +360,24 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'payments.receive')
     assertSameOriginMutation(request)
     const { allocations } = await readJson(request)
-    const result = await registerOrderPayment(env.DB, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
+    const result = await registerOrderPayment(financeDb, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
     return effectsJson(result, { status: 201 })
+  }
+  const supplementMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/supplemental-payment$/)
+  if(supplementMatch && request.method==='POST'){
+    requireCapability(context,'payments.receive')
+    assertSameOriginMutation(request)
+    const result=await registerOrderSupplementalPayment(financeDb,session.businessId,
+      decodeURIComponent(supplementMatch[1]),await readJson(request))
+    return effectsJson(result,{status:201})
+  }
+  const partialRefundMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/partial-refund$/)
+  if(partialRefundMatch && request.method==='POST'){
+    requireCapability(context,'payments.refund')
+    assertSameOriginMutation(request)
+    const result=await registerOrderPartialRefund(financeDb,session.businessId,
+      decodeURIComponent(partialRefundMatch[1]),await readJson(request))
+    return effectsJson(result,{status:201})
   }
   const paymentPromiseMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/payment-promise$/)
   if (paymentPromiseMatch && request.method === 'PATCH') {
@@ -337,14 +393,14 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const body = await readJson(request)
     if (body.refundNow) requireCapability(context, 'payments.refund')
-    const result = await cancelOrder(env.DB, session.businessId, decodeURIComponent(cancelMatch[1]), body)
+    const result = await cancelOrder(financeDb, session.businessId, decodeURIComponent(cancelMatch[1]), body)
     return effectsJson(result)
   }
   const refundMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/refund$/)
   if (refundMatch && request.method === 'POST') {
     requireCapability(context, 'payments.refund')
     assertSameOriginMutation(request)
-    const result = await registerOrderRefund(env.DB, session.businessId, decodeURIComponent(refundMatch[1]), await readJson(request))
+    const result = await registerOrderRefund(financeDb, session.businessId, decodeURIComponent(refundMatch[1]), await readJson(request))
     return effectsJson(result, { status: 201 })
   }
   const tableTabPrintMatch = url.pathname.match(/^\/api\/table-tabs\/([^/]+)\/print-document$/)
@@ -386,7 +442,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     assertSameOriginMutation(request)
     const { allocations } = await readJson(request)
     const result = await registerTableTabPayment(
-      env.DB,
+      financeDb,
       session.businessId,
       decodeURIComponent(tableTabPaymentMatch[1]),
       validatePaymentAllocations(allocations),
@@ -449,8 +505,13 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 }
 
 export const handleRequest = async (request, env, executionContext) => {
+  if(realtimeEnabled(env) && env.BUSINESS_REALTIME) {
+    const originalEnv=env
+    env={...env,DB:withCommittedEffects(env.DB,{onCommitted:effect=>publishCommittedEffect(originalEnv,effect.businessId,effect,executionContext)})}
+  }
   try {
     const url = new URL(request.url)
+    if(url.pathname==='/api/realtime/socket' && request.method==='GET')return await handleRealtimeUpgrade(request,env)
     if (!multiCompanyEnabled(env) && [true, 'true'].includes(env.AUTH_MULTI_COMPANY_PREPARE_ENABLED)) {
       if (['/api/auth/email-challenges/inspect', '/api/auth/email-challenges/complete'].includes(url.pathname)) return await handleGlobalAuthApi(request, env)
       if (['/api/auth/company-invitations/inspect', '/api/auth/company-invitations/accept'].includes(url.pathname)) return await handleCompanyInvitationsApi(request, env)

@@ -169,3 +169,10 @@ test('immediate print document leaves schedule metadata empty', () => {
   assert.equal(document.order.scheduledFor, '')
   assert.equal(document.order.scheduleLabel, '')
 })
+
+test('Task 13 print documents distinguish partially paid orders and pending refunds', () => {
+  for (const status of ['Parcialmente pago','Devolução pendente','Pago','Pendente']) {
+    const printed=createOrderPrintDocument({totalCents:9500,payment:{status,method:'Pix'}})
+    assert.equal(printed.payment.status,status)
+  }
+})

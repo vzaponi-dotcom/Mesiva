@@ -46,6 +46,8 @@ node scripts/infra/spec-b-d1-gate.mjs
 
 The repository `Validate application` workflow runs this gate after local migrations while Spec B is being closed. A node:sqlite-only test is not a substitute for this Wrangler/D1 gate.
 
+O CI também verifica os orçamentos de recuperação de impressão e leituras operacionais no D1 real, após as migrations locais. Consulte [as consultas, limites e reprodução do gate operacional](operations/operational-data-read-budget.md); preserve esses gates ao alterar queries ou índices. A sincronização WebSocket também exige o [gate real e orçamento agregado](operations/realtime-sync.md), com métricas externas para CPU/duração e baseline da conta. Flag de produção desabilitada enquanto orçamento/aceite não estiverem completos. A [exceção documentada para a ativação de16/10](superpowers/qa/2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega) adia somente a aferição financeira por decisão explícita do usuário; não dispensa CI, staging, aceite humano ou Deploy production manual e não altera a rejeição de dimensões desconhecidas no relatório.
+
 Any red validation check blocks the release. Fix the root cause on the branch; do not merge around a failing check.
 
 The complete suite runs in `Validate application`, split into eight shards. Deployments do not repeat `npm test`: before dependency installation or remote writes, `deploy-validation-gate.mjs` requires a successful validation run for the exact deployment SHA. Master requires its push validation, not the earlier PR commit. Feature staging retains its existing branch/open-PR restrictions and requires validation of that branch head. The gate checks workflow identity, repository, branch, event, SHA and the latest applicable run/attempt.
@@ -69,6 +71,9 @@ Use the **Deploy staging** GitHub Actions workflow. It may write only to staging
 On master, staging starts with the current push trigger and waits for that commit's CI approval; it does not run another full suite. The existing lightweight build/architecture/lint, local migration checks, remote migrations, release identity and post-deploy smokes remain in place.
 
 If staging deployment, migration, or acceptance fails, the production release stops. Production is not used to diagnose unfinished branch changes.
+No modo multi_company, o smoke automatizado atual verifica fronteiras anônimas, rejeições de login legado e identidade do release; ele não comprova o carregamento de uma sessão operacional autenticada. Antes de homologar, abrir o SHA publicado no navegador com conta fictícia de staging e confirmar que /api/bootstrap retorna 200, a operação aparece e a tela inicial não entra em ciclo de redescoberta de sessão. Registrar essa evidência junto ao SHA; HTTP 200 dos assets não substitui esse teste.
+
+Staging pode conter migrations/grants aditivos de outra entrega em homologação. Capabilities desconhecidas continuam sem conceder acesso ao bundle anterior; a validação de estabilidade deve comparar o snapshot persistido completo, sem confundir filtragem de capabilities com mudança de sessão. Não remover grants ou histórico para fazer o bundle abrir.
 
 For Spec B, record the exact staging SHA and the acceptance evidence in `docs/superpowers/qa/2026-09-15-spec-b-final-closure.md`. Physical printing acceptance by context remains a separate release gate documented in `docs/superpowers/qa/2026-09-12-spec-b-physical-printing-guide.md`.
 

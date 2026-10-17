@@ -1,10 +1,13 @@
+import { createRefreshQueue } from '../../../infrastructure/realtime/refreshQueue.js'
 import { useContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AreaNavigation from '../../navigation/AreaNavigation.jsx'
-import { buildKitchenQueueModel } from '../../../domains/orders/index.js'
+import { buildKitchenQueueModel, OrderEditChanges } from '../../../domains/orders/index.js'
 import Button from '../../../shared/ui/Button.jsx'
 import BottomSheet from '../../../shared/ui/BottomSheet.jsx'
 import Icon from '../../../shared/ui/Icon.jsx'
+import OrderEditedBadge from '../../../shared/ui/OrderEditedBadge.jsx'
+
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import {
   countKitchenTvModalities,
@@ -69,6 +72,7 @@ const printItemLabel = (item = {}) => {
 
 function KitchenTvControlSurface({
   orders = [],
+  realtime,
   now = new Date(),
   currentTiming,
   granted = new Set(),
@@ -92,6 +96,7 @@ function KitchenTvControlSurface({
   const [printSnapshotLoading, setPrintSnapshotLoading] = useState(false)
   const [printSnapshotError, setPrintSnapshotError] = useState('')
   const pendingOrderRef = useRef(null)
+  const subscribeRealtime=realtime?.subscribeInvalidations
 
   const canControl = granted instanceof Set && granted.has('orders.kitchen.control')
   const queueModel = useMemo(
@@ -165,10 +170,15 @@ function KitchenTvControlSurface({
       setError('')
       return undefined
     }
-    void loadControl()
-    const interval = globalThis.setInterval(() => { void loadControl(true) }, CONTROL_POLL_MS)
-    return () => globalThis.clearInterval(interval)
-  }, [isOnline, loadControl])
+    let first=true
+    const queue=createRefreshQueue({run:()=>{const silent=!first;first=false;return loadControl(silent)}})
+    void queue.refresh()
+    const unsubscribe=subscribeRealtime?.(event=>{if(event.topics.some(topic=>topic==='kitchen-tv' || topic==='orders'))return queue.refresh()})
+    // Presence expires in 15s; unchanged TV heartbeats intentionally do not broadcast.
+    // Preserve its health check on this mounted surface, independently of data sync.
+    const interval = globalThis.setInterval(() => {if(globalThis.document?.visibilityState!=='hidden')void queue.refresh()}, subscribeRealtime?5000:CONTROL_POLL_MS)
+    return () => {queue.stop();unsubscribe?.();globalThis.clearInterval(interval)}
+  }, [isOnline, loadControl,subscribeRealtime])
 
   useEffect(() => {
     if (selectedOrderId && !selectedEntry) {
@@ -346,6 +356,7 @@ function KitchenTvControlSurface({
     selectedEntry
       && (controlState?.hiddenOrderIds || []).some((id) => String(id) === String(selectedEntry.order.id)),
   )
+  const selectedEdit=Number(selectedEntry?.order?.operationalRevision) > 0 ? selectedEntry.order : null
   const selectedScheduled = selectedEntry?.phase === 'scheduled'
   const selectedActionDisabled = !operationalControlsEnabled || pendingOrderId !== null || selectedScheduled
 
@@ -447,11 +458,12 @@ function KitchenTvControlSurface({
         const displayNumber = formatOrderDisplayNumber(entry.order)
         const compactDisplayNumber = displayNumber.replace(/^Pedido\s*/i, '')
         const clientName = kitchenTvClientName(entry.order.client)
+        const edited=Number(entry.order.operationalRevision) > 0
         return <button
           key={entry.order.id}
           type="button"
           className={`kitchen-tv-control-order-card status-${status.key}${isPending ? ' is-pending' : ''}`}
-          aria-label={`${formatOrderDisplayNumber(entry.order)}, ${clientName}, ${status.label}, ${visibility.label}`}
+          aria-label={`${formatOrderDisplayNumber(entry.order)}, ${clientName}, ${status.label}, ${visibility.label}${edited ? ", pedido editado" : ""}`}
           aria-haspopup="dialog"
           aria-busy={isPending || undefined}
           onClick={() => openOrderActions(entry)}
@@ -462,6 +474,7 @@ function KitchenTvControlSurface({
             <span className="kitchen-tv-control-order-number-compact">{compactDisplayNumber}</span>
           </span>
           <span className="kitchen-tv-control-badges">
+            {edited && <OrderEditedBadge />}
             <span className={`kitchen-tv-control-badge status-${status.key}`}><Icon name={statusIcon(status.key)} size={11} />{status.label}</span>
             <span className={`kitchen-tv-control-badge visibility-${visibility.key}`}><Icon name={visibilityIcon(visibility.key)} size={11} />{visibility.label}</span>
           </span>
@@ -505,6 +518,9 @@ function KitchenTvControlSurface({
           </div>}
         </section>
 
+        {selectedEdit?.editSummary?.items?.length > 0 && (
+          <OrderEditChanges changes={selectedEdit.editSummary.items} defaultOpen className="kitchen-tv-control-edit-review" />
+        )}
         <p className="kitchen-tv-control-action-explainer">Remove apenas do painel da TV. O pedido continua em preparo no sistema.</p>
         {!canControl && <p className="kitchen-tv-control-action-note">Somente leitura. Você não tem permissão para alterar a TV.</p>}
         {canControl && (!isOnline || !controlState?.paired || !telemetryFresh) && <p className="kitchen-tv-control-action-note">A TV precisa estar conectada e com sinal recente para alterar a visibilidade.</p>}

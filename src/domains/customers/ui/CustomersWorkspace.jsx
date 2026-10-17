@@ -1,3 +1,4 @@
+import {useCallback} from 'react'
 import './client-duplicate.css'
 import { useCustomerCommands } from '../application/useCustomerCommands.js'
 import { useCustomerEditor } from '../application/useCustomerEditor.js'
@@ -6,6 +7,7 @@ import Clients from './Clients.jsx'
 import CustomerEditorDialog from './CustomerEditorDialog.jsx'
 
 function CustomersWorkspace({
+  readContext,
   clients = [],
   orders = [],
   granted = new Set(),
@@ -37,7 +39,15 @@ function CustomersWorkspace({
     onSuccess,
     onError,
   })
+  const lookupDuplicates=useCallback(async(draft,excludeId)=>{
+    const guard=readContext?.guard,token=guard?.beginQueryRead(['clients'])
+    try{
+      const duplicates=await readContext.api.getCustomerDuplicates({name:draft.name,phone:draft.phone,excludeId})
+      return token&&!guard.canApply(token,'clients')?false:duplicates
+    }catch(error){if(error?.status===401||error?.status===403||error?.code==='SESSION_CONTEXT_CHANGED')readContext?.onUnauthorized?.(error);throw error}
+  },[readContext?.api,readContext?.guard,readContext?.onUnauthorized])
   const editor = useCustomerEditor({
+    lookupDuplicates:readContext?.enabled?lookupDuplicates:undefined,ownerKey:readContext?.accessContextId,onError,
     clients,
     canCreateClients, canUpdateClients,
     writesBlocked,
@@ -60,6 +70,7 @@ function CustomersWorkspace({
   return (
     <>
       <Clients
+        readContext={readContext}
         clients={clients}
         orders={orders}
         granted={granted}
@@ -89,7 +100,7 @@ function CustomersWorkspace({
           onChange={editor.updateDraft}
           onSubmit={editor.submit}
           onCancel={editor.cancel}
-          disabled={writesBlocked}
+          disabled={writesBlocked || editor.checkingDuplicates}
         />
       )}
       {(editor.editing ? canUpdateClients : canCreateClients) && editor.duplicateDialog && (
@@ -98,7 +109,7 @@ function CustomersWorkspace({
           onCancel={editor.dismissDuplicate}
           onUseExisting={editor.useExistingDuplicate}
           onConfirm={editor.confirmDuplicate}
-          disabled={writesBlocked}
+          disabled={writesBlocked || editor.checkingDuplicates}
           cancelLabel="Cancelar"
           useExistingLabel="Usar cliente existente"
           confirmLabel="Cadastrar mesmo assim"

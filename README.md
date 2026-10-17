@@ -12,7 +12,11 @@ O acesso atual é por **e-mail e senha**, com contas Mesiva e vínculos por empr
 | Staging | https://staging.mesiva.com.br | D1 e recursos exclusivos de homologação |
 | Produção | https://app.mesiva.com.br | D1 e recursos com dados reais |
 
+A sincronização por avisos WebSocket, fallback HTTP e os temporizadores preservados de impressão/TV estão descritos em [operação realtime e orçamento](docs/operations/realtime-sync.md). Quando o modo scoped está habilitado, cada superfície carrega seus candidatos operacionais; histórico, relacionamento e financeiro usam consultas paginadas com totais completos no servidor. A ativação em produção depende das flags e dos gates de release/orçamento. O retorno a telas já visitadas pode reutilizar dados em memória por até cinco minutos, com invalidação por mudanças e isolamento de sessão/empresa; limites e temporizadores estão no mesmo guia.
+
 D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O navegador mantém preferências locais, mas não é a autoridade dos dados de negócio. Escritas não são enfileiradas offline.
+
+A edição de pedidos ativos preserva preços históricos, identidade e recebimentos anteriores. Diferenças são conciliadas por saldo complementar ou devolução manual, inclusive em lotes de clientes; Cozinha/TV identificam o pedido editado e a reimpressão é opcional. Consulte [edição de pedidos e saldo](docs/operations/order-editing.md) para regras e estado de homologação da PR #108.
 
 ## Requisitos
 
@@ -184,6 +188,9 @@ Gates D1 usados no CI:
 ```bash
 node scripts/infra/spec-b-d1-gate.mjs
 node scripts/infra/operation-profile-d1-gate.mjs
+node scripts/infra/print-recovery-d1-benchmark.mjs
+node scripts/infra/operational-read-d1-benchmark.mjs
+node scripts/infra/realtime-runtime-gate.mjs .wrangler/realtime-runtime-gate-report.json
 ```
 
 A aprovação completa do CI é necessária para integração/publicação. Informe falhas, travamentos ou limitações de verificações locais; não substitua testes por uma declaração de sucesso. Mudanças somente de documentação requerem conferir links, comandos e coerência, sem repetir a suíte da aplicação desnecessariamente.
@@ -220,10 +227,14 @@ Leia [o runbook de publicação e migrations](docs/release-and-migration-runbook
 
 ## Documentação operacional
 
+A [base de conhecimento e seu índice](docs/README.md) centralizam os documentos vivos de produto, regras de negócio, arquitetura, mapa de módulos e design. Consulte a fonte pertinente à mudança, confira a baseline da documentação e valide o comportamento no código e nos testes atuais. Specs, planos e QA datados permanecem como histórico.
+
 - [Guia para agentes e novos chats](AGENTS.md)
+- [Índice da documentação viva](docs/README.md)
 - [Publicação, migrations e rollback](docs/release-and-migration-runbook.md)
 - [Produção multiempresa e administração corrente](docs/operations/multi-company-production.md)
 - [Impressão Windows/QZ e recuperação operacional](docs/operations/windows-qz-tray-printing.md)
+- [Orçamento de leituras operacionais D1](docs/operations/operational-data-read-budget.md)
 - [Políticas e configurações Spec B](docs/operations/spec-b-settings.md)
 
 Documentos em `docs/superpowers/` e registros datados em `docs/operations/` preservam decisões e evidências históricas. Para a operação atual, confira também o código, os workflows e os runbooks correntes.
