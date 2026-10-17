@@ -150,3 +150,25 @@ test('dashboard aggregation matches legacy labels, quantities, no-item fallback 
     assert.equal(result.dashboard.totals.salesToday,all.filter(o=>o.status!=='Cancelado').reduce((sum,o)=>sum+o.total,0))
   }
 })
+
+
+test('Task 7: dashboard and A Receber use financial day for receivedToday, excluding manual and edit refunds',async t=>{
+  const {createSettingsDb}=await import('../test-support/settingsDb.js')
+  const {readReceivedToday}=await import('./movementReads.js')
+  const {sqlite,db,close}=createSettingsDb();t.after(close)
+  sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('a','a','A','2026-10-01','2026-10-01')")
+  const stmt=sqlite.prepare("INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,deleted_at) VALUES(?,'a',?,'Vendas','Teste',?,?,?,'2026-10-17T15:00:00.000Z',?)")
+  for(const [id,type,cents,source,date,deleted] of [
+    ['retro','entrada',10000,'order-payment','2026-10-15',null],
+    ['refund-retro','saida',1000,'order-refund','2026-10-15',null],
+    ['new','entrada',5000,'order-payment','2026-10-17',null],
+    ['refund-now','saida',600,'order-refund','2026-10-17',null],
+    ['edit-refund','saida',2000,'order-edit-refund','2026-10-17',null],
+    ['manual','entrada',9000,'manual','2026-10-17',null],
+    ['deleted','entrada',9999,'order-payment','2026-10-17','2026-10-17T16:00:00Z'],
+  ])stmt.run(id,type,cents,source,date,deleted)
+  const granted=new Set(['finance.movements'])
+  assert.equal(await readReceivedToday(db,'a',granted,'2026-10-15'),90)
+  assert.equal(await readReceivedToday(db,'a',granted,'2026-10-17'),44)
+  assert.equal(await readReceivedToday(db,'a',new Set(),'2026-10-17'),0)
+})
