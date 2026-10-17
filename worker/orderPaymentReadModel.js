@@ -1,3 +1,5 @@
+import { getBusinessDate } from '../shared/finance.js'
+
 const cleanText = (value) => typeof value === 'string' ? value.trim() : ''
 
 export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
@@ -18,6 +20,8 @@ export const PAYMENT_SETTLEMENT_SQL_SELECT = `(
         AND m.source = 'order-refund' AND m.type = 'saida'
         AND m.deleted_at IS NULL), 0)
   ) AS refunded_cents`
+
+export const PAYMENT_RECEIVED_DATE_SQL_SELECT = `(SELECT r.received_date FROM payment_receipts r WHERE r.business_id=o.business_id AND r.id=p.receipt_id) AS received_date`
 
 // Shared by list, bootstrap, detail and legacy cancellation readers.
 export const PAYMENT_ALLOCATIONS_JSON_SELECT = `p.receipt_id AS receipt_id,
@@ -79,6 +83,8 @@ export const mapOrderPaymentFields = (row = {}) => {
   const paid = Boolean(row.payment_id)
   const structured = row.receipt_id != null || Object.hasOwn(row, 'payment_allocations_json')
   const paymentAllocations = parsePaymentAllocations(row)
+  const fallbackPaidAt = paid && row.paid_at ? new Date(row.paid_at) : null
+  const receivedDate = paid ? (row.received_date || (fallbackPaidAt && !Number.isNaN(fallbackPaidAt.getTime()) ? getBusinessDate(fallbackPaidAt) : null)) : null
   const hasReceivedData = !paid || row.gross_received_cents != null || row.paid_amount_cents != null
   const balance = Number.isSafeInteger(row.total_cents) && hasReceivedData
     ? deriveOrderSettlementBalance({
@@ -96,6 +102,7 @@ export const mapOrderPaymentFields = (row = {}) => {
       : null,
     paymentAllocations,
     paidAt: paid ? row.paid_at : null,
+    receivedDate,
     ...(balance || {}),
   }
 }
