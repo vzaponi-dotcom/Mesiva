@@ -4,7 +4,7 @@
 **PR:** #120 — https://github.com/vzaponi-dotcom/Mesiva/pull/120  
 **Branch:** codex/received-date-tdd  
 **Estado:** PREPARADO PARA REVISÃO PELO CODEX / HOMOLOGAÇÃO AINDA NÃO EXECUTADA  
-**Última implementação financeira validada antes da Task 11:** c5e28d820f923eaca6f454e7d28ce97a05140100 (Validate #39069565814); a Task 11 altera exclusivamente gate de staging e testes/documentação; registrar novo SHA/CI.  
+**Baseline funcional Task 10:** c5e28d820f923eaca6f454e7d28ce97a05140100 (Validate #39069565814). **Task 11 gate de preparação GREEN:** 26a418acc0dbfdcac4eabb596c9fcdc202d32080 — [Validate application #39071153674](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39071153674) **SUCCESS** (8 shards + gates). A revisão integral/QA manual permanece pendente.  
 **Deploy staging:** NOT EXECUTED. **Migration remota:** NOT EXECUTED. **Merge/produção:** NOT AUTHORIZED.
 
 ## Objetivo e responsabilidade
