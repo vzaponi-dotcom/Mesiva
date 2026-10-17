@@ -102,7 +102,7 @@ export const createReportingService = (repository) => Object.freeze({
         refundsCents: sum(source.refunds, 'value_cents'),
         salesSeries: groupCentsByDate(commercial, (order) => order.order_date, (order) => order.total_cents),
         ordersSeries: groupCentsByDate(commercial, (order) => order.order_date, () => 1).map(({ date, cents }) => ({ date, count: cents })),
-        receivedSeries: groupCentsByDate(source.receipts, (receipt) => receipt.paid_at && getBusinessDate(new Date(receipt.paid_at)), (receipt) => receipt.total_cents),
+        receivedSeries: groupCentsByDate(source.receipts, (receipt) => receipt.received_date ?? (receipt.paid_at && getBusinessDate(new Date(receipt.paid_at))), (receipt) => receipt.total_cents),
         refundSeries: groupCentsByDate(source.refunds, (refund) => refund.movement_date, (refund) => refund.value_cents),
     }
     const comparable = Object.fromEntries(Object.entries(data).filter(([key]) => Object.hasOwn(priorMetrics, key)))
@@ -111,7 +111,7 @@ export const createReportingService = (repository) => Object.freeze({
       comparison: compareMetrics(comparable, priorMetrics),
       quality: { receiptCount: source.receipts.length },
       warnings: hasOrderContextFilter(query) || query.paymentMethod
-        ? ['Vendas seguem filtros de pedido; recebimentos seguem data de pagamento e forma selecionada, e estornos seguem data do movimento.'] : [],
+        ? ['Vendas seguem filtros de pedido; recebimentos seguem data efetiva de recebimento e forma selecionada, e estornos seguem data do movimento.'] : [],
     }
   },
   async products(businessId, query) {
