@@ -14,6 +14,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 | Executar uma tarefa como agente | [AGENTS.md](../AGENTS.md) | Arquivos da área indicada e contratos |
 | Instalar, executar ou conhecer o stack | [README do repositório](../README.md) | Configurações, scripts e workflows |
 | Implantar, migrar ou recuperar | [Runbook de release e migrations](release-and-migration-runbook.md) | GitHub Actions, `wrangler.jsonc` e scripts |
+| Otimizar consultas, sincronização e custo Cloudflare | [Regra de economia no AGENTS](../AGENTS.md#economia-de-recursos-cloudflare--regra-para-futuras-melhorias) | [Orçamento D1](operations/operational-data-read-budget.md), [realtime](operations/realtime-sync.md) e benchmarks |
 | Administrar contas e empresas | [Operação multiempresa corrente](operations/multi-company-production.md) | Código de acesso, identidade e plataforma |
 | Instalar/recuperar impressão física | [Runbook Windows/QZ](operations/windows-qz-tray-printing.md) | Domínio de impressão, Worker e testes |
 | Entender políticas de configuração | [Operação das configurações (Spec B)](operations/spec-b-settings.md) | Código e configuração efetiva |
@@ -26,6 +27,7 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 - **Arquitetura geral:** [Architecture](architecture/ARCHITECTURE.md) — visão atual de camadas, fluxos, limites de confiança, ambientes e CI; conferir a baseline e os contratos de código citados.
 - **Mapa de módulos:** [Module Map](architecture/MODULE_MAP.md) — dez domínios, contratos públicos, workflows transversais, correspondências do Worker e testes para começar pela área certa.
 - **Design System da interface:** [Design System](design/DESIGN_SYSTEM.md) — identidade aplicada, fontes cronológicas, tokens, temas, componentes e **divergências explícitas ainda pendentes de conciliação formal no guia oficial**.
+- **Economia operacional e escalabilidade:** [orçamento de leituras D1](operations/operational-data-read-budget.md), [realtime e orçamento Cloudflare](operations/realtime-sync.md), [incidente de impressão](operations/printing-d1-read-incident.md) e [roteiro de custo e escala](superpowers/plans/2026-10-14-mesiva-scale-roadmap.md) — fontes para medir mudanças em queries, índices, temporizadores, caches e requests; resultados históricos têm baseline própria.
 - **Procedimentos em vigor:** os runbooks vinculados acima. São detalhamentos operacionais; o PRD não os substitui.
 
 ### Identidade visual: referências e conciliação pendente
