@@ -1,9 +1,9 @@
 import { apiRequest, withJson } from '../../../infrastructure/api/httpClient.js'
 
 export const createPaymentApi = ({ request = apiRequest, json = withJson } = {}) => Object.freeze({
-  registerOrderPayment: (id, allocations) => request(
+  registerOrderPayment: (id, allocations, { receivedDate } = {}) => request(
     `/api/orders/${encodeURIComponent(id)}/payment`,
-    json('POST', { allocations }),
+    json('POST', { allocations, ...(receivedDate !== undefined ? { receivedDate } : {}) }),
   ),
   registerSupplementalPayment: (id, payload) => request(
     `/api/orders/${encodeURIComponent(id)}/supplemental-payment`,
