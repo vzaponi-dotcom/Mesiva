@@ -309,3 +309,66 @@ test('orders page lists Próximos dias with full schedule and reservation-only e
   assert.ok(buttonNamed(future, 'Cancelar pedido'))
   assert.ok(buttonNamed(future, 'Cancelar reserva'))
 })
+
+
+test('orders page combines modality, late status and search without mixing active or future queues', async (t) => {
+  const h = await workspaceHarness(t)
+  const { default: Orders } = await h.load('/src/domains/orders/ui/Orders.jsx')
+  const orders = [
+    { id: 'delivery-late', status: 'Em preparo', type: 'Entrega', client: 'Entrega atrasada', createdAt: '2026-09-04T13:00:00.000Z' },
+    { id: 'delivery-new', status: 'Em preparo', type: 'Entrega', client: 'Entrega recente', createdAt: '2026-09-04T14:55:00.000Z' },
+    { id: 'pickup', status: 'Em preparo', type: 'Retirada', client: 'Retirada balcão', createdAt: '2026-09-04T14:54:00.000Z' },
+    { id: 'table', status: 'Em preparo', type: 'Local', tableTabId: 'tab-1', client: 'Mesa 2 Hugo', createdAt: '2026-09-04T14:53:00.000Z' },
+    { id: 'pickup-scheduled', status: 'Em preparo', type: 'Retirada', client: 'Retirada agendada', createdAt: '2026-09-04T12:00:00.000Z', scheduledFor: '2026-09-04T18:00:00.000Z' },
+    { id: 'table-future', status: 'Em preparo', type: 'Local', client: 'Mesa reservada', createdAt: '2026-09-04T12:00:00.000Z', orderDate: '2026-09-05', scheduledFor: '2026-09-05T18:00:00.000Z', tableReservationId: 'res-1', tableReservationStatus: 'reserved' },
+  ]
+  const renderer = await renderWithNavigation(h, Orders, {
+    orders,
+    officialOrders: orders,
+    now: new Date('2026-09-04T15:00:00.000Z'),
+    search: '',
+    onSearchChange() {},
+    currency: (value) => `R$ ${Number(value).toFixed(2)}`,
+    onFinalizeOrder() {},
+    onCancelOrder() {},
+    printing: {},
+    granted: new Set(['orders.view']),
+    canCreateOrders: false,
+    canFinalizeOrders: false,
+    canCancelOrders: false,
+  })
+  const queueText = (index) => nodeText(renderer.root.findAllByProps({ className: 'kitchen-ticket-list' })[index])
+  const clickModality = async (label) => {
+    const buttons = renderer.root.findByProps({ 'aria-label': 'Filtrar por modalidade' }).findAllByType('button')
+    const button = buttons.find((item) => nodeText(item) === label)
+    assert.ok(button, `Modalidade ${label} disponível`)
+    await act(async () => button.props.onClick())
+  }
+  assert.match(queueText(0), /Entrega atrasada/)
+  assert.match(queueText(0), /Mesa 2 Hugo/)
+
+  await clickModality('Mesa')
+  assert.match(queueText(0), /Mesa 2 Hugo/)
+  assert.doesNotMatch(queueText(0), /Entrega atrasada/)
+  assert.match(queueText(2), /Mesa reservada/)
+
+  await clickModality('Retirada')
+  assert.match(queueText(0), /Retirada balcão/)
+  assert.match(queueText(1), /Retirada agendada/)
+  assert.doesNotMatch(queueText(2), /Mesa reservada/)
+
+  await clickModality('Entrega')
+  const lateButton = renderer.root.findByProps({ 'aria-label': 'Mostrar apenas pedidos em atraso' })
+  await act(async () => lateButton.props.onClick())
+  assert.match(queueText(0), /Entrega atrasada/)
+  assert.doesNotMatch(queueText(0), /Entrega recente/)
+
+  await clickModality('Mesa')
+  assert.match(queueText(0), /Nenhum pedido corresponde aos filtros selecionados/)
+
+  await act(async () => renderer.root.findAllByType('button').find((button) => nodeText(button) === 'Todos').props.onClick())
+  assert.match(queueText(0), /Mesa 2 Hugo/)
+  await clickModality('Todas')
+  assert.match(queueText(0), /Entrega recente/)
+  assert.match(queueText(0), /Retirada balcão/)
+})
