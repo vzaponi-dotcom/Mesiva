@@ -34,7 +34,7 @@ export function buildReceiptAuditSql(hasReceivedDate) {
     ...checks,
     // Period readers compare UTC timestamps lexically; other valid formats need
     // operator review too, rather than silently selecting the wrong business day.
-    "WHEN m.movement_count IS NULL AND (r.paid_at IS NULL OR strftime('%Y-%m-%dT%H:%M:%fZ',r.paid_at) IS NOT r.paid_at OR date(SUBSTR(r.paid_at,1,10),'+0 days')<>SUBSTR(r.paid_at,1,10)) THEN 'BLOCKED_invalid_paid_at'",
+    "WHEN r.paid_at IS NULL OR strftime('%Y-%m-%dT%H:%M:%fZ',r.paid_at) IS NOT r.paid_at OR SUBSTR(r.paid_at,12,2) NOT BETWEEN '00' AND '23' OR date(SUBSTR(r.paid_at,1,10),'+0 days')<>SUBSTR(r.paid_at,1,10) THEN 'BLOCKED_invalid_paid_at'",
     "WHEN m.movement_count IS NULL THEN 'legacy_no_movement'",
     "ELSE 'consensus_legacy' END classification",
     'FROM payment_receipts r LEFT JOIN movement_audit m',

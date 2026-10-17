@@ -12,6 +12,7 @@ test('Task 11: audit blocks impossible financial dates and invalid legacy timest
     ['month','2026-13-01','2026-10-17T15:00:00.000Z'],
     ['timestamp',null,'2026-10-17Txx:yy:zz'],
     ['timestamp-day',null,'2026-02-30T15:00:00.000Z'],
+    ['hour',null,'2026-10-17T24:30:00.000Z'],
     ['offset',null,'2026-10-17T00:30:00-03:00'],
     ['sql-timestamp',null,'2026-10-17 03:30:00'],
   ]) {
@@ -20,6 +21,22 @@ test('Task 11: audit blocks impossible financial dates and invalid legacy timest
     await assert.rejects(auditEffectiveReceipts({query,log(){}}), /BLOCKED/, id)
     f.sqlite.prepare('DELETE FROM payment_receipts WHERE id=?').run(id)
   }
+})
+
+test('Task 11: post-migration NULL fallback remains blocked for noncanonical timestamps even with movement consensus', async t => {
+  const {createSettingsDb}=await import('../../worker/test-support/settingsDb.js')
+  const {auditEffectiveReceipts}=await import('./effective-receipt-staging-preflight.mjs')
+  const f=createSettingsDb()
+  t.after(f.close)
+  f.sqlite.exec(`INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at)
+    VALUES('consensus','amor-e-sabor',100,'2026-10-17T00:30:00-03:00','2026-10-17T03:30:00.000Z');
+    INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at)
+    VALUES('consensus-allocation','amor-e-sabor','consensus','pix','Pix',100,'2026-10-17T03:30:00.000Z');
+    INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,receipt_id,payment_allocation_id)
+    VALUES('consensus-movement','amor-e-sabor','entrada','sales','Fictício',100,'order-payment','2026-10-17','2026-10-17T03:30:00.000Z','consensus','consensus-allocation');`)
+  await assert.rejects(auditEffectiveReceipts({
+    query:async sql=>f.sqlite.prepare(sql).all().map(row=>({...row})),log(){},
+  }), /BLOCKED/)
 })
 
 test('Task 11: pre-migration audit never queries a column absent before migration 0052', async () => {
