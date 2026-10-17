@@ -359,8 +359,11 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if (paymentMatch && request.method === 'POST') {
     requireCapability(context, 'payments.receive')
     assertSameOriginMutation(request)
-    const { allocations } = await readJson(request)
-    const result = await registerOrderPayment(financeDb, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
+    const { allocations, receivedDate } = await readJson(request)
+    const result = await registerOrderPayment(
+      financeDb, session.businessId, decodeURIComponent(paymentMatch[1]),
+      validatePaymentAllocations(allocations), new Date(), { receivedDate },
+    )
     return effectsJson(result, { status: 201 })
   }
   const supplementMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/supplemental-payment$/)
