@@ -2,6 +2,7 @@ import { useMutationOwner } from '../../../runtime/session/useMutationOwner.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatTableIdentifierLabel } from '../../../../domains/finance/index.js'
 import { paymentApi } from '../paymentApi.js'
+import { isValidReceivedDate } from '../paymentComposition.js'
 import { settleTableTabPayment } from './tableTabPaymentReconciliation.js'
 
 export function useTableTabPaymentWorkflow({
@@ -77,7 +78,7 @@ export function useTableTabPaymentWorkflow({
     return false
   }, [isLive, publish, refreshOfficialData, trySettle])
 
-  const pay = useCallback(async (tableTabId, allocations, intent) => {
+  const pay = useCallback(async (tableTabId, allocations, intent, { receivedDate } = {}) => {
     const currentTables = getOfficialTables()
     const selected = currentTables.find((table) => (
       table.id === intent?.tableId
@@ -92,6 +93,7 @@ export function useTableTabPaymentWorkflow({
       || activeOwnerRef.current
       || acceptedOwnersRef.current.size
       || !intent
+      || (receivedDate !== undefined && !isValidReceivedDate(receivedDate))
       || !Array.isArray(allocations)
       || allocations.length === 0
       || !ownsSelection(intent, currentTables)
@@ -118,7 +120,8 @@ export function useTableTabPaymentWorkflow({
     const ownsRequest = () => ownsMutation() && getSyncGuard() === guard && activeOwnerRef.current === owner
 
     try {
-      const result = await api.registerTableTabPayment(tableTabId, owner.allocations)
+      const result = await api.registerTableTabPayment(tableTabId, owner.allocations,
+        ...(receivedDate === undefined ? [] : [{ receivedDate }]))
       if (!ownsMutation() || getSyncGuard() !== guard) return false
 
       owner.paid = true
