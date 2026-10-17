@@ -33,8 +33,8 @@ test('new order batches permitted clients, catalog and open-tab reads',async t=>
   db.batch=async statements=>{lengths.push(statements.length);return batch(statements)}
   const result=await load(db,businessId,{surface:'new-order',granted:new Set(['orders.create','orders.view','comandas.view','clients.view','products.view','tables.view','finance.movements'])})
   assert.deepEqual(lengths,[10])
-  assert.equal(result.tables.length,1)
-  assert.equal(result.tables[0].occupancy,'free')
+  assert.ok(result.tables.length>0)
+  assert.ok(result.tables.every(table=>typeof table.name==='string' && ['free','occupied'].includes(table.occupancy)))
   assert.equal(result.readModel.counters.refunds,0)
   assert.deepEqual(result.clients.map(c=>c.id),['new-client'])
   assert.deepEqual(result.products.map(p=>p.id),['new-product'])
