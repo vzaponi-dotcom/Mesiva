@@ -30,7 +30,10 @@ const enrichDetail = (row) => {
     let receiptDates=[]
     try { receiptDates=JSON.parse(row.payment_receipts_dates_json||'[]') } catch { receiptDates=[] }
     const dates=new Set()
-    for (const receipt of Array.isArray(receiptDates)?receiptDates:[]) {
+    const sorted=Array.isArray(receiptDates)?receiptDates.sort((a,b)=>
+      String(a?.paidAt||'').localeCompare(String(b?.paidAt||''))
+      || String(a?.receiptId||'').localeCompare(String(b?.receiptId||''))):[]
+    for (const receipt of sorted) {
       const paidAt=receipt?.paidAt?new Date(receipt.paidAt):null
       const day=receipt?.receivedDate || (paidAt && !Number.isNaN(paidAt.getTime())?getBusinessDate(paidAt):null)
       if (day) dates.add(day)
@@ -181,14 +184,14 @@ export function createReportingRepository(db) {
     async listDetail(businessId, query) {
       const { sql, values } = buildOrderFilters(businessId, query)
       const receiptDatesSelect=query.withFinancialDates?`,
-        (SELECT COALESCE(json_group_array(json_object('receivedDate',x.received_date,'paidAt',x.paid_at)),'[]')
-        FROM (SELECT r.received_date,r.paid_at FROM payment_receipts r
-          WHERE r.business_id=o.business_id AND r.id IN (
-            SELECT p.receipt_id FROM payments p WHERE p.business_id=o.business_id AND p.order_id=o.id AND p.receipt_id IS NOT NULL
-            UNION
-            SELECT e.receipt_id FROM order_settlement_entries e
-              WHERE e.business_id=o.business_id AND e.order_id=o.id AND e.kind='supplemental_payment' AND e.receipt_id IS NOT NULL
-          ) ORDER BY r.paid_at,r.id) x) AS payment_receipts_dates_json`:''
+        (SELECT COALESCE(json_group_array(json_object('receiptId',r.id,'receivedDate',r.received_date,'paidAt',r.paid_at)),'[]')
+        FROM payment_receipts r
+        WHERE r.business_id=o.business_id AND r.id IN (
+          SELECT p.receipt_id FROM payments p WHERE p.business_id=o.business_id AND p.order_id=o.id AND p.receipt_id IS NOT NULL
+          UNION
+          SELECT e.receipt_id FROM order_settlement_entries e
+            WHERE e.business_id=o.business_id AND e.order_id=o.id AND e.kind='supplemental_payment' AND e.receipt_id IS NOT NULL
+        )) AS payment_receipts_dates_json`:''
       const select = `SELECT o.id, o.order_number, o.order_date, o.client_id,
         o.client_name_snapshot, o.client_phone_snapshot, o.type, o.status, o.subtotal_cents, o.total_cents,
         o.delivery_fee_cents, o.adjustment_type, o.adjustment_amount_cents,
