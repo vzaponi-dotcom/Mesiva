@@ -39,7 +39,7 @@ test('Task 10: populated 0052 upgrade backfills only unanimous movements, preser
   const {sqlite,db,close}=createSettingsDb({beforeMigration})
   t.after(close)
   assert.deepEqual(sqlite.prepare(`SELECT id,received_date FROM payment_receipts
-    WHERE business_id='historical-a' ORDER BY id`).all(),[
+    WHERE business_id='historical-a' ORDER BY id`).all().map(row=>({...row})),[
     {id:'disagreement',received_date:null},
     {id:'unanimous',received_date:'2026-10-15'},
     {id:'without-movements',received_date:null},
@@ -52,7 +52,7 @@ test('Task 10: populated 0052 upgrade backfills only unanimous movements, preser
       ON m.business_id=r.business_id AND m.receipt_id=r.id
       AND m.deleted_at IS NULL AND m.type='entrada' AND m.source='order-payment'
     WHERE r.business_id='historical-a' AND r.received_date IS NULL
-    GROUP BY r.id ORDER BY r.id`).all()
+    GROUP BY r.id ORDER BY r.id`).all().map(row=>({...row}))
   assert.deepEqual(audits,[
     {id:'disagreement',movement_count:2,min_day:'2026-10-14',max_day:'2026-10-15'},
     {id:'without-movements',movement_count:0,min_day:null,max_day:null},
