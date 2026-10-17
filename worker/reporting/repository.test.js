@@ -345,10 +345,10 @@ test('Task 7: reporting uses received_date over paid_at for receipts, split meth
       ('other-company','b',9000,'2026-10-17T15:00:00Z','2026-10-15','2026-10-17T15:00:00Z'),
       ('current','a',2500,'2026-10-17T15:00:00Z','2026-10-17','2026-10-17T15:00:00Z');
     INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES
-      ('split-pix','a','backdated','pix','Pix',7000,'2026-10-17T15:00:00Z'),
-      ('split-cash','a','backdated','cash','Dinheiro',3000,'2026-10-17T15:00:00Z'),
-      ('current-pix','a','current','pix','Pix',2500,'2026-10-17T15:00:00Z'),
-      ('other-pix','b','other-company','pix','Pix',9000,'2026-10-17T15:00:00Z');
+      ('split-pix','a','backdated',NULL,'Pix',7000,'2026-10-17T15:00:00Z'),
+      ('split-cash','a','backdated',NULL,'Dinheiro',3000,'2026-10-17T15:00:00Z'),
+      ('current-pix','a','current',NULL,'Pix',2500,'2026-10-17T15:00:00Z'),
+      ('other-pix','b','other-company',NULL,'Pix',9000,'2026-10-17T15:00:00Z');
     INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at) VALUES
       ('refund','a','saida','refunds','Estorno',500,'order-refund','2026-10-15','2026-10-17T15:00:00Z'),
       ('manual','a','saida','other','Manual',1000,'manual','2026-10-15','2026-10-17T15:00:00Z');
@@ -391,7 +391,7 @@ test('Task 7: 100 orders linked to one dated receipt never multiply received tot
   const {db,sqlite,close}=createSettingsDb();t.after(close)
   sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('a','a','A','2026-10-01','2026-10-01')")
   sqlite.exec("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES('shared','a',10000,'2026-10-17T15:00:00Z','2026-10-15','2026-10-17T15:00:00Z')")
-  sqlite.exec("INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES('alloc','a','shared','pix','Pix',10000,'2026-10-17T15:00:00Z')")
+  sqlite.exec("INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES('alloc','a','shared',NULL,'Pix',10000,'2026-10-17T15:00:00Z')")
   const order=sqlite.prepare("INSERT INTO orders(id,business_id,order_number,client_name_snapshot,order_date,type,status,subtotal_cents,total_cents,created_at) VALUES(?,'a',?,'Ana','2026-10-17','Entrega','Finalizado',100,100,'2026-10-17T15:00:00Z')")
   const pay=sqlite.prepare("INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES(?,'a',?,'shared',100,'2026-10-17T15:00:00Z','2026-10-17T15:00:00Z')")
   for(let i=1;i<=100;i++){order.run('order-'+i,i);pay.run('payment-'+i,'order-'+i)}
