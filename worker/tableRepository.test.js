@@ -105,6 +105,7 @@ class D1Sqlite {
             return { results: database.prepare(sql).all(...values) }
           },
           run() {
+            if (/^\s*SELECT\b/i.test(sql)) return { success: true, results: database.prepare(sql).all(...values) }
             if (sql.includes('UPDATE table_tabs') && sql.includes('SET table_id =') && adapter.beforeTransferRun) {
               const beforeTransferRun = adapter.beforeTransferRun
               adapter.beforeTransferRun = null
