@@ -147,23 +147,20 @@ const tablePatchInput = (body) => {
 
 const authenticatedApi = async (request, env) => {
   const url = new URL(request.url)
-  const timing = env.STAGING_BOOTSTRAP_TIMING === 'true' && url.pathname === '/api/bootstrap' ? { started: performance.now() } : null
   const session = await resolveRequestContext(request, env)
   if (multiCompanyEnabled(env)) requireBusinessContext(request, session)
   else if (!session || session.businessId !== BUSINESS_ID) throw apiError(401, 'UNAUTHENTICATED', 'Sua sessão expirou. Entre novamente.')
   const context = await resolveBusinessSettingsContext(env, session)
-  if (timing) timing.auth = performance.now() - timing.started
   if (session.userId && session.authMode === 'enrollment' && !url.pathname.startsWith('/api/access/')) {
     await recordSecurityEvent(env.DB,{businessId:context.businessId,context,action:'access.denied',result:'denied'})
     throw apiError(403, 'ENROLLMENT_ONLY', 'Durante a preparação, use somente a administração de acesso.')
   }
   let response, failure
-  try { response = await dispatchAuthenticatedApi(request, env, session, context, url, timing) } catch (error) {
+  try { response = await dispatchAuthenticatedApi(request, env, session, context, url) } catch (error) {
     failure = error
     if (error.status === 403) await recordSecurityEvent(env.DB,{businessId:context.businessId,context,action:'access.denied',result:'denied'})
   }
   if (failure) { await validateResponseSession(request, env, session, response); throw failure }
-  const finalizeStarted = timing && performance.now()
   if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
     const payload = await response.json()
     response = new Response(JSON.stringify(await attachOperationalAttributions(env.DB,context.businessId,payload,{reportOrder:/^\/api\/reporting\/orders\/[^/]+$/.test(url.pathname)})), {status:response.status,headers:response.headers})
@@ -173,15 +170,10 @@ const authenticatedApi = async (request, env) => {
     throw error
   }
   response.headers.set('cache-control', 'no-store')
-  if (timing) {
-    timing.finalize = performance.now() - finalizeStarted
-    response.headers.set('server-timing', ['auth','config','snapshot','snapCommon','snapRefunds','snapTables','snapOrders','snapOther','finalize','total']
-      .map(key => `${key};dur=${(key === 'total' ? performance.now() - timing.started : timing[key] || 0).toFixed(1)}`).join(', '))
-  }
   return response
 }
 
-const dispatchAuthenticatedApi = async (request, env, session, context, url, timing) => {
+const dispatchAuthenticatedApi = async (request, env, session, context, url) => {
   env = { ...env, DB: withAuditContext(multiCompanyEnabled(env) ? withBusinessSessionGuard(env.DB, session) : env.DB, context) }
   const effectsJson = (payload, init) => json(projectMutationEffects(payload, context.granted), init)
   const financeDb = withFinanceMutationGuard(env.DB, context)
@@ -212,21 +204,17 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url, tim
   if (tableReservationResponse) return tableReservationResponse
 
   if (url.pathname === '/api/bootstrap' && request.method === 'GET') {
-    const configStarted = timing && performance.now()
     const effectiveBusinessConfig = await loadEffectiveBusinessConfig(env.DB, session.businessId, context.granted, context.userId)
-    if (timing) timing.config = performance.now() - configStarted
     const knownVersion = url.searchParams.get('knownEffectiveConfigVersion')
-    const snapshotStarted = timing && performance.now()
     const bootstrap = readModelsEnabled(env) && url.searchParams.has('surface')
       ? await loadSurfaceSnapshot(env.DB,session.businessId,{surface:url.searchParams.get('surface'),granted:context.granted,currentTiming:effectiveBusinessConfig.operations?.timing,
-        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig,timing})
+        effectiveBusinessConfig:knownVersion===effectiveBusinessConfig.version?undefined:effectiveBusinessConfig})
       : await loadBootstrap(
       env.DB,
       session.businessId,
       knownVersion === effectiveBusinessConfig.version ? undefined : effectiveBusinessConfig,
       context.granted,
     )
-    if (timing) timing.snapshot = performance.now() - snapshotStarted
     return json({ ...bootstrap, effectiveConfigVersion: effectiveBusinessConfig.version })
   }
   if (url.pathname === '/api/tables' && request.method === 'POST') {
