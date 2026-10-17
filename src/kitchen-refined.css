@@ -47,6 +47,15 @@
 .kitchen-queue-filters button[aria-pressed='true'] { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px #0f274718; font-weight: 600; }
 .kitchen-queue-filters button span { margin-left: 4px; color: var(--danger); }
 .kitchen-queue-filters button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.kitchen-page .kitchen-modality-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 0 20px 14px; }
+.kitchen-modality-label { color: var(--muted); font-size: .72rem; font-weight: 600; }
+.kitchen-modality-filters { min-width: 0; flex-wrap: wrap; }
+.kitchen-modality-filters button { min-height: 42px; padding-inline: 12px; }
+@media (max-width: 480px) {
+  .kitchen-page .kitchen-modality-toolbar { padding-inline: 14px; }
+  .kitchen-modality-filters { flex: 1 1 100%; }
+  .kitchen-modality-filters button { flex: 1 1 38%; min-height: 44px; }
+}
 .kitchen-page .kitchen-ticket-list { gap: 12px; padding: 0 14px 14px; }
 .kitchen-page .kitchen-ticket {
   grid-template-columns: minmax(0, 1fr) auto;
