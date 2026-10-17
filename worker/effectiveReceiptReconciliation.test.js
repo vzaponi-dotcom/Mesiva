@@ -23,10 +23,10 @@ test('Task 10: shared/split and supplemental receipts reconcile reporting, movem
       ('supp','task10-a',1500,'${at}','2026-10-17','${at}'),
       ('other-business','task10-b',3000,'${at}','2026-10-15','${at}');
     INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES
-      ('cash','task10-a','shared','cash','Dinheiro',3000,'${at}'),
-      ('pix','task10-a','shared','pix','Pix',5000,'${at}'),
-      ('supp-pix','task10-a','supp','pix','Pix',1500,'${at}'),
-      ('foreign','task10-b','other-business','pix','Pix',3000,'${at}');
+      ('cash','task10-a','shared',NULL,'Dinheiro',3000,'${at}'),
+      ('pix','task10-a','shared',NULL,'Pix',5000,'${at}'),
+      ('supp-pix','task10-a','supp',NULL,'Pix',1500,'${at}'),
+      ('foreign','task10-b','other-business',NULL,'Pix',3000,'${at}');
     INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES
       ('p1','task10-a','o1','shared',4000,'${at}','${at}'),
       ('p2','task10-a','o2','shared',4000,'${at}','${at}');
@@ -48,7 +48,7 @@ test('Task 10: shared/split and supplemental receipts reconcile reporting, movem
   assert.deepEqual(prior.data.paymentMix,[{method:'Dinheiro',amountCents:3000},{method:'Pix',amountCents:5000}])
   assert.equal(business.data.receivedCents,3000,'business scope is independent')
   assert.equal((await service.sales('task10-a',{...period('2026-10-15'),paymentMethod:'pix'})).data.receivedCents,5000)
-  assert.equal((await service.sales('task10-a',{...period('2026-10-15'),paymentMethod:'cash'})).data.receivedCents,3000)
+  assert.equal((await service.sales('task10-a',{...period('2026-10-15'),paymentMethod:'Dinheiro'})).data.receivedCents,3000)
   const granted=new Set(['finance.movements'])
   assert.equal(await readReceivedToday(db,'task10-a',granted,'2026-10-15'),70)
   assert.equal(await readReceivedToday(db,'task10-a',granted,'2026-10-17'),15)
