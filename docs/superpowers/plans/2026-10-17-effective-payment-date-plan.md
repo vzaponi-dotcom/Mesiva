@@ -116,9 +116,12 @@
 | --- | --- | --- |
 | 0 | **COMPLETE — documentação** | Spec e plano na branch, commit(s) registrados no PR |
 | 1 | **COMPLETE / GREEN** | RED: `d4cfb3c`, Validate `39060351817` (shard 8: 3 falhas esperadas, 498 PASS). GREEN: `2f89147`, Validate `39060453305` — SUCCESS (8 shards e validate). |
-| 2–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
+| 2 | **SCHEMA GREEN / compatibilidade legada pendente** | RED: `96b4681`, Validate `39060880038` (2 falhas esperadas). GREEN: migration `4beeda0` + correção no teste `15bf6dd`, Validate `39061309279` SUCCESS. Fallback para recibos legados sem evidência continua obrigatório na Task 7. |
+| 3–11 | **PENDING** | Não marcar RED/GREEN/PASS antes de executar |
 
 Atualizar a tabela com SHA, comando, saída relevante, status de teste e blockers à medida que as tarefas forem implementadas.
+
+**Task 2:** `migrations/0052_effective_receipt_date.sql` adiciona coluna nullable, backfill somente com `movement_date` unânime e índice parcial de recibos; `worker/effectiveReceiptDateMigration.test.js` prova clean/upgrade e preservação das linhas. [CI GREEN 39061309279](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39061309279). Não houve migração remota. Tratamento timezone para legado sem movimento, custo D1 e leitores de compatibilidade permanecem pendentes, não declarar Task 2 inteiramente fechada antes dessas evidências.
 
 **Task 1:** `worker/receivedDateValidation.test.js` cobre default, passado, futuro, datas inválidas e virada do dia em São Paulo. `resolveReceivedDate` foi implementado em `worker/paymentValidation.js`. CI GREEN: [run 39060453305](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39060453305), finalizado com sucesso. Escritas de pagamentos ainda não utilizam esse campo; nenhuma migration foi aplicada remotamente. Antes de alterar um arquivo, verificar o HEAD atual da branch e compatibilidade com PRs concorrentes.
 
