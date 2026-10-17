@@ -23,6 +23,20 @@ const receiptPeriod = (businessId,{from,to})=>{
   }
 }
 const enrichDetail = (row) => {
+  // Ordered receipt list is loaded only for an export requesting financial dates.
+  // Never infer historical receipt day from a fixed UTC offset (DST varied).
+  let paymentReceivedDates
+  if (Object.hasOwn(row,'payment_receipts_dates_json')) {
+    let receiptDates=[]
+    try { receiptDates=JSON.parse(row.payment_receipts_dates_json||'[]') } catch { receiptDates=[] }
+    const dates=new Set()
+    for (const receipt of Array.isArray(receiptDates)?receiptDates:[]) {
+      const paidAt=receipt?.paidAt?new Date(receipt.paidAt):null
+      const day=receipt?.receivedDate || (paidAt && !Number.isNaN(paidAt.getTime())?getBusinessDate(paidAt):null)
+      if (day) dates.add(day)
+    }
+    paymentReceivedDates=[...dates].join(' + ')||null
+  }
   const order = {
     status: row.status, createdAt: row.created_at, finishedAt: row.finished_at,
     scheduledFor: row.scheduled_for, timingPolicySnapshot: row.timing_policy_snapshot_json,
@@ -42,7 +56,7 @@ const enrichDetail = (row) => {
     : dueCents > 0 ? (grossReceivedCents ? 'Parcialmente pago' : 'Pendente')
     : grossReceivedCents ? 'Pago' : 'Pendente'
   const created = new Date(row.created_at)
-  return { ...row, durationMinutes, onTime, paymentStatus,
+  return { ...row, ...(paymentReceivedDates!==undefined?{payment_received_dates:paymentReceivedDates}:{}), durationMinutes, onTime, paymentStatus,
     paidCents:grossReceivedCents,grossReceivedCents,refundedCents,netReceivedCents,
     dueCents,refundDueCents,pendingCents,
     businessDate:Number.isNaN(created.getTime()) ? null : getBusinessDate(created) }
@@ -166,6 +180,15 @@ export function createReportingRepository(db) {
     },
     async listDetail(businessId, query) {
       const { sql, values } = buildOrderFilters(businessId, query)
+      const receiptDatesSelect=query.withFinancialDates?`,
+        (SELECT COALESCE(json_group_array(json_object('receivedDate',x.received_date,'paidAt',x.paid_at)),'[]')
+        FROM (SELECT r.received_date,r.paid_at FROM payment_receipts r
+          WHERE r.business_id=o.business_id AND r.id IN (
+            SELECT p.receipt_id FROM payments p WHERE p.business_id=o.business_id AND p.order_id=o.id AND p.receipt_id IS NOT NULL
+            UNION
+            SELECT e.receipt_id FROM order_settlement_entries e
+              WHERE e.business_id=o.business_id AND e.order_id=o.id AND e.kind='supplemental_payment' AND e.receipt_id IS NOT NULL
+          ) ORDER BY r.paid_at,r.id) x) AS payment_receipts_dates_json`:''
       const select = `SELECT o.id, o.order_number, o.order_date, o.client_id,
         o.client_name_snapshot, o.client_phone_snapshot, o.type, o.status, o.subtotal_cents, o.total_cents,
         o.delivery_fee_cents, o.adjustment_type, o.adjustment_amount_cents,
@@ -183,7 +206,7 @@ export function createReportingRepository(db) {
             SELECT e.receipt_id FROM order_settlement_entries e
             WHERE e.business_id = o.business_id AND e.order_id = o.id
               AND e.kind = 'supplemental_payment'
-          )) AS payment_label
+          )) AS payment_label${receiptDatesSelect}
         FROM orders o
         LEFT JOIN table_reservations tr
           ON tr.business_id = o.business_id AND tr.order_id = o.id
@@ -284,7 +307,7 @@ export function createReportingRepository(db) {
         WHERE business_id = ? AND order_id = ? ORDER BY created_at, id`).bind(businessId, id).all()
 
       const { results: allocations } = await db.prepare(`
-        SELECT pa.receipt_id, pa.method_code, pa.method_label, pa.amount_cents, r.paid_at
+        SELECT pa.receipt_id, pa.method_code, pa.method_label, pa.amount_cents, r.paid_at, r.received_date
         FROM payment_allocations pa
         JOIN payment_receipts r
           ON r.business_id = pa.business_id AND r.id = pa.receipt_id
