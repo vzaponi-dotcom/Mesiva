@@ -13,5 +13,5 @@ export function prepareFinancialCandidateIds(db,businessId,{kind='unpaid',grante
 }
 export async function listFinancialCandidateIds(db,businessId,options={}){
   const query=prepareFinancialCandidateIds(db,businessId,options)
-  return query?(await query.all()).results.map(row=>row.id):[]
+  return query?((await query.all()).results || []).map(row=>row.id):[]
 }
