@@ -70,6 +70,41 @@ test('returns only active kitchen-safe fields, future scheduled orders and curre
   ])
 })
 
+test('TV shows table and client on the first, second and third order of a comanda', async (t) => {
+  const repository = await repositoryPromise
+  const { db, sqlite } = setup(t)
+  sqlite.exec(`
+    INSERT INTO clients (id, business_id, name, created_at, updated_at)
+      VALUES ('client-hugo', '${BUSINESS}', 'Hugo', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
+    INSERT INTO tables (id, business_id, name, name_key, sort_order, is_active, created_at, updated_at)
+      VALUES ('mesa-2', '${BUSINESS}', 'Mesa 2', 'MESA 2', 2, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
+             ('mesa-3', '${BUSINESS}', 'Mesa 3', 'MESA 3', 3, 1, '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
+    INSERT INTO table_tabs (id, business_id, table_id, table_identifier, tab_number, status, opened_at, created_at, updated_at)
+      VALUES ('comanda-2', '${BUSINESS}', 'mesa-2', 'Mesa 2', 2, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z'),
+             ('comanda-3', '${BUSINESS}', 'mesa-3', 'Mesa 3', 3, 'open', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z', '2026-09-22T18:00:00.000Z');
+  `)
+  const addOrder = sqlite.prepare(`INSERT INTO orders (
+    id, business_id, client_id, client_name_snapshot, customer_identity_type, table_tab_id,
+    type, order_date, status, subtotal_cents, total_cents, created_at, order_number
+  ) VALUES (?, ?, ?, ?, 'table', ?, 'Local', '2026-09-22', 'Em preparo', 1500, 1500, ?, ?)`)
+  for (const number of [1, 2, 3]) {
+    addOrder.run(`hugo-${number}`, BUSINESS, 'client-hugo', 'Hugo', 'comanda-2',
+      `2026-09-22T18:0${number}:00.000Z`, 1043 + number)
+  }
+  addOrder.run('no-name', BUSINESS, null, 'Mesa 3', 'comanda-3', '2026-09-22T18:04:00.000Z', 1047)
+
+  const state = await repository.loadKitchenTvState(db, BUSINESS)
+  for (const number of [1, 2, 3]) {
+    const order = state.orders.find((entry) => entry.id === `hugo-${number}`)
+    assert.equal(order.client, 'Mesa 2 · Hugo')
+    assert.equal(order.type, 'Local')
+    assert.equal(Object.hasOwn(order, 'tableIdentifier'), false)
+    assert.equal(Object.hasOwn(order, 'clientId'), false)
+  }
+  assert.equal(state.orders.find((order) => order.id === 'no-name').client, 'Mesa 3')
+  assert.equal(state.orders.find((order) => order.id === 'active-now').client, 'Ana Souza')
+})
+
 test('serialized state never exposes contact, financial, refund, printing or catalog fields', async (t) => {
   const repository = await repositoryPromise
   const { db } = setup(t)
