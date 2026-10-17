@@ -49,3 +49,21 @@ test('single-order API includes an explicitly chosen receipt date without changi
     { allocations },
   ])
 })
+
+
+test('shared client and comanda requests include optional receipt date while keeping legacy payload shape',async()=>{
+  const calls=[]
+  const api=createPaymentApi({request:async(...args)=>{calls.push(args);return {}},
+    json:(method,body)=>({method,body:JSON.stringify(body)})})
+  const allocations=[{methodCode:'pix',amountCents:2000}]
+  await api.registerTableTabPayment('t',allocations,{receivedDate:'2026-10-15'})
+  await api.registerTableTabPayment('t2',allocations)
+  await api.registerClientOrdersPayment('c',['o1','o2'],allocations,{mutationId:'key-1',receivedDate:'2026-10-15'})
+  await api.registerClientOrdersPayment('c',['o3','o4'],allocations,{mutationId:'key-2'})
+  assert.deepEqual(calls.map(([,o])=>JSON.parse(o.body)),[
+    {allocations,receivedDate:'2026-10-15'},
+    {allocations},
+    {orderIds:['o1','o2'],allocations,mutationId:'key-1',receivedDate:'2026-10-15'},
+    {orderIds:['o3','o4'],allocations,mutationId:'key-2'},
+  ])
+})
