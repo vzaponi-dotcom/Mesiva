@@ -105,6 +105,7 @@ class D1Sqlite {
             return { results: database.prepare(sql).all(...values) }
           },
           run() {
+            if (/^\s*SELECT\b/i.test(sql)) return { success: true, results: database.prepare(sql).all(...values) }
             if (sql.includes('UPDATE table_tabs') && sql.includes('SET table_id =') && adapter.beforeTransferRun) {
               const beforeTransferRun = adapter.beforeTransferRun
               adapter.beforeTransferRun = null
@@ -231,7 +232,10 @@ test('listTables exposes the next reservation without changing current occupancy
     ('reservation-occupied', 'biz-a', 'reserve-occupied', 'occupied', 'Mesa 2', 'reserved',
       '2026-09-10T22:00:00.000Z', '2026-09-11T00:00:00.000Z', 120, 1, '${now.toISOString()}', '${now.toISOString()}')`)
 
+  const originalBatch=db.batch.bind(db),calls=[]
+  db.batch=async statements=>{calls.push(statements.length);return originalBatch(statements)}
   const tables = await listTables(db, 'biz-a')
+  assert.deepEqual(calls,[2])
   const free = tables.find((table) => table.id === 'free')
   const occupied = tables.find((table) => table.id === 'occupied')
 

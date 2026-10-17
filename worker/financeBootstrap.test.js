@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { loadBootstrap } from './repositories.js'
 
 class FinanceBootstrapDb {
+  async batch(statements) { return Promise.all(statements.map(statement => statement.all())) }
   prepare(sql) {
     return {
       bind() {

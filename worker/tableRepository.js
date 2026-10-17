@@ -1,6 +1,6 @@
 import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
-import { listNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
+import { mapTableReservationRow, prepareNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
 
 const TABLE_NAME_MAX_LENGTH = 60
 
@@ -126,15 +126,18 @@ LEFT JOIN (
   ON tab_summary.business_id = open_tabs.business_id
  AND tab_summary.table_tab_id = open_tabs.id`
 
-export const listTables = async (db, businessId) => {
-  const result = await db.prepare(`${tableSelect}
+export const prepareTableReads = (db, businessId) => [
+  db.prepare(`${tableSelect}
     WHERE tables.business_id = ?
-    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId).all()
+    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId),
+  prepareNextTableReservations(db, businessId),
+]
+export const projectTableReads = ([result, reservations]) => {
   const tables = (result.results || []).map(mapTableRow)
-  const nextReservations = await listNextTableReservations(db, businessId)
-  const reservationByTableId = new Map(nextReservations.map((reservation) => [reservation.tableId, reservation]))
-  return tables.map((table) => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
+  const reservationByTableId = new Map((reservations.results || []).map(mapTableReservationRow).map(reservation => [reservation.tableId, reservation]))
+  return tables.map(table => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
 }
+export const listTables = async (db, businessId) => projectTableReads(await db.batch(prepareTableReads(db, businessId)))
 
 export const loadTableById = async (db, businessId, tableId) => {
   const row = await db.prepare(`${tableSelect}

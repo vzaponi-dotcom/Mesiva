@@ -22,6 +22,31 @@ test('effective projection contains only operational data allowed by server capa
   assert.equal(JSON.stringify(effective).includes('active'), false)
 })
 
+test('effective config validates loaded revisions with one version batch', async t => {
+  const { db, close } = createSettingsDb()
+  t.after(close)
+  const batch = db.batch.bind(db)
+  let calls = 0
+  db.batch = async statements => { calls++; return batch(statements) }
+  const effective = await loadEffectiveBusinessConfig(db, BUSINESS, new Set(['orders.view', 'payments.receive', 'printing.execute']))
+  assert.equal(effective.operations.defaultModality, 'Entrega')
+  assert.equal(calls, 1)
+})
+
+test('effective config retries if a revision changes while loading', async t => {
+  const { db, sqlite, close } = createSettingsDb()
+  t.after(close)
+  const batch = db.batch.bind(db)
+  let calls = 0
+  db.batch = async statements => {
+    if (++calls === 1) sqlite.prepare('UPDATE business_operation_settings SET revision=revision+1 WHERE business_id=?').run(BUSINESS)
+    return batch(statements)
+  }
+  const effective = await loadEffectiveBusinessConfig(db, BUSINESS, new Set(['orders.view']))
+  assert.equal(effective.revisions.operations, 2)
+  assert.equal(calls, 2)
+})
+
 test('effective version is deterministic for revision vector and capability identity', async (t) => {
   const { db, close } = createSettingsDb()
   t.after(close)

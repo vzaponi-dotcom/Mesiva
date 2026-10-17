@@ -1,5 +1,5 @@
 const contexts = new WeakMap()
-const COLLECTION_TOPIC = { orders:'orders', clients:'clients', products:'catalog', tables:'tables', tableTabs:'tables', movements:'finance', financeSettings:'finance' }
+export const COLLECTION_TOPIC = { orders:'orders', clients:'clients', products:'catalog', tables:'tables', tableTabs:'tables', movements:'finance', financeSettings:'finance' }
 const same = (left, right) => JSON.stringify(left) === JSON.stringify(right)
 
 export function getScopedReadCache(guard, accessContextId) {

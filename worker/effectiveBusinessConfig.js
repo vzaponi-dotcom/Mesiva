@@ -58,12 +58,11 @@ const project = (domain, resource) => {
 }
 
 export async function loadEffectiveBusinessConfig(db, businessId, granted, userId = null) {
+  const domains = selectedDomains(granted)
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const before = await readEffectiveConfigVersion(db, businessId, granted, userId)
-    const domains = Object.keys(before.revisions)
     const resources = await Promise.all(domains.map((domain) => LOADERS[domain](db, businessId)))
     const after = await readEffectiveConfigVersion(db, businessId, granted, userId)
-    if (before.version !== after.version) continue
+    if (domains.some((domain, index) => resources[index].revision !== after.revisions[domain])) continue
     const effective = { version: after.version, revisions: after.revisions }
     domains.forEach((domain, index) => { effective[domain] = project(domain, resources[index]) })
     return effective

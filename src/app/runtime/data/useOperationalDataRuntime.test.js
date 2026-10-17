@@ -697,18 +697,33 @@ test('navigation cache restores each surface snapshot without reading again on r
  assert.equal(h.getCurrent().surfaceState,'ready')
 })
 
-test('navigation cache never restores a snapshot after local data changed or the company changed',async t=>{
+test('unrelated order updates keep product snapshots cached without restoring stale operational metadata',async t=>{
+ const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'products',api:{getBootstrap:async(_v,{surface})=>{
+  calls.push(surface);return scoped(surface,surface==='products'?['products']:[],surface==='products'?{products:[{id:'coffee'}]}:{})
+ }}})
+ await act(async()=>h.getCurrent().refreshBootstrap())
+ await act(async()=>h.update({surface:'history'}))
+ await act(async()=>h.getCurrent().applyOfficialEffects({order:{id:'active',status:'Finalizado'}}))
+ assert.deepEqual(h.getCurrent().operationalOrders,[])
+ await act(async()=>h.update({surface:'products'}))
+ assert.deepEqual(calls,['products','history'])
+ assert.deepEqual(h.getCurrent().products,[{id:'coffee'}])
+ assert.deepEqual(h.getCurrent().operationalOrders,[])
+ assert.equal(h.getCurrent().surfaceState,'ready')
+})
+
+test('navigation cache preserves unrelated changes but resets on company switch',async t=>{
  const calls=[],h=await mountHarness(t,{accessContextId:'A',surface:'orders',api:{getBootstrap:async(_v,{surface})=>{calls.push(surface);return scoped(surface,[])}}})
  await act(async()=>h.getCurrent().refreshBootstrap())
  await act(async()=>h.update({surface:'clients'}))
  await act(async()=>h.getCurrent().applyOfficialEffects({client:{id:'new-client'}}))
  await act(async()=>h.update({surface:'orders'}))
- assert.deepEqual(calls,['orders','clients','orders'])
+ assert.deepEqual(calls,['orders','clients'])
  await act(async()=>h.update({accessContextId:'B'}))
  assert.equal(h.getCurrent().bootstrapState,'idle')
  assert.deepEqual(h.getCurrent().orders,[])
  await act(async()=>h.getCurrent().refreshBootstrap())
- assert.equal(calls.length,4)
+ assert.equal(calls.length,3)
 })
 
 

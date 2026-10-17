@@ -146,10 +146,10 @@ const tablePatchInput = (body) => {
 }
 
 const authenticatedApi = async (request, env) => {
+  const url = new URL(request.url)
   const session = await resolveRequestContext(request, env)
   if (multiCompanyEnabled(env)) requireBusinessContext(request, session)
   else if (!session || session.businessId !== BUSINESS_ID) throw apiError(401, 'UNAUTHENTICATED', 'Sua sessão expirou. Entre novamente.')
-  const url = new URL(request.url)
   const context = await resolveBusinessSettingsContext(env, session)
   if (session.userId && session.authMode === 'enrollment' && !url.pathname.startsWith('/api/access/')) {
     await recordSecurityEvent(env.DB,{businessId:context.businessId,context,action:'access.denied',result:'denied'})
