@@ -265,3 +265,15 @@
     min-height: 50px;
   }
 }
+
+/* Shared date choice for checkout, stand-alone, table, client batch and supplement. */
+.payment-received-date { display: grid; gap: 6px; min-width: 0; }
+.payment-received-date > span { color: var(--text); font-size: .85rem; font-weight: 700; }
+.payment-received-date input { box-sizing: border-box; width: 100%; max-width: 260px; min-height: 44px;
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); background: var(--surface-soft); font: inherit; }
+.payment-received-date input:focus-visible { outline: 2px solid var(--focus-outline); outline-offset: 2px; }
+.payment-received-date input[aria-invalid='true'] { border-color: var(--danger); }
+.payment-received-date .form-hint { font-size: .76rem; color: var(--muted); line-height: 1.4; }
+.payment-received-date input[aria-invalid='true'] + .form-hint { color: var(--danger); }
+@media (max-width: 640px) { .payment-received-date input { max-width: 100%; min-height: 48px; } }
