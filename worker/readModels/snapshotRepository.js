@@ -7,10 +7,8 @@ import {loadFinanceSettings} from '../financeRepository.js'
 import {requireReadSurface} from './query.js'
 import {prepareFinancialCandidateIds} from './financialCandidates.js'
 const rows=result=>Array.isArray(result?.results)?result.results:[]
-export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted=new Set(),effectiveBusinessConfig,currentTiming=effectiveBusinessConfig?.operations?.timing,now=new Date(),timing}={}){
+export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted=new Set(),effectiveBusinessConfig,currentTiming=effectiveBusinessConfig?.operations?.timing,now=new Date()}={}){
   requireReadSurface(granted,surface)
-  let last=timing?performance.now():0
-  const mark=key=>{if(timing){const now=performance.now();timing[key]=now-last;last=now}}
   const tableScope=['new-order','tables','comandas'].includes(surface)
   const tabScope=tableScope && granted.has('comandas.view')
   const clientScope=surface==='new-order' && granted.has('clients.view')
@@ -36,7 +34,6 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
     ...(refundRead?[refundRead]:[]),
     ...tableReads,
   ])
-  mark('snapCommon')
   const business=common[0]?.results?.[0]
   const payload={business:business?{id:business.id,name:business.name,hasLogo:Boolean(business.has_logo),logoVersion:business.has_logo?(business.logo_version??null):null}:{id:businessId,name:'Estabelecimento',hasLogo:false,logoVersion:null}}
   if(effectiveBusinessConfig)payload.effectiveBusinessConfig=effectiveBusinessConfig
@@ -49,9 +46,7 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
   if(productScope)payload.products=rows(common[index++]).map(mapProductRow)
   const counters={orders:getOperationalOrderCount(operationalOrders,now,currentTiming),comandas:openTableTabIds.length}
   if(granted.has('finance.movements'))counters.refunds=refundRead?rows(common[index++]).length:0
-  mark('snapRefunds')
   if(tableReads.length)payload.tables=projectTableReads(common.slice(index,index+tableReads.length))
-  mark('snapTables')
   let orderScope=null
   if(surface==='orders'){
     payload.orders=await listActiveOrders(db,businessId);orderScope='active'
@@ -60,9 +55,7 @@ export async function loadSurfaceSnapshot(db,businessId,{surface='shell',granted
     payload.orders=(await listOrdersByIds(db,businessId,selectedTabOrders)).filter(order=>currentTabIds.has(order.tableTabId))
     orderScope='open-tabs'
   }
-  mark('snapOrders')
   if(['dashboard','finance','receivables'].includes(surface) && ['finance.overview','finance.movements','finance.movements.manage'].some(cap=>granted.has(cap)))payload.financeSettings=await loadFinanceSettings(db,businessId)
   const projected=projectBootstrap(payload,granted)
-  mark('snapOther')
   return {...projected,readModel:{version:1,surface,completeCollections:Object.keys(projected).filter(key=>['clients','products','orders','tables','tableTabs','movements','financeSettings'].includes(key)),orderScope,counters,operationalOrders,openTableTabIds}}
 }
