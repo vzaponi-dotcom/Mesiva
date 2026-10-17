@@ -57,7 +57,7 @@ test('0052 preserves receipt/allocations/timestamps, derives only unanimous link
   assert.deepEqual(f.sqlite.prepare('SELECT id,total_cents,paid_at,created_at FROM payment_receipts ORDER BY id').all(), historical.receipts)
   assert.deepEqual(f.sqlite.prepare('SELECT id,receipt_id,amount_cents,created_at FROM payment_allocations ORDER BY id').all(), historical.allocations)
   assert.deepEqual(f.sqlite.prepare('SELECT id,receipt_id,movement_date,created_at FROM movements ORDER BY id').all(), historical.movements)
-  assert.deepEqual(f.sqlite.prepare('SELECT id,received_date FROM payment_receipts ORDER BY id').all(), [
+  assert.deepEqual(f.sqlite.prepare('SELECT id,received_date FROM payment_receipts ORDER BY id').all().map((row) => ({ ...row })), [
     { id: 'linked', received_date: '2026-10-15' },
     { id: 'mixed-dates', received_date: null },
     { id: 'no-movement', received_date: null },
