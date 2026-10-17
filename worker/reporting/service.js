@@ -170,7 +170,8 @@ export const createReportingService = (repository) => Object.freeze({
       ? (query.view === 'products' ? reportPromise : this.products(businessId, query))
       : Promise.resolve(null)
     const [detail, report, operationIdentity, overview, operation, products] = await Promise.all([
-      repository.listDetail(businessId, { ...query, page: 1, pageSize: EXPORT_LIMIT }),
+      repository.listDetail(businessId, { ...query, page: 1, pageSize: EXPORT_LIMIT,
+        withFinancialDates: columns == null || (Array.isArray(columns) && columns.includes('payment_received_dates')) }),
       reportPromise,
       repository.getBusinessIdentity ? repository.getBusinessIdentity(businessId) : Promise.resolve(null),
       overviewPromise,
