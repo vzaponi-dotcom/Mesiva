@@ -1,6 +1,6 @@
 import { registerCommittedEffect } from './realtime/committedEffects.js'
 import { businessEvent, auditedMutation } from './access/audit.js'
-import { listNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
+import { mapTableReservationRow, prepareNextTableReservations, loadNextTableReservationForTable } from './tableReservationRepository.js'
 
 const TABLE_NAME_MAX_LENGTH = 60
 
@@ -127,11 +127,14 @@ LEFT JOIN (
  AND tab_summary.table_tab_id = open_tabs.id`
 
 export const listTables = async (db, businessId) => {
-  const result = await db.prepare(`${tableSelect}
+  const [result, reservations] = await db.batch([
+    db.prepare(`${tableSelect}
     WHERE tables.business_id = ?
-    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId).all()
+    ORDER BY tables.sort_order, tables.name, tables.id`).bind(businessId, businessId),
+    prepareNextTableReservations(db, businessId),
+  ])
   const tables = (result.results || []).map(mapTableRow)
-  const nextReservations = await listNextTableReservations(db, businessId)
+  const nextReservations = (reservations.results || []).map(mapTableReservationRow)
   const reservationByTableId = new Map(nextReservations.map((reservation) => [reservation.tableId, reservation]))
   return tables.map((table) => ({ ...table, nextReservation: reservationByTableId.get(table.id) ?? null }))
 }
