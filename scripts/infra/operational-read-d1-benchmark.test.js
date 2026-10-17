@@ -44,6 +44,10 @@ test('TV equivalence matches orders and items independently of concurrent comple
   const beforeItems={sql:'SELECT i.order_id FROM order_items i INNER JOIN orders o',results:[{order_id:'one',quantity:1}]}
   const afterItems={...beforeItems,sql:'SELECT i.order_id FROM orders o CROSS JOIN order_items i'}
   assert.doesNotThrow(()=>module.assertSameTvReads([orders,beforeItems],[afterItems,orders]))
+  const enriched={...orders,results:[{...orders.results[0],customer_identity_type:'table',table_identifier:'Mesa 2',reservation_table_name:null}]}
+  assert.doesNotThrow(()=>module.assertSameTvReads([orders,beforeItems],[afterItems,enriched]))
+  assert.throws(()=>module.assertSameTvReads([orders,beforeItems],[afterItems,{...enriched,results:[{...enriched.results[0],phone:'11999999999'}]}]),/unexpected order field/)
+  assert.throws(()=>module.assertSameTvReads([orders,beforeItems],[afterItems,{...enriched,results:[{...enriched.results[0],status:'Finalizado'}]}]),/TV read contract differs/)
   assert.throws(()=>module.assertSameTvReads([orders,beforeItems],[{...afterItems,results:[]},orders]),/TV read contract differs/)
 })
 
