@@ -35,7 +35,7 @@ test('Server-Timing is opt-in for staging bootstrap only',async t=>{
   const traced=await handleRequest(f.request(url),tracedEnv)
   assert.equal(traced.status,200)
   assert.equal((await traced.json()).readModel.surface,'clients')
-  for(const phase of ['auth','config','snapshot','finalize','total'])
+  for(const phase of ['auth','config','snapshot','snapCommon','snapRefunds','snapTables','snapOrders','snapOther','finalize','total'])
     assert.match(traced.headers.get('server-timing'),new RegExp(`(?:^|, )${phase};dur=\\d+\\.\\d`))
   assert.equal((await handleRequest(f.request('/api/reads/customers'),tracedEnv)).headers.has('server-timing'),false)
 })
