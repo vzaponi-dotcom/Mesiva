@@ -684,14 +684,14 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     if(pendingPrint && pendingPrint.owner===accessContextId)setEditedPrintPrompt(pendingPrint)
     return true
   }
-  const submitEditSettlement=async(type,values)=>{
+  const submitEditSettlement=async(type,values,receivedDate)=>{
     const target=editSettlement
     if(!target || target.owner!==accessContextId || target.guard!==getSyncGuard()
       || editSettlementBusy || writesBlocked)return false
     const order=target.order
     const serialized=JSON.stringify({type,orderId:order.id,
       contentRevision:order.contentRevision,totalCents:order.totalCents,
-      netReceivedCents:order.netReceivedCents,values})
+      netReceivedCents:order.netReceivedCents,values,...(type==='receive'?{receivedDate}:{})})
     const attempt=editSettlementAttemptRef.current?.serialized===serialized
       ? editSettlementAttemptRef.current : {serialized,mutationId:crypto.randomUUID()}
     editSettlementAttemptRef.current=attempt
@@ -708,8 +708,9 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
               expectedTotalCents:order.totalCents,
               expectedNetReceivedCents:order.netReceivedCents,
               allocations:values,
+              receivedDate,
             })
-          : await clientsForContext.payments.registerOrderPayment(order.id,values)
+          : await clientsForContext.payments.registerOrderPayment(order.id,values,{receivedDate})
         : await clientsForContext.refunds.registerPartialRefund(order.id,{
             mutationId:attempt.mutationId,
             expectedContentRevision:order.contentRevision,
@@ -1094,7 +1095,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
           error={editSettlementError}
           onStageChange={stage=>{setEditSettlement(s=>s&&({...s,stage}));setEditSettlementError('')}}
           onClose={finishEditSettlement}
-          onReceive={allocations=>void submitEditSettlement('receive',allocations)}
+          onReceive={(allocations,receivedDate)=>void submitEditSettlement('receive',allocations,receivedDate)}
           onRefund={refund=>void submitEditSettlement('refund',refund)}
         />}
         {editedPrintPrompt && editedPrintPrompt.owner === accessContextId && <Modal
