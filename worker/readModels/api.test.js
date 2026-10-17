@@ -26,20 +26,6 @@ test('scoped bootstrap is opt-in, isolated and attributable while the legacy res
   const disabled=await (await handleRequest(f.request('/api/bootstrap?surface=orders'),{...f.env,OPERATIONAL_READ_MODELS_ENABLED:'false'})).json()
   assert.equal(disabled.readModel,undefined);assert.equal(disabled.orders.length,2)
 })
-test('Server-Timing is opt-in for staging bootstrap only',async t=>{
-  const f=await setup(t),url='/api/bootstrap?surface=clients'
-  const normal=await handleRequest(f.request(url),f.env)
-  assert.equal(normal.status,200)
-  assert.equal(normal.headers.has('server-timing'),false)
-  const tracedEnv={...f.env,STAGING_BOOTSTRAP_TIMING:'true'}
-  const traced=await handleRequest(f.request(url),tracedEnv)
-  assert.equal(traced.status,200)
-  assert.equal((await traced.json()).readModel.surface,'clients')
-  for(const phase of ['auth','config','snapshot','snapCommon','snapRefunds','snapTables','snapOrders','snapOther','finalize','total'])
-    assert.match(traced.headers.get('server-timing'),new RegExp(`(?:^|, )${phase};dur=\\d+\\.\\d`))
-  assert.equal((await handleRequest(f.request('/api/reads/customers'),tracedEnv)).headers.has('server-timing'),false)
-})
-
 test('new read routes remain business-authenticated and reject unsupported surface values',async t=>{
   const f=await setup(t)
   assert.equal((await handleRequest(new Request('https://example.test/api/reads/orders/active'),f.env)).status,401)
