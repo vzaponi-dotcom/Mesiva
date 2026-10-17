@@ -1,4 +1,4 @@
-import { PAYMENT_ALLOCATIONS_JSON_SELECT } from './orderPaymentReadModel.js'
+import { PAYMENT_ALLOCATIONS_JSON_SELECT, PAYMENT_RECEIVED_DATE_SQL_SELECT } from './orderPaymentReadModel.js'
 import { LATEST_OPERATIONAL_EDIT_JOIN, OPERATIONAL_EDIT_SELECT_FIELDS } from './orderEditSignalsRepository.js'
 
 export const ORDER_SELECT = `SELECT o.id, o.order_number, o.client_id, o.client_name_snapshot,
@@ -10,7 +10,7 @@ export const ORDER_SELECT = `SELECT o.id, o.order_number, o.client_id, o.client_
   o.created_at, o.finished_at, o.cancelled_at, o.cancel_reason, o.cancel_reason_note,
   cr.label AS cancel_reason_label,
   o.timing_policy_snapshot_json,
-  p.id AS payment_id, p.method AS payment_method, p.paid_at, ${PAYMENT_ALLOCATIONS_JSON_SELECT},
+  p.id AS payment_id, p.method AS payment_method, p.paid_at, ${PAYMENT_RECEIVED_DATE_SQL_SELECT}, ${PAYMENT_ALLOCATIONS_JSON_SELECT},
   p.amount_cents AS paid_amount_cents,
   r.id AS refund_movement_id, r.created_at AS refund_created_at,
   tt.table_identifier AS table_identifier,
