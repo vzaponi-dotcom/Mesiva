@@ -157,7 +157,9 @@ test('Task 7: dashboard and A Receber use financial day for receivedToday, exclu
   const {readReceivedToday}=await import('./movementReads.js')
   const {sqlite,db,close}=createSettingsDb();t.after(close)
   sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('a','a','A','2026-10-01','2026-10-01')")
-  const stmt=sqlite.prepare("INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,deleted_at) VALUES(?,'a',?,'Vendas','Teste',?,?,?,'2026-10-17T15:00:00.000Z',?)")
+  const receipt=sqlite.prepare("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES(?,'a',?,'2026-10-17T15:00:00.000Z',?,'2026-10-17T15:00:00.000Z')")
+  const allocation=sqlite.prepare("INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES(?,'a',?,'Pix',?,'2026-10-17T15:00:00.000Z')")
+  const stmt=sqlite.prepare("INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,deleted_at,receipt_id,payment_allocation_id) VALUES(?,'a',?,'Vendas','Teste',?,?,?,'2026-10-17T15:00:00.000Z',?,?,?)")
   for(const [id,type,cents,source,date,deleted] of [
     ['retro','entrada',10000,'order-payment','2026-10-15',null],
     ['refund-retro','saida',1000,'order-refund','2026-10-15',null],
@@ -166,7 +168,13 @@ test('Task 7: dashboard and A Receber use financial day for receivedToday, exclu
     ['edit-refund','saida',2000,'order-edit-refund','2026-10-17',null],
     ['manual','entrada',9000,'manual','2026-10-17',null],
     ['deleted','entrada',9999,'order-payment','2026-10-17','2026-10-17T16:00:00Z'],
-  ])stmt.run(id,type,cents,source,date,deleted)
+  ]){
+    if(source==='order-payment'){
+      receipt.run('receipt-'+id,cents,date)
+      allocation.run('alloc-'+id,'receipt-'+id,cents)
+    }
+    stmt.run(id,type,cents,source,date,deleted,source==='order-payment'?'receipt-'+id:null,source==='order-payment'?'alloc-'+id:null)
+  }
   const granted=new Set(['finance.movements'])
   assert.equal(await readReceivedToday(db,'a',granted,'2026-10-15'),90)
   assert.equal(await readReceivedToday(db,'a',granted,'2026-10-17'),44)
