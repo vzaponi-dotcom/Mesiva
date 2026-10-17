@@ -1,23 +1,23 @@
 # Mesiva — Guia oficial de identidade visual e histórico
 
-**Status:** centralização de identidade visual no **GitHub aprovada em 17/10/2026**; **upload dos quatro binários pendente** nesta PR. Este índice não declara que os documentos já estão disponíveis para download.
+**Status:** centralização de identidade visual no **GitHub aprovada em 17/10/2026**; **quatro binários incorporados e verificados** na branch da PR #119. PDF e Word estão disponíveis nos links abaixo; merge e deploy não foram realizados.
 
 ## Fonte oficial e estrutura
 
-A **v1.1** é a edição *editorialmente aprovada* do guia Mesiva, em PDF e Word (10 páginas). A **v1.0**, datada de 23/09/2026, é histórico (PDF com 9 páginas). A versão vigente só terá um **link definitivo no GitHub depois de os bytes serem enviados e os hashes verificados**.
+A **v1.1** é a edição *editorialmente aprovada* do guia Mesiva, em PDF e Word (10 páginas). A **v1.0**, datada de 23/09/2026, é histórico (PDF com 9 páginas). Os quatro arquivos preservam os bytes aprovados, com tamanhos, SHA-256 e SHA-1 dos blobs Git conferidos contra o manifesto abaixo.
 
 | Destino dentro deste diretório | Papel | Estado |
 | --- | --- | --- |
-| `00_Mesiva_Guia_oficial_identidade_visual_v1.1.pdf` | Referência visual oficial vigente para leitura | **Pendente de upload** |
-| `00_Mesiva_Guia_oficial_identidade_visual_v1.1.docx` | Fonte editável de manutenção do guia | **Pendente de upload** |
-| `historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.pdf` | Registro histórico original, sem sobrescrever | **Pendente de upload** |
-| `historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.docx` | Fonte editável histórica | **Pendente de upload** |
+| [00_Mesiva_Guia_oficial_identidade_visual_v1.1.pdf](00_Mesiva_Guia_oficial_identidade_visual_v1.1.pdf) | Referência visual oficial vigente para leitura | **Publicado na branch; verificado** |
+| [00_Mesiva_Guia_oficial_identidade_visual_v1.1.docx](00_Mesiva_Guia_oficial_identidade_visual_v1.1.docx) | Fonte editável de manutenção do guia | **Publicado na branch; verificado** |
+| [historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.pdf](historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.pdf) | Registro histórico original, sem sobrescrever | **Publicado na branch; verificado** |
+| [historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.docx](historico/00_Mesiva_Guia_oficial_identidade_visual_v1.0.docx) | Fonte editável histórica | **Publicado na branch; verificado** |
 
 A subpasta [`historico/`](historico/README.md) mantém o registro original. Os logos e ícones **de produção** já estão em [`public/brand/`](../../../public/brand/); não duplicar ativos no guia nem reconstruir o vetor a partir de uma imagem.
 
 ## Integridade — arquivos originais e aprovados
 
-As medidas abaixo são obtidas dos arquivos efetivos aprovados; `git blob SHA-1` é o identificador esperado em `git ls-tree`/GitHub Tree após upload. **Não confundir hash previsto com upload já realizado.**
+As medidas abaixo foram conferidas nos quatro arquivos importados do patch binário, sem alteração de bytes. `git blob SHA-1` identifica o conteúdo em `git ls-tree`/GitHub Tree.
 
 | Arquivo | Bytes | SHA-256 | SHA-1 do blob Git |
 | --- | ---: | --- | --- |
@@ -31,15 +31,17 @@ As medidas abaixo são obtidas dos arquivos efetivos aprovados; `git blob SHA-1`
 - **23/09/2026:** edição v1.0 histórica, com algumas definições técnicas da marca ainda em aberto.
 - **02/10/2026:** refinamento aprovado do SVG, versões clara/escura, ícones, lettering vetorizado e slogan **“Pessoas. Sabor. Evolução.”**. Fonte de contexto: [registro de refinamento](../../operations/2026-10-02-mesiva-logo-refinement.md).
 - **17/10/2026:** edição v1.1 do guia Word/PDF **aprovada**; integra as decisões acima e diferencia a cor de referência da UI (`#14B8A6`) da cor do vetor aprovado (`#0F9F91`). Não implica recoloração, exclusão do tema Clássico nem testes de contraste em todas as telas.
-- **Fonte oficial após a publicação dos bytes:** este diretório em GitHub, com PR, SHA e histórico. O Drive deixa de ser necessário para consumir ou atualizar a identidade visual.
+- **Fonte oficial:** este diretório em GitHub, com PR, SHA e histórico. O Drive deixa de ser necessário para consumir ou atualizar a identidade visual.
 - **Aplicação técnica:** consultar [Design System](../DESIGN_SYSTEM.md) e `public/brand/` antes de tocar em JSX/CSS.
 
 ## Fechamento da migração — PR #119
 
-1. Fazer upload dos **quatro arquivos binários sem modificá-los** à branch `codex/docs-visual-guide-v1-1-approval-2026-10-17`, nos caminhos exatos da tabela; não enviar à `master` diretamente.
-2. Comparar `size`, `SHA-256` e/ou `git blob SHA-1` da árvore da branch com a tabela. Parar se não corresponderem.
-3. Substituir os nomes em código neste índice por **links relativos aos arquivos efetivamente existentes** e marcar os quatro uploads como verificados.
-4. Atualizar [índice geral](../../README.md), [Design System](../DESIGN_SYSTEM.md) e PR #119, e verificar links/CI/diff antes de solicitar merge. O histórico v1.0 deve permanecer acessível e identificado como histórico.
-5. **Sem autorização automática de merge ou deploy.** Mudanças documentais não implicam nova versão do software ou publicação remota.
+- [x] Quatro arquivos binários incorporados sem alteração à branch `codex/docs-visual-guide-v1-1-approval-2026-10-17`, nos caminhos exatos da tabela.
+- [x] Tamanhos, SHA-256 e SHA-1 dos blobs Git conferidos: quatro correspondências com o manifesto.
+- [x] Links relativos habilitados para os quatro arquivos verificados, preservando o histórico v1.0.
+- [x] [Índice geral](../../README.md), [Design System](../DESIGN_SYSTEM.md), instruções dos agentes e índice histórico atualizados para refletir a importação.
+- [ ] Conferir CI e revisão do commit final antes de qualquer integração.
 
-> **Importante:** nenhum link para PDF/DOCX é emitido neste estado porque os arquivos ainda não constam da árvore Git. É proibido afirmar que o guia já está hospedado no GitHub.
+**Sem autorização automática de merge ou deploy.** Mudanças documentais não implicam nova versão do software ou publicação remota.
+
+> **Importante:** a incorporação dos arquivos à branch da PR #119 não representa merge na `master` nem publicação do software.

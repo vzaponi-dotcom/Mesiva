@@ -32,15 +32,15 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 
 ### Identidade visual: GitHub como fonte oficial
 
-**Decisão de 17/10/2026:** a Mesiva adotou o **próprio repositório GitHub** como fonte canônica da documentação de identidade visual, sem depender de sincronização com Google Drive. A edição **v1.1 foi aprovada** pelo proprietário; os quatro arquivos binários (PDF e Word da v1.1 e da v1.0 histórica) **ainda precisam ser incorporados à PR #119**. A aprovação editorial não é evidência de que os arquivos estejam publicados no repositório.
+**Decisão de 17/10/2026:** a Mesiva adotou o **próprio repositório GitHub** como fonte canônica da documentação de identidade visual, sem depender de sincronização com Google Drive. A edição **v1.1 foi aprovada** pelo proprietário; os quatro arquivos binários (PDF e Word da v1.1 e da v1.0 histórica) **foram incorporados à branch da PR #119**, preservando os bytes originais e verificando tamanhos, SHA-256 e SHA-1 dos blobs Git contra o manifesto.
 
-- [Governança, arquivos esperados e hashes de integridade](design/identidade-visual/README.md) — versão vigente, histórico v1.0, checklists e como realizar upload na branch da PR #119.
+- [Governança, arquivos e hashes de integridade](design/identidade-visual/README.md) — links para a versão vigente e o histórico v1.0, manifesto verificado e checklist de integração da PR #119.
 - [Design System](design/DESIGN_SYSTEM.md) — aplicação em CSS/JSX, tokens, temas, componentes, exemplos e cinco diferenças **históricas** entre o guia v1.0 e ativos aprovados em outubro.
 - [Refinamento do logo e slogan (02/10/2026)](operations/2026-10-02-mesiva-logo-refinement.md) — registros originais da aprovação do vetor, ícones e assinatura “Pessoas. Sabor. Evolução.”
 - [Ícones e publicações](operations/2026-10-02-github-releases-and-mesiva-icons.md) e [referência visual de Cozinha/Comandas](mesiva-kitchen-visual.md) — decisões complementares.
 - **Ativos efetivos de aplicação:** `public/brand/` (SVGS e ícones já versionados). Não reconstruir nem recolorir a marca por aproximação.
 
-**Até o upload verificado:** consultar a [governança](design/identidade-visual/README.md), o Design System e os assets do repositório; os arquivos aprovados ainda não podem ser acessados por links GitHub. Não inventar caminhos clicáveis nem alterar marca, código ou produção para compensar essa pendência.
+**Arquivos disponíveis nesta branch:** guia v1.1 em [PDF](design/identidade-visual/00_Mesiva_Guia_oficial_identidade_visual_v1.1.pdf) e [Word](design/identidade-visual/00_Mesiva_Guia_oficial_identidade_visual_v1.1.docx), com [histórico v1.0](design/identidade-visual/historico/README.md) preservado. Consultar também a governança, o Design System e os assets do repositório. A importação não altera marca, código ou produção.
 
 ## Documentação histórica e evidências
 
@@ -66,4 +66,4 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 
 ## Escopo desta primeira entrega
 
-Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md), o [Design System](design/DESIGN_SYSTEM.md) e a integração da consulta seletiva ao [AGENTS.md](../AGENTS.md), criados em entregas sequenciais. A edição v1.1 do guia visual já foi **aprovada**; permanece **pendente a inclusão verificável dos arquivos oficiais e históricos no GitHub**, como registrado na [governança](design/identidade-visual/README.md). Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
+Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md), o [Design System](design/DESIGN_SYSTEM.md) e a integração da consulta seletiva ao [AGENTS.md](../AGENTS.md), criados em entregas sequenciais. A edição v1.1 do guia visual já foi **aprovada**; os quatro arquivos oficiais e históricos foram **incorporados e verificados na branch da PR #119**, como registrado na [governança](design/identidade-visual/README.md). Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
