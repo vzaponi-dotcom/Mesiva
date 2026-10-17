@@ -31,8 +31,10 @@ test('new order batches permitted clients, catalog and open-tab reads',async t=>
   sqlite.prepare("INSERT INTO products(id,business_id,category,size,name,price_cents,active,created_at,updated_at) VALUES('new-product',?,'Bebidas','Un','Suco',3000,1,?,?)").run(businessId,at,at)
   const batch=db.batch.bind(db),lengths=[]
   db.batch=async statements=>{lengths.push(statements.length);return batch(statements)}
-  const result=await load(db,businessId,{surface:'new-order',granted:new Set(['orders.create','orders.view','comandas.view','clients.view','products.view'])})
-  assert.equal(lengths[0],7)
+  const result=await load(db,businessId,{surface:'new-order',granted:new Set(['orders.create','orders.view','comandas.view','clients.view','products.view','tables.view','finance.movements'])})
+  assert.deepEqual(lengths,[10])
+  assert.deepEqual(result.tables,[])
+  assert.equal(result.readModel.counters.refunds,0)
   assert.deepEqual(result.clients.map(c=>c.id),['new-client'])
   assert.deepEqual(result.products.map(p=>p.id),['new-product'])
   assert.deepEqual(result.tableTabs,[])
