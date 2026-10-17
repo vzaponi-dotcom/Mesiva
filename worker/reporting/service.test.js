@@ -206,3 +206,23 @@ test('overview receivable metrics exclude an active reservation while keeping or
   assert.equal(result.data.metrics.receivableCents, 4_000)
   assert.equal(result.data.metrics.receivableCount, 1)
 })
+
+
+test('Task 7: sales series uses financial received_date even when paid_at was recorded two days later',async()=>{
+  const {createReportingService}=await import('./service.js')
+  const empty={orders:[],receipts:[],allocations:[],payments:[],refunds:[]}
+  const repo={loadSales:async(_biz,query)=>query.from==='2026-10-15'?{
+    ...empty,receipts:[{id:'retro',total_cents:10000,paid_at:'2026-10-17T15:00:00Z',received_date:'2026-10-15'}],
+    allocations:[{receipt_id:'retro',method_label:'Pix',amount_cents:7000},{receipt_id:'retro',method_label:'Dinheiro',amount_cents:3000}],
+    refunds:[{value_cents:500,movement_date:'2026-10-15'}],
+  }:empty}
+  const svc=createReportingService(repo)
+  const retro=await svc.sales('a',{from:'2026-10-15',to:'2026-10-15',period:'custom'})
+  assert.equal(retro.data.receivedCents,10000)
+  assert.deepEqual(retro.data.receivedSeries,[{date:'2026-10-15',cents:10000}])
+  assert.deepEqual(retro.data.paymentMix,[{method:'Dinheiro',amountCents:3000},{method:'Pix',amountCents:7000}])
+  assert.deepEqual(retro.data.refundSeries,[{date:'2026-10-15',cents:500}])
+  const today=await svc.sales('a',{from:'2026-10-17',to:'2026-10-17',period:'custom'})
+  assert.equal(today.data.receivedCents,0)
+  assert.deepEqual(today.data.receivedSeries,[])
+})
