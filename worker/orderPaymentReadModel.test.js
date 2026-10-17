@@ -155,7 +155,7 @@ test('Task 8: an original receipt exposes its effective date without changing te
   original(sqlite,'retro-payment','retro-order','retro-receipt',8000)
   const {readOrderHeaders}=await import('./readModels/orderHeaders.js')
   const all=await listOrders(db,BIZ)
-  const header=(await readOrderHeaders(db,BIZ,{granted:new Set(['orders.history']),paid:true}))[0]
+  const header=(await readOrderHeaders(db,BIZ,{granted:new Set(['orders.history','orders.view']),paid:true}))[0]
   for(const value of [all[0],await loadOrderById(db,BIZ,'retro-order'),header]){
     assert.equal(value.receivedDate,'2026-10-10')
     assert.equal(value.paidAt,NOW)
