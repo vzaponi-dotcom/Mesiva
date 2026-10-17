@@ -95,3 +95,24 @@ test('reporting order drawer implements Details, History, Client and client-orde
   await act(async () => previous.props.onClick())
   assert.deepEqual(openedOrders, ['o173'])
 })
+
+
+test('Task 8: report timeline shows effective date separately from actual registration and keeps recorded order',async t=>{
+  const h=await workspaceHarness(t)
+  const {ReportingOrderDrawer}=await h.load('/src/domains/reporting/ui/detail/ReportingOrderDrawer.jsx')
+  const data={...order,id:'backdated-order',status:'Finalizado',paidCents:9500,pendingCents:0,finished_at:'2026-10-17T13:00:00Z',
+    paymentAllocations:[
+      {receipt_id:'initial',method_label:'Pix',amount_cents:8000,paid_at:'2026-10-17T10:00:00Z',received_date:'2026-10-14'},
+      {receipt_id:'later',method_label:'Pix',amount_cents:1000,paid_at:'2026-10-17T12:00:00Z',received_date:'2026-10-15'},
+      {receipt_id:'later',method_label:'Dinheiro',amount_cents:500,paid_at:'2026-10-17T12:00:00Z',received_date:'2026-10-15'},
+    ]}
+  const renderer=await h.render(ReportingOrderDrawer,{id:'backdated-order',api:{loadOrder:async()=>({data})},onClose(){}})
+  const tabs=renderer.root.findAllByType('button')
+  await act(async()=>tabs.find(x=>nodeText(x)==='Histórico').props.onClick())
+  const history=nodeText(renderer.root)
+  assert.match(history,/Recebido em 14\/10\/2026/)
+  assert.match(history,/Recebido em 15\/10\/2026/)
+  assert.match(history,/Registrado em 17\/10\/2026/)
+  assert.equal((history.match(/Pagamento registrado/g)||[]).length,2)
+  assert.ok(history.indexOf('Recebido em 14/10/2026')<history.indexOf('Recebido em 15/10/2026'))
+})
