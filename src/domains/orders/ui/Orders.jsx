@@ -232,7 +232,7 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
                 
               </div>
             ))}
-            {!preparing.length && <div className="kitchen-queue-empty"><Icon name="preparation" size={24} /><strong>{queueFilter !== 'all' || modalityFilter !== 'all' || search ? 'Nenhum pedido corresponde aos filtros selecionados.' : 'Nenhum pedido em preparo agora.'}</strong><span>{queueFilter !== 'all' || modalityFilter !== 'all' || search ? 'Altere os filtros ou a busca para ver outros pedidos.' : 'Novos pedidos aparecem aqui automaticamente.'}</span></div>}
+            {!preparing.length && <div className="kitchen-queue-empty"><Icon name="preparation" size={24} /><strong>{queueFilter === 'late' && modalityFilter === 'all' ? 'Nenhum pedido em atraso nesta busca.' : modalityFilter !== 'all' || search ? 'Nenhum pedido corresponde aos filtros selecionados.' : 'Nenhum pedido em preparo agora.'}</strong><span>{queueFilter !== 'all' || modalityFilter !== 'all' || search ? 'Altere os filtros ou a busca para ver outros pedidos.' : 'Novos pedidos aparecem aqui automaticamente.'}</span></div>}
           </div>
         </section>
 
