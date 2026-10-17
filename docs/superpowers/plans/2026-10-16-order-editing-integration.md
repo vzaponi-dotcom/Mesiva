@@ -1,6 +1,6 @@
 # Integração da edição de pedidos — PR 108
 
-**Autorização:** usuário aprovou em 16/10/2026 prosseguir com a revisão e as correções propostas. Manter a mesma PR, sem merge ou produção nesta etapa.
+**Autorização:** usuário aprovou em 16/10/2026 prosseguir com a revisão e as correções propostas na mesma PR. Após homologar em staging, autorizou merge e produção com impressão física não executada, conforme o [registro de aceite](../qa/2026-10-16-order-editing-integration.md#aceite-humano-e-autorização-de-publicação).
 **Spec:** [edição de pedidos](../specs/2026-10-10-order-editing-design.md).
 **Base:** PR `13cc1baa`, master `ecbcf908`.
 **Abordagem:** reutilizar os writers/ledger e owners existentes; incorporar realtime e leituras por superfície sem restaurar bootstrap histórico integral. Não reescrever migrations aplicadas.
@@ -10,8 +10,8 @@
 - [x] Atualizar os candidatos e leitores financeiros por saldo, os efeitos realtime e o snapshot automático de impressão.
 - [x] Receber lote misto de cliente com recibo único, somente saldos devidos e replay durável, preservando o pagamento original.
 - [x] Verificar consumidores, concorrência, upgrades a partir dos dois históricos de migrations, limites D1, suíte completa e gates.
-- [ ] Revisão independente, documentação/PR consolidadas e CI do SHA final.
-- [ ] Publicação autorizada em staging pelo workflow, smoke e registro das pendências humanas/hardware.
+- [x] Revisão independente, documentação/PR consolidadas e CI do SHA homologado.
+- [x] Publicação autorizada em staging pelo workflow, smoke e registro do aceite humano e da impressão física não executada.
 
 ## Decisões de implementação
 

@@ -1,6 +1,6 @@
 # PR 108 — integração e homologação de edição de pedidos
 
-**Data:** 16/10/2026. **Estado:** validação local aprovada; CI/staging do commit final pendentes; sem merge/produção. [PR #108](https://github.com/vzaponi-dotcom/Mesiva/pull/108).
+**Data:** 16/10/2026. **Estado:** CI e staging de `ce7a332f` aprovados; homologação funcional aprovada pelo usuário, com impressão física não executada; merge e produção autorizados, aguardando conclusão dos workflows. [PR #108](https://github.com/vzaponi-dotcom/Mesiva/pull/108).
 **Plano:** [integração](../plans/2026-10-16-order-editing-integration.md). **Operação:** [edição de pedidos](../../operations/order-editing.md).
 
 ## Escopo e evidências
@@ -22,9 +22,10 @@ Início na feature `13cc1baa`, incorporando a master `ecbcf908`. O usuário auto
 | Orçamento operacional D1 / recuperação de impressão | PASS local |
 | Runtime WebSocket/workerd/D1 | PASS local; relatório financeiro continua monthlyReady=false |
 | Suíte completa final | PASS: 4.049/4.049, zero falhas; teste adicional de publicação/replay também aprovado no arquivo focado (9/9) |
-| Validate do SHA final | PENDENTE; consultar checks da PR após push |
-| Staging do SHA integrado | PENDENTE de CI e workflow; deploy histórico de 12/10 não comprova esta versão |
-| TV/som/QZ/impressão física | PENDENTE de homologação humana/hardware |
+| Validate do SHA homologado `ce7a332f` | PASS: [push](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/38954937214) e [PR](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/38954941011), incluindo os oito shards |
+| Staging do SHA integrado `ce7a332f` | PASS: [deploy e smokes](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/38955593578), identidade pública confirmada |
+| Homologação funcional em staging | APROVADA pelo usuário em 16/10/2026 para todos os demais cenários do roteiro; relato humano, sem execução presencial pelo agente |
+| Impressão física / impressora | NÃO EXECUTADA: equipamento indisponível; exceção aceita explicitamente pelo usuário para esta publicação |
 
 O primeiro ensaio da suíte local foi interrompido: o sandbox Windows bloqueou a renomeação do cache temporário Vite. A execução com o acesso necessário revelou nove incompatibilidades: asserções antigas de contador/estado, fixture de permissão futura que passou a ser real (`orders.edit`), e finais CRLF no SQL. Foram corrigidas sem remover gates. `.gitattributes` conserva LF nas migrations; conteúdos das migrations aplicadas não foram reescritos no Git.
 
@@ -40,8 +41,12 @@ Gates de upgrade simulam a master com índices/candidatos e a PR com ledger ante
 
 O mecanismo temporário de push por mensagem `staging-publish-PR108-phase-A` foi retirado. A branch desta PR é elegível a **Deploy staging** manual, com CI do SHA exato e PR aberta; produção continua manual e exclusiva da master.
 
-## Aceite que permanece humano
+## Aceite humano e autorização de publicação
 
-Homologar o SHA integrado: avulso não pago/pago, +saldo e composição, redução/devolução parcial, cancelamento sobre líquido, lote misto, comanda aberta/fechada, item histórico inativo, agendamento/reserva, duas sessões e F5, troca de empresa/permissões, desktop/mobile, TV/filtros/ocultação/som, QZ offline e reimpressão opt-in. Impressão física só recebe PASS após saída real e conferência de cópias. Não marcar indisponibilidade de hardware como aprovado.
+O roteiro do SHA integrado cobre avulso não pago/pago, +saldo e composição, redução/devolução parcial, cancelamento sobre líquido, lote misto, comanda aberta/fechada, item histórico inativo, agendamento/reserva, duas sessões e F5, troca de empresa/permissões, desktop/mobile, TV/filtros/ocultação/som, QZ offline e reimpressão opt-in.
 
-A exceção financeira da ativação realtime anterior é [histórica e específica daquela entrega](2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega). O relatório desta integração preserva dimensões desconhecidas e não comprova franquia/custo mensal; nenhum gate foi relaxado. Merge/produção desta funcionalidade ainda exigem decisão própria.
+Após testar em staging, o usuário informou: “Deu tudo certo, so a impressora que nao vamos conseguir fazer, entao pode subir pra produção registrando que todos os outros testes passaram”. Este é o aceite humano dos demais testes e a autorização explícita para merge e produção desta PR. A indisponibilidade da impressora é exceção desta entrega, não aprovação de impressão: saída física, conteúdo e quantidade de vias continuam sem evidência e deverão ser conferidos quando houver equipamento disponível. Nenhum gate automatizado foi dispensado.
+
+A homologação corresponde ao código `ce7a332f`. A atualização seguinte registra apenas esta evidência em documentação; CI, staging e produção devem validar seus próprios SHAs exatos. Os resultados finais de integração e publicação ficam nos checks e na descrição da PR.
+
+A exceção financeira da ativação realtime anterior é [histórica e específica daquela entrega](2026-10-16-realtime-financial-validation.md#decisão-de-liberação-desta-entrega). O relatório desta integração preserva dimensões desconhecidas e não comprova franquia/custo mensal; a aprovação funcional não transforma essa medição em PASS. A configuração realtime já vigente não é alterada nesta publicação.
