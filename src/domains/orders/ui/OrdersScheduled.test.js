@@ -49,7 +49,7 @@ test('orders page composes the approved kitchen heading, actions, counters, and 
 test('orders page wires primary and cancellation actions by capability while keeping global counts independent from search results', async () => {
   const source = await read('./Orders.jsx')
   const preparingBlock = source.slice(source.indexOf('preparing.map'), source.indexOf('kitchen-scheduled-heading'))
-  const scheduledBlock = source.slice(source.indexOf('queueModel.scheduled.map'), source.indexOf('!queueModel.scheduled.length'))
+  const scheduledBlock = source.slice(source.indexOf('scheduled.map'), source.indexOf('!scheduled.length'))
   assert.match(source, /onDetails=\{\(order\) => setDetailOrderId\(order\.id\)\}/)
   assert.match(preparingBlock, /disabled=\{actionsDisabled\}/)
   assert.match(preparingBlock, /onFinalize=\{canFinalizeOrders \? \(order\) => \{ setFinalizeCandidate\(order\); return true \} : undefined\}/)
