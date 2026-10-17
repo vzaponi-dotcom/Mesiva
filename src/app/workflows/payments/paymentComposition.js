@@ -1,3 +1,5 @@
+import { getBusinessDate } from '../../../../shared/finance.js'
+
 const safeCents = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0
 const currentCodes = (allocations = [], exceptIndex = -1) => new Set(
   allocations
@@ -104,3 +106,12 @@ export const paymentMethodLabel = (paymentOptions = [], code) => (
 )
 
 export const paymentMethodCode = (paymentOptions = [], value) => optionFor(paymentOptions, value)?.code || ''
+
+// ISO calendar date only. Avoid Date.parse normalization of impossible days.
+export const isValidReceivedDate = (value, today = getBusinessDate()) => {
+  if (typeof value !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() + 1 === month
+    && parsed.getUTCDate() === day && value <= today
+}
