@@ -1,4 +1,4 @@
-import {getScopedReadCache} from '../../../infrastructure/realtime/scopedReadCache.js'
+import {COLLECTION_TOPIC,getScopedReadCache} from '../../../infrastructure/realtime/scopedReadCache.js'
 import {getScopedBootstrapCollections,getScopedOperationalState} from '../../../../shared/scopedReads.js'
 import {createScopedReadsApi} from '../../../infrastructure/api/scopedReadsApi.js'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -113,7 +113,7 @@ export function useOperationalDataRuntime({
     officialOrdersRef.current=value;setOrders(value)
   },[])
 
-  const applyBootstrapCollections = useCallback((data, token) => {
+  const applyBootstrapCollections = useCallback((data, token, {fromCache=false}={}) => {
     const guard = syncGuardRef.current
     const declared=getScopedBootstrapCollections(data),selected=declared ?? DATA_COLLECTIONS,operational=getScopedOperationalState(data)
     const allowed=key=>selected.includes(key)&&guard.canApply(token,key)
@@ -132,7 +132,7 @@ export function useOperationalDataRuntime({
     if(allowed('tableTabs'))setTableTabs(Array.isArray(data?.tableTabs)?data.tableTabs:[])
     if(allowed('movements'))setMovements(Array.isArray(data?.movements)?data.movements:[])
     if(allowed('financeSettings'))setFinanceSettings(data?.financeSettings ?? null)
-    if(declared && receipt.metadataApplied){
+    if(declared && receipt.metadataApplied && !fromCache){
       setOperationalCounters(operational.counters)
       setOperationalOrders(operational.orders)
       setOpenTableTabIds(operational.tabs)
@@ -215,7 +215,7 @@ export function useOperationalDataRuntime({
     const token = guard.beginRead(GUARD_COLLECTIONS)
     const cached=navigation&&modeRef.current?cache?.get(cacheKey):null
     if(cached){
-      const receipt=applyBootstrapCollections(cached,token)
+      const receipt=applyBootstrapCollections(cached,token,{fromCache:true})
       appliedSurfaceRef.current=owner.surface;setSurfaceState({surface:owner.surface,status:'ready'})
       bootstrapOwnerRef.current=null;bootstrapSyncInFlightRef.current=false
       return Promise.resolve(receipt)
@@ -230,7 +230,7 @@ export function useOperationalDataRuntime({
         if(data.readModel && owner.surface!==undefined && data.readModel.surface!==owner.surface)throw new TypeError('Unexpected bootstrap surface')
         const receipt = applyBootstrapCollections(data, token)
         if(modeRef.current && receipt.metadataApplied && receipt.collectionsApplied.length===receipt.expectedCollections.length)
-          cache?.set(cacheKey,data,{topics:SNAPSHOT_TOPICS,collections:GUARD_COLLECTIONS,token:cacheToken,version:cacheVersion})
+          cache?.set(cacheKey,data,{topics:[...new Set(['settings',...receipt.expectedCollections.map(key=>COLLECTION_TOPIC[key]),...(receipt.expectedCollections.some(key=>key==='tables'||key==='tableTabs')?['reservations']:[])])],collections:receipt.expectedCollections,token:cacheToken,version:cacheVersion})
         appliedSurfaceRef.current=owner.surface;setSurfaceState({surface:owner.surface,status:'ready'})
         if(bootstrapStateRef.current!=='ready')setBootstrapState('ready')
         return receipt
