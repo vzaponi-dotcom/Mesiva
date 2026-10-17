@@ -49,7 +49,15 @@ export function assertSameTvReads(before,after) {
   const itemRows=queries=>queries.find(q=>q.sql.includes('i.order_id'))?.results
   assert.ok(orderRows(before) && orderRows(after),'TV order queries were not captured')
   assert.ok(itemRows(before) && itemRows(after),'TV item queries were not captured')
-  assert.deepEqual(orderRows(after),orderRows(before),'TV read contract differs: orders')
+  const publishedOrders=orderRows(before),currentOrders=orderRows(after)
+  const publishedKeys=Object.keys(publishedOrders[0] || {})
+  const addedKeys=new Set(['customer_identity_type','table_identifier','reservation_table_name'])
+  for(const row of currentOrders){
+    assert.ok(Object.keys(row).every(key=>publishedKeys.includes(key)||addedKeys.has(key)),
+      'TV read contract differs: unexpected order field')
+  }
+  assert.deepEqual(currentOrders.map(row=>Object.fromEntries(publishedKeys.map(key=>[key,row[key]]))),
+    publishedOrders,'TV read contract differs: orders')
   assert.deepEqual(itemRows(after),itemRows(before),'TV read contract differs: items')
 }
 // Diagnostic guard for the repository's two tenant lookup forms, not authorization.
