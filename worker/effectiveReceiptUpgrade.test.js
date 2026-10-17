@@ -17,16 +17,24 @@ test('Task 10: populated 0052 upgrade backfills only unanimous movements, preser
       ['without-movements','historical-a',3000,'2018-12-01T02:30:00.000Z'],
       ['foreign-receipt','historical-b',4000,at],
     ])receipt.run(id,business,amount,paidAt,paidAt)
+    const allocation=sqlite.prepare(`INSERT INTO payment_allocations
+      (id,business_id,receipt_id,method_label,amount_cents,created_at)
+      VALUES(?,?,?,'Pix',?,?)`)
+    for(const [id,business,cents,receiptId] of [
+      ['c1','historical-a',700,'unanimous'],['c2','historical-a',300,'unanimous'],
+      ['d1','historical-a',1000,'disagreement'],['d2','historical-a',1000,'disagreement'],
+      ['f1','historical-b',4000,'foreign-receipt'],
+    ])allocation.run(id,business,receiptId,cents,at)
     const movement=sqlite.prepare(`INSERT INTO movements(id,business_id,type,category,description,
-      value_cents,source,movement_date,created_at,receipt_id)
-      VALUES(?,?,'entrada','sales','Migração',?,'order-payment',?,?,?)`)
+      value_cents,source,movement_date,created_at,receipt_id,payment_allocation_id)
+      VALUES(?,?,'entrada','sales','Migração',?,'order-payment',?,?,?,?)`)
     for(const [id,business,cents,date,receiptId] of [
       ['c1','historical-a',700,'2026-10-15','unanimous'],
       ['c2','historical-a',300,'2026-10-15','unanimous'],
       ['d1','historical-a',1000,'2026-10-14','disagreement'],
       ['d2','historical-a',1000,'2026-10-15','disagreement'],
       ['f1','historical-b',4000,'2026-10-15','foreign-receipt'],
-    ])movement.run(id,business,cents,date,at,receiptId)
+    ])movement.run(id,business,cents,date,at,receiptId,id)
   }
   const {sqlite,db,close}=createSettingsDb({beforeMigration})
   t.after(close)
