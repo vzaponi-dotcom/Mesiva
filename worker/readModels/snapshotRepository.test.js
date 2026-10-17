@@ -25,6 +25,20 @@ test('common snapshot reads share one guarded batch and preserve counters', asyn
   assert.deepEqual(result.readModel.openTableTabIds, [])
 })
 
+test('new order batches permitted clients, catalog and open-tab reads',async t=>{
+  const {db,sqlite}=setup(t),load=await read(),at='2026-10-16T12:00:00Z'
+  sqlite.prepare("INSERT INTO clients(id,business_id,name,created_at,updated_at) VALUES('new-client',?,'Ana',?,?)").run(businessId,at,at)
+  sqlite.prepare("INSERT INTO products(id,business_id,category,size,name,price_cents,active,created_at,updated_at) VALUES('new-product',?,'Bebidas','Un','Suco',3000,1,?,?)").run(businessId,at,at)
+  const batch=db.batch.bind(db),lengths=[]
+  db.batch=async statements=>{lengths.push(statements.length);return batch(statements)}
+  const result=await load(db,businessId,{surface:'new-order',granted:new Set(['orders.create','orders.view','comandas.view','clients.view','products.view'])})
+  assert.equal(lengths[0],6)
+  assert.deepEqual(result.clients.map(c=>c.id),['new-client'])
+  assert.deepEqual(result.products.map(p=>p.id),['new-product'])
+  assert.deepEqual(result.tableTabs,[])
+  assert.equal(result.readModel.orderScope,'open-tabs')
+})
+
 test('active selection stays indexed at 10k and 100k terminal orders with old and future active candidates',async t=>{
   const {db,sqlite}=setup(t),load=await read()
   const active=await seedOperationalReadFixture(db,{businessId,activeOrders:3})
