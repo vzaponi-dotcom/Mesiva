@@ -1,3 +1,4 @@
+import { getBusinessDate } from '../shared/finance.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { act } from 'react-test-renderer'
@@ -414,7 +415,7 @@ for (const mobile of [false, true]) test(`official full payment releases table a
   await pay()
   assert.equal(state.pending.length, 1)
   assert.equal(state.pending[0].path, '/api/table-tabs/tab-42/payment')
-  assert.deepEqual(JSON.parse(state.pending[0].options.body), { allocations: [{ methodCode: 'pix', amountCents: 12345 }] })
+  assert.deepEqual(JSON.parse(state.pending[0].options.body), { allocations: [{ methodCode: 'pix', amountCents: 12345 }], receivedDate: getBusinessDate() })
   assert.match(nodeText(r.root.findByProps({ 'aria-label': 'Mesas ativas' })), /Ocupada/)
   await act(async () => state.pending[0].resolve(jsonResponse(paidResult())))
   assert.equal(r.root.findAllByProps({ role: 'dialog' }).length, 0)
