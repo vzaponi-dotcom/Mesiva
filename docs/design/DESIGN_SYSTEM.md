@@ -1,11 +1,11 @@
 # Mesiva — Design System e aplicação visual no produto
 
 - **Tipo:** documentação viva da identidade aplicada ao produto, tokens, temas, componentes e critérios de revisão.
-- **Versão:** v0.2 — revisão focal em 17/10/2026 (consolidação inicial 13/10/2026).
+- **Versão:** v0.3 — centralização documental no GitHub em 17/10/2026 (baseline de implementação de v0.2 preservada).
 - **Baselines de implementação:** inspeção original em `master@e595f7ed2a801fde6ffab231194788430cc53316`; temas, CSS, assets SVG e componentes de Cozinha/TV reconferidos em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d`. Não equivale à reauditoria visual de todas as telas.
-- **Fontes de marca:** [Guia oficial de identidade visual v1.0 — PDF (23/09/2026)](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view), [edição Word](https://docs.google.com/document/d/1JAhAgcuIa7sR8yK7sqX9SF_q1S993qj_/edit), [refinamento aprovado de logo (02/10/2026)](../operations/2026-10-02-mesiva-logo-refinement.md) e [atualização de ícones (02/10/2026)](../operations/2026-10-02-github-releases-and-mesiva-icons.md).
+- **Fontes de marca:** [governança GitHub dos guias v1.1 e v1.0](identidade-visual/README.md) (arquivos binários ainda pendentes de upload), [refinamento aprovado de logo (02/10/2026)](../operations/2026-10-02-mesiva-logo-refinement.md), [atualização de ícones (02/10/2026)](../operations/2026-10-02-github-releases-and-mesiva-icons.md) e ativos em [\`public/brand/\`](../../public/brand/).
 - **Escopo:** documentação da direção aprovada no guia, decisões posteriores registradas e **implementação observável no repositório**; não é redesign, auditoria WCAG completa ou homologação de dispositivos.
-- **Situação normativa:** **conciliação formal do guia v1.0 com os ativos aprovados em 02/10 ainda pendente**. A revisão focal confrontou o PDF v1.0 disponibilizado no projeto, o registro de refinamento de 02/10, os SVGs e os tokens existentes: não revoga as cinco divergências nem substitui a aprovação de nova versão do guia Word/PDF.
+- **Situação normativa:** a **edição v1.1 foi aprovada** em 17/10/2026, conciliando editorialmente os ativos de 02/10 com o guia original. **Sua publicação junto da v1.0 no GitHub ainda está pendente de upload dos binários**; as cinco divergências abaixo permanecem como registro histórico e decisões distintas de implementação. Não afirmar que os arquivos binários estão no repositório enquanto não forem verificados.
 
 **Para agentes:** este arquivo responde **como apresentar** o produto, não substitui o [PRD](../product/PRD.md), as [regras de negócio](../product/BUSINESS_RULES.md), a [arquitetura](../architecture/ARCHITECTURE.md), o [mapa de módulos](../architecture/MODULE_MAP.md) ou as [instruções operacionais](../../AGENTS.md). **Não alterar** SVGs, paleta, comportamento, permissões, rotas ou produção apenas com base nesta consolidação.
 
@@ -13,13 +13,14 @@
 
 | Fonte | O que ela de fato determina | Limitação / relação com as demais |
 | --- | --- | --- |
-| **Guia oficial Mesiva v1.0, 23/09/2026** | Direção amigável/profissional, símbolo em M com garfo e colher, cor amarela, paleta, contrastes, linguagem, regras de aplicação, revisão e governança | Na data de sua emissão, **fonte e vetor final, versões de logo/ícones e slogan ainda constavam como pendentes**; não foi identificada uma edição v1.1 do guia neste trabalho |
+| **Guia oficial Mesiva v1.1, aprovado em 17/10/2026** | Consolida editorialmente vetor, variantes, ícones, slogan português e duas cores com papéis diferentes; documento aprovado | **Arquivos PDF/Word aprovados ainda não enviados ao GitHub**. Consultar [manifesto de governança](identidade-visual/README.md) e verificar SHA dos blobs antes de afirmar publicação |
+| **Guia oficial Mesiva v1.0, 23/09/2026** | Direção inicial, paleta, contrastes, linguagem, revisão e governança | **Versão histórica**; em sua emissão, fonte, vetor, variantes de logo/ícones e slogan final constavam pendentes. Arquivos históricos ainda aguardam importação ao GitHub |
 | **Refinamento do logo de 02/10/2026** | Registra aprovação posterior do vetor com curvas ajustadas, variantes claro/escuro, lettering e slogan **“Pessoas. Sabor. Evolução.”** | São decisões posteriores registradas no projeto. Não equivalem automaticamente à publicação de um guia do Drive com versão atualizada |
 | **Ativos versionados em `public/brand/`** | São os arquivos **efetivamente disponíveis para uso na aplicação**; o código aponta para eles | A geometria/cor do SVG não deve ser alterada para “corrigir” divergências documentais sem revisão e autorização |
 | **Tokens e componentes do repositório** | Revelam como a UI está implementada na baseline e o efeito dos modos de tema | Não significam certificação de contraste/acessibilidade nem tornam todo estilo legado normativo |
 | **`docs/mesiva-kitchen-visual.md`** | Diretrizes datadas de Cozinha, Comandas, navegação e homologação | Complementa a implementação da área; não revoga regras de negócio nem é o catálogo universal de componentes |
 
-**Regra de consulta em mudança visual:** ler primeiro o guia disponível, depois o registro do refinamento posterior e os assets que o código usa. Diante de divergência, **descrever e escalar para a aprovação do proprietário**. A ordem formal de precedência prevista no guia é guia vigente → ativos finais aprovados → base/refinamentos → histórico. Não “promover” esta síntese a uma nova edição do guia sem aprovação.
+**Regra de consulta em mudança visual:** a versão **v1.1 aprovada** é a referência editorial vigente; consultar também o registro do refinamento de outubro, os assets `public/brand/` e o Design System para aplicação em UI. Enquanto os binários aguardam upload, usar somente as fontes já versionadas, sem alegar disponibilidade do PDF. Diante de dúvida não resolvida, **escalar para aprovação do proprietário**. Ordem: guia aprovado vigente → ativos finais aprovados → documentação viva → histórico.
 
 ### 1.1 Registro de divergências e decisões pendentes
 
@@ -31,7 +32,7 @@
 | **DV-04** | `src/index.css` ainda contém cores vermelhas da variante **Clássico** e `src/brand.css` / `BrandLogo.jsx` preservam representações legadas. | Não tratá-las como nova marca Mesiva nem removê-las sem rastrear usos. O app suporta seleção **Clássico/Mesiva**; a marca Mesiva usa `public/brand/`. |
 | **DV-05** | Guia v1.0 não define família exata do lettering do logo; registro de outubro descreve contornos vetorizados e geração do slogan. | **Não** recriar o lettering com uma fonte “parecida”, nem distribuir fontes. A tipografia da **interface** permanece a pilha funcional vigente, distinta do desenho do logotipo. |
 
-**Atualização de governança (17/10/2026):** o proprietário aprovou a **edição documental v1.1** do guia em Word/PDF (10 páginas), que formaliza os vetores, variantes, ícones e slogan aprovados anteriormente. As DV-01–DV-05 acima descrevem a divergência **histórica** entre a edição v1.0 e os ativos de outubro. A v1.1 registra essas diferenças; isso não autoriza recolorir ativos, apagar o tema Clássico, criar logo novo ou declarar certificação de acessibilidade. **Falta publicar e verificar os dois arquivos v1.1 na pasta oficial do Drive**; até lá, os links do cabeçalho ainda representam a v1.0. Nenhuma publicação no Drive foi efetuada nesta PR.
+**Atualização de governança (17/10/2026):** o proprietário aprovou a **edição documental v1.1** do guia em Word/PDF (10 páginas), que formaliza os vetores, variantes, ícones e slogan aprovados anteriormente. As DV-01–DV-05 descrevem diferenças **históricas** entre a edição v1.0 e os ativos de outubro; a edição v1.1 registra o histórico, sem autorizar recolorir ativos, apagar o tema Clássico, criar logo novo ou declarar certificação de acessibilidade. **Repositório GitHub é a fonte oficial decidida; o upload de PDF/Word v1.1 e do histórico v1.0 ainda precisa ser executado e verificado**. O Google Drive deixa de ser dependência operacional. Consulte o [manifesto de versões](identidade-visual/README.md).
 
 ## 2. Identidade da marca
 
@@ -214,17 +215,17 @@ A lista é derivada do checklist do guia v1.0 e dos contratos observados no cód
 
 ### Texto sugerido para o corpo de futuras PRs visuais
 
-> Referência visual: Mesiva — guia de identidade v1.0 (23/09/2026), refinamento de logo/ativos (02/10/2026) e `docs/design/DESIGN_SYSTEM.md`. Superfícies afetadas: […]. Modos testados: Mesiva/Clássico, claro/escuro/automático conforme aplicável. Evidências e SHA: […]. Divergências aprovadas ou pendentes: […].
+> Referência visual: Mesiva — guia oficial **v1.1 aprovado em 17/10/2026**, histórico v1.0 (23/09/2026), refinamento de logo/ativos (02/10/2026) e `docs/design/DESIGN_SYSTEM.md`. Superfícies afetadas: […]. Modos testados: Mesiva/Clássico, claro/escuro/automático conforme aplicável. Evidências e SHA: […]. Divergências aprovadas ou pendentes: […].
 
 ## 9. Governança, próximos passos e manutenção
 
 1. **Não iniciar um redesign automático.** Este documento não autoriza mudar CSS/JSX/ativos. Em cada tarefa visual, abrir o componente e seguir seu proprietário pelo [Module Map](../architecture/MODULE_MAP.md), com testes/regressões proporcionais ao impacto.
-2. **Conciliação documental pendente:** propor revisão formal do **guia oficial Word + PDF** para incorporar o vetor final, variantes, slogan, ícones e diferenças de cor, mantendo links e versionamento. A revisão depende de autorização explícita do proprietário.
+2. **Guia v1.1 aprovado; publicação pendente:** adicionar PDF e Word aprovados, com seus hashes, a [\`docs/design/identidade-visual/\`](identidade-visual/README.md) e guardar a v1.0 sob `historico/`. Após verificar os blobs, habilitar os links reais do GitHub e tratar a v1.1 como fonte oficial publicada. Não reutilizar links do Drive como referência obrigatória.
 3. **Não apagar o legado por interpretação:** tema Clássico e eventuais arquivos de marca anteriores exigem rastreamento de consumidores e decisão específica antes de remoção.
 4. **Ao alterar marca ou tokens:** registrar fonte/aprovação, CSS/asset, telas afetadas, evidências desktop/mobile/escuro e, se aplicável, TV e impressão. Revisar contrastes em combinações reais.
 5. **Ao alterar estados operacionais:** consultar [Business Rules](../product/BUSINESS_RULES.md) e runbooks; Design System não redefine preparo, pagamento, permissões, reserva nem fila de impressão.
 6. **Produção:** alterações visuais seguem PR/CI/staging/homologação; merge e deploy dependem de autorização separada.
 
-**Referências:** [Índice documental](../README.md) · [PRD](../product/PRD.md) · [Arquitetura](../architecture/ARCHITECTURE.md) · [Mapa de módulos](../architecture/MODULE_MAP.md) · [Guia Mesiva v1.0](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) · [Refinamento de marca](../operations/2026-10-02-mesiva-logo-refinement.md) · [Identidade Cozinha/Comandas](../mesiva-kitchen-visual.md).
+**Referências:** [Índice documental](../README.md) · [PRD](../product/PRD.md) · [Arquitetura](../architecture/ARCHITECTURE.md) · [Mapa de módulos](../architecture/MODULE_MAP.md) · [Guias oficiais Mesiva — governança GitHub](identidade-visual/README.md) · [Refinamento de marca](../operations/2026-10-02-mesiva-logo-refinement.md) · [Identidade Cozinha/Comandas](../mesiva-kitchen-visual.md).
 
-**Atualização:** documentar a edição/PR/SHA sempre que tokens, componentes públicos, temas ou ativos aprovados mudarem. A existência deste Design System **não** significa que ele foi aprovado como substituto do guia oficial, nem que uma implantação remota foi executada.
+**Atualização:** documentar edição/PR/SHA sempre que tokens, componentes públicos, temas ou ativos aprovados mudarem. O Design System não substitui o guia v1.1 aprovado. **Até verificar o upload, a v1.1 é oficialmente aprovada, mas não está publicada no repositório.** Esta atualização não executa deploy.
