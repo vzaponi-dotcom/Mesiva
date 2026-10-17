@@ -18,7 +18,7 @@ test('common snapshot reads share one guarded batch and preserve counters', asyn
   const { db } = setup(t), load = await read()
   const batch = db.batch.bind(db), lengths = []
   db.batch = async statements => { lengths.push(statements.length); return batch(statements) }
-  const result = await load(db, businessId, { surface: 'clients', granted: new Set(['orders.view', 'comandas.view']) })
+  const result = await load(db, businessId, { surface: 'clients', granted: new Set(['clients.view', 'orders.view', 'comandas.view']) })
   assert.deepEqual(lengths, [3])
   assert.deepEqual(result.readModel.counters, { orders: 0, comandas: 0 })
   assert.deepEqual(result.readModel.operationalOrders, [])
