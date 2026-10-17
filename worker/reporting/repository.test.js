@@ -456,6 +456,12 @@ test('Task 8: reporting detail retains effective financial day per original and 
     ['extra-r8','2026-10-15','2026-10-17T12:00:00Z',500],
   ])
   assert.equal(result.grossReceivedCents,9500)
+  const exported=await repo.listDetail('r8',{from:'2026-10-17',to:'2026-10-17',page:1,pageSize:20,withFinancialDates:true})
+  assert.equal(exported.total,1)
+  assert.equal(exported.items[0].payment_received_dates,'2026-10-14 + 2026-10-15')
+  assert.equal(exported.items[0].order_date,'2026-10-17')
+  const browsing=await repo.listDetail('r8',{from:'2026-10-17',to:'2026-10-17',page:1,pageSize:20})
+  assert.equal(Object.hasOwn(browsing.items[0],'payment_received_dates'),false,'no extra receipt query for ordinary browsing')
   assert.equal((await repo.getOrderDetail('r8','absent')),null)
   assert.equal((await repo.getOrderDetail('amor-e-sabor','order-r8')),null)
 })
