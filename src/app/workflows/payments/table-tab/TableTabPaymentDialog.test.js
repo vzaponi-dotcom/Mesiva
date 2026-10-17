@@ -111,3 +111,29 @@ test('whole-table dialog submits a structured Dinheiro + Pix composition instead
     ],
   ]])
 })
+
+
+test('Task 9: comanda date defaults to business today, rejects future, survives failed submit and resets on reopen',async t=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const h=await workspaceHarness(t,{mobile:true})
+  const {default:Dialog}=await h.load('/src/app/workflows/payments/table-tab/TableTabPaymentDialog.jsx')
+  const today=getBusinessDate()
+  const props={open:true,detail:comandaDetail,currency:String,onClose(){},onConfirm:(...args)=>{calls.push(args);return false}}
+  const calls=[]
+  const r=await h.render(Dialog,props)
+  const dateField=()=>r.root.findByProps({'aria-label':'Data do recebimento'})
+  assert.equal(dateField().props.type,'date')
+  assert.equal(dateField().props.value,today)
+  assert.equal(dateField().props.max,today)
+  await act(async()=>dateField().props.onChange({target:{value:'2999-01-01'}}))
+  assert.ok(buttonNamed(r.root,'Confirmar pagamento').props.disabled)
+  await act(async()=>r.root.findByType('form').props.onSubmit({preventDefault(){}}))
+  assert.equal(calls.length,0)
+  await act(async()=>dateField().props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>r.root.findByType('form').props.onSubmit({preventDefault(){}}))
+  assert.equal(calls[0][2].receivedDate,'2026-10-15')
+  assert.equal(dateField().props.value,'2026-10-15')
+  await act(async()=>r.update(React.createElement(Dialog,{...props,open:false})))
+  await act(async()=>r.update(React.createElement(Dialog,props)))
+  assert.equal(dateField().props.value,today)
+})
