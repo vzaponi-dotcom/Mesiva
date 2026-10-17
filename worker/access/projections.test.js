@@ -271,6 +271,9 @@ test('paid checkout HTTP route persists a distinct financial date while keeping 
 
 test('checkout HTTP rejects future date and effective date on unpaid orders without persisting effects',async(t)=>{
   const {env,tokens,sqlite}=await setup(t)
+  const tracked=['orders','payment_receipts','payments','movements','print_jobs']
+  const count=(table)=>sqlite.prepare('SELECT COUNT(*) n FROM '+table).get().n
+  const before=Object.fromEntries(tracked.map(table=>[table,count(table)]))
   for(const body of [
     {paymentAllocations:[{methodCode:'pix',amountCents:2500}],receivedDate:'9999-12-31'},
     {paymentAllocations:null,receivedDate:'2026-09-19'},
@@ -282,6 +285,5 @@ test('checkout HTTP rejects future date and effective date on unpaid orders with
     assert.equal(response.status,400)
     assert.equal((await response.json()).error.code,'VALIDATION_ERROR')
   }
-  for(const table of ['payment_receipts','payments','movements','print_jobs'])
-    assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM '+table).get().n,0)
+  for(const table of tracked) assert.equal(count(table),before[table],table)
 })
