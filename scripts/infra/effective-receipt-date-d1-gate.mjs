@@ -112,14 +112,22 @@ export async function runEffectiveReceiptDateD1Gate() {
     const budget={runtime:'Miniflare D1/workerd local, Wrangler 4.128.0',fixture:{small:1000,large:10000},
       baseline:{},after:{},legacy:{},indexCreation:null,queryPlan:[],
     }
-    await seed(0,1000)
+    const smallInsertMeta=(await seed(0,1000)).meta
     const params=values(biz,'2026-10-15'),legacy=values(biz,'2018-12-01')
     budget.baseline.small=await sample(BEFORE,params.before,biz)
     const indexMeta=(await db.prepare(financialIndex.sql).run()).meta
     budget.indexCreation={rows_read:indexMeta.rows_read,rows_written:indexMeta.rows_written,atHistoricalRows:1000}
     budget.after.small=await sample(CURRENT,params.after,biz)
     budget.legacy.small=await sample(CURRENT,legacy.after,biz)
-    await seed(1000,9000)
+    const indexedInsertMeta=(await seed(1000,1000)).meta
+    await seed(2000,8000)
+    budget.insertWrites={
+      receiptRowsPerSample:1000,
+      beforeIndex:{rows_read:smallInsertMeta.rows_read,rows_written:smallInsertMeta.rows_written,requests:1},
+      afterIndex:{rows_read:indexedInsertMeta.rows_read,rows_written:indexedInsertMeta.rows_written,requests:1},
+    }
+    assert.ok(budget.insertWrites.afterIndex.rows_written>=budget.insertWrites.beforeIndex.rows_written,
+      'financial receipt index maintenance should not be hidden')
     budget.baseline.large=await sample(BEFORE,params.before,biz)
     budget.after.large=await sample(CURRENT,params.after,biz)
     budget.legacy.large=await sample(CURRENT,legacy.after,biz)
