@@ -105,3 +105,13 @@ test('removing a row recalculates from the remaining immutable composition', () 
   assert.deepEqual(remaining, [{ methodCode: 'cash', amountCents: 3000 }])
   assert.equal(summarizePaymentComposition(remaining, 8000, options).remainingCents, 5000)
 })
+
+
+test('Task 9: received date validates Sao Paulo calendar boundaries, empty and impossible dates', async () => {
+  const { isValidReceivedDate } = await import('./paymentComposition.js')
+  assert.equal(isValidReceivedDate('2026-10-15','2026-10-17'),true)
+  assert.equal(isValidReceivedDate('2026-10-17','2026-10-17'),true)
+  for(const invalid of ['','2026-10-18','2026-02-30','2026-1-1','2026-10-17T12:00:00Z',' 2026-10-15','2026-13-02',null]){
+    assert.equal(isValidReceivedDate(invalid,'2026-10-17'),false,String(invalid))
+  }
+})
