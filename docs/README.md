@@ -26,18 +26,21 @@ Este índice orienta pessoas e agentes de IA a encontrar a **fonte pertinente** 
 - **Regras de negócio consolidadas:** [Business Rules](product/BUSINESS_RULES.md) — invariantes funcionais com IDs estáveis, referências a código e pendências explícitas; verificar sempre a branch/SHA da tarefa.
 - **Arquitetura geral:** [Architecture](architecture/ARCHITECTURE.md) — visão atual de camadas, fluxos, limites de confiança, ambientes e CI; conferir a baseline e os contratos de código citados.
 - **Mapa de módulos:** [Module Map](architecture/MODULE_MAP.md) — dez domínios, contratos públicos, workflows transversais, correspondências do Worker e testes para começar pela área certa.
-- **Design System da interface:** [Design System](design/DESIGN_SYSTEM.md) — identidade aplicada, fontes cronológicas, tokens, temas, componentes e **divergências explícitas ainda pendentes de conciliação formal no guia oficial**.
+- **Design System da interface:** [Design System](design/DESIGN_SYSTEM.md) — identidade aplicada, fontes cronológicas, tokens, temas e componentes; [governança dos guias oficiais](design/identidade-visual/README.md) define versões, aprovação, integridade e publicação dos binários no GitHub.
 - **Economia operacional e escalabilidade:** [orçamento de leituras D1](operations/operational-data-read-budget.md), [realtime e orçamento Cloudflare](operations/realtime-sync.md), [incidente de impressão](operations/printing-d1-read-incident.md) e [roteiro de custo e escala](superpowers/plans/2026-10-14-mesiva-scale-roadmap.md) — fontes para medir mudanças em queries, índices, temporizadores, caches e requests; resultados históricos têm baseline própria.
 - **Procedimentos em vigor:** os runbooks vinculados acima. São detalhamentos operacionais; o PRD não os substitui.
 
-### Identidade visual: referências e conciliação pendente
+### Identidade visual: GitHub como fonte oficial
 
-- [Guia oficial de identidade visual Mesiva v1.0 (Drive, 23/09/2026)](https://drive.google.com/file/d/1YHj8qfsBMhGz7BQCCyTn69iQ8qtMOjKc/view) — direção da marca e regras de aplicação aprovadas naquela edição.
-- [Refinamento do logo e slogan (02/10/2026)](operations/2026-10-02-mesiva-logo-refinement.md) — registra vetores, versões clara/escura, ícones e a assinatura em português adotados posteriormente.
-- [Ícones e publicações](operations/2026-10-02-github-releases-and-mesiva-icons.md) e [referência visual de Cozinha/Comandas](mesiva-kitchen-visual.md) — mudanças e contexto adicionais.
-- Ativos da aplicação: `public/brand/`. **Não** reconstruir/recolorir a marca por aproximação.
+**Decisão de 17/10/2026:** a Mesiva adotou o **próprio repositório GitHub** como fonte canônica da documentação de identidade visual, sem depender de sincronização com Google Drive. A edição **v1.1 foi aprovada** pelo proprietário; os quatro arquivos binários (PDF e Word da v1.1 e da v1.0 histórica) **foram incorporados à branch da PR #119**, preservando os bytes originais e verificando tamanhos, SHA-256 e SHA-1 dos blobs Git contra o manifesto.
 
-O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositório contém versões posteriores. O [Design System](design/DESIGN_SYSTEM.md) documenta as duas situações e cinco divergências, **sem declarar reconciliação formal concluída**. Não alterar o logo nem substituir o guia no Drive sem revisão e aprovação.
+- [Governança, arquivos e hashes de integridade](design/identidade-visual/README.md) — links para a versão vigente e o histórico v1.0, manifesto verificado e checklist de integração da PR #119.
+- [Design System](design/DESIGN_SYSTEM.md) — aplicação em CSS/JSX, tokens, temas, componentes, exemplos e cinco diferenças **históricas** entre o guia v1.0 e ativos aprovados em outubro.
+- [Refinamento do logo e slogan (02/10/2026)](operations/2026-10-02-mesiva-logo-refinement.md) — registros originais da aprovação do vetor, ícones e assinatura “Pessoas. Sabor. Evolução.”
+- [Ícones e publicações](operations/2026-10-02-github-releases-and-mesiva-icons.md) e [referência visual de Cozinha/Comandas](mesiva-kitchen-visual.md) — decisões complementares.
+- **Ativos efetivos de aplicação:** `public/brand/` (SVGS e ícones já versionados). Não reconstruir nem recolorir a marca por aproximação.
+
+**Arquivos disponíveis nesta branch:** guia v1.1 em [PDF](design/identidade-visual/00_Mesiva_Guia_oficial_identidade_visual_v1.1.pdf) e [Word](design/identidade-visual/00_Mesiva_Guia_oficial_identidade_visual_v1.1.docx), com [histórico v1.0](design/identidade-visual/historico/README.md) preservado. Consultar também a governança, o Design System e os assets do repositório. A importação não altera marca, código ou produção.
 
 ## Documentação histórica e evidências
 
@@ -63,4 +66,4 @@ O guia v1.0 ainda registra ativos técnicos como pendentes, enquanto o repositó
 
 ## Escopo desta primeira entrega
 
-Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md), o [Design System](design/DESIGN_SYSTEM.md) e a integração da consulta seletiva ao [AGENTS.md](../AGENTS.md), criados em entregas sequenciais. A revisão formal do guia visual no Drive **permanece pendente e separada**. Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.
+Esta PR reúne o índice, o [PRD](product/PRD.md), as [regras de negócio](product/BUSINESS_RULES.md), a [arquitetura](architecture/ARCHITECTURE.md), o [mapa de módulos](architecture/MODULE_MAP.md), o [Design System](design/DESIGN_SYSTEM.md) e a integração da consulta seletiva ao [AGENTS.md](../AGENTS.md), criados em entregas sequenciais. A edição v1.1 do guia visual já foi **aprovada**; os quatro arquivos oficiais e históricos foram **incorporados e verificados na branch da PR #119**, como registrado na [governança](design/identidade-visual/README.md). Nenhuma mudança nos módulos, permissões, UI, bancos ou no processo de publicação é autorizada por esta documentação.

@@ -18,7 +18,7 @@ Os documentos abaixo **orientam a leitura**, mas não dispensam confirmar códig
 | Saber qual fonte é atual, qual é histórica e o que falta documentar | [Índice documental](docs/README.md) | Spec, plano ou QA específico **somente quando o contexto exigir** |
 
 - **Conflitos e evidências:** documento vivo registra a baseline que foi auditada, **não** prova comportamento de qualquer branch posterior nem deploy em produção. Diante de divergência entre documentação, implementação e intenção aprovada, investigar, registrar e pedir decisão quando necessário; não corrigir silenciosamente regras de negócio para combinar com uma spec antiga.
-- **Identidade visual:** o Design System explica as divergências ainda abertas entre o guia v1.0 e os vetores aprovados depois. Não recolorir/recriar logos nem apresentar a atualização formal do guia no Drive como concluída.
+- **Identidade visual:** guia oficial **v1.1 aprovado em 17/10/2026**, com histórico v1.0 e decisões posteriores. **GitHub é a fonte oficial**, com os quatro binários PDF/Word de v1.1 e v1.0 incorporados à branch da PR #119 e hashes verificados. Conferir o [manifesto de arquivos e hashes](docs/design/identidade-visual/README.md); preservar os bytes aprovados e não recolorir/recriar os logos.
 - **Histórico:** specs, planos, QA e releases preservam decisões e evidências de seus próprios SHAs; consultar pontualmente. Mudança funcional/visual deve atualizar **somente os documentos vivos afetados**, na mesma PR, com fonte verificável. Nenhum desses documentos autoriza merge, migration remota ou produção.
 
 ## Localização rápida
