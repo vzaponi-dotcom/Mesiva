@@ -330,3 +330,73 @@ test('detail receivable filter and pending amount exclude active reservation ord
   assert.equal(reservation.pendingCents, 0)
   assert.deepEqual(unpaid.items.map(({ id }) => id), ['detail-delivery-order'])
 })
+
+
+test('Task 7: reporting uses received_date over paid_at for receipts, split methods and tenant isolation',async t=>{
+  const {createReportingRepository}=await import('./repository.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  sqlite.exec(`
+    INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES
+      ('a','a','A','2026-10-01','2026-10-01'),('b','b','B','2026-10-01','2026-10-01');
+    INSERT INTO orders(id,business_id,order_number,client_name_snapshot,order_date,type,status,subtotal_cents,total_cents,created_at) VALUES
+      ('oa','a',1,'Ana','2026-10-17','Entrega','Finalizado',10000,10000,'2026-10-17T15:00:00Z');
+    INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES
+      ('backdated','a',10000,'2026-10-17T15:00:00Z','2026-10-15','2026-10-17T15:00:00Z'),
+      ('other-company','b',9000,'2026-10-17T15:00:00Z','2026-10-15','2026-10-17T15:00:00Z'),
+      ('current','a',2500,'2026-10-17T15:00:00Z','2026-10-17','2026-10-17T15:00:00Z');
+    INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES
+      ('split-pix','a','backdated','pix','Pix',7000,'2026-10-17T15:00:00Z'),
+      ('split-cash','a','backdated','cash','Dinheiro',3000,'2026-10-17T15:00:00Z'),
+      ('current-pix','a','current','pix','Pix',2500,'2026-10-17T15:00:00Z'),
+      ('other-pix','b','other-company','pix','Pix',9000,'2026-10-17T15:00:00Z');
+    INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at) VALUES
+      ('refund','a','saida','refunds','Estorno',500,'order-refund','2026-10-15','2026-10-17T15:00:00Z'),
+      ('manual','a','saida','other','Manual',1000,'manual','2026-10-15','2026-10-17T15:00:00Z');
+  `)
+  const repo=createReportingRepository(db),retro={from:'2026-10-15',to:'2026-10-15'},today={from:'2026-10-17',to:'2026-10-17'}
+  const overview=await repo.loadOverview('a',retro)
+  assert.deepEqual(overview.receipts.map(r=>r.total_cents),[10000])
+  assert.deepEqual(overview.refunds.map(r=>r.value_cents),[500])
+  const sales=await repo.loadSales('a',retro)
+  assert.deepEqual(sales.receipts.map(r=>[r.id,r.received_date,r.total_cents]),[['backdated','2026-10-15',10000]])
+  assert.deepEqual(sales.allocations.map(a=>a.amount_cents).sort((a,b)=>a-b),[3000,7000])
+  assert.deepEqual((await repo.loadSales('a',{...retro,paymentMethod:'Pix'})).receipts.map(r=>r.total_cents),[7000])
+  assert.deepEqual((await repo.loadSales('a',{...retro,paymentMethod:'Pix'})).allocations.map(r=>r.amount_cents),[7000])
+  assert.deepEqual((await repo.loadSales('a',today)).receipts.map(r=>r.id),['current'])
+  assert.deepEqual((await repo.loadSales('b',retro)).receipts.map(r=>r.id),['other-company'])
+  assert.deepEqual((await repo.loadSales('a',today)).orders.map(o=>o.id),['oa'])
+})
+
+test('Task 7: NULL legacy receipts use Sao Paulo historical DST without altering stored data',async t=>{
+  const {createReportingRepository}=await import('./repository.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  sqlite.exec(`
+    INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES ('a','a','A','2018-01-01','2018-01-01');
+    INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,created_at) VALUES
+      ('before-midnight','a',400,'2018-12-01T01:59:59.000Z','2018-12-01T01:59:59.000Z'),
+      ('midnight','a',600,'2018-12-01T02:00:00.000Z','2018-12-01T02:00:00.000Z'),
+      ('after','a',800,'2018-12-02T01:59:59.000Z','2018-12-02T01:59:59.000Z'),
+      ('next','a',1000,'2018-12-02T02:00:00.000Z','2018-12-02T02:00:00.000Z');
+  `)
+  const repo=createReportingRepository(db),query={from:'2018-12-01',to:'2018-12-01'}
+  assert.deepEqual((await repo.loadOverview('a',query)).receipts.map(x=>x.total_cents),[600,800])
+  const sales=await repo.loadSales('a',query)
+  assert.deepEqual(sales.receipts.map(x=>x.id).sort(),['after','midnight'])
+  assert.deepEqual(sales.receipts.map(x=>x.received_date ?? null),[null,null])
+  assert.equal(sqlite.prepare("SELECT count(*) n FROM payment_receipts WHERE received_date IS NOT NULL").get().n,0)
+})
+
+test('Task 7: 100 orders linked to one dated receipt never multiply received totals',async t=>{
+  const {createReportingRepository}=await import('./repository.js')
+  const {db,sqlite,close}=createSettingsDb();t.after(close)
+  sqlite.exec("INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('a','a','A','2026-10-01','2026-10-01')")
+  sqlite.exec("INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at) VALUES('shared','a',10000,'2026-10-17T15:00:00Z','2026-10-15','2026-10-17T15:00:00Z')")
+  sqlite.exec("INSERT INTO payment_allocations(id,business_id,receipt_id,method_code,method_label,amount_cents,created_at) VALUES('alloc','a','shared','pix','Pix',10000,'2026-10-17T15:00:00Z')")
+  const order=sqlite.prepare("INSERT INTO orders(id,business_id,order_number,client_name_snapshot,order_date,type,status,subtotal_cents,total_cents,created_at) VALUES(?,'a',?,'Ana','2026-10-17','Entrega','Finalizado',100,100,'2026-10-17T15:00:00Z')")
+  const pay=sqlite.prepare("INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at) VALUES(?,'a',?,'shared',100,'2026-10-17T15:00:00Z','2026-10-17T15:00:00Z')")
+  for(let i=1;i<=100;i++){order.run('order-'+i,i);pay.run('payment-'+i,'order-'+i)}
+  const repo=createReportingRepository(db),query={from:'2026-10-15',to:'2026-10-15'}
+  assert.deepEqual((await repo.loadOverview('a',query)).receipts.map(x=>x.total_cents),[10000])
+  assert.deepEqual((await repo.loadSales('a',query)).receipts.map(x=>x.total_cents),[10000])
+  assert.deepEqual((await repo.loadSales('a',query)).allocations.map(x=>x.amount_cents),[10000])
+})
