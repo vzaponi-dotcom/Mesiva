@@ -1,0 +1,1452 @@
+{
+  "generatedAt": "2026-10-18T02:57:08.365Z",
+  "timezone": "America/Sao_Paulo",
+  "reviewedBase": "f44e10da3e523d757dc0a9ceffe575d4331907e0",
+  "initialSha": "cd0e2291f65fa1850c53877411f177229a1c0f4c",
+  "codeSha": "ef1d9ae720aaccc4b6a86a16e297776bc08fbdff",
+  "reviewedFiles": [
+    ".github/workflows/deploy-staging.yml",
+    ".github/workflows/validate.yml",
+    "docs/product/BUSINESS_RULES.md",
+    "docs/superpowers/plans/2026-10-17-effective-payment-date-plan.md",
+    "docs/superpowers/qa/2026-10-17-effective-receipt-task10.md",
+    "docs/superpowers/qa/2026-10-17-effective-receipt-task11.md",
+    "docs/superpowers/specs/2026-10-17-effective-payment-date-design.md",
+    "migrations/0052_effective_receipt_date.sql",
+    "scripts/infra/effective-receipt-date-d1-gate.mjs",
+    "scripts/infra/effective-receipt-staging-preflight.mjs",
+    "scripts/infra/effectiveReceiptStagingPreflight.test.js",
+    "scripts/infra/productionSafetyRegression.test.js",
+    "shared/cashFlowReadRules.js",
+    "src/App.jsx",
+    "src/app/surfaces/table-service/TableServiceExternalActions.jsx",
+    "src/app/surfaces/table-service/TableServiceExternalActions.test.js",
+    "src/app/workflows/payments/CheckoutPaymentComposition.jsx",
+    "src/app/workflows/payments/PaymentCompositionEditor.jsx",
+    "src/app/workflows/payments/client-orders/ClientOrdersPaymentDialog.jsx",
+    "src/app/workflows/payments/client-orders/useClientOrdersPaymentWorkflow.js",
+    "src/app/workflows/payments/client-orders/useClientOrdersPaymentWorkflow.test.js",
+    "src/app/workflows/payments/order/OrderPaymentDialog.jsx",
+    "src/app/workflows/payments/order/useOrderPaymentWorkflow.js",
+    "src/app/workflows/payments/order/useOrderPaymentWorkflow.test.js",
+    "src/app/workflows/payments/payment-composition.css",
+    "src/app/workflows/payments/paymentApi.js",
+    "src/app/workflows/payments/paymentApi.test.js",
+    "src/app/workflows/payments/paymentComposition.js",
+    "src/app/workflows/payments/paymentComposition.test.js",
+    "src/app/workflows/payments/table-tab/TableTabPaymentDialog.jsx",
+    "src/app/workflows/payments/table-tab/TableTabPaymentDialog.test.js",
+    "src/app/workflows/payments/table-tab/useTableTabPaymentWorkflow.js",
+    "src/comandasAppWiring.test.js",
+    "src/domains/finance/domain/cashFlow.test.js",
+    "src/domains/finance/ui/ReceivableDetail.jsx",
+    "src/domains/finance/ui/Receivables.jsx",
+    "src/domains/orders/domain/orderCart.js",
+    "src/domains/orders/domain/orderCart.test.js",
+    "src/domains/orders/ui/NewOrder.jsx",
+    "src/domains/orders/ui/NewOrder.test.js",
+    "src/domains/reporting/ui/detail/ReportingOrderDrawer.jsx",
+    "src/domains/reporting/ui/detail/ReportingOrderDrawer.render.test.js",
+    "src/tableTabsAppWiring.test.js",
+    "worker/access/projections.test.js",
+    "worker/clientReceivablesPayment.test.js",
+    "worker/effectiveReceiptDateMigration.test.js",
+    "worker/effectiveReceiptReconciliation.test.js",
+    "worker/effectiveReceiptUpgrade.test.js",
+    "worker/index.js",
+    "worker/orderCheckout.js",
+    "worker/orderCheckout.test.js",
+    "worker/orderPaymentReadModel.js",
+    "worker/orderPaymentReadModel.test.js",
+    "worker/orderReadSql.js",
+    "worker/orderSupplementalPayment.js",
+    "worker/orderSupplementalPayment.test.js",
+    "worker/paidCheckoutSplit.test.js",
+    "worker/paymentRepository.js",
+    "worker/paymentRepository.test.js",
+    "worker/paymentValidation.js",
+    "worker/readModels/financeReadRepository.test.js",
+    "worker/readModels/movementReads.js",
+    "worker/readModels/orderHeaders.js",
+    "worker/receivedDateValidation.test.js",
+    "worker/reporting/exportModel.js",
+    "worker/reporting/exportModel.test.js",
+    "worker/reporting/repository.js",
+    "worker/reporting/repository.test.js",
+    "worker/reporting/service.js",
+    "worker/reporting/service.test.js",
+    "worker/repositories.js",
+    "worker/tableTabPayment.test.js"
+  ],
+  "environment": {
+    "runtime": "Windows, Node22.23.2, npm10.9.8",
+    "frontend": "http://127.0.0.1:4173",
+    "worker": "http://127.0.0.1:8787",
+    "database": ".wrangler/task11-state",
+    "businessIds": [
+      "company-A",
+      "company-B"
+    ],
+    "fictitiousOnly": true
+  },
+  "manualQa": {
+    "pass": 13,
+    "fail": 0,
+    "blocked": 2,
+    "pending": 0,
+    "integratedBrowser": "PASS after documented local server restart",
+    "windowsComputerUse": "Initial URL-policy interruption; no further Windows UI actions, browser QA completed in IAB",
+    "codeSha": "ef1d9ae720aaccc4b6a86a16e297776bc08fbdff",
+    "viewports": [
+      "1280x900 desktop",
+      "390x844 mobile emulation; client/scroll width 375/375"
+    ],
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "results": [
+      {
+        "id": "Q11-01",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-02",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-03",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-04",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-05",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-06",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-07",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-08",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-09",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-10",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-11",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-12",
+        "result": "BLOCKED",
+        "scope": "Local migration/upgrade/integrity/index PASS; destination historical audit, restore and budget pending"
+      },
+      {
+        "id": "Q11-13",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-14",
+        "result": "PASS",
+        "scope": "Local browser plus explicitly identified automated boundary coverage; see report"
+      },
+      {
+        "id": "Q11-15",
+        "result": "BLOCKED",
+        "scope": "UI/keyboard/cancel/print-job integrity PASS; physical QZ/spooler/paper pending"
+      }
+    ],
+    "automatedBoundaries": [
+      "Exact 100-order client batch: worker/clientReceivablesPayment.test.js:408; real SQLite, not 100 manual selections",
+      "UTC/SP midnight default: deterministic tests, system clock unchanged",
+      "Impossible date/datetime: Worker and workflow; native date input does not represent arbitrary impossible calendars",
+      "HTTP mutationId/replay/409 and realtime fallback: probes/tests/gate"
+    ],
+    "browserOrders": {
+      "checkoutToday": 25,
+      "checkoutRetroSplit": 26,
+      "kitchenTimeoutRetry": 27,
+      "history": 28,
+      "receivables": 29,
+      "clientBatch": [
+        30,
+        31
+      ],
+      "supplementImmediate": 32,
+      "supplementLater": 33,
+      "tableTab3": [
+        34,
+        35
+      ],
+      "twoSessionConvergence": 36,
+      "lateResponseContextSwitch": 37,
+      "companyBDenied": 1
+    },
+    "legacyDst": {
+      "receiptId": "task11-dst-receipt",
+      "receivedDate": null,
+      "paidAt": "2018-12-01T02:30:00.000Z",
+      "totalCents": 100,
+      "orderDate": "2018-11-30",
+      "uiReceivedDate": "2018-12-01",
+      "movementAbsentByDesign": true
+    },
+    "networkFaults": [
+      "Payment timeout on #27; date retained, retry confirmed",
+      "201 response for #37 held after commit; switch A to B before release; no stale A result applied"
+    ],
+    "realtime": "Two independent cookie contexts; immediate convergence verified using Worker SPA on localhost:8787. Vite proxy does not forward WebSocket upgrade.",
+    "exports": {
+      "csv": "task11-report.csv",
+      "pdf": "task11-report.pdf",
+      "pdfInspection": {
+        "pages": 2,
+        "text": [
+          "Mesiva\nRestaurantes que vão mais longe\nCENTRO DE RELATÓRIOS\nResumo executivo\nUma visão clara do seu restaurante para\ndecisões mais inteligentes.\nOperação Período\nCompany A 17/10/2026 a 17/10/2026\nRelatório gerado em 17/10/2026, 19:12 Gerado por Mesiva\nVendas registradas Pedidos Ticket médio\nR$ 925,00 33 R$ 28,03\nSem base comparável Sem base comparável Sem base comparável\nRecebido no período A receber do período Taxa de cancelamento\nR$ 225,00 R$ 0,00 5,71%\n-70% vs. período anterior Sem base comparável Sem base comparável\nPrincipais insights\n1 Vendas registradas: R$ 925,00 no período selecionado.\n2 Ticket médio: R$ 28,03 no período selecionado.\n3 Taxa de cancelamento em 5,71% no período selecionado.\nRecebido x a receber Atual x período anterior\nVendas registradas Sem base\n100%\nPedidos Sem base\nTicket médio Sem base\nRecebido no período A receber do período\nCancelamento Sem base\nR$ 225,00 R$ 0,00\nMesiva | PESSOAS. SABOR. EVOLUÇÃO. Relatório executivo · 17/10/2026 a 17/10/2026 | 1",
+          "Mesiva\nRestaurantes que vão mais longe\nCENTRO DE RELATÓRIOS\nAnálise detalhada\nOperação Período\nCompany A 17/10/2026 a 17/10/2026 Gerado em 17/10/2026, 19:12\npor Mesiva\nComposição das vendas Modalidades\nParticipação por categoria de produtos Participação nas vendas por canal\nMarmita 100%\nRetirada 83,78%\nR$ 925,00 Local 16,22%\nem mercadorias\nTop 5 produtos\nProdutos mais vendidos no período\n# Produto Unidades Receita Participação\n1 Prato QA fictício 37 R$ 925,00 100%\nObservações e oportunidades\nCancelamentos Pedidos em atraso Oportunidades\nA taxa de cancelamento foi de 5,71% no 0% dos pedidos medidos ficaram fora do A categoria Marmita representa 100% da\nperíodo selecionado. prazo operacional. receita de mercadoria. Avalie combos e\nofertas para ampliar ticket e recorrência.\nMesiva | PESSOAS. SABOR. EVOLUÇÃO. Relatório executivo · 17/10/2026 a 17/10/2026 | 2"
+        ]
+      },
+      "snapshot": "19:12 SP: sales925, received225; final sales975 after orders36/37"
+    },
+    "finalUi": {
+      "sales": 975,
+      "receivedTodayNet": 175,
+      "entries": 1025,
+      "exits": 50,
+      "balance": 975,
+      "receivables": 0
+    },
+    "releaseAcceptance": "BLOCKED; local PASS does not authorize staging or Task11 acceptance"
+  },
+  "codeCi": {
+    "run": 39073109702,
+    "headSha": "ef1d9ae720aaccc4b6a86a16e297776bc08fbdff",
+    "conclusion": "SUCCESS",
+    "shards": 8,
+    "validate": "SUCCESS"
+  },
+  "tests": {
+    "firstComplete": {
+      "tests": 4115,
+      "pass": 4115,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 256428.1804
+    },
+    "finalComplete": {
+      "tests": 4116,
+      "pass": 4116,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 273177.8556
+    },
+    "targetedFinal": {
+      "tests": 32,
+      "pass": 32,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 972.1551
+    },
+    "red": [
+      "Missing expected rejection: impossible",
+      "Missing expected rejection: offset",
+      "Missing expected rejection: hour",
+      "Missing expected rejection (consensus still NULL)"
+    ],
+    "preflightFinal": {
+      "tests": 6,
+      "pass": 6,
+      "fail": 0
+    }
+  },
+  "gates": {
+    "architecture": "PASS",
+    "lint": "PASS_WITH_WARNINGS",
+    "build": "PASS_WITH_CHUNK_WARNING",
+    "localMigrations": {
+      "result": "PASS",
+      "files": 56,
+      "last": "0052_effective_receipt_date.sql"
+    },
+    "dryRun": {
+      "production": "PASS",
+      "staging": "PASS"
+    },
+    "specB": {
+      "ok": true,
+      "runtime": "D1 local Worker",
+      "checks": {
+        "absenceAndInitializationRace": true,
+        "concurrentUpdate": true,
+        "historicalReplayAndReuse": true,
+        "intermediateAndReceiptRollback": true,
+        "noOpAndReceiptCollision": true,
+        "receipt24Hours": true,
+        "unknownBeforeCommitAndLostResponse": true,
+        "partialState": true,
+        "missingSchema": true
+      },
+      "printContextMigration": {
+        "legacyRejectsTwoCopies": true,
+        "rowsPreserved": true,
+        "referencesPreserved": true,
+        "cleanInstall": true
+      },
+      "wrangler": "4.128.0",
+      "local": true,
+      "migrations": 56
+    },
+    "printing": "PASS",
+    "operational": "PASS",
+    "operationProfile": {
+      "ok": true,
+      "migration": "0030_business_profiles.sql",
+      "migrations": 56,
+      "cleanInstall": true,
+      "upgradeFrom0029": true,
+      "backfilledBusinesses": 2,
+      "foreignKeys": true
+    },
+    "companyManagement": {
+      "pass": 2,
+      "fail": 0
+    },
+    "orderEditing": {
+      "gate": "order-editing-0041-upgrade",
+      "upgrade": true,
+      "clean": true,
+      "idempotent": true,
+      "foreignKeys": true,
+      "immutability": true,
+      "migrations": 56,
+      "ok": true
+    },
+    "realtime": {
+      "functional": "PASS",
+      "monthlyReady": false,
+      "unknownDimensions": [
+        "normal.workerCpuMs",
+        "normal.durableDurationGbS",
+        "normal.d1StorageGb",
+        "normal.durableStorageGb",
+        "normal.rowsRead",
+        "normal.rowsWritten",
+        "normal.workerRequests",
+        "normal.durableRequests",
+        "normal.durableRowsRead",
+        "normal.durableRowsWritten",
+        "normal.r2StorageGb",
+        "normal.r2ClassA",
+        "normal.r2ClassB",
+        "normal.logs",
+        "degraded.workerCpuMs",
+        "degraded.durableDurationGbS",
+        "degraded.d1StorageGb",
+        "degraded.durableStorageGb",
+        "degraded.rowsRead",
+        "degraded.rowsWritten",
+        "degraded.workerRequests",
+        "degraded.durableRequests",
+        "degraded.durableRowsRead",
+        "degraded.durableRowsWritten",
+        "degraded.r2StorageGb",
+        "degraded.r2ClassA",
+        "degraded.r2ClassB",
+        "degraded.logs"
+      ],
+      "invariants": {
+        "authenticatedLoginScopes": [
+          "identity",
+          "business"
+        ],
+        "legacyGlobalPolls": 0,
+        "hibernationRecovered": true,
+        "restartConnectedClients": 5,
+        "lostEventConvergedClients": 5,
+        "convergenceVirtualMs": 264000,
+        "publicationFailureMutationCount": 1,
+        "unchangedHeartbeatNotifications": 0,
+        "unknownClaimedAgain": false,
+        "concurrentClaimWinners": 1
+      }
+    }
+  },
+  "http": {
+    "executionWindow": {
+      "from": "2026-10-17T21:53:30.202Z",
+      "to": "2026-10-17T21:53:32.290Z"
+    },
+    "trace": [
+      {
+        "at": "2026-10-17T21:53:30.202Z",
+        "path": "/api/auth/login",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:30.243Z",
+        "path": "/api/auth/select-business",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:30.299Z",
+        "path": "/api/bootstrap?surface=orders",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:30.396Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.438Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.531Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.596Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.632Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 400,
+        "error": "VALIDATION_ERROR"
+      },
+      {
+        "at": "2026-10-17T21:53:30.665Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 400,
+        "error": "VALIDATION_ERROR"
+      },
+      {
+        "at": "2026-10-17T21:53:30.696Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 400,
+        "error": "VALIDATION_ERROR"
+      },
+      {
+        "at": "2026-10-17T21:53:30.728Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 400,
+        "error": "VALIDATION_ERROR"
+      },
+      {
+        "at": "2026-10-17T21:53:30.777Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.802Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 409,
+        "error": "ORDER_ALREADY_PAID"
+      },
+      {
+        "at": "2026-10-17T21:53:30.887Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:30.960Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.028Z",
+        "path": "/api/clients/company-A-client/receivables/payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.082Z",
+        "path": "/api/clients/company-A-client/receivables/payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.106Z",
+        "path": "/api/clients/company-A-client/receivables/payment",
+        "method": "POST",
+        "status": 409,
+        "error": "CLIENT_RECEIVABLES_PAYMENT_CONFLICT"
+      },
+      {
+        "at": "2026-10-17T21:53:31.133Z",
+        "path": "/api/clients/company-A-client/receivables/payment",
+        "method": "POST",
+        "status": 400,
+        "error": "VALIDATION_ERROR"
+      },
+      {
+        "at": "2026-10-17T21:53:31.184Z",
+        "path": "/api/reporting/sales?period=custom&from=2026-10-16&to=2026-10-16",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.222Z",
+        "path": "/api/reporting/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.322Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.415Z",
+        "path": "/api/orders",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.483Z",
+        "path": "/api/table-tabs/22a8d493-6197-4883-9611-323af40655d1/payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.544Z",
+        "path": "/api/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "method": "PATCH",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.608Z",
+        "path": "/api/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909/supplemental-payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.653Z",
+        "path": "/api/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909/supplemental-payment",
+        "method": "POST",
+        "status": 201
+      },
+      {
+        "at": "2026-10-17T21:53:31.685Z",
+        "path": "/api/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909/supplemental-payment",
+        "method": "POST",
+        "status": 409,
+        "error": "ORDER_SUPPLEMENTAL_CONFLICT"
+      },
+      {
+        "at": "2026-10-17T21:53:31.734Z",
+        "path": "/api/reporting/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.777Z",
+        "path": "/api/reporting/export-model",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.831Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/cancel",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.894Z",
+        "path": "/api/reads/finance/overview?period=30d",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.930Z",
+        "path": "/api/auth/select-business",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:31.947Z",
+        "path": "/api/orders/54f72288-f894-4d8c-b0ff-901f92db7b46/payment",
+        "method": "POST",
+        "status": 403,
+        "error": "FORBIDDEN"
+      },
+      {
+        "at": "2026-10-17T21:53:31.967Z",
+        "path": "/api/reporting/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "method": "GET",
+        "status": 403,
+        "error": "FORBIDDEN"
+      },
+      {
+        "at": "2026-10-17T21:53:32.043Z",
+        "path": "/api/auth/login",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:32.072Z",
+        "path": "/api/reporting/orders/e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "method": "GET",
+        "status": 404,
+        "error": "REPORTING_ORDER_NOT_FOUND"
+      },
+      {
+        "at": "2026-10-17T21:53:32.125Z",
+        "path": "/api/reporting/sales?period=custom&from=2026-10-16&to=2026-10-16",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:32.204Z",
+        "path": "/api/auth/login",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:32.231Z",
+        "path": "/api/auth/select-business",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "at": "2026-10-17T21:53:32.290Z",
+        "path": "/api/bootstrap?surface=orders",
+        "method": "GET",
+        "status": 200
+      }
+    ],
+    "checks": [
+      {
+        "check": "authenticated_bootstrap",
+        "businessId": "company-A",
+        "keys": [
+          "business",
+          "effectiveBusinessConfig",
+          "orders",
+          "readModel",
+          "effectiveConfigVersion"
+        ]
+      },
+      {
+        "check": "retro_sales",
+        "data": {
+          "salesCents": 0,
+          "ordersCount": 0,
+          "averageTicketCents": null,
+          "receivedCents": 45000,
+          "merchandiseRevenueCents": 0,
+          "deliveryFeesCents": 0,
+          "discountCents": 0,
+          "surchargeCents": 0,
+          "receivableCents": 0,
+          "receivableCount": 0,
+          "receivables": {
+            "overdue": {
+              "amountCents": 0,
+              "count": 0
+            },
+            "today": {
+              "amountCents": 0,
+              "count": 0
+            },
+            "upcoming": {
+              "amountCents": 0,
+              "count": 0
+            }
+          },
+          "cancellationCount": 0,
+          "cancellationRate": null,
+          "paymentMix": [
+            {
+              "method": "Dinheiro",
+              "amountCents": 14000
+            },
+            {
+              "method": "Pix",
+              "amountCents": 31000
+            }
+          ],
+          "refundsCents": 0,
+          "salesSeries": [],
+          "ordersSeries": [],
+          "receivedSeries": [
+            {
+              "date": "2026-10-16",
+              "cents": 45000
+            }
+          ],
+          "refundSeries": []
+        }
+      },
+      {
+        "check": "split_receipt",
+        "orderId": "e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "dates": [
+          {
+            "receiptId": "4a68ea1f-2717-45fd-a663-d59d49ea4f35",
+            "receivedDate": "2026-10-16",
+            "amountCents": 1500
+          },
+          {
+            "receiptId": "4a68ea1f-2717-45fd-a663-d59d49ea4f35",
+            "receivedDate": "2026-10-16",
+            "amountCents": 1000
+          }
+        ],
+        "paidAt": "2026-10-17T21:53:30.456Z"
+      },
+      {
+        "check": "table_settlement",
+        "receiptId": "acd33e3c-ea96-44f8-be2e-f786e781cc85",
+        "tableTab": {
+          "id": "22a8d493-6197-4883-9611-323af40655d1",
+          "tableId": "company-A-table",
+          "tableIdentifier": "Mesa QA",
+          "tabNumber": 2,
+          "status": "closed",
+          "openedAt": "2026-10-17T21:53:31.240Z",
+          "closedAt": "2026-10-17T21:53:31.433Z"
+        },
+        "orderCount": 2
+      },
+      {
+        "check": "supplement",
+        "orderId": "e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+        "originalReceivedDate": "2026-10-16",
+        "supplementReceivedDate": "2026-10-17",
+        "allocations": [
+          {
+            "receiptId": "4a68ea1f-2717-45fd-a663-d59d49ea4f35",
+            "receivedDate": "2026-10-16",
+            "amountCents": 1500
+          },
+          {
+            "receiptId": "4a68ea1f-2717-45fd-a663-d59d49ea4f35",
+            "receivedDate": "2026-10-16",
+            "amountCents": 1000
+          },
+          {
+            "receiptId": "d075e00e-8b82-4586-9f99-b461e6571694",
+            "receivedDate": "2026-10-17",
+            "amountCents": 2500
+          }
+        ]
+      },
+      {
+        "check": "export_model",
+        "columnKeys": [
+          "payment_received_dates"
+        ],
+        "rowCount": 24,
+        "rows": [
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16 + 2026-10-17"
+          ],
+          [
+            "2026-10-17"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16 + 2026-10-17"
+          ],
+          [
+            "2026-10-17"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-17"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-16"
+          ],
+          [
+            "2026-10-17"
+          ]
+        ]
+      },
+      {
+        "check": "finance_after_real_refund",
+        "totals": {
+          "entries": 650,
+          "exits": 25,
+          "balance": 625
+        },
+        "receivedToday": 125
+      },
+      {
+        "check": "context_switch_refresh",
+        "keys": [
+          "business",
+          "effectiveBusinessConfig",
+          "orders",
+          "readModel",
+          "effectiveConfigVersion"
+        ],
+        "orderIds": [
+          "5529efe9-4fb2-4a4f-abac-315776ba61a8",
+          "e863baa1-0f23-4ebd-bbde-e6a5441f8909",
+          "54f72288-f894-4d8c-b0ff-901f92db7b46",
+          "776a9199-773b-45c9-a145-ec7c1aa0e21a",
+          "3bb0f876-bcca-4dc4-81a1-f8ad98c29431"
+        ],
+        "receiptIds": [
+          "202d8108-0ffe-440d-9b4d-2886055d7b1f",
+          "c7fd10b3-9844-46f3-8305-3c91667fa22c"
+        ]
+      }
+    ]
+  },
+  "localReconciliation": [
+    {
+      "success": true,
+      "results": [
+        {
+          "business_id": "company-A",
+          "receipts": 20,
+          "total_cents": 65000,
+          "null_dates": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "amount_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "date_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "receipt_movement_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "payment_unique_violations": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "movement_date": "2026-10-16",
+          "source": "order-payment",
+          "type": "entrada",
+          "total_cents": 50000,
+          "movements": 24
+        },
+        {
+          "movement_date": "2026-10-17",
+          "source": "order-payment",
+          "type": "entrada",
+          "total_cents": 15000,
+          "movements": 6
+        },
+        {
+          "movement_date": "2026-10-17",
+          "source": "order-refund",
+          "type": "saida",
+          "total_cents": 2500,
+          "movements": 1
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "duplicate_automatic_jobs": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": []
+    }
+  ],
+  "localAudit": [
+    {
+      "success": true,
+      "results": [
+        {
+          "classification": "canonical",
+          "receipts": 20
+        }
+      ]
+    }
+  ],
+  "finalLocalReconciliation": [
+    {
+      "success": true,
+      "results": [
+        {
+          "business_id": "company-A",
+          "receipts": 34,
+          "total_cents": 102600,
+          "null_dates": 1
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "amount_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "date_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "receipt_movement_mismatches": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "payment_unique_violations": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "movement_date": "2026-10-16",
+          "source": "order-payment",
+          "type": "entrada",
+          "total_cents": 80000,
+          "movements": 37
+        },
+        {
+          "movement_date": "2026-10-17",
+          "source": "order-payment",
+          "type": "entrada",
+          "total_cents": 22500,
+          "movements": 9
+        },
+        {
+          "movement_date": "2026-10-17",
+          "source": "order-refund",
+          "type": "saida",
+          "total_cents": 5000,
+          "movements": 2
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": [
+        {
+          "duplicate_automatic_jobs": 0
+        }
+      ]
+    },
+    {
+      "success": true,
+      "results": []
+    }
+  ],
+  "finalLocalAudit": [
+    {
+      "success": true,
+      "results": [
+        {
+          "classification": "canonical",
+          "receipts": 33
+        },
+        {
+          "classification": "legacy_no_movement",
+          "receipts": 1
+        }
+      ]
+    }
+  ],
+  "localDatabaseReadRecovery": "Concurrent Wrangler read failed internally while Worker active; same SQL succeeded after stopping own Worker; Worker restarted on same persistence with bootstrap200. No database reset.",
+  "openingBalance": {
+    "at": "2026-10-17T21:57:29.329Z",
+    "businessId": "company-A",
+    "openingBalance": 100,
+    "openingDate": "2026-10-17",
+    "currentBalance": 225,
+    "receivedToday": 125,
+    "totals": {
+      "entries": 650,
+      "exits": 25,
+      "balance": 625
+    },
+    "retroactiveEntriesExcludedFromCurrentBalance": 500
+  },
+  "performance": {
+    "officialReceiptGate": {
+      "runtime": "Miniflare D1/workerd local, Wrangler 4.128.0",
+      "fixture": {
+        "small": 1000,
+        "large": 10000
+      },
+      "baseline": {
+        "small": {
+          "rows_read": 2,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": []
+        },
+        "large": {
+          "rows_read": 2,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": []
+        }
+      },
+      "after": {
+        "small": {
+          "rows_read": 5,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": [
+            "retro"
+          ]
+        },
+        "large": {
+          "rows_read": 5,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": [
+            "retro"
+          ]
+        }
+      },
+      "legacy": {
+        "small": {
+          "rows_read": 5,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": [
+            "dst-legacy"
+          ]
+        },
+        "large": {
+          "rows_read": 5,
+          "rows_written": 0,
+          "requests": 1,
+          "tenantScoped": true,
+          "receiptIds": [
+            "dst-legacy"
+          ]
+        }
+      },
+      "indexCreation": {
+        "rows_read": 1518,
+        "rows_written": 504,
+        "atHistoricalRows": 1000
+      },
+      "queryPlan": [
+        "MERGE (UNION ALL)",
+        "LEFT",
+        "SEARCH payment_receipts USING INDEX payment_receipts_business_received_date_idx (business_id=? AND received_date>? AND received_date<?)",
+        "USE TEMP B-TREE FOR ORDER BY",
+        "RIGHT",
+        "SEARCH payment_receipts USING INDEX payment_receipts_business_paid_idx (business_id=? AND paid_at>? AND paid_at<?)",
+        "USE TEMP B-TREE FOR ORDER BY"
+      ],
+      "insertWrites": {
+        "receiptRowsPerSample": 1000,
+        "beforeIndex": {
+          "rows_read": 2001,
+          "rows_written": 4000,
+          "requests": 1
+        },
+        "afterIndex": {
+          "rows_read": 2001,
+          "rows_written": 4500,
+          "requests": 1
+        }
+      },
+      "passed": true
+    },
+    "concentratedSales": [
+      {
+        "mode": "null-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 2004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "mode": "null-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 20004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "receiptCount": 0,
+        "sqlStatements": 5,
+        "rowsRead": 2004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "receiptCount": 0,
+        "sqlStatements": 5,
+        "rowsRead": 20004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      }
+    ],
+    "concentratedQuerySource": "createReportingRepository(db).loadSales(task11,{from:2026-10-17,to:2026-10-17})",
+    "concentratedFixtures": {
+      "paid_at": "2026-10-17T15:00:00.000Z",
+      "nullInPeriod": {
+        "received_date": null
+      },
+      "canonicalPaidInPeriod": {
+        "received_date": "2026-10-16"
+      },
+      "total_cents": 100
+    },
+    "limitation": "Local synthetic D1/workerd measurements, excludes route/auth cost and account baseline. No release budget approval."
+  },
+  "dependencyAudit": {
+    "info": 0,
+    "low": 1,
+    "moderate": 2,
+    "high": 1,
+    "critical": 0,
+    "total": 4
+  },
+  "remote": {
+    "historicalAudit": "NOT_EXECUTED",
+    "restore": "BLOCKED_UNVERIFIED",
+    "migrations": "NOT_EXECUTED",
+    "staging": "NOT_EXECUTED",
+    "merge": "NOT_EXECUTED",
+    "production": "NOT_EXECUTED"
+  },
+  "artifacts": [
+    {
+      "name": "task11-checkout-default.png",
+      "bytes": 38169,
+      "sha256": "2c49785ef69d7eede4ded40a569faff6756464f0aa100f95a700d3e77f42e761"
+    },
+    {
+      "name": "task11-checkout-retro-split.png",
+      "bytes": 22463,
+      "sha256": "0db970f9a797f342309ad914af1b18b7648ab93377739a7df8a8ab606098aa84"
+    },
+    {
+      "name": "task11-client-batch.png",
+      "bytes": 43473,
+      "sha256": "3f1ad1e56dd2b0d254d57892560e609496a48d446dadbf6a90e3334e3caaef35"
+    },
+    {
+      "name": "task11-dst-legacy.png",
+      "bytes": 88617,
+      "sha256": "dbf07dc9c7cde2fe00dd08baf9e40ba8321ac04af2686a7ef86d91fb19def03c"
+    },
+    {
+      "name": "task11-finance-final.png",
+      "bytes": 87799,
+      "sha256": "f629c9a759c4badf025030bd2047a66a83047fe3d74dcd35842bd515495c736f"
+    },
+    {
+      "name": "task11-finance-final.txt",
+      "bytes": 4060,
+      "sha256": "4f32de133b7ec91c62060a8d7b84769e973c83e1016f057463599e77ff35871e"
+    },
+    {
+      "name": "task11-finance-overview.png",
+      "bytes": 69785,
+      "sha256": "5063ff8d8373d628ef88c123d1211f9c07abdc6bd1b699e13ed61b88270799e8"
+    },
+    {
+      "name": "task11-late-context.png",
+      "bytes": 74077,
+      "sha256": "43964deb75fbde297aa8b19d0d739aa28163b5f9f0e5c124444667014a19610c"
+    },
+    {
+      "name": "task11-mobile-dark-invalid.png",
+      "bytes": 30795,
+      "sha256": "94350813233f2bd7e8ff695744c4f5ee4bde5ca672e1433b395000ee6acbf93b"
+    },
+    {
+      "name": "task11-mobile-light.png",
+      "bytes": 30953,
+      "sha256": "fa1756c48e88cf87c4813bf2e39901f85e81298f1a4420e32986316aec94c870"
+    },
+    {
+      "name": "task11-movements-final.png",
+      "bytes": 92003,
+      "sha256": "4d6ff2383f2d0801870c145af4121e9f9c9d0d3a9e1d0b6a702fda7023bbb0be"
+    },
+    {
+      "name": "task11-movements-final.txt",
+      "bytes": 10748,
+      "sha256": "14448c834326200c3328b59f5cd762689256fe42f52263ac26f5a0478ae6726d"
+    },
+    {
+      "name": "task11-paid-list.png",
+      "bytes": 80259,
+      "sha256": "81d8878cae3c686d3f00e15f2c49cb9277ccda7797890ad91a528a7b4ee450b9"
+    },
+    {
+      "name": "task11-paid-list.txt",
+      "bytes": 13547,
+      "sha256": "bff11f69d1eb4d53f3cc43e27ada2b730b102f15e34e272ac0063739e2107894"
+    },
+    {
+      "name": "task11-payment-timeout.png",
+      "bytes": 44898,
+      "sha256": "0959dc0e9891c9f67e2a549a97e5e4b105b50cd8158cc12c4ac9ed444cf94f5a"
+    },
+    {
+      "name": "task11-report-drawer.png",
+      "bytes": 107125,
+      "sha256": "74566270a317732fade4191e2cacf2c053afbf83d879d3e569197031981b0674"
+    },
+    {
+      "name": "task11-report.csv",
+      "bytes": 8695,
+      "sha256": "ece9771ffb7b97ed1886ce5134fa55d77894b13f2c0bb2a3b8b5078fd1d8b535"
+    },
+    {
+      "name": "task11-report.pdf",
+      "bytes": 568582,
+      "sha256": "1685c74a5510894a3e43363c60af03f9f04e4d5f5d2a37a0a71e660b013a6680"
+    },
+    {
+      "name": "task11-supplement.png",
+      "bytes": 46567,
+      "sha256": "c10291df67015d2f2b2745a826e30f8e7c906bcd49323e97ec8d695b3d131096"
+    },
+    {
+      "name": "task11-table-split.png",
+      "bytes": 42404,
+      "sha256": "e01a1c3db07df23891aa3418a6d9ba45b16375cd0f420292f44fd815126cc5bb"
+    }
+  ]
+}

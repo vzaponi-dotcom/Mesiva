@@ -1,0 +1,347 @@
+- banner:
+  - 'generic "Localização: Financeiro"':
+    - generic: Gestão
+    - generic: /
+    - strong: Financeiro
+  - button "Ativar tema claro":
+  - button "Notificações":
+  - button "Company A, empresa atual":
+    - generic: CA
+    - strong: Company A
+    - generic: Empresa atual
+- complementary:
+  - img "Mesiva"
+  - navigation "Menu principal":
+    - region "OPERAÇÃO":
+      - generic: OPERAÇÃO
+      - button "Pedidos, 34 pedidos em andamento":
+        - generic: "34"
+        - generic: Pedidos
+      - button "Comandas":
+        - generic: Comandas
+      - button "Fila de impressão, 35 jobs ativos":
+        - generic: "35"
+        - generic: Fila de impressão
+    - region "FINANCEIRO":
+      - generic: FINANCEIRO
+      - button "Visão geral":
+        - generic: Visão geral
+      - button "Relatórios":
+        - generic: Relatórios
+      - button "A receber":
+        - generic: A receber
+      - button "Movimentações":
+        - generic: Movimentações
+    - region "CADASTROS":
+      - generic: CADASTROS
+      - button "Clientes":
+        - generic: Clientes
+      - button "Produtos e preços":
+        - generic: Produtos e preços
+      - button "Mesas":
+        - generic: Mesas
+  - generic: Gestão para restaurantes
+- main:
+  - navigation "Navegação de Financeiro":
+    - button "Visão geral"
+    - button "Relatórios"
+    - button "A receber"
+    - button "Movimentações"
+  - paragraph: Financeiro
+  - heading "Fluxo de caixa" [level=1]
+  - paragraph: Visualize entradas, saídas e saldo. Pagamentos de pedidos entram automaticamente quando forem confirmados em A Receber.
+  - button "Saldo inicial":
+    - generic: Saldo inicial
+  - button "Novo movimento":
+    - generic: Novo movimento
+  - region "Resumo financeiro":
+    - article:
+      - generic: Entradas
+      - strong: R$ 1.025,00
+      - generic: Receita registrada
+    - article:
+      - generic: Saídas
+      - strong: R$ 50,00
+      - generic: Despesas registradas
+    - article:
+      - generic: Saldo
+      - strong: R$ 975,00
+      - generic: Entradas menos saídas
+  - text: Histórico
+  - heading "Movimentações" [level=2]
+  - generic: 35 registro(s)
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Estorno pedido · Cliente QA fictício · Pix
+    - generic: Saída
+    - generic: Estorno de pedido
+    - generic: Estornos · 2026-10-17 · Pix
+    - strong: "-R$ 25,00"
+  - article:
+    - strong: Complemento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Complemento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento comanda #3 · Mesa QA"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 30,00
+      - strong: Dinheiro
+      - generic: R$ 20,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Recebimento cliente · Cliente QA fictício · 2 pedidos
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Dinheiro
+      - generic: R$ 20,00
+      - strong: Pix
+      - generic: R$ 30,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #33 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #32 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #26 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Dinheiro
+      - generic: R$ 10,00
+      - strong: Pix
+      - generic: R$ 15,00
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #25 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Estorno pedido · Cliente QA fictício · Pix
+    - generic: Saída
+    - generic: Estorno de pedido
+    - generic: Estornos · 2026-10-17 · Pix
+    - strong: "-R$ 25,00"
+  - article:
+    - strong: Complemento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento comanda #2 · Mesa QA"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 30,00
+      - strong: Dinheiro
+      - generic: R$ 20,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Recebimento cliente · Cliente QA fictício · 2 pedidos
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Dinheiro
+      - generic: R$ 20,00
+      - strong: Pix
+      - generic: R$ 30,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #19 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 15,00
+      - strong: Dinheiro
+      - generic: R$ 10,00
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #18 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Complemento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento comanda #1 · Mesa QA"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 30,00
+      - strong: Dinheiro
+      - generic: R$ 20,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Recebimento cliente · Cliente QA fictício · 2 pedidos
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Dinheiro
+      - generic: R$ 20,00
+      - strong: Pix
+      - generic: R$ 30,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #12 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 15,00
+      - strong: Dinheiro
+      - generic: R$ 10,00
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #11 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Recebimento cliente · Cliente QA fictício · 2 pedidos
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 30,00
+      - strong: Dinheiro
+      - generic: R$ 20,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #7 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 15,00
+      - strong: Dinheiro
+      - generic: R$ 10,00
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #6 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: Recebimento cliente · Cliente QA fictício · 2 pedidos
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Pix
+      - generic: R$ 30,00
+      - strong: Dinheiro
+      - generic: R$ 20,00
+    - strong: +R$ 50,00
+  - article:
+    - strong: Pagamento pedido · Cliente QA fictício
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · Pix
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #2 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-16 · 2 formas
+    - generic "Formas de pagamento":
+      - strong: Dinheiro
+      - generic: R$ 10,00
+      - strong: Pix
+      - generic: R$ 15,00
+    - strong: +R$ 25,00
+  - article:
+    - strong: "Pagamento pedido #1 · Cliente QA fictício"
+    - generic: Entrada
+    - generic: Pedido recebido
+    - generic: Vendas · 2026-10-17 · Pix
+    - strong: +R$ 25,00

@@ -1,0 +1,43 @@
+﻿Relatório,Centro de Relatórios
+Operação,Company A
+Período,2026-10-17 a 2026-10-17
+Gerado em,2026-10-17T22:12:21.569Z
+Timezone,America/Sao_Paulo
+sort,date-desc
+
+Pedido,Data,Data e hora,Cliente,Telefone,Modalidade,Agendamento,Status,Subtotal,Taxa de entrega,Tipo de ajuste,Valor do ajuste,Total,Recebido,Pendente,Situação financeira,Forma de pagamento,Data(s) do recebimento,Promessa de pagamento,Duração (min),Prazo
+35,17/10/2026,"17/10/2026, 19:07",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+34,17/10/2026,"17/10/2026, 19:07",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+33,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 50,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 50,00","R$ 50,00","R$ 0,00",Pago,Pix,2026-10-16 + 2026-10-17,Indisponível,Indisponível,Indisponível
+32,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 50,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 50,00","R$ 50,00","R$ 0,00",Pago,Pix,2026-10-16 + 2026-10-17,Indisponível,Indisponível,Indisponível
+31,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+30,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+29,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+28,17/10/2026,"17/10/2026, 19:07",Cliente QA fictício,,Retirada,Imediato,Finalizado,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,0,No prazo
+27,17/10/2026,"17/10/2026, 19:05",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+26,17/10/2026,"17/10/2026, 19:05",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+25,17/10/2026,"17/10/2026, 19:04",Cliente QA fictício,,Retirada,Imediato,Cancelado,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Indisponível,Pix,2026-10-17,Indisponível,Indisponível,Indisponível
+24,17/10/2026,"17/10/2026, 18:53",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+23,17/10/2026,"17/10/2026, 18:53",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+22,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+21,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+20,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Cancelado,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Indisponível,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+19,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 50,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 50,00","R$ 50,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16 + 2026-10-17,Indisponível,Indisponível,Indisponível
+18,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-17,Indisponível,Indisponível,Indisponível
+17,17/10/2026,"17/10/2026, 18:53",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+16,17/10/2026,"17/10/2026, 18:53",Mesa QA,,Local,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+15,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+14,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+13,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+12,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 50,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 50,00","R$ 50,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16 + 2026-10-17,Indisponível,Indisponível,Indisponível
+11,17/10/2026,"17/10/2026, 18:53",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-17,Indisponível,Indisponível,Indisponível
+10,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+9,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+8,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+7,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+6,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-17,Indisponível,Indisponível,Indisponível
+5,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+4,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+3,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-16,Indisponível,Indisponível,Indisponível
+2,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-16,Indisponível,Indisponível,Indisponível
+1,17/10/2026,"17/10/2026, 18:50",Cliente QA fictício,,Retirada,Imediato,Em preparo,"R$ 25,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 25,00","R$ 25,00","R$ 0,00",Pago,Pix,2026-10-17,Indisponível,Indisponível,Indisponível

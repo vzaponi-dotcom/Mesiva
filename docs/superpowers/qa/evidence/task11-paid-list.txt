@@ -1,0 +1,225 @@
+- banner:
+  - 'generic "Localização: Financeiro"':
+    - generic: Gestão
+    - generic: /
+    - strong: Financeiro
+  - button "Ativar tema claro":
+  - button "Notificações":
+  - button "Company A, empresa atual":
+    - generic: CA
+    - strong: Company A
+    - generic: Empresa atual
+- complementary:
+  - img "Mesiva"
+  - navigation "Menu principal":
+    - region "OPERAÇÃO":
+      - generic: OPERAÇÃO
+      - button "Pedidos, 34 pedidos em andamento":
+        - generic: "34"
+        - generic: Pedidos
+      - button "Comandas":
+        - generic: Comandas
+      - button "Fila de impressão, 35 jobs ativos":
+        - generic: "35"
+        - generic: Fila de impressão
+    - region "FINANCEIRO":
+      - generic: FINANCEIRO
+      - button "Visão geral":
+        - generic: Visão geral
+      - button "Relatórios":
+        - generic: Relatórios
+      - button "A receber":
+        - generic: A receber
+      - button "Movimentações":
+        - generic: Movimentações
+    - region "CADASTROS":
+      - generic: CADASTROS
+      - button "Clientes":
+        - generic: Clientes
+      - button "Produtos e preços":
+        - generic: Produtos e preços
+      - button "Mesas":
+        - generic: Mesas
+  - generic: Gestão para restaurantes
+- main:
+  - navigation "Navegação de Financeiro":
+    - button "Visão geral"
+    - button "Relatórios"
+    - button "A receber"
+    - button "Movimentações"
+  - paragraph: Financeiro
+  - heading "A receber" [level=1]
+  - paragraph: Acompanhe o que entra hoje, os próximos recebimentos e os atrasos.
+  - button "Previsão de recebimentos":
+    - generic: Previsão
+  - region "Resumo de recebimentos":
+    - button "Receber hoje R$ 0,00 0 pedido(s)":
+      - generic: Receber hoje
+      - strong: R$ 0,00
+      - generic: 0 pedido(s)
+    - button "Próximos R$ 0,00 0 recebimento(s)":
+      - generic: Próximos
+      - strong: R$ 0,00
+      - generic: 0 recebimento(s)
+    - button "Em atraso R$ 0,00 0 pendência(s)":
+      - generic: Em atraso
+      - strong: R$ 0,00
+      - generic: 0 pendência(s)
+  - group "Situação dos recebimentos":
+    - button "Pendentes"
+    - button "Quitados" [pressed]
+  - searchbox
+  - generic: 30 item(ns)
+  - generic "Recebimentos quitados":
+    - 'button "Cliente QA fictício Pedido #37 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:17 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #37 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:17
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #36 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:17 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #36 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:17
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #31 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #31 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #30 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #30 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #29 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #29 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:08
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #28 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #28 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #33 · 1× Prato QA fictício Un · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07 R$ 50,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #33 · 1× Prato QA fictício Un · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07
+      - strong: R$ 50,00
+    - 'button "Cliente QA fictício Pedido #32 · 1× Prato QA fictício Un · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07 R$ 50,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #32 · 1× Prato QA fictício Un · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:07
+      - strong: R$ 50,00
+    - 'button "Cliente QA fictício Pedido #27 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:06 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #27 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:06
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #26 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:05 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #26 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 19:05
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #22 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #22 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #21 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #21 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #19 · 2× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 50,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #19 · 2× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 50,00
+    - 'button "Cliente QA fictício Pedido #18 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 17/10/2026 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #18 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 17/10/2026
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #15 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #15 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #14 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #14 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #13 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #13 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #12 · 2× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53 R$ 50,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #12 · 2× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:53
+      - strong: R$ 50,00
+    - 'button "Cliente QA fictício Pedido #11 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 17/10/2026 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #11 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 17/10/2026
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #10 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #10 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #9 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #9 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #8 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #8 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #7 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #7 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #6 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 17/10/2026 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #6 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 17/10/2026
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #5 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #5 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #4 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #4 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #3 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #3 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #2 · 1× Prato QA fictício Un Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #2 · 1× Prato QA fictício Un"
+      - generic: Quitado · 2 formas · Recebido em 16/10/2026 · Registrado em 17/10/2026, 18:50
+      - strong: R$ 25,00
+    - 'button "Cliente QA fictício Pedido #1 · 1× Prato QA fictício Un Quitado · Pix · Recebido em 17/10/2026 R$ 25,00"':
+      - strong: Cliente QA fictício
+      - generic: "Pedido #1 · 1× Prato QA fictício Un"
+      - generic: Quitado · Pix · Recebido em 17/10/2026
+      - strong: R$ 25,00
+    - button "Cliente QA fictício Pedido · 1× Produto Quitado · Pix · Recebido em 01/12/2018 R$ 1,00":
+      - strong: Cliente QA fictício
+      - generic: Pedido · 1× Produto
+      - generic: Quitado · Pix · Recebido em 01/12/2018
+      - strong: R$ 1,00
+  - complementary "Detalhes do recebimento":
+    - generic: Selecione um recebimento para ver os detalhes.
