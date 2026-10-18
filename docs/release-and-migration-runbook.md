@@ -101,6 +101,8 @@ Na branch `codex/received-date-tdd` da PR #120, staging é elegível somente por
 
 Antes de acionar o workflow, revisar a distribuição histórica do D1 de destino, inclusive recibos sem movimentos ou com consenso ainda NULL, e registrar estratégia de restore D1 verificável e compatibilidade de bundle/schema. O bookmark automático de produção não comprova recuperação de staging; esse workflow não registra um bookmark específico desta feature automaticamente. Não forçar backfill para eliminar divergências.
 
+Para uma auditoria estritamente somente de leitura com Wrangler `4.128.0`, não usar `d1 migrations list`: o comando chama `initMigrationsTable` e pode criar a tabela de controle. Confirmar sua existência em `sqlite_master`, consultar `SELECT name FROM d1_migrations ORDER BY id` e comparar os nomes com os arquivos locais; tabela ausente exige registro do bloqueio, sem criá-la durante a auditoria.
+
 Conferir também o [orçamento dos recebimentos efetivos](operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) e a [matriz da Task 11](superpowers/qa/2026-10-17-effective-receipt-task11.md). CI verde e testes locais não dispensam auditoria, restore, orçamento, impressão física pendente ou aceite do release de staging no SHA exato. Destino e testes usam somente dados fictícios; os bloqueios registrados precisam ser resolvidos antes da publicação.
 
 ### Spec B migrations 0024/0025

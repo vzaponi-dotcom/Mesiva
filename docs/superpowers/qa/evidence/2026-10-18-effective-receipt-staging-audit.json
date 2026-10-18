@@ -1,0 +1,175 @@
+{
+  "startedAt": "2026-10-18T03:22:07.870Z",
+  "timezone": "America/Sao_Paulo",
+  "codeSha": "d7bb18808c82292f5163db00dadb74de8faa4adc",
+  "environment": "staging",
+  "database": "amor-e-sabor-delivery-staging",
+  "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+  "wrangler": "4.128.0",
+  "readOnly": true,
+  "remoteMigrationsExecuted": false,
+  "deploymentExecuted": false,
+  "queries": [
+    {
+      "sha256": "62007c3a8da967a1fcfd6cc3d9a4b3cfa3b33232c0d7ecca3c282e6bb1cb0384",
+      "kind": "schema_objects",
+      "success": true,
+      "meta": {
+        "rows_read": 430,
+        "rows_written": 0,
+        "duration": 0.3176,
+        "served_by_region": "ENAM",
+        "served_by_primary": true,
+        "changes": 0
+      }
+    },
+    {
+      "sha256": "dcdd6e5a38b85331021fe5f2097fab489e8718692da5f076d2decc5eb9c78e33",
+      "kind": "applied_migrations",
+      "success": true,
+      "meta": {
+        "rows_read": 55,
+        "rows_written": 0,
+        "duration": 0.2544,
+        "served_by_region": "ENAM",
+        "served_by_primary": true,
+        "changes": 0
+      }
+    },
+    {
+      "sha256": "5ac30c69bc06907f1e182f50f2d045603fd3b462108e48bad4ec4bc7e15125eb",
+      "kind": "receipt_columns",
+      "success": true,
+      "meta": {
+        "rows_read": 0,
+        "rows_written": 0,
+        "duration": 0.2432,
+        "served_by_region": "ENAM",
+        "served_by_primary": true,
+        "changes": 0
+      }
+    },
+    {
+      "sha256": "21bc9e8b3114dc688da2b0e9a1ba0a2a4d731a29d3e74d9a8731d3060cfd5540",
+      "kind": "receipt_distribution",
+      "success": true,
+      "meta": {
+        "rows_read": 1186,
+        "rows_written": 0,
+        "duration": 2.4229,
+        "served_by_region": "ENAM",
+        "served_by_primary": true,
+        "changes": 0
+      }
+    }
+  ],
+  "schemaObjects": [
+    {
+      "type": "table",
+      "name": "d1_migrations"
+    },
+    {
+      "type": "table",
+      "name": "movements"
+    },
+    {
+      "type": "table",
+      "name": "payment_allocations"
+    },
+    {
+      "type": "table",
+      "name": "payment_receipts"
+    },
+    {
+      "type": "table",
+      "name": "payments"
+    }
+  ],
+  "appliedMigrations": [
+    "0001_initial.sql",
+    "0002_order_idempotency.sql",
+    "0003_order_checkout.sql",
+    "0004_client_phone_uniqueness.sql",
+    "0005_product_presentation.sql",
+    "0006_order_customer_identity.sql",
+    "0007_table_tabs.sql",
+    "0008_order_cancellation_refunds.sql",
+    "0009_finance_cash_flow.sql",
+    "0010_order_printing.sql",
+    "0011_scheduled_orders_operational_timing.sql",
+    "0012_receivables_payment_promise.sql",
+    "0013_table_management.sql",
+    "0014_centralized_print_queue.sql",
+    "0015_print_job_awaiting_second_copy.sql",
+    "0016_second_copy_prompt_acknowledgment.sql",
+    "0017_order_numbers.sql",
+    "0018_second_copy_decisions.sql",
+    "0019_print_operational_confirmation.sql",
+    "0020_table_tab_numbers.sql",
+    "0021_table_tab_lifecycle_guards.sql",
+    "0022_table_tab_print_jobs.sql",
+    "0023_print_recovery_job_affinity.sql",
+    "0024_business_settings_policies.sql",
+    "0025_print_context_copies.sql",
+    "0026_split_payments.sql",
+    "0027_split_payments_hardening.sql",
+    "0028_kitchen_tv_access.sql",
+    "0029_kitchen_tv_pairing_requests.sql",
+    "0030_business_profiles.sql",
+    "0031_reporting_detail_order.sql",
+    "0032_kitchen_tv_control.sql",
+    "0033_kitchen_tv_modality_filter.sql",
+    "0034_table_reservations.sql",
+    "0035_users_profiles_access.sql",
+    "0036_audit_resource_attribution.sql",
+    "0037_email_access_recovery.sql",
+    "0038_global_identity_tenancy.sql",
+    "0039_tenant_reference_guards.sql",
+    "0040_operator_order_adjustments.sql",
+    "0041_platform_company_management.sql",
+    "0042_order_editing_foundation.sql",
+    "0043_order_settlement_ledger.sql",
+    "0044_order_supplemental_idempotency.sql",
+    "0045_order_partial_refund_idempotency.sql",
+    "0042_print_recovery_candidate_indexes.sql",
+    "0043_operational_order_read_indexes.sql",
+    "0044_print_summary_retention_indexes.sql",
+    "0045_operational_status_read_index.sql",
+    "0046_order_history_read_indexes.sql",
+    "0047_financial_read_candidates.sql",
+    "0048_financial_received_legacy_index.sql",
+    "0049_kitchen_finished_read_indexes.sql",
+    "0050_order_editing_read_candidates.sql",
+    "0051_client_payment_mutation_receipts.sql"
+  ],
+  "localMigrationCount": 56,
+  "pendingMigrations": [
+    "0052_effective_receipt_date.sql"
+  ],
+  "appliedOutsideBranch": [],
+  "receiptAudit": {
+    "hasReceivedDate": false,
+    "receipts": 195,
+    "needsManualReview": 195,
+    "distribution": {
+      "empty": 0,
+      "canonical": 0,
+      "consensus_legacy": 195,
+      "legacy_no_movement": 0,
+      "BLOCKED_conflicting_movements": 0,
+      "BLOCKED_invalid_movement_date": 0,
+      "BLOCKED_movement_amount_mismatch": 0,
+      "BLOCKED_receipt_movement_mismatch": 0,
+      "BLOCKED_invalid_paid_at": 0,
+      "BLOCKED_invalid_received_date": 0
+    }
+  },
+  "auditMessages": [
+    "Task 11 staging read-only audit: schema pre-0052; receipts 195; canonical 0; consensus 195; legacy_no_movement 0; blockers 0."
+  ],
+  "receivedDateIndexPresent": false,
+  "migration0052Recorded": false,
+  "schemaHistoryConsistent": true,
+  "status": "REVIEW_REQUIRED",
+  "completedAt": "2026-10-18T03:22:16.393Z"
+}

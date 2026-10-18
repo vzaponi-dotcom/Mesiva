@@ -11,6 +11,8 @@
 
 **Fechamento em 18/10:** código e evidências publicados na PR. Pacote `36e47798` com [CI SUCCESS #39092051011](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39092051011), oito shards e `validate`; 20 hashes de artefatos conferidos contra o Git. Atualizações posteriores de documentação mantêm o código executável; CI anterior não dispensa validar o SHA exato de eventual publicação.
 
+**Auditoria de staging em 18/10, SHA `d7bb1880`:** [leitura remota concluída](2026-10-18-effective-receipt-staging-audit.md), com 195 recibos em consenso e zero bloqueadores técnicos; 55 migrations aplicadas, apenas 0052 pendente. Quatro consultas, 1.671 linhas lidas, zero escritas. Sem migration/backfill/deploy; aceite do plano histórico, restore, orçamento e impressão física ainda pendentes. Q11-12 e Q11-15 continuam BLOCKED.
+
 ## Objetivo e responsabilidade
 
 A Task 11 inclui publicação controlada em staging e aceite humano. Nesta entrega, preparar o fluxo seguro e todas as evidências a preencher; a auditoria completa de código e homologação de navegador ficam delegadas ao Codex pelo usuário. **Nenhum PASS manual é permitido sem execução real.** O CI só comprova os testes automatizados no SHA executado, não a homologação humana.

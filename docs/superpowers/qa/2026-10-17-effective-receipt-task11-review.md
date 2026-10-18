@@ -11,6 +11,8 @@ O commit que acrescenta este relatório altera somente documentação/evidência
 
 **Matriz local dos 15 casos: 13 PASS, 0 FAIL remanescente, 2 BLOCKED, 0 PENDING.** Os cinco caminhos foram exercitados no navegador, com fronteiras adicionais automatizadas discriminadas abaixo. Q11-12 continua bloqueado pelos pré-requisitos remotos e Q11-15 pela impressão física. Não houve migration remota, staging, merge ou produção; o aceite integral da Task 11 permanece pendente.
 
+**Atualização de 18/10:** [auditoria histórica remota somente de leitura executada](2026-10-18-effective-receipt-staging-audit.md): 195 recibos com consenso, zero bloqueadores técnicos, apenas 0052 pendente; 1.671 linhas lidas e zero escritas. O plano de transição dos 195 consensos ainda requer aceite humano. Restore, orçamento e impressão física continuam pendentes. O JSON da rodada local preserva o estado anterior a essa auditoria; a nova evidência remota está no documento vinculado.
+
 ## Escopo e ambiente
 
 Revisado o diff completo de 72 arquivos, incluindo testes, documentos e workflows, com segunda revisão independente somente leitura. Acompanhados os consumidores dos cinco caminhos de recebimento, projeções, fechamento da comanda, edição/complemento, movimentos, relatórios e exportação. As duas correções acrescentadas foram revisadas novamente.
@@ -114,7 +116,7 @@ SQL conferiu **zero** divergências entre recibo/alocações, datas/valores dos 
 | Q11-09 | PASS | Dashboard líquido R$175, quitados com data 16/10/registro 17/10, movimentos entradas R$1.025/saídas R$50; [dashboard](evidence/task11-finance-final.png), [movimentos](evidence/task11-movements-final.png), SQL | — |
 | Q11-10 | PASS | Séries/mix de vendas e financeiro conferidos, drawer por recibo, [CSV](evidence/task11-report.csv) e [PDF](evidence/task11-report.pdf) baixados/renderizados | — |
 | Q11-11 | PASS | A#25 cancelado com estorno Pix real R$25 em 17/10, saldo inicial R$100 preservado, exclusão do retroativo na leitura após abertura; movimentos e SQL | — |
-| Q11-12 | BLOCKED | Clean/upgrade populado, duas empresas, FKs/timestamps/índice/custo local PASS; auditoria final local 33 canônicos + 1 legado conhecido | Auditoria histórica do D1 de destino, restore verificável e orçamento de staging |
+| Q11-12 | BLOCKED | Clean/upgrade populado, duas empresas, FKs/timestamps/índice/custo local PASS; auditoria local 33 canônicos + 1 legado; staging auditado em 18/10: 195 consensos, zero bloqueadores técnicos | Aceite do plano histórico para 195 consensos, restore verificável e orçamento de staging |
 | Q11-13 | PASS | Alternância UI A→B, B#1 sem receber, reports com aviso de acesso negado, dados da A ausentes; HTTP 403/404; [contexto B](evidence/task11-late-context.png) | — |
 | Q11-14 | PASS | #27 timeout/retry, #36 duas sessões/WebSocket/F5, #37 resposta 201 tardia após troca de empresa descartada; [contexto](evidence/task11-late-context.png). Replay/409 e fallback nos probes/testes/gate | — |
 | Q11-15 | BLOCKED | Desktop/mobile, claro/escuro, label/erro/foco/teclado/Escape/cancelamento e ausência de jobs duplicados PASS; [escuro](evidence/task11-mobile-dark-invalid.png), [claro](evidence/task11-mobile-light.png) | Impressora/QZ/spooler/saída física não disponíveis nesta rodada |
@@ -145,9 +147,9 @@ Revisão não encontrou regressão nova de tenant/RBAC, confiança em preços do
 | Pré-requisito | Estado nesta rodada |
 | --- | --- |
 | Dados fictícios na homologação local | Confirmado; nenhuma cópia de produção |
-| Auditoria agregada histórica **do D1 de staging** pré/pós-0052 | **BLOCKED / NOT EXECUTED**; auditoria local 33 canônicos + 1 legado não comprova staging |
-| Recibos contraditórios, sem movimentos ou consenso ainda NULL | Decisão humana/distribuição de destino pendente; sem backfill forçado |
-| Lista de migrations pendentes no D1 remoto | **NOT EXECUTED**; lista local não substitui a remota |
+| Auditoria agregada histórica **do D1 de staging** pré/pós-0052 | **EXECUTED / REVIEW_REQUIRED** em 18/10: 195 consensos, zero conflitos/datas inválidas/valores divergentes; schema pré-0052 |
+| Recibos contraditórios, sem movimentos ou consenso ainda NULL | Zero contraditórios/sem movimentos; aceite humano do plano para 195 consensos pendente; sem backfill executado |
+| Lista de migrations pendentes no D1 remoto | **EXECUTED** por SELECT: 55 aplicadas, somente `0052_effective_receipt_date.sql` pendente, nenhum arquivo aplicado fora da branch |
 | Restore D1 Time Travel/bookmark e compatibilidade do bundle/schema | **BLOCKED**; nenhum bookmark de staging coletado nem restore de destino validado; workflow staging não registra bookmark específico automaticamente |
 | Orçamento por rota e cenário concentrado em staging | **BLOCKED**; crescimento local medido e baseline/limites de destino ausentes |
 | QA local de 15 casos | **13 PASS / 2 BLOCKED**, conforme matriz; impressão física e destino ainda pendentes |
@@ -163,4 +165,4 @@ README, AGENTS, índice documental, Business Rules, Architecture e Module Map pe
 
 O [orçamento D1 vigente](../../operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) referencia o cenário concentrado desta revisão; o [runbook de release](../../release-and-migration-runbook.md#migration-0052--data-efetiva-dos-recebimentos) explicita os pré-requisitos da migration 0052. README e AGENTS não precisaram de alteração adicional. Bancos locais, credenciais, caches e logs brutos permanecem fora do Git; as evidências publicadas são sanitizadas e usam somente dados fictícios.
 
-Próximos passos necessários: validar impressão física pelo runbook, obter auditoria histórica agregada do destino fictício, verificar restore D1 e revisar orçamento incluindo candidatos concentrados, CPU/conta e degradação. Somente então avaliar staging pelo workflow oficial no SHA exato com CI verde e repetir a validação do release. **Recomendação atual: manter a PR aberta, sem publicar staging e sem considerar Task 11 homologada.** Os servidores locais foram deixados ativos em 4173/8787 com a persistência fictícia preservada.
+Próximos passos necessários: validar impressão física pelo runbook, obter aceite do plano para os 195 consensos auditados em staging, verificar restore D1 e revisar orçamento incluindo candidatos concentrados, CPU/conta e degradação. Somente então avaliar staging pelo workflow oficial no SHA exato com CI verde e repetir a validação do release. **Recomendação atual: manter a PR aberta, sem publicar staging e sem considerar Task 11 homologada.** Os servidores locais foram deixados ativos em 4173/8787 com a persistência fictícia preservada.
