@@ -73,6 +73,8 @@ On master, staging starts with the current push trigger and waits for that commi
 If staging deployment, migration, or acceptance fails, the production release stops. Production is not used to diagnose unfinished branch changes.
 No modo multi_company, o smoke automatizado atual verifica fronteiras anônimas, rejeições de login legado e identidade do release; ele não comprova o carregamento de uma sessão operacional autenticada. Antes de homologar, abrir o SHA publicado no navegador com conta fictícia de staging e confirmar que /api/bootstrap retorna 200, a operação aparece e a tela inicial não entra em ciclo de redescoberta de sessão. Registrar essa evidência junto ao SHA; HTTP 200 dos assets não substitui esse teste.
 
+Se a aba já estava aberta antes do deploy, sair de rascunhos/confirmadores pendentes e recarregá-la antes do QA. Conferir o asset efetivamente carregado na aba e a identidade em `release.json`: o JSON do servidor atualizado não prova que uma aba antiga já está executando o bundle novo. Não repetir mutations para atualizar a interface.
+
 Staging pode conter migrations/grants aditivos de outra entrega em homologação. Capabilities desconhecidas continuam sem conceder acesso ao bundle anterior; a validação de estabilidade deve comparar o snapshot persistido completo, sem confundir filtragem de capabilities com mudança de sessão. Não remover grants ou histórico para fazer o bundle abrir.
 
 For Spec B, record the exact staging SHA and the acceptance evidence in `docs/superpowers/qa/2026-09-15-spec-b-final-closure.md`. Physical printing acceptance by context remains a separate release gate documented in `docs/superpowers/qa/2026-09-12-spec-b-physical-printing-guide.md`.

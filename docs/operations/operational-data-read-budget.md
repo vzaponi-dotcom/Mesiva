@@ -51,6 +51,8 @@ O modelo HTTP atual projeta **9,701 bilhões de leituras D1 normais / 16,029 bil
 
 Posteriormente, o usuário autorizou a [publicação controlada para homologação em staging](../superpowers/qa/2026-10-18-effective-receipt-staging-deploy.md), SHA `68404745`, workflow #39097117765 SUCCESS em 18/10. A migração histórica passou; orçamento mensal e impressão física não foram aprovados por esse resultado. A validação funcional e métricas que dependem da candidata publicada pertencem à etapa posterior; não confundir essa autorização específica com liberação de produção ou dispensa geral dos gates.
 
+A [continuação autenticada](../superpowers/qa/2026-10-18-effective-receipt-staging-functional.md#métricas-agregadas-reais-após-a-publicação) registrou uso agregado de staging após o deploy: 659.361 leituras D1/2.309 escritas, 306 requests/4.571,289 ms de CPU Workers e 1,164 GB·s DO na janela curta observada. Inclui outros acessos/auditorias e usa amostragem; não é CPU por operação, fatura ou carga mensal equivalente. `monthlyReady=false` permanece correto.
+
 ## Release e investigação
 
 Seguir [o runbook de publicação](../release-and-migration-runbook.md), com bookmark D1 automático antes da migration, staging e aprovação do SHA exato. Não usar dados fictícios em produção para demonstrar economia. Em regressão, conferir planos e candidates antes de alterar índices; não executar scans antigos caros repetidamente em produção.
