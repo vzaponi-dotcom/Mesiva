@@ -6,6 +6,8 @@ Continuação da [publicação controlada](2026-10-18-effective-receipt-staging-
 
 ## Release, sessão e evidências
 
+**Continuação após os cinco caminhos PASS:** a [triagem visual e de orçamento](2026-10-18-effective-receipt-final-triage.md) confirmou a compressão preexistente dos métodos, validou o campo de data no harness em ambos os temas e confirmou plano/ciclo/acumulado no painel Cloudflare. Impressão física adiada pelo usuário nesta rodada, sem PASS. A investigação visual deixou de estar aberta; orçamento futuro integral e aceite seguem pendentes.
+
 O login abriu **Conta Teste 1**. A aba havia sido aberta antes do deploy e ainda executava `index-CpKK1PnF.js`; o servidor já entregava `index-DQs4ZyWN.js` e o release correto. Foi descartado somente o rascunho de QA e recarregada a aba, antes de qualquer recebimento. O cliente fictício já salvo foi reutilizado; não foi duplicado. A sessão permaneceu válida na retomada por volta de 10:32 SP.
 
 Foram observadas **137 respostas HTTP**, sem erro >=400 nem truncamento: `/api/auth/session`, `/api/bootstrap`, `/api/reporting/overview`, `/api/reporting/sales` e `/api/reporting/export-model` responderam **200**. A captura publica somente caminho/status, sem headers, cookies, payloads ou query strings. Essa amostra não mede frequência mensal, latência ou CPU por operação.
@@ -98,7 +100,7 @@ Na primeira retomada, apenas a comanda estava quitada; o lote ainda estava abert
 
 Asserções de unicidade, vínculos, saldo, split, datas e preservação dos registros anteriores: **PASS**; [JSON e quatro hashes de capturas](evidence/2026-10-18-effective-receipt-staging-handoff.json). O CI documental anterior `db937498` também concluiu [SUCCESS #39133848777](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39133848777). Esta atualização não altera runtime/schema nem republica staging.
 
-Os cinco caminhos de staging agora estão **5 PASS/0 BLOCKED de submissão**. A matriz integral local continua 13 PASS/2 BLOCKED: orçamento mensal, impressão física, triagem visual e aceite integral seguem pendentes. Não há aceitação da Task 11, merge ou produção.
+Os cinco caminhos de staging agora estão **5 PASS/0 BLOCKED de submissão**. A matriz histórica local continua 13 PASS/2 BLOCKED. Na continuação vinculada acima, triagem visual concluída com limitação preexistente registrada e impressão física adiada pelo usuário, sem PASS; orçamento futuro integral e aceite seguem pendentes. Não há aceitação da Task 11, merge ou produção.
 
 ## Validação documental
 
