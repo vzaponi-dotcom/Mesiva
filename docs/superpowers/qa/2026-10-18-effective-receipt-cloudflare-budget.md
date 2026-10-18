@@ -4,6 +4,8 @@
 
 A medição identifica consumo da conta, separa outros serviços e recalcula o cenário normal/degradado com o gate HTTP atual. Não demonstra ainda margem integral de 20% nem gasto total de US$5/mês. Nenhuma migration remota da aplicação, publicação de staging, merge ou deploy de produção foi executado. Os ensaios usam dados fictícios locais; a consulta remota acessou somente metadados e métricas agregadas de recursos, sem linhas de negócio de produção.
 
+**Atualização posterior:** após esclarecer pré-flight versus homologação pós-deploy, o usuário autorizou a [publicação controlada em staging do SHA `68404745`](2026-10-18-effective-receipt-staging-deploy.md), executada com sucesso em 18/10. A migration preservou os campos financeiros originais dos 195 recibos. Essa autorização permite avançar a homologação; **não é aprovação do orçamento mensal**, que permanece incompleto. Os registros “sem publicação” e a recomendação ao final deste relatório descrevem o encerramento da parte 3, anterior à autorização posterior.
+
 ## Método e limites
 
 Evidência sanitizada: [`evidence/2026-10-18-effective-receipt-cloudflare-budget.json`](evidence/2026-10-18-effective-receipt-cloudflare-budget.json). Conta identificada pelo D1 de staging configurado, representada pelo hash `748b0258b295`. Recursos alheios ao Mesiva são pseudonimizados. Credenciais ficaram somente em memória; não foram publicados tokens, e-mails, cookies, identificadores de clientes, objetos R2 ou payloads de requests.

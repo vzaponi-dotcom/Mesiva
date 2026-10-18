@@ -49,6 +49,8 @@ O modelo HTTP atual projeta **9,701 bilhões de leituras D1 normais / 16,029 bil
 
 **Orçamento de liberação BLOCKED / `monthlyReady=false`:** ainda faltam confirmação do plano/ciclo/acumulado/logs, CPU faturável por operação da candidata, duração DO e crescimento de storage representativos, previsão completa de outros serviços/staging e frequência/limite aprovado de relatórios concentrados. A API de assinaturas retornou 403; a leitura do painel chegou ao login. Consultas agregadas não acessaram linhas de negócio de produção. Não extrapolar medições isoladas para margem mensal de 20%, meta US$5 ou economia demonstrada. Preservar os [pré-requisitos de staging](../superpowers/qa/2026-10-17-effective-receipt-task11-review.md#bloqueios-antes-de-staging); uma exceção financeira de release histórico não libera esta PR automaticamente.
 
+Posteriormente, o usuário autorizou a [publicação controlada para homologação em staging](../superpowers/qa/2026-10-18-effective-receipt-staging-deploy.md), SHA `68404745`, workflow #39097117765 SUCCESS em 18/10. A migração histórica passou; orçamento mensal e impressão física não foram aprovados por esse resultado. A validação funcional e métricas que dependem da candidata publicada pertencem à etapa posterior; não confundir essa autorização específica com liberação de produção ou dispensa geral dos gates.
+
 ## Release e investigação
 
 Seguir [o runbook de publicação](../release-and-migration-runbook.md), com bookmark D1 automático antes da migration, staging e aprovação do SHA exato. Não usar dados fictícios em produção para demonstrar economia. Em regressão, conferir planos e candidates antes de alterar índices; não executar scans antigos caros repetidamente em produção.

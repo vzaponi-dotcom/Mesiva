@@ -2,6 +2,8 @@
 
 **17/10/2026, America/Sao_Paulo. Recomendação: NÃO LIBERAR staging; Task 11 NÃO HOMOLOGADA.**
 
+**Atualização posterior em 18/10:** o usuário autorizou a [publicação controlada em staging](2026-10-18-effective-receipt-staging-deploy.md), SHA `68404745`, workflow #39097117765 SUCCESS. A 0052 datou 195/195 recibos, preservou os campos financeiros originais e passou em FKs/índice. A recomendação de não publicar registrada em 17/10 descreve aquela rodada; staging agora está publicado. Homologação autenticada aguarda acesso; orçamento integral e impressão física seguem pendentes, sem aceite da Task 11 ou liberação de produção.
+
 PR [#120](https://github.com/vzaponi-dotcom/Mesiva/pull/120), branch `codex/received-date-tdd`.
 Baseline do diff: `f44e10da3e523d757dc0a9ceffe575d4331907e0`; HEAD recebido: `cd0e2291f65fa1850c53877411f177229a1c0f4c`.
 Correções de código: `d94f1d101618ba9de4467e55aef20e110f40a472` e `ef1d9ae720aaccc4b6a86a16e297776bc08fbdff`.
@@ -149,15 +151,15 @@ Revisão não encontrou regressão nova de tenant/RBAC, confiança em preços do
 | Pré-requisito | Estado nesta rodada |
 | --- | --- |
 | Dados fictícios na homologação local | Confirmado; nenhuma cópia de produção |
-| Auditoria agregada histórica **do D1 de staging** pré/pós-0052 | **EXECUTED / REVIEW_REQUIRED** em 18/10: 195 consensos, zero conflitos/datas inválidas/valores divergentes; schema pré-0052 |
-| Recibos contraditórios, sem movimentos ou consenso ainda NULL | Zero contraditórios/sem movimentos; aceite humano do plano para 195 consensos pendente; sem backfill executado |
-| Lista de migrations pendentes no D1 remoto | **EXECUTED** por SELECT: 55 aplicadas, somente `0052_effective_receipt_date.sql` pendente, nenhum arquivo aplicado fora da branch |
+| Auditoria agregada histórica **do D1 de staging** pré/pós-0052 | **PASS técnico** em 18/10: 195 consensos antes e 195 canônicos depois, zero conflitos/datas inválidas/valores divergentes, hashes financeiros preservados |
+| Recibos contraditórios, sem movimentos ou consenso ainda NULL | Zero contraditórios/sem movimentos; backfill dos 195 consensos executado pela 0052 na publicação autorizada; zero NULL restante |
+| Lista de migrations pendentes no D1 remoto | **EXECUTED** por SELECT: 56 aplicadas após o workflow, nenhuma pendente |
 | Restore D1 Time Travel/bookmark e compatibilidade do bundle/schema | **MÉTODO VERIFICADO COM LIMITES** em 18/10: bookmarks de staging, restore/undo em descartável e compatibilidade financeira local. Staging não restaurado; checkpoint fresco obrigatório na janela real; workflow não o registra automaticamente |
 | Orçamento por rota e cenário concentrado em staging | **BLOCKED**; [parte 3 em 18/10](2026-10-18-effective-receipt-cloudflare-budget.md) mediu conta, A/B e HTTP/exportações locais; projeção D1 9,701/16,029 bilhões. CPU/plano/ciclo/logs e limites representativos incompletos; candidata não publicada |
 | QA local de 15 casos | **13 PASS / 2 BLOCKED**, conforme matriz; impressão física e destino ainda pendentes |
-| Deploy staging, release.json, autenticação/deeplinks do release | **NOT EXECUTED** |
+| Deploy staging, release.json, autenticação/deeplinks do release | **SUCCESS** no SHA `68404745`; identidade/multi_company/deeplinks PASS; autenticação operacional no navegador aguarda login |
 
-O workflow autoriza esta branch somente por `workflow_dispatch`; o pré-flight precede R2/migrations remotos. Nenhum workflow de staging foi disparado. A auditoria automática tem condição específica da branch: uma futura publicação da master e cada banco de destino ainda exigem a revisão histórica própria do runbook. Não extrapolar uma auditoria de staging para produção. Merge e produção continuam fora da autorização.
+O workflow autoriza esta branch somente por `workflow_dispatch`; o pré-flight precede R2/migrations remotos. A publicação posterior autorizada consta no relatório de 18/10 vinculado acima. A auditoria automática tem condição específica da branch: uma futura publicação da master e cada banco de destino ainda exigem a revisão histórica própria do runbook. Não extrapolar uma auditoria de staging para produção. Merge e produção continuam fora da autorização.
 
 ## Evidências e próximo passo
 
@@ -167,4 +169,4 @@ README, AGENTS, índice documental, Business Rules, Architecture e Module Map pe
 
 O [orçamento D1 vigente](../../operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) referencia o cenário concentrado desta revisão; o [runbook de release](../../release-and-migration-runbook.md#migration-0052--data-efetiva-dos-recebimentos) explicita os pré-requisitos da migration 0052. README e AGENTS não precisaram de alteração adicional. Bancos locais, credenciais, caches e logs brutos permanecem fora do Git; as evidências publicadas são sanitizadas e usam somente dados fictícios.
 
-Próximos passos necessários: validar impressão física pelo runbook, obter aceite do plano para os 195 consensos auditados em staging e revisar orçamento incluindo candidatos concentrados, CPU/conta e degradação. Na janela real, recapturar o bookmark e conferir o par bundle/schema pelo procedimento de recuperação verificado. Somente então avaliar staging pelo workflow oficial no SHA exato com CI verde e repetir a validação do release. **Recomendação atual: manter a PR aberta, sem publicar staging e sem considerar Task 11 homologada.** Os servidores locais foram deixados ativos em 4173/8787 com a persistência fictícia preservada.
+Após a publicação controlada autorizada de 18/10, os próximos passos são concluir login operacional em staging, validar funcionalmente os cinco caminhos/relatórios no release `68404745`, revisar orçamento incluindo CPU/conta/degradação e validar impressão física pelo runbook. Migration e preservação dos 195 recibos passaram; não é preciso repetir a publicação para testar o release já disponível. **Recomendação atual: manter a PR aberta e a Task 11 não homologada até resolver os bloqueios e registrar aceite do release.** Os servidores locais foram deixados ativos em 4173/8787 com a persistência fictícia preservada na rodada local.

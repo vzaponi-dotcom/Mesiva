@@ -105,6 +105,8 @@ Para uma auditoria estritamente somente de leitura com Wrangler `4.128.0`, não 
 
 Conferir também o [orçamento dos recebimentos efetivos](operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) e a [matriz da Task 11](superpowers/qa/2026-10-17-effective-receipt-task11.md). CI verde e testes locais não dispensam auditoria, restore, orçamento, impressão física pendente ou aceite do release de staging no SHA exato. Destino e testes usam somente dados fictícios; os bloqueios registrados precisam ser resolvidos antes da publicação.
 
+Separar as evidências: auditoria histórica, plano de tratamento, recuperação e avaliação prévia de orçamento precedem a publicação; homologação funcional e métricas que exigem a candidata publicada são verificadas depois. A [publicação controlada da PR #120 em 18/10](superpowers/qa/2026-10-18-effective-receipt-staging-deploy.md) recebeu autorização específica do usuário, com orçamento integral e impressão física ainda pendentes. Isso não cria dispensa geral dos gates nem autoriza merge/produção.
+
 ### Spec B migrations 0024/0025
 
 `0024_business_settings_policies.sql` persists typed settings/catalogs and their revisions. `0025_print_context_copies.sql` extends printing snapshots/policies by context. Before production:

@@ -5,7 +5,7 @@
 **Branch:** codex/received-date-tdd
 **Estado:** REVISÃO E QA LOCAL EXECUTADOS: 13 PASS / 2 BLOCKED; TASK 11 NÃO HOMOLOGADA
 **Baseline funcional Task 10:** c5e28d820f923eaca6f454e7d28ce97a05140100 (Validate #39069565814). **Task 11 gate de preparação GREEN:** 26a418acc0dbfdcac4eabb596c9fcdc202d32080 — [Validate application #39071153674](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39071153674) **SUCCESS** (8 shards + gates). Histórico de preparação; resultados posteriores estão no relatório da rodada abaixo.
-**Deploy staging:** NOT EXECUTED. **Migration remota:** NOT EXECUTED. **Merge/produção:** NOT AUTHORIZED.
+**Deploy staging/migration 0052:** [SUCCESS em 18/10, SHA `68404745`](2026-10-18-effective-receipt-staging-deploy.md). **Homologação autenticada:** aguardando acesso. **Merge/produção:** NOT AUTHORIZED.
 
 **Rodada Codex de 17/10:** [relatório e evidências](2026-10-17-effective-receipt-task11-review.md). Correções do pré-flight via RED → GREEN em `d94f1d10` e `ef1d9ae7`; 4.116 testes PASS e [CI do código final SUCCESS](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39073109702). Após reinício documentado dos servidores, os cinco caminhos foram executados no navegador. Matriz local: **13 PASS / 0 FAIL remanescente / 2 BLOCKED / 0 PENDING**, com limites automatizados discriminados no relatório. Q11-12: auditoria histórica/restore/orçamento do destino; Q11-15: impressão física. Staging e aceite integral permanecem bloqueados.
 
@@ -16,6 +16,8 @@
 **Parte 2 em 18/10, SHA `304240ba`:** [método de recuperação verificado](2026-10-18-effective-receipt-d1-recovery.md): bookmarks de staging obtidos, restore/undo em D1 descartável PASS, banco temporário excluído, compatibilidade financeira e snapshot local conferidos, cinco testes PASS. Staging permanece com 195 recibos/55 migrations, sem 0052. Na janela real é obrigatório obter checkpoint fresco e usar par código/schema compatível. Aceite histórico, orçamento e impressão física ainda pendentes; sem aceite integral da Task 11.
 
 **Parte 3 em 18/10, SHA `c7ef7100`:** [análise do orçamento executada](2026-10-18-effective-receipt-cloudflare-budget.md), com agregados da conta, projeções normal/degradada, 12 medições A/B de repositório e 18 requests autenticados de relatórios/exportação. Projeção D1: 9,701/16,029 bilhões de leituras; amplificação canônica de `loadSales` medida em 20.002 → 40.002 leituras/10 mil recibos. **Gate financeiro BLOCKED:** plano/ciclo/logs e CPU/duração/crescimento representativos ainda incompletos; `monthlyReady=false`. Nenhuma migration/publicação remota. Q11-12 e Q11-15 seguem BLOCKED; 13 PASS/2 BLOCKED.
+
+**Publicação autorizada posteriormente em 18/10:** [workflow #39097117765 SUCCESS](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39097117765), SHA `68404745`, confirmado em `release.json`. A migration datou 195/195 recibos; hashes dos campos financeiros originais preservados, zero FKs e índice confirmado. Isso supera os registros históricos de “não publicado” acima. Login operacional e cinco caminhos de recebimento no release aguardam acesso; orçamento integral e impressão física continuam pendentes. Task 11 não homologada.
 
 ## Objetivo e responsabilidade
 
@@ -84,15 +86,15 @@ Não alterar fluxos financeiros em produção nem migrar staging/produção como
 ## 5. Checklist de aceite final
 
 - [x] Código corrigido `ef1d9ae7`: CI SUCCESS (8/8 + gates), run #39073109702; pacote de evidências `36e47798`: SUCCESS, run #39092051011. Atualização posterior deve manter CI do HEAD exato antes de publicação.
-- [ ] Auditoria staging executada, distribuição histórica avaliada e resolução de blockers documentada.
-- [ ] Plano de restore D1 anterior à migration registrado, migrations aplicadas exclusivamente em staging pelo workflow oficial.
+- [x] Auditoria staging pré/pós executada: 195 consensos → 195 canônicos, zero bloqueadores técnicos, campos financeiros originais preservados; publicação controlada autorizada pelo usuário.
+- [x] Método de restore verificado e bookmark fresco anterior à migration registrado; 0052 aplicada exclusivamente em staging pelo workflow #39097117765.
 - [ ] Release staging SHA exato verificado em release.json, autenticação real e bootstrap com conta fictícia.
 - [ ] QA dos 15 casos concluído com evidências; 0 FAIL e 0 PENDING. BLOCKED restante exige decisão explícita.
 - [ ] Métricas D1 de staging e eventuais regressões de fallback revisadas.
 - [ ] Revisão total do diff pelo Codex concluída; PR review threads resolvidas, riscos residuais registrados.
 - [ ] Usuário aprovou merge explicitamente depois de visualizar evidências. Produção exige decisão e workflow separados.
 
-**Situação atual:** revisão integral, correções do pré-flight, testes e navegador locais registrados no relatório. Matriz local: 13 PASS e 2 BLOCKED; impressão física e pré-requisitos de staging pendentes. NÃO marcar Task 11 aceita/concluída sem resolver os bloqueios e validar o release de staging no SHA exato.
+**Situação atual:** revisão integral e QA local registrados; matriz local 13 PASS/2 BLOCKED. Staging publicado em `68404745`, migration/preservação histórica PASS. A homologação autenticada aguarda login; orçamento integral e impressão física permanecem pendentes. NÃO marcar Task 11 aceita/concluída sem resolver os bloqueios e validar funcionalmente o release publicado.
 
 ## 6. Fontes vivas e handoff
 
@@ -105,4 +107,4 @@ Não alterar fluxos financeiros em produção nem migrar staging/produção como
 - Workflow: .github/workflows/deploy-staging.yml
 - Gates de segurança: scripts/infra/productionSafetyRegression.test.js e scripts/infra/effectiveReceiptStagingPreflight.test.js
 
-**Prompt recomendado ao Codex:** "Continue a Task 11 da PR #120 a partir desta matriz. Leia o relatório da rodada de 17/10 e preserve suas evidências. Confira mudanças posteriores e CI do SHA atual; resolva Q11-12 (auditoria histórica, restore, orçamento) e Q11-15 (impressão física), repetindo as validações afetadas com dados fictícios. Não use dados de produção. Não faça merge/deploy de produção. Não acione Deploy staging antes de read-only preflight, bookmark/rollback e autorização, e não confunda um CI verde com homologação manual. Corrija falhas via RED → GREEN, publique staging pelo workflow permitido somente após gates, registre run/SHA e traga relatório de PASS/FAIL/BLOCKED/PENDING com recomendação final, sem merge."
+**Prompt recomendado ao Codex:** "Continue a Task 11 da PR #120. Preserve as evidências locais e leia a publicação de staging de 18/10, workflow #39097117765, SHA 68404745: migration e preservação histórica passaram. Confira release.json e mudanças posteriores; conclua login operacional com conta de homologação e execute os cinco caminhos de recebimento, relatórios/exportações, permissões e regressões no release publicado. Não peça senha pelo chat nem crie credencial universal. Resolva Q11-12 (orçamento/aceite integral) e Q11-15 (impressão física); não trate CI/smoke anônimo como homologação. Corrija falhas via RED → GREEN e use somente dados fictícios. Qualquer nova publicação exige CI, pré-flight e checkpoint do SHA exato; não republique só por alteração documental. Não faça merge ou produção. Entregue evidências e pendências reais."
