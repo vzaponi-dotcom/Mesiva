@@ -13,6 +13,8 @@
 
 **Auditoria de staging em 18/10, SHA `d7bb1880`:** [leitura remota concluída](2026-10-18-effective-receipt-staging-audit.md), com 195 recibos em consenso e zero bloqueadores técnicos; 55 migrations aplicadas, apenas 0052 pendente. Quatro consultas, 1.671 linhas lidas, zero escritas. Sem migration/backfill/deploy; aceite do plano histórico, restore, orçamento e impressão física ainda pendentes. Q11-12 e Q11-15 continuam BLOCKED.
 
+**Parte 2 em 18/10, SHA `304240ba`:** [método de recuperação verificado](2026-10-18-effective-receipt-d1-recovery.md): bookmarks de staging obtidos, restore/undo em D1 descartável PASS, banco temporário excluído, compatibilidade financeira e snapshot local conferidos, cinco testes PASS. Staging permanece com 195 recibos/55 migrations, sem 0052. Na janela real é obrigatório obter checkpoint fresco e usar par código/schema compatível. Aceite histórico, orçamento e impressão física ainda pendentes; sem aceite integral da Task 11.
+
 ## Objetivo e responsabilidade
 
 A Task 11 inclui publicação controlada em staging e aceite humano. Nesta entrega, preparar o fluxo seguro e todas as evidências a preencher; a auditoria completa de código e homologação de navegador ficam delegadas ao Codex pelo usuário. **Nenhum PASS manual é permitido sem execução real.** O CI só comprova os testes automatizados no SHA executado, não a homologação humana.

@@ -161,6 +161,26 @@ Database rollback normally uses a forward fix or restoration from the applicable
 
 For destructive operations, the restoration procedure must be understood before the destructive step is authorized.
 
+### Recuperação da migration 0052
+
+O [ensaio de 18/10/2026](superpowers/qa/2026-10-18-effective-receipt-d1-recovery.md) verificou Time Travel/undo em D1 descartável e compatibilidade financeira com snapshots locais. Não restaurou staging. A [documentação Cloudflare](https://developers.cloudflare.com/d1/reference/time-travel/) descreve restore no próprio banco, cancelamento de queries em andamento e retorno de um bookmark para desfazer a operação; não há clone por Time Travel. A retenção depende do plano, sem presumir 30 dias.
+
+1. Em janela autorizada, suspender escritas por procedimento operacional aprovado, incluindo processos de fundo que escrevam. Registrar bundle/release, schema, contagens e transações que ficariam fora do ponto. Preferir correção adiante quando perder essas transações for inaceitável; não reenviar recebimentos automaticamente após restore.
+2. Imediatamente antes da migration, obter e guardar o bookmark pré-migration, banco/ID, horário e SHA. Antes de eventual restore, guardar também um bookmark do estado corrente como ponto de segurança. Para staging, a consulta somente de leitura é:
+
+   ```bash
+   npx --yes wrangler@4.128.0 d1 time-travel info amor-e-sabor-delivery-staging --env staging --json
+   ```
+
+3. Preparar o par código/schema compatível pelos workflows oficiais e seus gates. O candidato exige `received_date`; não pode operar sobre um banco restaurado para pré-0052. O bundle anterior abre o schema aditivo, mas pode interpretar recebimentos retroativos pelo dia técnico antigo. O SHA publicado `f44e10da` usado no ensaio é referência de compatibilidade, não autorização para contornar a exigência de HEAD/CI dos workflows.
+4. Somente após autorização da recuperação e conferência do destino, o comando de restore de staging é o seguinte; o placeholder deve ser substituído pelo ponto aprovado do próprio banco. No Wrangler `4.128.0`, `restore --json` executa sem o prompt interativo: não é dry-run. Por isso, o exemplo preserva a confirmação:
+
+   ```bash
+   npx --yes wrangler@4.128.0 d1 time-travel restore amor-e-sabor-delivery-staging --env staging --bookmark "BOOKMARK_APROVADO"
+   ```
+
+5. Guardar o `previous_bookmark` retornado para eventual undo no mesmo banco. Antes de liberar tráfego/escritas, conferir schema, histórico de migrations somente por leitura, integridade/FKs, contagens e totais financeiros, isolamento, login/bootstrap e fluxos afetados no bundle correto. Conciliar registros posteriores ao ponto. Este procedimento não autoriza executar restore, migration ou publicação por si só.
+
 ## Emergency rule
 
 A production incident does not turn production into a development environment. Diagnose the failure, prepare the smallest safe fix on a branch, validate it, use staging whenever the incident permits, and release through the controlled production path. Any exceptional direct production operation requires explicit authorization and should be recorded in the incident/release notes.

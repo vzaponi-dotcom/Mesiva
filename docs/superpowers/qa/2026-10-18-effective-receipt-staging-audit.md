@@ -4,6 +4,8 @@
 
 **Resultado: sem bloqueadores técnicos encontrados; `REVIEW_REQUIRED` para o plano de transição de 195 recibos históricos.** Não houve migration, backfill, criação de tabela, alteração de dados ou deploy. Restore, orçamento e impressão física não fazem parte desta execução e continuam pendentes.
 
+**Atualização posterior:** a [parte 2 verificou o método de recuperação](2026-10-18-effective-receipt-d1-recovery.md) com bookmarks de staging e exercício isolado em D1 descartável, sem restaurar staging. Este documento preserva os resultados da auditoria de leitura da parte 1.
+
 ## Destino e schema
 
 - D1 de staging `amor-e-sabor-delivery-staging`, ID `73a1c0c1-142f-4247-8ffc-e858ab2ac400`, conferido no binding `env.staging` de `wrangler.jsonc`. Nenhuma consulta em produção.
