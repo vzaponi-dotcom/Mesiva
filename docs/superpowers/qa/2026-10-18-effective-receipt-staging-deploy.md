@@ -4,7 +4,7 @@
 
 Após esclarecer a diferença entre auditoria histórica pré-migration e validação funcional posterior ao deploy, o usuário autorizou prosseguir com a publicação controlada em staging e os testes seguintes. Essa autorização não é aceite definitivo do orçamento, da impressão física ou da produção. Não houve merge, deploy de produção ou consulta de suas linhas de negócio. O banco de staging permanece separado e destinado a dados fictícios.
 
-**Continuação posterior em 18/10:** [homologação autenticada parcial](2026-10-18-effective-receipt-staging-functional.md) com sessão/bootstrap, três caminhos pagos e relatórios/CSV/PDF PASS. Lote/comanda aguardam submissão final pelo usuário por bloqueio da ferramenta. As referências a login pendente neste documento/JSON descrevem o instante da publicação, anterior a essa continuação.
+**Continuação posterior em 18/10:** [homologação autenticada](2026-10-18-effective-receipt-staging-functional.md) com sessão/bootstrap, cinco caminhos pagos e relatórios PASS, CSV/PDF do snapshot anterior PASS. Lote/comanda foram submetidos pelo usuário e conferidos por UI/SELECT, com saldo zero dos seis pedidos e mesa livre. Orçamento, impressão física, triagem visual e aceite integral permanecem pendentes. As referências a login pendente neste documento/JSON descrevem o instante da publicação, anterior a essa continuação.
 
 ## Gates e publicação
 

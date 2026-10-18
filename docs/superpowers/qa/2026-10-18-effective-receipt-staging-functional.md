@@ -1,6 +1,6 @@
 # PR #120 — homologação autenticada em staging
 
-**18/10/2026, America/Sao_Paulo. Release:** `68404745c7b47b2d2e4e31ece5f0812a1c3d3400`. **Resultado: três caminhos de recebimento PASS; dois BLOCKED pela revisão automática da ferramenta. Task 11 NÃO HOMOLOGADA.**
+**18/10/2026, America/Sao_Paulo. Release:** `68404745c7b47b2d2e4e31ece5f0812a1c3d3400`. **Resultado atualizado às 12:29 SP: cinco caminhos de recebimento PASS após a submissão de lote/comanda pelo usuário e conferência independente. Task 11 NÃO HOMOLOGADA.**
 
 Continuação da [publicação controlada](2026-10-18-effective-receipt-staging-deploy.md). O usuário autorizou usar a senha salva e depois confirmou explicitamente que todos os dados de staging são fictícios, com liberdade para manipulá-los no QA. A credencial foi preenchida pelo navegador, sem leitura/publicação de senha ou cookie. Não houve criação de conta, reset de credencial, cópia de produção, merge ou deploy de produção.
 
@@ -10,7 +10,7 @@ O login abriu **Conta Teste 1**. A aba havia sido aberta antes do deploy e ainda
 
 Foram observadas **137 respostas HTTP**, sem erro >=400 nem truncamento: `/api/auth/session`, `/api/bootstrap`, `/api/reporting/overview`, `/api/reporting/sales` e `/api/reporting/export-model` responderam **200**. A captura publica somente caminho/status, sem headers, cookies, payloads ou query strings. Essa amostra não mede frequência mensal, latência ou CPU por operação.
 
-Resumo sanitizado e hashes dos nove anexos: [`evidence/2026-10-18-effective-receipt-staging-functional.json`](evidence/2026-10-18-effective-receipt-staging-functional.json). A matriz anterior de [15 casos locais](2026-10-17-effective-receipt-task11-review.md#matriz-de-homologação-integral--15-casos) permanece **13 PASS / 2 BLOCKED**; não foi convertida em 15 PASS de staging nem integralmente repetida nesta rodada.
+Resumo sanitizado e hashes dos nove anexos da primeira rodada: [`evidence/2026-10-18-effective-receipt-staging-functional.json`](evidence/2026-10-18-effective-receipt-staging-functional.json), preservado com seu estado histórico 3 PASS/2 BLOCKED. A [conferência posterior à submissão humana](evidence/2026-10-18-effective-receipt-staging-handoff.json) registra os dois caminhos adicionais PASS. A matriz anterior de [15 casos locais](2026-10-17-effective-receipt-task11-review.md#matriz-de-homologação-integral--15-casos) permanece **13 PASS / 2 BLOCKED**; não foi convertida em 15 PASS de staging nem integralmente repetida nesta rodada.
 
 ## Cinco caminhos de recebimento
 
@@ -19,16 +19,16 @@ Resumo sanitizado e hashes dos nove anexos: [`evidence/2026-10-18-effective-rece
 | Checkout retroativo com split | **PASS** | #358, R$18, Pix R$10 + Dinheiro R$8, recebido em **17/10**, data comercial **18/10**. Um recibo, duas alocações/entradas. [Captura](evidence/task11-staging-checkout-split.png) |
 | Complemento após salvar edição | **PASS** | #358 passou de R$18 para R$36. Novo recibo Pix de R$18 em **18/10**, original de 17/10 preservado e um `supplemental_payment`. Reimpressão opcional recusada. [Captura](evidence/task11-staging-supplement.png) |
 | Avulso pela Cozinha | **PASS** | #359 salvo pendente e depois recebido em Pix, R$18 em **18/10**. Permaneceu em preparo. [Captura](evidence/task11-staging-order-payment.png) |
-| Lote de cliente | **BLOCKED — submissão final pela ferramenta** | #360/R$18 e #361/R$27, total R$45. Seletor sem campo de data; confirmação com campo único, preparada em Pix/17/10. Recibo ainda não gravado. [Pronto para confirmar](evidence/task11-staging-batch-ready.png) |
-| Comanda | **BLOCKED — mesma restrição de submissão** | Mesa 7, comanda 59, #362/R$18 + #363/R$27. Saldo R$45; campo único, preparado para **17/10**, Pix R$20 + Dinheiro R$25. Comanda continua aberta; nenhuma quitação presumida. [Pronta para confirmar](evidence/task11-staging-table-ready.png) |
+| Lote de cliente | **PASS — submissão pelo usuário** | #360/R$18 e #361/R$27, total R$45 Pix/17/10. Seletor sem campo de data; confirmação com campo único. Um recibo compartilhado, pedidos quitados e cliente sem saldo. [Resultado](evidence/task11-handoff-batch-paid.png); [formulário anterior](evidence/task11-staging-batch-ready.png) |
+| Comanda | **PASS — submissão pelo usuário** | Mesa 7, comanda 59, #362/R$18 + #363/R$27. Um recibo de R$45 em **17/10**, Pix R$20 + Dinheiro R$25. Comanda `closed`, ambos quitados e mesa livre. [Resultado](evidence/task11-handoff-table-free.png); [formulário anterior](evidence/task11-staging-table-ready.png) |
 
-Os seis pedidos são próprios da tarefa: cliente **QA Task11 Staging 18out** ou observação de item com esse prefixo na mesa 7. Pedidos/comandas anteriores não foram alterados. Os salvos em mesa são pendentes, não lançamentos de pagamento. Nenhuma confirmação bloqueada foi substituída por chamada de API ou escrita SQL.
+Os seis pedidos são próprios da tarefa: cliente **QA Task11 Staging 18out** ou observação de item com esse prefixo na mesa 7. Pedidos/comandas anteriores não foram alterados. Os pedidos de mesa foram salvos pendentes e depois recebidos pelo usuário. Nenhuma confirmação bloqueada foi substituída por chamada de API ou escrita SQL.
 
 Default **18/10** observado em checkout, avulso, complemento e comanda. Data futura **19/10** mostrou erro e desabilitou confirmar, sem gravar recibo ([captura](evidence/task11-staging-future.png)). Calendários impossíveis, virada UTC/DST, limite 100/101, RBAC negativo, timeout/replay/409 e troca de empresa mantêm a evidência local/automatizada anterior; não foram novamente simulados em staging nesta rodada. A base remota migrada não ficou com NULL legado para reproduzir DST ali.
 
 ## Reconciliação SQL e preservação histórica
 
-SELECTs restritos aos registros de QA conferiram:
+Antes das duas confirmações pelo usuário, SELECTs restritos aos registros de QA conferiram o snapshot abaixo. O resultado atual está na seção de conferência após submissão humana.
 
 - **Seis pedidos, R$144 em valor comercial**, todos em preparo. #358/R$36, #359/R$18, #360/R$18, #361/R$27, #362/R$18 e #363/R$27.
 - **Três recibos, R$54**, quatro alocações e quatro entradas `order-payment`; somas e datas iguais ao recibo. R$18 em 17/10 e R$36 em 18/10. Dois pagamentos originais + um complemento; nenhum recibo duplicado.
@@ -75,18 +75,30 @@ Workers teve `sampleInterval≈1,0066`; demais métricas retornaram 1. A janela 
 
 **Orçamento mensal continua BLOCKED / `monthlyReady=false`.** A amostra não demonstra CPU por operação sob carga equivalente, duração/storage em 31 dias, plano/ciclo/fatura/logs ou previsão de toda a conta. Não multiplicar a média agregada dessa janela pelos requests do modelo e declarar US$5 ou margem de 20% aprovados. A [parte 3](2026-10-18-effective-receipt-cloudflare-budget.md) mantém os limites do cenário concentrado. Nenhuma carga volumosa remota foi criada.
 
-## Restrição da ferramenta e próximo passo
+## Restrição da ferramenta e resolução pelo usuário
 
 A revisão automática inicialmente rejeitou selecionar os dois pedidos e abrir “Receber selecionados”, classificando a ação como financeira. O código mostrou que essa etapa apenas prepara o formulário; sua abertura foi permitida depois da verificação, sem chamar o submit. **O clique final em “Confirmar recebimento” voltou a ser rejeitado**, mesmo após o usuário confirmar expressamente dados fictícios e autorizar a manipulação. Motivo informado: operação financeira persistente em staging exige que o usuário execute a submissão final.
 
 Esse bloqueio vem da **revisão automática da ferramenta**, não da ausência de autorização do usuário nem de um defeito funcional constatado no lote. Não foi contornado trocando de ferramenta, chamando endpoints ou gravando recibos diretamente. A comanda foi preparada até a confirmação, sem tentar outra submissão equivalente rejeitada.
 
-Para prosseguir, o usuário precisa clicar nas duas abas preservadas:
+O usuário executou as duas submissões nas abas preservadas:
 
 1. **Clientes:** lote #360/#361, R$45 Pix, data 17/10 — `Confirmar recebimento`.
 2. **Comandas:** comanda 59/mesa 7, R$45 em Pix R$20 + Dinheiro R$25, data 17/10 — `Confirmar pagamento`.
 
-Depois, conferir os dois recibos únicos, vínculos/saldos, liberação da mesa e atualização dos relatórios/SQL, sem repetir pagamentos já concluídos. Ainda são necessários orçamento integral, impressão física e aceite humano. A matriz local permanece 13 PASS/2 BLOCKED; nesta rodada remota os cinco caminhos ficaram **3 PASS/2 BLOCKED**, sem aceitação da Task 11, merge ou produção.
+### Conferência após submissão humana — 18/10, 12:27–12:29 SP
+
+Na primeira retomada, apenas a comanda estava quitada; o lote ainda estava aberto na UI e ausente no D1. Isso foi informado ao usuário, que confirmou também o lote. Nenhum pagamento foi repetido pelo agente. A leitura final confirmou:
+
+- **Comanda:** recibo único de R$45, `paid_at=2026-10-18T15:27:56.118Z`, `received_date=2026-10-17`, dois pagamentos de R$18/R$27 e duas alocações Pix/R$20 + Dinheiro/R$25. Comanda 59 `closed`, mesa 7 livre na UI.
+- **Lote:** recibo único de R$45, `paid_at=2026-10-18T15:28:50.499Z`, `received_date=2026-10-17`, dois pagamentos de R$18/R$27 e uma alocação Pix. #360/#361 aparecem `Pago`, e o cliente está `Sem saldo`.
+- **QA completo:** seis pedidos/R$144, cinco recibos/R$144, seis pagamentos originais + um complemento, sete alocações e sete entradas. **Saldo zero em cada pedido**; nenhum recibo duplicado e todos ainda `Em preparo`. Os três recibos e respectivos pagamentos/alocações/movimentos/complemento da primeira rodada foram comparados campo a campo e permaneceram iguais. FKs: zero violações.
+- A leitura diagnóstica final de dez statements consumiu **24.179 linhas lidas/zero escritas**. O agregado financeiro independente consumiu **65/zero**; esses valores não são custo por rota da aplicação.
+- **Relatório atualizado, empresa inteira:** vendas de 18/10 **R$189/sete pedidos**, recebido em 18/10 **R$36/dois recibos**, recebido em 17/10 **R$153/quatro recibos**; movimentos de entrada nos mesmos dias/valores. A UI mostrou esses totais e R$45 pendentes de outro pedido fictício, enquanto os seis do QA ficaram quitados. [Vendas](evidence/task11-handoff-report-today.png), [recebido/comparativo](evidence/task11-handoff-report-received.png). O CSV/PDF anterior é mantido como snapshot anterior à comanda; não foi reexportado nesta conferência.
+
+Asserções de unicidade, vínculos, saldo, split, datas e preservação dos registros anteriores: **PASS**; [JSON e quatro hashes de capturas](evidence/2026-10-18-effective-receipt-staging-handoff.json). O CI documental anterior `db937498` também concluiu [SUCCESS #39133848777](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39133848777). Esta atualização não altera runtime/schema nem republica staging.
+
+Os cinco caminhos de staging agora estão **5 PASS/0 BLOCKED de submissão**. A matriz integral local continua 13 PASS/2 BLOCKED: orçamento mensal, impressão física, triagem visual e aceite integral seguem pendentes. Não há aceitação da Task 11, merge ou produção.
 
 ## Validação documental
 

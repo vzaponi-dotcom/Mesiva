@@ -5,7 +5,7 @@
 **Branch:** codex/received-date-tdd
 **Estado:** REVISÃO E QA LOCAL EXECUTADOS: 13 PASS / 2 BLOCKED; TASK 11 NÃO HOMOLOGADA
 **Baseline funcional Task 10:** c5e28d820f923eaca6f454e7d28ce97a05140100 (Validate #39069565814). **Task 11 gate de preparação GREEN:** 26a418acc0dbfdcac4eabb596c9fcdc202d32080 — [Validate application #39071153674](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39071153674) **SUCCESS** (8 shards + gates). Histórico de preparação; resultados posteriores estão no relatório da rodada abaixo.
-**Deploy staging/migration 0052:** [SUCCESS em 18/10, SHA `68404745`](2026-10-18-effective-receipt-staging-deploy.md). **Homologação autenticada:** [parcial, três caminhos PASS e dois BLOCKED pela ferramenta](2026-10-18-effective-receipt-staging-functional.md). **Merge/produção:** NOT AUTHORIZED.
+**Deploy staging/migration 0052:** [SUCCESS em 18/10, SHA `68404745`](2026-10-18-effective-receipt-staging-deploy.md). **Homologação autenticada:** [cinco caminhos PASS, incluindo lote/comanda submetidos pelo usuário e conferidos](2026-10-18-effective-receipt-staging-functional.md). **Merge/produção:** NOT AUTHORIZED.
 
 **Rodada Codex de 17/10:** [relatório e evidências](2026-10-17-effective-receipt-task11-review.md). Correções do pré-flight via RED → GREEN em `d94f1d10` e `ef1d9ae7`; 4.116 testes PASS e [CI do código final SUCCESS](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39073109702). Após reinício documentado dos servidores, os cinco caminhos foram executados no navegador. Matriz local: **13 PASS / 0 FAIL remanescente / 2 BLOCKED / 0 PENDING**, com limites automatizados discriminados no relatório. Q11-12: auditoria histórica/restore/orçamento do destino; Q11-15: impressão física. Staging e aceite integral permanecem bloqueados.
 
@@ -21,7 +21,7 @@
 
 ## Objetivo e responsabilidade
 
-**Homologação autenticada posterior em 18/10:** [sessão/bootstrap HTTP 200, checkout split, avulso e complemento PASS](2026-10-18-effective-receipt-staging-functional.md); seis pedidos fictícios #358–#363, três recibos/R$54 conciliados, 195 originais preservados. Relatórios e CSV/PDF conferidos. Lote #360/#361 e comanda 59/mesa 7 estão preparados, mas a revisão automática exige a submissão final pelo usuário, mesmo após sua autorização explícita para dados fictícios. Não contornar por API/SQL. Orçamento mensal, impressão física e aceite integral seguem pendentes; matriz local 13 PASS/2 BLOCKED preservada.
+**Homologação autenticada posterior em 18/10:** [sessão/bootstrap HTTP 200 e cinco caminhos PASS](2026-10-18-effective-receipt-staging-functional.md); seis pedidos fictícios #358–#363, cinco recibos/R$144 conciliados e saldo zero por pedido. O usuário submeteu lote #360/#361 e comanda 59/mesa 7 às 12:27–12:28 SP; unicidade, vínculos, datas, split, comanda fechada e mesa livre conferidos por UI/SELECT. Os três recibos anteriores do QA permaneceram iguais; a auditoria anterior preservou os 195 históricos. Relatórios atualizados e CSV/PDF do snapshot anterior conferidos. Orçamento mensal, impressão física, triagem visual e aceite integral seguem pendentes; matriz local 13 PASS/2 BLOCKED preservada.
 
 A Task 11 inclui publicação controlada em staging e aceite humano. Nesta entrega, preparar o fluxo seguro e todas as evidências a preencher; a auditoria completa de código e homologação de navegador ficam delegadas ao Codex pelo usuário. **Nenhum PASS manual é permitido sem execução real.** O CI só comprova os testes automatizados no SHA executado, não a homologação humana.
 
@@ -90,13 +90,13 @@ Não alterar fluxos financeiros em produção nem migrar staging/produção como
 - [x] Código corrigido `ef1d9ae7`: CI SUCCESS (8/8 + gates), run #39073109702; pacote de evidências `36e47798`: SUCCESS, run #39092051011. Atualização posterior deve manter CI do HEAD exato antes de publicação.
 - [x] Auditoria staging pré/pós executada: 195 consensos → 195 canônicos, zero bloqueadores técnicos, campos financeiros originais preservados; publicação controlada autorizada pelo usuário.
 - [x] Método de restore verificado e bookmark fresco anterior à migration registrado; 0052 aplicada exclusivamente em staging pelo workflow #39097117765.
-- [ ] Release staging SHA exato verificado em release.json, autenticação real e bootstrap com conta fictícia.
+- [x] Release staging `68404745` verificado em release.json, autenticação real e bootstrap com conta fictícia; cinco caminhos pagos conferidos.
 - [ ] QA dos 15 casos concluído com evidências; 0 FAIL e 0 PENDING. BLOCKED restante exige decisão explícita.
 - [ ] Métricas D1 de staging e eventuais regressões de fallback revisadas.
 - [ ] Revisão total do diff pelo Codex concluída; PR review threads resolvidas, riscos residuais registrados.
 - [ ] Usuário aprovou merge explicitamente depois de visualizar evidências. Produção exige decisão e workflow separados.
 
-**Situação atual:** matriz local 13 PASS/2 BLOCKED. Staging publicado em `68404745`, migration/preservação histórica PASS; sessão/bootstrap, três caminhos e relatórios/exportações autenticados PASS. Dois caminhos aguardam submissão final pelo usuário por restrição da ferramenta. Orçamento integral, impressão física e aceite permanecem pendentes. NÃO marcar Task 11 aceita/concluída sem resolver os bloqueios.
+**Situação atual:** matriz local 13 PASS/2 BLOCKED. Staging publicado em `68404745`, migration/preservação histórica PASS; sessão/bootstrap, cinco caminhos e relatórios autenticados PASS. Lote e comanda foram submetidos pelo usuário e conferidos, sem duplicações nem saldo de QA. Orçamento integral, impressão física, triagem visual e aceite permanecem pendentes. NÃO marcar Task 11 aceita/concluída sem resolver os bloqueios.
 
 ## 6. Fontes vivas e handoff
 
@@ -109,4 +109,4 @@ Não alterar fluxos financeiros em produção nem migrar staging/produção como
 - Workflow: .github/workflows/deploy-staging.yml
 - Gates de segurança: scripts/infra/productionSafetyRegression.test.js e scripts/infra/effectiveReceiptStagingPreflight.test.js
 
-**Prompt recomendado ao Codex:** "Continue a Task 11 da PR #120. Leia a homologação autenticada de staging de 18/10 e preserve evidências: release 68404745, migration/195 originais, sessão/bootstrap, checkout/avulso/complemento e relatórios/exportações passaram. Confira primeiro no D1 se o usuário já confirmou o lote #360/#361 e a comanda 59/mesa 7; não duplique recebimentos. A revisão automática exige o clique final pelo usuário mesmo com dados fictícios autorizados: não contorne por API/SQL. Após a confirmação, confira recibos únicos, vínculos, saldos, mesa e atualização financeira. Resolva orçamento integral, triagem visual e impressão física; não marque Task 11 homologada sem evidência/aceite. Use somente dados fictícios; não exponha credenciais. Qualquer mudança de runtime exige RED → GREEN, CI e gates do SHA exato; não republique só por documentação. Não faça merge ou produção."
+**Prompt recomendado ao Codex:** "Continue a Task 11 da PR #120. Leia a homologação autenticada de staging de 18/10 e a conferência após submissão humana: release 68404745, migration/195 originais, sessão/bootstrap e cinco caminhos passaram. Lote #360/#361 e comanda 59/mesa 7 já foram pagos pelo usuário e conferidos; não repita recebimentos. Seis pedidos/R$144, cinco recibos/R$144, saldo zero e mesa livre. Resolva orçamento integral, triagem visual e impressão física; não marque Task 11 homologada sem evidência/aceite. Use somente dados fictícios; não exponha credenciais. Qualquer mudança de runtime exige RED → GREEN, CI e gates do SHA exato; não republique só por documentação. Não faça merge ou produção."
