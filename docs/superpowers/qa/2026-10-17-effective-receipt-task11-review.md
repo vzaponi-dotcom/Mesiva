@@ -153,7 +153,7 @@ Revisão não encontrou regressão nova de tenant/RBAC, confiança em preços do
 | Recibos contraditórios, sem movimentos ou consenso ainda NULL | Zero contraditórios/sem movimentos; aceite humano do plano para 195 consensos pendente; sem backfill executado |
 | Lista de migrations pendentes no D1 remoto | **EXECUTED** por SELECT: 55 aplicadas, somente `0052_effective_receipt_date.sql` pendente, nenhum arquivo aplicado fora da branch |
 | Restore D1 Time Travel/bookmark e compatibilidade do bundle/schema | **MÉTODO VERIFICADO COM LIMITES** em 18/10: bookmarks de staging, restore/undo em descartável e compatibilidade financeira local. Staging não restaurado; checkpoint fresco obrigatório na janela real; workflow não o registra automaticamente |
-| Orçamento por rota e cenário concentrado em staging | **BLOCKED**; crescimento local medido e baseline/limites de destino ausentes |
+| Orçamento por rota e cenário concentrado em staging | **BLOCKED**; [parte 3 em 18/10](2026-10-18-effective-receipt-cloudflare-budget.md) mediu conta, A/B e HTTP/exportações locais; projeção D1 9,701/16,029 bilhões. CPU/plano/ciclo/logs e limites representativos incompletos; candidata não publicada |
 | QA local de 15 casos | **13 PASS / 2 BLOCKED**, conforme matriz; impressão física e destino ainda pendentes |
 | Deploy staging, release.json, autenticação/deeplinks do release | **NOT EXECUTED** |
 
