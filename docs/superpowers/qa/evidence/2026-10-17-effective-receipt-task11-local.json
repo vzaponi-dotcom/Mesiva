@@ -251,6 +251,16 @@
     "shards": 8,
     "validate": "SUCCESS"
   },
+  "evidenceCi": {
+    "run": 39092051011,
+    "headSha": "36e477987d19cdb602d5b08709e2aba04aac7fab",
+    "conclusion": "SUCCESS",
+    "shards": 8,
+    "validate": "SUCCESS",
+    "url": "https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39092051011",
+    "artifactHashesVerifiedAgainstGit": 20,
+    "subsequentDocumentationRequiresExactShaCiBeforePublication": true
+  },
   "tests": {
     "firstComplete": {
       "tests": 4115,

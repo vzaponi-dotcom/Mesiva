@@ -36,6 +36,15 @@ Esses números são limites de regressão, não uma promessa sobre tráfego ilim
 | Lista completa: 10.020 pedidos e 50.100 itens versus um pedido solicitado | 120.242 | 17 | 0 |
 
 A última linha compara escopos diferentes intencionalmente: a API pontual prepara a sincronização incremental, enquanto a lista legada permanece completa e compatível. A TV mantém o mesmo resultado antes/depois. Na TV vazia, 353 linhas vêm da leitura existente de configurações/guards e uma das seleções de candidatos. Histórico 10x maior não aumentou as 615 linhas da TV nem as 17 da busca pontual. O benchmark prepara a carga em SQL em lote para evitar dezenas de milhares de round-trips de bindings do proxy Miniflare; o volume de dados é verificado separadamente.
+
+## Recebimentos efetivos — PR #120
+
+A [revisão da Task 11](../superpowers/qa/2026-10-17-effective-receipt-task11-review.md#performance-banco-e-segurança), código `ef1d9ae7` e pacote de evidências `36e47798`, registra medições locais com dados fictícios para a migration 0052. O gate `node scripts/infra/effective-receipt-date-d1-gate.mjs` mediu 2 → 5 `rows_read` na query isolada, estáveis com histórico fora do período crescendo de 1.000 para 10.000 recibos; zero escritas nas seleções.
+
+Essa estabilidade não cobre candidatos concentrados no dia consultado. O `loadSales` real executou cinco queries, zero escritas e **2.004 → 20.004 `rows_read`** com 1.000 → 10.000 candidatos, tanto para NULL legados quanto para recibos canônicos cujo `paid_at` está no período e `received_date` está fora dele. O braço legado ainda percorre candidatos do índice `paid_at` antes de descartar os não NULL. As cinco queries são chamadas SQL, não uma medição de requests HTTP por dispositivo.
+
+Essas medidas não aprovam o orçamento mensal: faltam baseline da conta, custo da rota completa/autenticação/exportações, CPU/duração, frequência de acesso e degradação no destino. O gate realtime retornou `monthlyReady=false`. Para liberar esta entrega, revisar esses custos agregados e o cenário concentrado junto aos [pré-requisitos de staging](../superpowers/qa/2026-10-17-effective-receipt-task11-review.md#bloqueios-antes-de-staging). Não extrapolar a medição isolada para margem mensal de 20% ou economia já demonstrada.
+
 ## Release e investigação
 
 Seguir [o runbook de publicação](../release-and-migration-runbook.md), com bookmark D1 automático antes da migration, staging e aprovação do SHA exato. Não usar dados fictícios em produção para demonstrar economia. Em regressão, conferir planos e candidates antes de alterar índices; não executar scans antigos caros repetidamente em produção.

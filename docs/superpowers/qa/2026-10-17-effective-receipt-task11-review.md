@@ -7,6 +7,8 @@ Baseline do diff: `f44e10da3e523d757dc0a9ceffe575d4331907e0`; HEAD recebido: `cd
 Correções de código: `d94f1d101618ba9de4467e55aef20e110f40a472` e `ef1d9ae720aaccc4b6a86a16e297776bc08fbdff`.
 O commit que acrescenta este relatório altera somente documentação/evidências. O resultado do CI deve corresponder ao HEAD da PR; um run de um SHA anterior não autoriza publicação.
 
+**Fechamento documental em 18/10/2026:** correções, matriz e 20 artefatos de evidência enviados ao GitHub. Pacote `36e477987d19cdb602d5b08709e2aba04aac7fab` aprovado em [Validate #39092051011](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39092051011), com oito shards e `validate` SUCCESS. Os 20 hashes SHA-256 foram conferidos contra os bytes versionados, incluindo CSV original e PDF. Atualizações documentais posteriores não alteram o código `ef1d9ae7`; qualquer publicação futura continua exigindo CI do HEAD exato e resolução dos bloqueios abaixo.
+
 **Matriz local dos 15 casos: 13 PASS, 0 FAIL remanescente, 2 BLOCKED, 0 PENDING.** Os cinco caminhos foram exercitados no navegador, com fronteiras adicionais automatizadas discriminadas abaixo. Q11-12 continua bloqueado pelos pré-requisitos remotos e Q11-15 pela impressão física. Não houve migration remota, staging, merge ou produção; o aceite integral da Task 11 permanece pendente.
 
 ## Escopo e ambiente
@@ -34,6 +36,7 @@ Os seis testes de pré-flight ficaram GREEN, incluindo compatibilidade de schema
 | --- | --- |
 | CI do HEAD recebido `cd0e2291` | [Validate #39071489063](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39071489063): SUCCESS, 8/8 shards e validate |
 | CI do código corrigido `ef1d9ae7` | [Validate #39073109702](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39073109702): SUCCESS, 8/8 shards e validate |
+| CI do pacote de evidências `36e47798` | [Validate #39092051011](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39092051011): SUCCESS, 8/8 shards e validate; mesmo código executável |
 | `npm test -- --test-reporter=spec --test-concurrency=4` | **4.116 PASS**, zero falhas, cancelamentos ou skips em **273,2 s**, no commit de código final `ef1d9ae7` |
 | `node --test` pré-flight + production safety + validação de data + migration/upgrade/reconciliação | **32 PASS**, zero falhas/skips no código final; pré-flight isolado: **6 PASS** |
 | `npm run test:architecture` | PASS |
@@ -157,5 +160,7 @@ O workflow autoriza esta branch somente por `workflow_dispatch`; o pré-flight p
 Resumo sanitizado persistido em [`evidence/2026-10-17-effective-receipt-task11-local.json`](evidence/2026-10-17-effective-receipt-task11-local.json): HTTP/status, IDs fictícios, datas, rodadas de navegador, SQL de reconciliação, D1/budget, saldo inicial e resultados dos comandos. Logs completos e probes locais preservados em `.wrangler/task11-evidence/` e `.wrangler/task11-*.mjs`, fora do Git. Capturas, snapshots e exportações fictícias estão anexados no mesmo diretório de evidências versionadas.
 
 README, AGENTS, índice documental, Business Rules, Architecture e Module Map pertinentes foram conferidos: comandos, regras de datas e ownerships continuam coerentes. Foi atualizado o roteiro da Task 11 para apontar este resultado e exigir revisão de formatos UTC legados e do cenário de carga concentrada; não foram acrescentadas regras de produto ou dispensados gates. A melhoria documental registra o diagnóstico e a recuperação do ambiente local, as evidências reais de navegador e os limites das medições.
+
+O [orçamento D1 vigente](../../operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) referencia o cenário concentrado desta revisão; o [runbook de release](../../release-and-migration-runbook.md#migration-0052--data-efetiva-dos-recebimentos) explicita os pré-requisitos da migration 0052. README e AGENTS não precisaram de alteração adicional. Bancos locais, credenciais, caches e logs brutos permanecem fora do Git; as evidências publicadas são sanitizadas e usam somente dados fictícios.
 
 Próximos passos necessários: validar impressão física pelo runbook, obter auditoria histórica agregada do destino fictício, verificar restore D1 e revisar orçamento incluindo candidatos concentrados, CPU/conta e degradação. Somente então avaliar staging pelo workflow oficial no SHA exato com CI verde e repetir a validação do release. **Recomendação atual: manter a PR aberta, sem publicar staging e sem considerar Task 11 homologada.** Os servidores locais foram deixados ativos em 4173/8787 com a persistência fictícia preservada.

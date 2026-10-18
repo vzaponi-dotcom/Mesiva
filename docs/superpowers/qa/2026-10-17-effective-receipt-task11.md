@@ -9,6 +9,8 @@
 
 **Rodada Codex de 17/10:** [relatório e evidências](2026-10-17-effective-receipt-task11-review.md). Correções do pré-flight via RED → GREEN em `d94f1d10` e `ef1d9ae7`; 4.116 testes PASS e [CI do código final SUCCESS](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39073109702). Após reinício documentado dos servidores, os cinco caminhos foram executados no navegador. Matriz local: **13 PASS / 0 FAIL remanescente / 2 BLOCKED / 0 PENDING**, com limites automatizados discriminados no relatório. Q11-12: auditoria histórica/restore/orçamento do destino; Q11-15: impressão física. Staging e aceite integral permanecem bloqueados.
 
+**Fechamento em 18/10:** código e evidências publicados na PR. Pacote `36e47798` com [CI SUCCESS #39092051011](https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39092051011), oito shards e `validate`; 20 hashes de artefatos conferidos contra o Git. Atualizações posteriores de documentação mantêm o código executável; CI anterior não dispensa validar o SHA exato de eventual publicação.
+
 ## Objetivo e responsabilidade
 
 A Task 11 inclui publicação controlada em staging e aceite humano. Nesta entrega, preparar o fluxo seguro e todas as evidências a preencher; a auditoria completa de código e homologação de navegador ficam delegadas ao Codex pelo usuário. **Nenhum PASS manual é permitido sem execução real.** O CI só comprova os testes automatizados no SHA executado, não a homologação humana.
@@ -75,7 +77,7 @@ Não alterar fluxos financeiros em produção nem migrar staging/produção como
 
 ## 5. Checklist de aceite final
 
-- [x] Código corrigido `ef1d9ae7`: CI SUCCESS (8/8 + gates), run #39073109702. Commit documental posterior deve manter CI do HEAD exato antes de publicação.
+- [x] Código corrigido `ef1d9ae7`: CI SUCCESS (8/8 + gates), run #39073109702; pacote de evidências `36e47798`: SUCCESS, run #39092051011. Atualização posterior deve manter CI do HEAD exato antes de publicação.
 - [ ] Auditoria staging executada, distribuição histórica avaliada e resolução de blockers documentada.
 - [ ] Plano de restore D1 anterior à migration registrado, migrations aplicadas exclusivamente em staging pelo workflow oficial.
 - [ ] Release staging SHA exato verificado em release.json, autenticação real e bootstrap com conta fictícia.

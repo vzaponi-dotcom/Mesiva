@@ -95,6 +95,14 @@ Destructive or data-transforming migrations require a reviewed restore strategy 
 
 Automatic down-migrations are not the default database rollback strategy.
 
+### Migration 0052 — data efetiva dos recebimentos
+
+Na branch `codex/received-date-tdd` da PR #120, staging é elegível somente por `workflow_dispatch`. O workflow executa `scripts/infra/effective-receipt-staging-preflight.mjs` antes de criar recursos R2 ou aplicar migrations remotas. O pré-flight detecta schema pré/pós-0052 e bloqueia datas impossíveis, divergências entre recibos/movimentos e timestamps não canônicos usados no fallback; preservar essa ordem e esses bloqueios.
+
+Antes de acionar o workflow, revisar a distribuição histórica do D1 de destino, inclusive recibos sem movimentos ou com consenso ainda NULL, e registrar estratégia de restore D1 verificável e compatibilidade de bundle/schema. O bookmark automático de produção não comprova recuperação de staging; esse workflow não registra um bookmark específico desta feature automaticamente. Não forçar backfill para eliminar divergências.
+
+Conferir também o [orçamento dos recebimentos efetivos](operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) e a [matriz da Task 11](superpowers/qa/2026-10-17-effective-receipt-task11.md). CI verde e testes locais não dispensam auditoria, restore, orçamento, impressão física pendente ou aceite do release de staging no SHA exato. Destino e testes usam somente dados fictícios; os bloqueios registrados precisam ser resolvidos antes da publicação.
+
 ### Spec B migrations 0024/0025
 
 `0024_business_settings_policies.sql` persists typed settings/catalogs and their revisions. `0025_print_context_copies.sql` extends printing snapshots/policies by context. Before production:
