@@ -1,0 +1,1163 @@
+{
+  "at": "2026-10-18T13:57:03.008Z",
+  "environment": "staging",
+  "release": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+  "documentationHeadBeforeReport": "fc09d2212954bcb6bc74fab353649dd811f5d998",
+  "task11Accepted": false,
+  "credentials": {
+    "savedBrowserCredentialUseAuthorized": true,
+    "credentialReadOrPublished": false,
+    "newAccountCreated": false
+  },
+  "frontend": {
+    "initialTabOpenedBeforeDeployment": true,
+    "oldAsset": "index-CpKK1PnF.js",
+    "publishedAsset": "index-DQs4ZyWN.js",
+    "draftDiscardedBeforeReceipts": true,
+    "publishedAssetVerified": true
+  },
+  "workflows": [
+    {
+      "name": "Checkout retroativo split",
+      "status": "PASS",
+      "orderNumbers": [
+        358
+      ],
+      "date": "2026-10-17",
+      "totalCents": 1800,
+      "allocations": [
+        {
+          "method": "Pix",
+          "cents": 1000
+        },
+        {
+          "method": "Dinheiro",
+          "cents": 800
+        }
+      ]
+    },
+    {
+      "name": "Complemento após edição salva",
+      "status": "PASS",
+      "orderNumbers": [
+        358
+      ],
+      "date": "2026-10-18",
+      "totalCents": 1800,
+      "originalReceiptPreserved": true
+    },
+    {
+      "name": "Recebimento avulso pela Cozinha",
+      "status": "PASS",
+      "orderNumbers": [
+        359
+      ],
+      "date": "2026-10-18",
+      "totalCents": 1800,
+      "preparationRemainedOpen": true
+    },
+    {
+      "name": "Lote de cliente",
+      "status": "BLOCKED_TOOL_REQUIRES_HUMAN_SUBMISSION",
+      "orderNumbers": [
+        360,
+        361
+      ],
+      "date": "2026-10-17",
+      "totalCents": 4500,
+      "method": "Pix",
+      "formPrepared": true,
+      "submitted": false
+    },
+    {
+      "name": "Comanda",
+      "status": "BLOCKED_TOOL_REQUIRES_HUMAN_SUBMISSION",
+      "table": 7,
+      "tabNumber": 59,
+      "orderNumbers": [
+        362,
+        363
+      ],
+      "date": "2026-10-17",
+      "totalCents": 4500,
+      "allocations": [
+        {
+          "method": "Pix",
+          "cents": 2000
+        },
+        {
+          "method": "Dinheiro",
+          "cents": 2500
+        }
+      ],
+      "formPrepared": true,
+      "submitted": false
+    }
+  ],
+  "automaticReview": {
+    "initialAction": "Select two orders and open batch composition",
+    "initialRejected": true,
+    "openingAllowedAfterStaticEvidence": true,
+    "finalAction": "Confirmar recebimento",
+    "finalRejectedAfterExplicitFictionalDataAuthorization": true,
+    "reason": "Reviewer classified the persistent staging receipt as financial and required user final submission even with fictional data and explicit authorization",
+    "bypassed": false
+  },
+  "financial": {
+    "at": "2026-10-18T13:46:33.088Z",
+    "phase": "final",
+    "environment": "staging",
+    "release": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+    "readOnly": true,
+    "rowsRead": 24116,
+    "rowsWritten": 0,
+    "clients": [
+      {
+        "id": "c78ab77f-79d3-4367-bd9f-58ada3523229",
+        "business_id": "amor-e-sabor",
+        "name": "QA Task11 Staging 18out"
+      }
+    ],
+    "orders": [
+      {
+        "id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "business_id": "amor-e-sabor",
+        "order_number": 358,
+        "status": "Em preparo",
+        "total_cents": 3600,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "business_id": "amor-e-sabor",
+        "order_number": 359,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "f3ca7889-1ea5-40ac-9139-b8e9195f9131",
+        "business_id": "amor-e-sabor",
+        "order_number": 360,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "db59c20d-2a78-46af-aad4-60524f7cae87",
+        "business_id": "amor-e-sabor",
+        "order_number": 361,
+        "status": "Em preparo",
+        "total_cents": 2700,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "839f63a6-803c-4345-8fb7-3a4156fb21cb",
+        "business_id": "amor-e-sabor",
+        "order_number": 362,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": "92130d18-2645-445f-af12-208e921f27cc"
+      },
+      {
+        "id": "e4157c71-e49b-41fe-bc91-ff529eaed2ee",
+        "business_id": "amor-e-sabor",
+        "order_number": 363,
+        "status": "Em preparo",
+        "total_cents": 2700,
+        "order_date": "2026-10-18",
+        "table_tab_id": "92130d18-2645-445f-af12-208e921f27cc"
+      }
+    ],
+    "receipts": [
+      {
+        "id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T04:57:43.615Z",
+        "created_at": "2026-10-18T04:57:43.615Z",
+        "received_date": "2026-10-17"
+      },
+      {
+        "id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T04:58:40.733Z",
+        "created_at": "2026-10-18T04:58:40.733Z",
+        "received_date": "2026-10-18"
+      },
+      {
+        "id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T05:00:47.663Z",
+        "created_at": "2026-10-18T05:00:47.663Z",
+        "received_date": "2026-10-18"
+      }
+    ],
+    "payments": [
+      {
+        "id": "70cac36a-677e-4bb3-899a-65d31d30713a",
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T04:57:43.615Z"
+      },
+      {
+        "id": "73a361a7-8763-4ed4-87e3-2b7c45d1f7ed",
+        "order_id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T05:00:47.663Z"
+      }
+    ],
+    "settlements": [
+      {
+        "id": "598997a9-76e5-4256-9ec2-f7dbf401fd34",
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "kind": "supplemental_payment",
+        "amount_cents": 1800
+      }
+    ],
+    "allocations": [
+      {
+        "id": "d283ce91-a64a-4ac7-985d-2b717dc6cf74",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "method_code": "pix",
+        "amount_cents": 1800
+      },
+      {
+        "id": "e16f00e9-d0d5-4911-b437-5612b095486c",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "method_code": "pix",
+        "amount_cents": 1800
+      },
+      {
+        "id": "10975a9f-a6a4-4da2-88ef-f3b968c05ed4",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "method_code": "pix",
+        "amount_cents": 1000
+      },
+      {
+        "id": "935ef4f9-ca30-438a-b142-61e53bbd2d71",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "method_code": "cash",
+        "amount_cents": 800
+      }
+    ],
+    "movements": [
+      {
+        "id": "e72e1c20-9619-49a3-9274-2deb62cc540c",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "type": "entrada",
+        "value_cents": 1800,
+        "movement_date": "2026-10-18",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "00e16b52-139d-4338-a7be-e84b832000cf",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "type": "entrada",
+        "value_cents": 1800,
+        "movement_date": "2026-10-18",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "0455acb6-f06d-4322-ae3c-a493c88660d8",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "type": "entrada",
+        "value_cents": 800,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "bda01d1a-141b-414c-90ef-1e26177d07bb",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "type": "entrada",
+        "value_cents": 1000,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      }
+    ],
+    "printJobs": [
+      {
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "839f63a6-803c-4345-8fb7-3a4156fb21cb",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "db59c20d-2a78-46af-aad4-60524f7cae87",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "e4157c71-e49b-41fe-bc91-ff529eaed2ee",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "f3ca7889-1ea5-40ac-9139-b8e9195f9131",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      }
+    ],
+    "tableTabs": [
+      {
+        "id": "92130d18-2645-445f-af12-208e921f27cc",
+        "number": 59,
+        "status": "open"
+      }
+    ],
+    "foreignKeys": []
+  },
+  "originalFinancialPreservation": {
+    "at": "2026-10-18T13:35:49.539Z",
+    "phase": "post",
+    "sha": "fc09d2212954bcb6bc74fab353649dd811f5d998",
+    "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+    "readOnly": true,
+    "tables": {
+      "payment_receipts": {
+        "rows": 195,
+        "totalCents": 1790836,
+        "sha256": "a38db963aa91a8a2e5bde4e10dbdded7e3a2cd87135a53fc620c58f6c4f7e194"
+      },
+      "payments": {
+        "rows": 287,
+        "totalCents": 1777436,
+        "sha256": "ef721f2d6637654c39580e44fb07cb6efdc6223c06314e83d38e5e96728acf78"
+      },
+      "payment_allocations": {
+        "rows": 210,
+        "totalCents": 1790836,
+        "sha256": "325f7657356fef2ed54ef3d0b2ec5cbd5a3bbcf07e4d71851c14f2d6ab3b1394"
+      },
+      "movements": {
+        "rows": 222,
+        "totalCents": 2020024,
+        "sha256": "7009eae840136d204a218cc810ce36cb79f36b772c28da0d42394b0aa8c8b884"
+      }
+    },
+    "rowsRead": 1218,
+    "rowsWritten": 0,
+    "originalFinancialFieldsPreserved": true
+  },
+  "http": {
+    "at": "2026-10-18T13:48:25.037Z",
+    "release": "68404745",
+    "truncated": false,
+    "hasMore": false,
+    "responses": [
+      {
+        "path": "/api/auth/session",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/prepare",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/stations",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reporting/overview",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/reporting/overview",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/reporting/sales",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/reporting/export-model",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/reporting/export-model",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/orders",
+        "status": 201
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/table-tabs/92130d18-2645-445f-af12-208e921f27cc",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/orders",
+        "status": 201
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/table-tabs/92130d18-2645-445f-af12-208e921f27cc",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/table-tabs/92130d18-2645-445f-af12-208e921f27cc",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers/c78ab77f-79d3-4367-bd9f-58ada3523229/relationship",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers/c78ab77f-79d3-4367-bd9f-58ada3523229/relationship",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers/c78ab77f-79d3-4367-bd9f-58ada3523229/relationship",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers/c78ab77f-79d3-4367-bd9f-58ada3523229/relationship",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/bootstrap",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers",
+        "status": 200
+      },
+      {
+        "path": "/api/reads/customers/c78ab77f-79d3-4367-bd9f-58ada3523229/relationship",
+        "status": 200
+      },
+      {
+        "path": "/api/orders/by-ids",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      },
+      {
+        "path": "/api/realtime/renew",
+        "status": 200
+      },
+      {
+        "path": "/api/printing/state",
+        "status": 200
+      }
+    ]
+  },
+  "reports": {
+    "sqlTotalsAtSnapshot": {
+      "at": "2026-10-18T13:36:47.289Z",
+      "readOnly": true,
+      "receiptDays": [
+        {
+          "received_date": "2026-10-17",
+          "cents": 6300,
+          "receipts": 2
+        },
+        {
+          "received_date": "2026-10-18",
+          "cents": 3600,
+          "receipts": 2
+        }
+      ],
+      "salesDays": [
+        {
+          "order_date": "2026-10-17",
+          "cents": 25700,
+          "orders": 6
+        },
+        {
+          "order_date": "2026-10-18",
+          "cents": 14400,
+          "orders": 5
+        }
+      ],
+      "movementDays": [
+        {
+          "movement_date": "2026-10-17",
+          "type": "entrada",
+          "cents": 6300,
+          "count": 3
+        },
+        {
+          "movement_date": "2026-10-18",
+          "type": "entrada",
+          "cents": 3600,
+          "count": 2
+        }
+      ],
+      "rowsRead": 55,
+      "rowsWritten": 0
+    },
+    "uiSalesTodayCents": 14400,
+    "uiReceivedTodayCents": 3600,
+    "uiReceivedPreviousDayCents": 6300,
+    "uiPendingTodayCents": 9000,
+    "exports": {
+      "csvQaOrders": [
+        {
+          "Pedido": "361",
+          "Total": "R$ 27,00",
+          "Recebido": "R$ 0,00",
+          "Pendente": "R$ 27,00",
+          "Data(s) do recebimento": "Indisponível"
+        },
+        {
+          "Pedido": "360",
+          "Total": "R$ 18,00",
+          "Recebido": "R$ 0,00",
+          "Pendente": "R$ 18,00",
+          "Data(s) do recebimento": "Indisponível"
+        },
+        {
+          "Pedido": "359",
+          "Total": "R$ 18,00",
+          "Recebido": "R$ 18,00",
+          "Pendente": "R$ 0,00",
+          "Data(s) do recebimento": "2026-10-18"
+        },
+        {
+          "Pedido": "358",
+          "Total": "R$ 36,00",
+          "Recebido": "R$ 36,00",
+          "Pendente": "R$ 0,00",
+          "Data(s) do recebimento": "2026-10-17 + 2026-10-18"
+        }
+      ],
+      "pdfPages": 2,
+      "pdfContainsSales144AndReceived36": true,
+      "pdfRenderPaths": [
+        ".wrangler/task11-evidence/staging-pdf-page-1.png",
+        ".wrangler/task11-evidence/staging-pdf-page-2.png"
+      ],
+      "files": [
+        {
+          "file": "task11-staging-report.csv",
+          "sha256": "55f84bcab76c5ddb58f5dac8dbe222d0cf3cd16f5a23a31d0c7c4e0ad2ed2be7",
+          "bytes": 1685
+        },
+        {
+          "file": "task11-staging-report.pdf",
+          "sha256": "07bca1f89861dbbfbfc0d246aa9462f046cdcc3626dca2a873e6c062255ac831",
+          "bytes": 574338
+        }
+      ],
+      "assertions": "PASS"
+    },
+    "visualPdfInspection": "PASS, two pages, no clipping",
+    "snapshotBeforeComandaCreation": true
+  },
+  "metrics": {
+    "at": "2026-10-18T13:47:19.558Z",
+    "from": "2026-10-18T04:28:07Z",
+    "toExclusive": "2026-10-18T13:42:17.804Z",
+    "release": "68404745",
+    "accountHash": "748b0258b295",
+    "readOnly": true,
+    "productionBusinessDataQueried": false,
+    "metrics": {
+      "d1AnalyticsAdaptiveGroups": {
+        "groups": 1,
+        "total": {
+          "readQueries": 9005,
+          "rowsRead": 659361,
+          "rowsWritten": 2309,
+          "writeQueries": 1473
+        },
+        "sampleIntervals": [
+          1
+        ]
+      },
+      "durableObjectsInvocationsAdaptiveGroups": {
+        "groups": 1,
+        "total": {
+          "errors": 4,
+          "requests": 78
+        },
+        "sampleIntervals": [
+          1
+        ]
+      },
+      "workersInvocationsAdaptive": {
+        "groups": 1,
+        "total": {
+          "cpuTimeUs": 4571289,
+          "errors": 0,
+          "requests": 306
+        },
+        "sampleIntervals": [
+          1.006578947368421
+        ]
+      },
+      "durableObjectsPeriodicGroups": {
+        "groups": 1,
+        "total": {
+          "duration": 1.1637359360000001,
+          "rowsRead": 48,
+          "rowsWritten": 24
+        },
+        "sampleIntervals": [
+          1
+        ]
+      }
+    },
+    "limitations": [
+      "Post-deployment window includes all staging traffic and database audits, not exclusively a single user or operation.",
+      "Adaptive estimates and ingestion delay; not invoice/cycle or monthly extrapolation.",
+      "CPU per operation, exact subscription/cycle and full account forecast remain unknown."
+    ],
+    "monthlyReady": false
+  },
+  "artifacts": [
+    {
+      "file": "task11-staging-batch-ready.png",
+      "bytes": 53305,
+      "sha256": "5a567c68fb68a74a3f3fd081d98e92026b5b55114a1579d237f37122f78a39f4"
+    },
+    {
+      "file": "task11-staging-checkout-split.png",
+      "bytes": 54565,
+      "sha256": "f131d6df390c2f177a2d99390cb380e239d74b83153a1d981ca48f441da3fb67"
+    },
+    {
+      "file": "task11-staging-future.png",
+      "bytes": 71398,
+      "sha256": "d2212cf36f973cbf6c68f1dcb870a400b4ea6ff4680f602a58bef915ff03962c"
+    },
+    {
+      "file": "task11-staging-order-payment.png",
+      "bytes": 49299,
+      "sha256": "e7f2f4e50b97b36cd9ddeaf7d1aef69be21184dd101866035628ba87236ad992"
+    },
+    {
+      "file": "task11-staging-report-today.png",
+      "bytes": 71938,
+      "sha256": "82fe409e365809d3f1f0ccf2a6770114acd6e3df21827d88135bda4fcc0b9cff"
+    },
+    {
+      "file": "task11-staging-report.csv",
+      "bytes": 1685,
+      "sha256": "55f84bcab76c5ddb58f5dac8dbe222d0cf3cd16f5a23a31d0c7c4e0ad2ed2be7"
+    },
+    {
+      "file": "task11-staging-report.pdf",
+      "bytes": 574338,
+      "sha256": "07bca1f89861dbbfbfc0d246aa9462f046cdcc3626dca2a873e6c062255ac831"
+    },
+    {
+      "file": "task11-staging-supplement.png",
+      "bytes": 57204,
+      "sha256": "73da44bfa880bc2ba170473f22e9e98efd753b7a9b8819781cb9226f7c80cdba"
+    },
+    {
+      "file": "task11-staging-table-ready.png",
+      "bytes": 49098,
+      "sha256": "912e827dc9da813ba9d9e20d83a87d2295abbd675bf75dcf3fb12601777ae033"
+    }
+  ],
+  "qa": {
+    "localMatrix": {
+      "pass": 13,
+      "blocked": 2
+    },
+    "stagingFivePaths": {
+      "pass": 3,
+      "blocked": 2
+    },
+    "futureDateUi": "PASS, 2026-10-19 blocked on 2026-10-18",
+    "defaultDateUi": "PASS, 2026-10-18",
+    "physicalPrinting": "BLOCKED_NOT_EXECUTED",
+    "monthlyBudget": "BLOCKED_NOT_PROVEN",
+    "stagingRbacAndTimeoutBoundaries": "NOT_REPEATED; previous local/automated evidence preserved",
+    "dstLegacyStaging": "NOT_EXECUTED; migration left no NULL legacy receipts; previous local fixture evidence preserved",
+    "visualNarrowCheckout": "OBSERVED_NARROW_METHOD_SELECTS_AT_1045PX_NOT_ATTRIBUTED_TO_PR"
+  },
+  "productionTouched": false,
+  "merged": false
+}

@@ -167,3 +167,12 @@ test('Local reservation payload keeps scheduledFor but never carries an open tab
   assert.equal(immediate.expectedTableTabId, 'tab-open')
   assert.equal(Object.hasOwn(immediate, 'scheduledFor'), false)
 })
+
+
+test('checkout payload optionally carries an effective payment date only for paid submissions',()=>{
+  const draft={type:'Retirada',orderDate:'2026-10-17',items:[]}
+  const allocations=[{methodCode:'pix',amountCents:2500}]
+  assert.equal(buildOrderPayload(draft,allocations,{receivedDate:'2026-10-15'}).receivedDate,'2026-10-15')
+  assert.equal(Object.hasOwn(buildOrderPayload(draft,allocations),'receivedDate'),false)
+  assert.equal(Object.hasOwn(buildOrderPayload(draft,null,{receivedDate:'2026-10-15'}),'receivedDate'),false)
+})

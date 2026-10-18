@@ -1,21 +1,21 @@
 import { apiRequest, withJson } from '../../../infrastructure/api/httpClient.js'
 
 export const createPaymentApi = ({ request = apiRequest, json = withJson } = {}) => Object.freeze({
-  registerOrderPayment: (id, allocations) => request(
+  registerOrderPayment: (id, allocations, { receivedDate } = {}) => request(
     `/api/orders/${encodeURIComponent(id)}/payment`,
-    json('POST', { allocations }),
+    json('POST', { allocations, ...(receivedDate !== undefined ? { receivedDate } : {}) }),
   ),
   registerSupplementalPayment: (id, payload) => request(
     `/api/orders/${encodeURIComponent(id)}/supplemental-payment`,
     json('POST',payload),
   ),
-  registerTableTabPayment: (id, allocations) => request(
+  registerTableTabPayment: (id, allocations, {receivedDate} = {}) => request(
     `/api/table-tabs/${encodeURIComponent(id)}/payment`,
-    json('POST', { allocations }),
+    json('POST', { allocations, ...(receivedDate !== undefined ? {receivedDate} : {}) }),
   ),
-  registerClientOrdersPayment: (clientId, orderIds, allocations, {mutationId} = {}) => request(
+  registerClientOrdersPayment: (clientId, orderIds, allocations, {mutationId,receivedDate} = {}) => request(
     `/api/clients/${encodeURIComponent(clientId)}/receivables/payment`,
-    json('POST', { orderIds, allocations, ...(mutationId?{mutationId}:{}) }),
+    json('POST', { orderIds, allocations, ...(mutationId?{mutationId}:{}), ...(receivedDate!==undefined?{receivedDate}:{}) }),
   ),
 })
 

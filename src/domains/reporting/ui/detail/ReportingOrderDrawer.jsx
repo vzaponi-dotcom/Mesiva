@@ -4,6 +4,7 @@ import Icon from '../../../../shared/ui/Icon.jsx'
 import { reportingApi, createReportingApi } from '../../infrastructure/reportingApi.js'
 import { ReportingReceivableLink } from '../ReportingReceivableLink.jsx'
 import { getReportingOrderReference } from './reportingOrderReference.js'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 
 const money = (cents) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(cents || 0) / 100)
 const number = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(Number(value || 0))
@@ -67,7 +68,7 @@ const paymentGroups = (allocations = []) => {
   const groups = new Map()
   for (const allocation of allocations) {
     const key = allocation.receipt_id || `${allocation.paid_at || ''}-${allocation.method_code || allocation.method_label || ''}`
-    const group = groups.get(key) || { receiptId: key, at: allocation.paid_at || null, amountCents: 0, methods: [] }
+    const group = groups.get(key) || { receiptId: key, at: allocation.paid_at || null, receivedDate: allocation.received_date || null, amountCents: 0, methods: [] }
     group.amountCents += Number(allocation.amount_cents || 0)
     const method = allocation.method_label || allocation.method_code || 'Não informado'
     if (!group.methods.includes(method)) group.methods.push(method)
@@ -84,14 +85,18 @@ const historyEvents = (order) => {
   if (order.client_name_snapshot) push({ at: order.created_at, label: time(order.created_at), icon: 'client', title: 'Cliente vinculado', text: `${order.client_name_snapshot}${order.client_phone_snapshot ? ` · ${phone(order.client_phone_snapshot)}` : ''}`, priority: 2 })
   if (order.items?.length) push({ at: order.created_at, label: time(order.created_at), icon: 'note', title: 'Itens confirmados', text: `${order.items.length} ${order.items.length === 1 ? 'item' : 'itens'} · Total do pedido ${money(order.total_cents)}`, priority: 3 })
   if (order.scheduled_for) push({ at: order.scheduled_for, label: dateTime(order.scheduled_for), icon: 'calendar', title: 'Agendamento', text: 'Horário programado para atendimento do pedido.', priority: 4 })
-  for (const payment of paymentGroups(order.paymentAllocations)) push({
-    at: payment.at,
-    label: dateTime(payment.at),
-    icon: paymentIcon(payment.methods.join(' + ')),
-    title: 'Pagamento registrado',
-    text: `${money(payment.amountCents)} · ${payment.methods.join(' + ')}`,
-    priority: 5,
-  })
+  for (const payment of paymentGroups(order.paymentAllocations)) {
+    const registeredDay=payment.at&&!Number.isNaN(new Date(payment.at).getTime())?getBusinessDate(new Date(payment.at)):null
+    const financialDay=payment.receivedDate||registeredDay
+    push({
+      at: payment.at,
+      label: dateTime(payment.at),
+      icon: paymentIcon(payment.methods.join(' + ')),
+      title: 'Pagamento registrado',
+      text: `${money(payment.amountCents)} · ${payment.methods.join(' + ')}${financialDay?` · Recebido em ${date(financialDay)}`:''}${financialDay&&registeredDay&&financialDay!==registeredDay?` · Registrado em ${dateTime(payment.at)}`:''}`,
+      priority: 5,
+    })
+  }
   if (order.cancelled_at) push({
     at: order.cancelled_at,
     label: dateTime(order.cancelled_at),
@@ -180,6 +185,15 @@ function DetailsTab({ order }) {
         <div><small>Pendente</small><strong>{money(order.pendingCents)}</strong></div>
       </div>
       <div className="reporting-drawer-payment-method"><span>Forma de pagamento</span><strong><Icon name={paymentIcon(paymentLabel)} size={17} />{paymentLabel}</strong></div>
+      {paymentGroups(order.paymentAllocations).map((payment)=>{
+        const registeredDay=payment.at&&!Number.isNaN(new Date(payment.at).getTime())?getBusinessDate(new Date(payment.at)):null
+        const financialDay=payment.receivedDate||registeredDay
+        return financialDay?<div className="reporting-drawer-payment-method" key={payment.receiptId}>
+          <span>Data do recebimento · {payment.methods.join(' + ')}</span>
+          <strong>{date(financialDay)}</strong>
+          {financialDay!==registeredDay&&payment.at?<small>Registrado em {dateTime(payment.at)}</small>:null}
+        </div>:null
+      })}
     </section>
 
     <section className="reporting-drawer-section reporting-drawer-items-section">

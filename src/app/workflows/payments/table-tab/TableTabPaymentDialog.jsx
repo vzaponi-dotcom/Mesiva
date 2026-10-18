@@ -3,10 +3,12 @@ import Button from '../../../../shared/ui/Button'
 import Modal from '../../../../shared/ui/Modal'
 import { PAYMENT_METHOD_OPTIONS } from '../../../../domains/finance/index.js'
 import PaymentCompositionEditor from '../PaymentCompositionEditor.jsx'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 import {
   createInitialPaymentComposition,
   summarizePaymentComposition,
   toPaymentAllocations,
+  isValidReceivedDate,
 } from '../paymentComposition.js'
 
 function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOptions, defaultPaymentMethod }) {
@@ -16,6 +18,8 @@ function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOp
     paymentOptions,
   }))
   const [busy, setBusy] = useState(false)
+  const [receivedDate, setReceivedDate] = useState(() => getBusinessDate())
+  const dateValid = isValidReceivedDate(receivedDate)
   const inFlight = useRef(false)
   const mounted = useRef(true)
   const composition = summarizePaymentComposition(allocations, detail.totalCents, paymentOptions)
@@ -36,6 +40,7 @@ function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOp
       disabled
       || inFlight.current
       || !submittedAllocations
+      || !isValidReceivedDate(receivedDate)
       || detail.status !== 'open'
       || detail.orderCount < 1
       || detail.totalCents <= 0
@@ -44,7 +49,7 @@ function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOp
     inFlight.current = true
     setBusy(true)
     try {
-      const success = await onConfirm(detail.id, submittedAllocations)
+      const success = await onConfirm(detail.id, submittedAllocations, { receivedDate })
       if (mounted.current && success) onClose()
       return Boolean(success)
     } finally {
@@ -70,13 +75,15 @@ function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOp
           onChange={setAllocations}
           paymentOptions={paymentOptions}
           disabled={disabled || busy}
+          receivedDate={receivedDate}
+          onReceivedDateChange={setReceivedDate}
         />
 
         <div className="form-actions">
           <Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancelar</Button>
           <Button
             type="submit"
-            disabled={disabled || busy || !composition.valid}
+            disabled={disabled || busy || !composition.valid || !dateValid}
           >
             Confirmar pagamento
           </Button>

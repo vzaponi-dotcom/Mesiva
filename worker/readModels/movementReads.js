@@ -1,10 +1,8 @@
 import {mapMovementRow,loadFinanceSettings} from '../financeRepository.js'
-import {calculateReceivedToday,filterFinanceHistory,getFinancePeriodRange} from '../../shared/cashFlowReadRules.js'
+import {filterFinanceHistory,getFinancePeriodRange} from '../../shared/cashFlowReadRules.js'
 import {getBusinessDate} from '../../shared/finance.js'
-import {businessDateRangeUtc} from '../reporting/businessDate.js'
 import {apiError} from '../http.js'
 import {decodeReadCursor,encodeReadCursor,readEnum,readSearch,readCalendarDate} from './query.js'
-const legacy="strftime('%Y-%m-%dT%H:%M:%fZ',m.created_at) IS NOT m.created_at"
 const movementSelect=`SELECT m.id,m.type,m.category,m.description,m.value_cents,m.source,m.order_id,m.payment_id,
  m.receipt_id,m.payment_allocation_id,fc.label AS category_label,
  CASE WHEN m.source='order-payment' THEN COALESCE(m.payment_method,p.method) ELSE m.payment_method END AS payment_method,
@@ -25,19 +23,14 @@ export async function readFinanceTotals(db,businessId,granted){
 }
 export async function readReceivedToday(db,businessId,granted,today){
   if(!canReadMovements(granted))return 0
-  const [from,to]=businessDateRangeUtc(today,today)
-  const common="m.business_id=? AND m.deleted_at IS NULL AND m.source IN ('order-payment','order-refund')"
-  const canonical=await db.prepare(`SELECT COALESCE(SUM(CASE WHEN m.type='entrada' AND m.source='order-payment' THEN MAX(m.value_cents,0) WHEN m.type='saida' AND m.source='order-refund' THEN -MAX(m.value_cents,0) ELSE 0 END),0) AS cents FROM movements m
-    WHERE ${common} AND m.created_at>=? AND m.created_at<? AND NOT (${legacy})`).bind(businessId,from,to).first()
-  let total=Number(canonical?.cents || 0)/100,after=null
-  do{
-    const values=[businessId,...(after?[after]:[])]
-    const batch=rows(await db.prepare(`SELECT m.id,m.type,m.source,m.value_cents,m.created_at FROM movements m
-      WHERE ${common} AND (${legacy})${after?' AND m.id>?':''} ORDER BY m.id ASC LIMIT 128`).bind(...values).all())
-    total+=calculateReceivedToday(batch.map(mapMovementRow),today)
-    after=batch.length===128?batch.at(-1).id:null
-  }while(after)
-  return total
+  const result=await db.prepare(`SELECT COALESCE(SUM(CASE
+    WHEN m.type='entrada' AND m.source='order-payment' THEN MAX(m.value_cents,0)
+    WHEN m.type='saida' AND m.source='order-refund' THEN -MAX(m.value_cents,0)
+    ELSE 0 END),0) AS cents FROM movements m
+    WHERE m.business_id=? AND m.deleted_at IS NULL
+      AND m.movement_date=? AND m.source IN ('order-payment','order-refund')`)
+    .bind(businessId,today).first()
+  return Number(result?.cents || 0)/100
 }
 export async function readPeriodMovements(db,businessId,granted,range){
   if(!canReadMovements(granted))return []

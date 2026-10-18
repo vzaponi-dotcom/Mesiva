@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import React from 'react'
 import TestRenderer, { act } from 'react-test-renderer'
 import { useOrderPaymentWorkflow } from './useOrderPaymentWorkflow.js'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 
 const deferred = () => {
   let resolve
@@ -143,7 +144,7 @@ test('double submit sends one canonical allocation request and applies plural au
     first = probe.getLatest().dialog.submit()
     assert.equal(await probe.getLatest().dialog.submit(), false)
   })
-  assert.deepEqual(calls, [[source.id, [{ methodCode: 'pix', amountCents: 4000 }]]])
+  assert.deepEqual(calls, [[source.id, [{ methodCode: 'pix', amountCents: 4000 }], {receivedDate:getBusinessDate()}]])
 
   const official = { ...paidEffects(source), deletedOrderIds: ['hidden-order'] }
   await act(async () => {
@@ -378,4 +379,30 @@ test('refund-due is never offered as collection and official partial uses its su
 test('canonical snapshot getter resolves a paged order even when the last render had no global order',async()=>{
   const h=await mountWorkflow({orders:[],props:{getOfficialOrders:()=>[order('remote',{status:'Finalizado'})]}})
   try{await act(async()=>assert.equal(h.getLatest().open('remote','history'),true));assert.equal(h.getLatest().dialog.order.id,'remote')}finally{h.unmount()}
+})
+
+
+test('Task 9: standalone and supplemental payments retain selected financial date on retry, then reset on next open',async()=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const calls=[]
+  const base=order('date-order')
+  const probe=await mountWorkflow({orders:[base],api:{registerOrderPayment:async(...args)=>{calls.push(args);throw new Error('temporary')}}})
+  await act(async()=>probe.getLatest().open(base.id,'orders'))
+  assert.equal(probe.getLatest().dialog.receivedDate,getBusinessDate())
+  await act(async()=>probe.getLatest().dialog.setReceivedDate('2026-10-15'))
+  await act(async()=>probe.getLatest().dialog.submit())
+  await act(async()=>probe.getLatest().dialog.submit())
+  assert.deepEqual(calls.map(x=>x[2]?.receivedDate),['2026-10-15','2026-10-15'])
+  await act(async()=>probe.getLatest().close())
+  await act(async()=>probe.getLatest().open(base.id,'orders'))
+  assert.equal(probe.getLatest().dialog.receivedDate,getBusinessDate())
+  probe.unmount()
+  const supplement=order('supp-date',{paymentId:'p1',paymentStatus:'Parcialmente pago',total:95,totalCents:9500,netReceivedCents:8000,dueCents:1500,contentRevision:2})
+  const captured=[]
+  const supplemental=await mountWorkflow({orders:[supplement],granted:new Set(['payments.receive']),api:{registerSupplementalPayment:async(id,payload)=>{captured.push(payload);throw new Error('temporary')}}})
+  await act(async()=>supplemental.getLatest().open(supplement.id,null))
+  await act(async()=>supplemental.getLatest().dialog.setReceivedDate('2026-10-15'))
+  await act(async()=>supplemental.getLatest().dialog.submit())
+  assert.equal(captured[0].receivedDate,'2026-10-15')
+  supplemental.unmount()
 })

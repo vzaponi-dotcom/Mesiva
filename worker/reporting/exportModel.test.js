@@ -85,3 +85,19 @@ test('default data export is one detailed row per order with customer, modality 
   assert.equal(row.durationMinutes, 35)
   assert.equal(row.onTime, true)
 })
+
+
+test('Task 8: exported order rows include explicit financial receipt dates without modifying commercial date and unpaid rows',async()=>{
+  const {createExportModel}=await import('./exportModel.js')
+  const model=createExportModel({
+    query:{view:'detail',from:'2026-10-14',to:'2026-10-17'},
+    report:{data:{}},
+    detail:{total:2,items:[
+      {order_number:7,order_date:'2026-10-17',payment_received_dates:'2026-10-14 + 2026-10-15',paidCents:9500},
+      {order_number:8,order_date:'2026-10-17',payment_received_dates:null,paidCents:0},
+    ]},
+    columns:['order_number','order_date','payment_received_dates','paidCents'],
+  })
+  assert.deepEqual(model.columns,['Pedido','Data','Data(s) do recebimento','Recebido'])
+  assert.deepEqual(model.rows,[[7,'2026-10-17','2026-10-14 + 2026-10-15',9500],[8,'2026-10-17',null,0]])
+})

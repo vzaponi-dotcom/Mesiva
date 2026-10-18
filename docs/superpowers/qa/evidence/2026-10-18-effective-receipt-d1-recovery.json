@@ -1,0 +1,223 @@
+{
+  "generatedAt": "2026-10-18T03:35:32.772Z",
+  "timezone": "America/Sao_Paulo",
+  "status": "VERIFIED_METHOD_WITH_LIMITS",
+  "staging": {
+    "startedAt": "2026-10-18T03:27:47.918Z",
+    "sha": "304240ba776240a8d4a34d59d445b2f52ae5a07e",
+    "database": "amor-e-sabor-delivery-staging",
+    "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+    "readOnly": true,
+    "stagingRestored": false,
+    "remoteMigrationsApplied": false,
+    "productionAccessed": false,
+    "info": {
+      "uuid": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+      "name": "amor-e-sabor-delivery-staging",
+      "created_at": "2026-09-04T13:19:26.810Z",
+      "num_tables": 75,
+      "running_in_region": "ENAM",
+      "read_replication": {
+        "mode": "disabled"
+      }
+    },
+    "currentBookmark": "00000548-00000000-00005108-34ca27c2c770c85bce16d29abfd03452",
+    "auditTimestamp": "2026-10-18T03:22:07.870Z",
+    "auditTimestampBookmark": "00000546-00000232-00005108-a431720c280bdeec29e88bdc3b95a6bf",
+    "status": "PASS_METADATA_ONLY",
+    "completedAt": "2026-10-18T03:27:54.117Z"
+  },
+  "release": {
+    "environment": "staging",
+    "commit": "f44e10da3e523d757dc0a9ceffe575d4331907e0",
+    "ref": "refs/heads/master",
+    "runUrl": "https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39055526001"
+  },
+  "isolatedRemoteDrill": {
+    "startedAt": "2026-10-18T03:28:58.302Z",
+    "sha": "304240ba776240a8d4a34d59d445b2f52ae5a07e",
+    "wrangler": "4.128.0",
+    "temporaryDatabase": {
+      "name": "mesiva-task11-restore-b1f8-16a40e2c",
+      "id": "96bd9b49-e096-4e18-8fd6-231528681717"
+    },
+    "stagingRestored": false,
+    "productionAccessed": false,
+    "applicationMigrationsApplied": false,
+    "copiedExistingData": false,
+    "sql": [
+      {
+        "label": "synthetic_before",
+        "statements": 2,
+        "rows_read": 1,
+        "rows_written": 5
+      },
+      {
+        "label": "synthetic_after",
+        "statements": 2,
+        "rows_read": 1,
+        "rows_written": 3
+      },
+      {
+        "label": "verify_restored",
+        "statements": 1,
+        "rows_read": 1,
+        "rows_written": 0
+      },
+      {
+        "label": "verify_undo",
+        "statements": 1,
+        "rows_read": 2,
+        "rows_written": 0
+      }
+    ],
+    "cleanup": {
+      "deleted": true
+    },
+    "beforeBookmark": "00000000-00000008-00005108-9e5906b4e1408c8ff1ec9dcb553650ca",
+    "afterBookmark": "00000000-0000000a-00005108-ecdf9f952d33064e9824fe315f5f1f1a",
+    "restore": {
+      "bookmark": "00000000-00000008-00005108-9e5906b4e1408c8ff1ec9dcb553650ca",
+      "previous_bookmark": "00000000-ffffffff-00005108-8541636fcaa80acc628a1fb52bc947fd",
+      "message": "Resetting Durable Object to restore database to bookmark: 00000000-00000008-00005108-9e5906b4e1408c8ff1ec9dcb553650ca"
+    },
+    "restoredRows": [
+      {
+        "id": "marker",
+        "value": "before"
+      }
+    ],
+    "undo": {
+      "bookmark": "00000000-ffffffff-00005108-8541636fcaa80acc628a1fb52bc947fd",
+      "previous_bookmark": "00000001-ffffffff-00005108-87f297cf9f2195f2460de729fa37371c",
+      "message": "Resetting Durable Object to restore database to bookmark: 00000000-ffffffff-00005108-8541636fcaa80acc628a1fb52bc947fd"
+    },
+    "undoRows": [
+      {
+        "id": "marker",
+        "value": "after"
+      },
+      {
+        "id": "new-row",
+        "value": "after"
+      }
+    ],
+    "status": "PASS",
+    "completedAt": "2026-10-18T03:29:20.265Z"
+  },
+  "localCompatibility": {
+    "startedAt": "2026-10-18T03:31:37.510Z",
+    "candidateSha": "304240ba776240a8d4a34d59d445b2f52ae5a07e",
+    "fictitiousOnly": true,
+    "remoteApplicationMigrationsApplied": false,
+    "cases": [
+      {
+        "name": "candidate_post_0052",
+        "result": "PASS",
+        "receivedOn15": 98
+      },
+      {
+        "name": "published_post_0052",
+        "result": "SQL_COMPATIBLE_FINANCIAL_SEMANTICS_DIFFER",
+        "receivedOn15": 0,
+        "receivedOn17": 98
+      },
+      {
+        "name": "published_pre_0052_restored",
+        "result": "PASS",
+        "receiptsOn17": 98
+      },
+      {
+        "name": "candidate_pre_0052_restored",
+        "result": "EXPECTED_INCOMPATIBLE",
+        "reason": "received_date absent"
+      }
+    ],
+    "publishedSha": "f44e10da3e523d757dc0a9ceffe575d4331907e0",
+    "publishedSource": [
+      {
+        "file": "worker/reporting/repository.js",
+        "sha256": "d4452d446c6c4fc644bf021fade053f8f82442761a362c16be43f04418b4e0a3"
+      },
+      {
+        "file": "worker/reporting/businessDate.js",
+        "sha256": "32b07a6b6252acc045f399000c34482318b0169a8e2d37f9354302a4276ab8a5"
+      },
+      {
+        "file": "shared/finance.js",
+        "sha256": "9c14afa7119d61cb66a33ee75859d09f9c8a4f6ef113cd98506ef0995a2b5976"
+      },
+      {
+        "file": "shared/businessPolicies.js",
+        "sha256": "830ea2299c2f5c06f267aa8c96df708737aba3878c13bf12a08b6088f415a563"
+      },
+      {
+        "file": "worker/reporting/settlementSql.js",
+        "sha256": "fe200bf902fdd69164a237bf48834afe4a3b2ddae9d555e033fab32c9491e4b8"
+      },
+      {
+        "file": "worker/reporting/orderFilters.js",
+        "sha256": "c35f42b760069d648930da8ca858f569b2b13ef3741d212dff1fd90d7abca3d2"
+      },
+      {
+        "file": "shared/orderTiming.js",
+        "sha256": "7f9e6c78d8ec65baa8cfc5e4036889ae7d842d5381d5a034338470f31164520f"
+      }
+    ],
+    "receiptsBefore": 195,
+    "snapshotFingerprint": {
+      "schemaHash": "da76286d6e0db2d9d625eaaf68f7df933721ba36cee5c860c68aab2c522418d2",
+      "dataHash": "255df4798ecc798278643dbdc68dc3df5852eebd78b17c179a8d5b4a4130997a",
+      "tableCount": 74,
+      "rows": 631
+    },
+    "restoredFingerprint": {
+      "schemaHash": "da76286d6e0db2d9d625eaaf68f7df933721ba36cee5c860c68aab2c522418d2",
+      "dataHash": "255df4798ecc798278643dbdc68dc3df5852eebd78b17c179a8d5b4a4130997a",
+      "tableCount": 74,
+      "rows": 631
+    },
+    "restoredReceipts": 195,
+    "postBookmarkReceiptsRemovedByRestore": 1,
+    "ledgerAmountsAndTechnicalTimestampsPreserved": true,
+    "integrityCheck": "ok",
+    "foreignKeyViolations": 0,
+    "scope": "Actual published/candidate financial repositories, synthetic local databases; not a full deployed Worker/UI acceptance test",
+    "status": "PASS_WITH_DOCUMENTED_COMPATIBILITY_LIMITS",
+    "completedAt": "2026-10-18T03:31:38.810Z"
+  },
+  "finalStagingState": {
+    "at": "2026-10-18T03:33:24.309Z",
+    "result": "PASS",
+    "database": "amor-e-sabor-delivery-staging",
+    "values": {
+      "receipts": 195,
+      "applied_migrations": 55,
+      "migration0052_records": 0,
+      "received_date_indexes": 0
+    },
+    "rows_read": 675,
+    "rows_written": 0,
+    "changes": 0
+  },
+  "targetedTests": {
+    "command": "node --test --test-reporter=spec worker/effectiveReceiptDateMigration.test.js worker/effectiveReceiptUpgrade.test.js worker/effectiveReceiptReconciliation.test.js",
+    "pass": 5,
+    "fail": 0
+  },
+  "constraints": {
+    "stagingRestored": false,
+    "productionAccessed": false,
+    "remoteApplicationMigrationsApplied": false,
+    "existingDatabaseCopied": false,
+    "fullRestoredWorkerUiAcceptance": false,
+    "freshCheckpointRequiredImmediatelyBeforeMigration": true,
+    "maintenanceAndReconciliationRequiredForActualRestore": true,
+    "accountPlanRetentionNotDetermined": true
+  },
+  "sources": [
+    "https://developers.cloudflare.com/d1/reference/time-travel/",
+    "https://developers.cloudflare.com/d1/platform/limits/",
+    "https://developers.cloudflare.com/api/resources/d1/subresources/database/subresources/time_travel/methods/restore/"
+  ]
+}

@@ -4,6 +4,7 @@ import React from 'react'
 import { act } from 'react-test-renderer'
 import { workspaceHarness, buttonNamed, nodeText } from '../../../test-support/renderWorkspace.js'
 import { comandaDetail, deferred } from '../../../test-support/comandaFixtures.js'
+import { getBusinessDate } from '../../../../shared/finance.js'
 
 const selectionA = { tableId: 'table-1', tableTabId: 'tab-A' }
 const selectionB = { tableId: 'table-2', tableTabId: 'tab-B' }
@@ -57,7 +58,7 @@ test('payment intent is owned by canonical identity/generation and closes on rep
   await act(async () => actions().requestPayment({ ...intentA, detail: comandaDetail }))
   assert.equal(renderer.root.findAllByProps({ role: 'dialog' }).length, 1)
   await act(async () => renderer.root.findByType('form').props.onSubmit({ preventDefault() {} }))
-  assert.deepEqual(payments[0], ['tab-42', [{ methodCode: 'pix', amountCents: 12345 }], { ...intentA, detail: comandaDetail }])
+  assert.deepEqual(payments[0], ['tab-42', [{ methodCode: 'pix', amountCents: 12345 }], { ...intentA, detail: comandaDetail }, { receivedDate: getBusinessDate() }])
 
   await update({ selection: selectionB, selectionGeneration: 5 })
   assert.equal(renderer.root.findAllByProps({ role: 'dialog' }).length, 0)

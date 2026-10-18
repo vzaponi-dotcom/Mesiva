@@ -1,0 +1,133 @@
+- banner:
+  - 'generic "Localização: Financeiro"':
+    - generic: Gestão
+    - generic: /
+    - strong: Financeiro
+  - button "Ativar tema claro":
+  - button "Notificações":
+  - button "Company A, empresa atual":
+    - generic: CA
+    - strong: Company A
+    - generic: Empresa atual
+- complementary:
+  - img "Mesiva"
+  - navigation "Menu principal":
+    - region "OPERAÇÃO":
+      - generic: OPERAÇÃO
+      - button "Pedidos, 34 pedidos em andamento":
+        - generic: "34"
+        - generic: Pedidos
+      - button "Comandas":
+        - generic: Comandas
+      - button "Fila de impressão, 35 jobs ativos":
+        - generic: "35"
+        - generic: Fila de impressão
+    - region "FINANCEIRO":
+      - generic: FINANCEIRO
+      - button "Visão geral":
+        - generic: Visão geral
+      - button "Relatórios":
+        - generic: Relatórios
+      - button "A receber":
+        - generic: A receber
+      - button "Movimentações":
+        - generic: Movimentações
+    - region "CADASTROS":
+      - generic: CADASTROS
+      - button "Clientes":
+        - generic: Clientes
+      - button "Produtos e preços":
+        - generic: Produtos e preços
+      - button "Mesas":
+        - generic: Mesas
+  - generic: Gestão para restaurantes
+- main:
+  - navigation "Navegação de Financeiro":
+    - button "Visão geral"
+    - button "Relatórios"
+    - button "A receber"
+    - button "Movimentações"
+  - paragraph: Resumo do dia
+  - heading "Visão geral financeira" [level=1]
+  - paragraph: Acompanhe os resultados de hoje e a evolução recente do negócio.
+  - button "Ocultar valores":
+  - region "Indicadores principais":
+    - article:
+      - generic: Vendas hoje
+      - strong: R$ 975,00
+      - generic: Pedidos da data de hoje
+    - article:
+      - generic: Recebido hoje
+      - strong: R$ 175,00
+      - generic: Pagamentos confirmados
+    - article:
+      - generic: A receber
+      - strong: R$ 0,00
+      - generic: Pagamentos pendentes
+  - region "Visão do período":
+    - text: Desempenho
+    - heading "Visão do período" [level=2]
+    - paragraph: Hoje + 29 dias anteriores
+    - group "Período da análise":
+      - button "Hoje"
+      - button "7 dias"
+      - button "30 dias" [pressed]
+    - article:
+      - generic: Vendas no período
+      - strong: R$ 975,00
+      - generic: Valor dos pedidos registrados
+    - article:
+      - generic: Pedidos no período
+      - strong: "35"
+      - generic: Quantidade de pedidos
+    - article:
+      - generic: Ticket médio
+      - strong: R$ 27,86
+      - generic: Venda média por pedido
+    - article:
+      - generic: Refeições vendidas
+      - strong: "39"
+      - generic: Unidades da categoria Refeições
+  - region "Gráficos de desempenho":
+    - article:
+      - text: Tendência
+      - heading "Vendas por dia" [level=2]
+      - generic: Hoje + 29 dias anteriores
+      - img "Vendas por dia no período selecionado":
+        - generic: R$ 975
+        - generic: R$ 487,5
+        - generic: R$ 0
+        - generic: 18/09
+        - generic: 25/09
+        - generic: 03/10
+        - generic: 10/10
+        - generic: 17/10
+    - article:
+      - text: Volume
+      - heading "Pedidos por dia" [level=2]
+      - generic: 35 pedidos
+      - img "Pedidos por dia no período selecionado":
+        - generic: "35"
+        - generic: "18"
+        - generic: "0"
+        - generic: 18/09
+        - generic: 25/09
+        - generic: 03/10
+        - generic: 10/10
+        - generic: 17/10
+    - article:
+      - text: Produtos
+      - heading "Top 10 produtos" [level=2]
+      - generic: Por unidades vendidas
+      - img "Top 10 produtos por quantidade vendida":
+        - generic: Prato QA fictício Un
+        - strong: 39 un.
+    - article:
+      - text: Recebimentos
+      - heading "Formas de pagamento" [level=2]
+      - generic: Movimentos recebidos
+      - 'img "Valores recebidos por forma de pagamento. Pix: R$ 815,00, Dinheiro: R$ 210,00"':
+        - generic: Pix
+        - strong: R$ 815,00
+        - generic: Dinheiro
+        - strong: R$ 210,00

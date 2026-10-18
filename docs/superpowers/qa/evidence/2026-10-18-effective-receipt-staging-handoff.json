@@ -1,0 +1,450 @@
+{
+  "at": "2026-10-18T15:32:32.518Z",
+  "environment": "staging",
+  "release": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+  "documentationHeadBeforeUpdate": "db937498bcf0bd080c1933164d6cb69e030b5f7e",
+  "task11Accepted": false,
+  "humanSubmission": {
+    "comandaConfirmed": true,
+    "batchConfirmed": true,
+    "comandaObservedBeforeBatch": true,
+    "agentFinancialSubmission": false,
+    "automaticReviewBypassed": false
+  },
+  "stagingFivePaths": {
+    "pass": 5,
+    "blocked": 0
+  },
+  "assertions": {
+    "result": "PASS",
+    "newReceiptsUnique": true,
+    "orderLinksCorrect": true,
+    "allSixOrdersOutstandingCents": 0,
+    "allSixOrdersRemainPreparing": true,
+    "previousThreeQaReceiptsAndRelatedRowsUnchanged": true,
+    "allocationsAndMovementsReconcile": true,
+    "datesCorrect": true,
+    "tabClosed": true,
+    "foreignKeys": 0
+  },
+  "financial": {
+    "at": "2026-10-18T15:29:14.671Z",
+    "phase": "after-both-human",
+    "environment": "staging",
+    "release": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+    "readOnly": true,
+    "rowsRead": 24179,
+    "rowsWritten": 0,
+    "clients": [
+      {
+        "id": "c78ab77f-79d3-4367-bd9f-58ada3523229",
+        "business_id": "amor-e-sabor",
+        "name": "QA Task11 Staging 18out"
+      }
+    ],
+    "orders": [
+      {
+        "id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "business_id": "amor-e-sabor",
+        "order_number": 358,
+        "status": "Em preparo",
+        "total_cents": 3600,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "business_id": "amor-e-sabor",
+        "order_number": 359,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "f3ca7889-1ea5-40ac-9139-b8e9195f9131",
+        "business_id": "amor-e-sabor",
+        "order_number": 360,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "db59c20d-2a78-46af-aad4-60524f7cae87",
+        "business_id": "amor-e-sabor",
+        "order_number": 361,
+        "status": "Em preparo",
+        "total_cents": 2700,
+        "order_date": "2026-10-18",
+        "table_tab_id": null
+      },
+      {
+        "id": "839f63a6-803c-4345-8fb7-3a4156fb21cb",
+        "business_id": "amor-e-sabor",
+        "order_number": 362,
+        "status": "Em preparo",
+        "total_cents": 1800,
+        "order_date": "2026-10-18",
+        "table_tab_id": "92130d18-2645-445f-af12-208e921f27cc"
+      },
+      {
+        "id": "e4157c71-e49b-41fe-bc91-ff529eaed2ee",
+        "business_id": "amor-e-sabor",
+        "order_number": 363,
+        "status": "Em preparo",
+        "total_cents": 2700,
+        "order_date": "2026-10-18",
+        "table_tab_id": "92130d18-2645-445f-af12-208e921f27cc"
+      }
+    ],
+    "receipts": [
+      {
+        "id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T04:57:43.615Z",
+        "created_at": "2026-10-18T04:57:43.615Z",
+        "received_date": "2026-10-17"
+      },
+      {
+        "id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T04:58:40.733Z",
+        "created_at": "2026-10-18T04:58:40.733Z",
+        "received_date": "2026-10-18"
+      },
+      {
+        "id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "business_id": "amor-e-sabor",
+        "total_cents": 1800,
+        "paid_at": "2026-10-18T05:00:47.663Z",
+        "created_at": "2026-10-18T05:00:47.663Z",
+        "received_date": "2026-10-18"
+      },
+      {
+        "id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "business_id": "amor-e-sabor",
+        "total_cents": 4500,
+        "paid_at": "2026-10-18T15:27:56.118Z",
+        "created_at": "2026-10-18T15:27:56.118Z",
+        "received_date": "2026-10-17"
+      },
+      {
+        "id": "49013144-ee51-496b-b1b5-fa183a18242e",
+        "business_id": "amor-e-sabor",
+        "total_cents": 4500,
+        "paid_at": "2026-10-18T15:28:50.499Z",
+        "created_at": "2026-10-18T15:28:50.499Z",
+        "received_date": "2026-10-17"
+      }
+    ],
+    "payments": [
+      {
+        "id": "4aec42f1-ba5a-4e04-a6b9-97391cc41d5c",
+        "order_id": "db59c20d-2a78-46af-aad4-60524f7cae87",
+        "receipt_id": "49013144-ee51-496b-b1b5-fa183a18242e",
+        "amount_cents": 2700,
+        "paid_at": "2026-10-18T15:28:50.499Z"
+      },
+      {
+        "id": "70cac36a-677e-4bb3-899a-65d31d30713a",
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T04:57:43.615Z"
+      },
+      {
+        "id": "727df83e-f829-438e-af58-c37c65e2679d",
+        "order_id": "e4157c71-e49b-41fe-bc91-ff529eaed2ee",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "amount_cents": 2700,
+        "paid_at": "2026-10-18T15:27:56.118Z"
+      },
+      {
+        "id": "73a361a7-8763-4ed4-87e3-2b7c45d1f7ed",
+        "order_id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T05:00:47.663Z"
+      },
+      {
+        "id": "8f9553d6-dd91-4afe-8ca7-ff2d783348f8",
+        "order_id": "839f63a6-803c-4345-8fb7-3a4156fb21cb",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T15:27:56.118Z"
+      },
+      {
+        "id": "9d1e2b89-9829-4712-9197-163638197b96",
+        "order_id": "f3ca7889-1ea5-40ac-9139-b8e9195f9131",
+        "receipt_id": "49013144-ee51-496b-b1b5-fa183a18242e",
+        "amount_cents": 1800,
+        "paid_at": "2026-10-18T15:28:50.499Z"
+      }
+    ],
+    "settlements": [
+      {
+        "id": "598997a9-76e5-4256-9ec2-f7dbf401fd34",
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "kind": "supplemental_payment",
+        "amount_cents": 1800
+      }
+    ],
+    "allocations": [
+      {
+        "id": "d283ce91-a64a-4ac7-985d-2b717dc6cf74",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "method_code": "pix",
+        "amount_cents": 1800
+      },
+      {
+        "id": "e16f00e9-d0d5-4911-b437-5612b095486c",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "method_code": "pix",
+        "amount_cents": 1800
+      },
+      {
+        "id": "c76f9eeb-bafa-44b4-8b84-0cdef3e97a28",
+        "receipt_id": "49013144-ee51-496b-b1b5-fa183a18242e",
+        "method_code": "pix",
+        "amount_cents": 4500
+      },
+      {
+        "id": "1cd60543-3761-45ec-9803-09eea1dce5a9",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "method_code": "pix",
+        "amount_cents": 2000
+      },
+      {
+        "id": "6c21e4e3-16b4-4af6-976f-c29768e67965",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "method_code": "cash",
+        "amount_cents": 2500
+      },
+      {
+        "id": "10975a9f-a6a4-4da2-88ef-f3b968c05ed4",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "method_code": "pix",
+        "amount_cents": 1000
+      },
+      {
+        "id": "935ef4f9-ca30-438a-b142-61e53bbd2d71",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "method_code": "cash",
+        "amount_cents": 800
+      }
+    ],
+    "movements": [
+      {
+        "id": "e72e1c20-9619-49a3-9274-2deb62cc540c",
+        "receipt_id": "38a383de-e3e4-49d7-b0d8-7370747e045e",
+        "type": "entrada",
+        "value_cents": 1800,
+        "movement_date": "2026-10-18",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "00e16b52-139d-4338-a7be-e84b832000cf",
+        "receipt_id": "44345cc0-6a5f-4b50-968c-c62f8c889fc4",
+        "type": "entrada",
+        "value_cents": 1800,
+        "movement_date": "2026-10-18",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "6b7bdda4-e4b5-4ab1-8504-85e42b0c94bc",
+        "receipt_id": "49013144-ee51-496b-b1b5-fa183a18242e",
+        "type": "entrada",
+        "value_cents": 4500,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "d4ebee20-d54d-4d6c-9794-78592f74cef4",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "type": "entrada",
+        "value_cents": 2500,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "ead964e3-de8d-47c8-afa4-ed3b195791a6",
+        "receipt_id": "8f64ae25-c043-49b3-bfc2-64f1df01f1aa",
+        "type": "entrada",
+        "value_cents": 2000,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "0455acb6-f06d-4322-ae3c-a493c88660d8",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "type": "entrada",
+        "value_cents": 800,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      },
+      {
+        "id": "bda01d1a-141b-414c-90ef-1e26177d07bb",
+        "receipt_id": "a6436221-9813-4939-a253-c7b53984b38c",
+        "type": "entrada",
+        "value_cents": 1000,
+        "movement_date": "2026-10-17",
+        "source": "order-payment",
+        "deleted_at": null
+      }
+    ],
+    "printJobs": [
+      {
+        "order_id": "276be406-9c75-4cb3-b732-df1dc101f038",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "839f63a6-803c-4345-8fb7-3a4156fb21cb",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "91399232-f7fe-4741-895d-8533ff7cb161",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "db59c20d-2a78-46af-aad4-60524f7cae87",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "e4157c71-e49b-41fe-bc91-ff529eaed2ee",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      },
+      {
+        "order_id": "f3ca7889-1ea5-40ac-9139-b8e9195f9131",
+        "type": "order",
+        "trigger": "automatic",
+        "status": "pending",
+        "count": 1
+      }
+    ],
+    "tableTabs": [
+      {
+        "id": "92130d18-2645-445f-af12-208e921f27cc",
+        "number": 59,
+        "status": "closed"
+      }
+    ],
+    "foreignKeys": []
+  },
+  "reportTotals": {
+    "at": "2026-10-18T15:29:16.139Z",
+    "readOnly": true,
+    "receiptDays": [
+      {
+        "received_date": "2026-10-17",
+        "cents": 15300,
+        "receipts": 4
+      },
+      {
+        "received_date": "2026-10-18",
+        "cents": 3600,
+        "receipts": 2
+      }
+    ],
+    "salesDays": [
+      {
+        "order_date": "2026-10-17",
+        "cents": 25700,
+        "orders": 6
+      },
+      {
+        "order_date": "2026-10-18",
+        "cents": 18900,
+        "orders": 7
+      }
+    ],
+    "movementDays": [
+      {
+        "movement_date": "2026-10-17",
+        "type": "entrada",
+        "cents": 15300,
+        "count": 6
+      },
+      {
+        "movement_date": "2026-10-18",
+        "type": "entrada",
+        "cents": 3600,
+        "count": 2
+      }
+    ],
+    "rowsRead": 65,
+    "rowsWritten": 0
+  },
+  "uiObservations": {
+    "client": "Sem saldo; #358/#359/#360/#361 Pago, Em preparo",
+    "table": "Mesa 7 Livre agora; two other tabs remain open",
+    "report": "2026-10-18: sales R$189/7 orders, received R$36 vs R$153 previous day, pending R$45 from another fictional order",
+    "csvPdf": "Not re-exported; earlier snapshot evidence preserved"
+  },
+  "artifacts": [
+    {
+      "file": "task11-handoff-batch-paid.png",
+      "bytes": 40071,
+      "sha256": "2b9d69ede55b51a1074a08992d57cc403a67c519b05b451c140570c391aeeba2"
+    },
+    {
+      "file": "task11-handoff-table-free.png",
+      "bytes": 49149,
+      "sha256": "4f8a9747f10487eb7168d5cbe4549a04a45eafde302c43162c1088ee45efc894"
+    },
+    {
+      "file": "task11-handoff-report-today.png",
+      "bytes": 74693,
+      "sha256": "e2c75d6cd46154c11e530ec46fc2627e710d9e7885caa4cfec72298173cc22b5"
+    },
+    {
+      "file": "task11-handoff-report-received.png",
+      "bytes": 75380,
+      "sha256": "e41bb6edacc0e1817da692dcce6fd56eca4a62321d6e39fd4ea5f7ab692d0164"
+    }
+  ],
+  "previousCi": {
+    "sha": "db937498bcf0bd080c1933164d6cb69e030b5f7e",
+    "status": "success",
+    "run": 39133848777
+  },
+  "remaining": {
+    "local15Matrix": {
+      "pass": 13,
+      "blocked": 2
+    },
+    "monthlyBudget": "BLOCKED_NOT_PROVEN",
+    "physicalPrinting": "BLOCKED_NOT_EXECUTED",
+    "visualNarrowCheckout": "OPEN_NOT_ATTRIBUTED_TO_PR",
+    "fullStagingBoundaryMatrix": "NOT_REPEATED",
+    "releaseAcceptance": "PENDING"
+  },
+  "runtimeChanged": false,
+  "remoteMigrationOrDeployment": false,
+  "productionTouched": false,
+  "merged": false
+}

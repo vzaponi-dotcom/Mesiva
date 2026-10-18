@@ -73,6 +73,8 @@ On master, staging starts with the current push trigger and waits for that commi
 If staging deployment, migration, or acceptance fails, the production release stops. Production is not used to diagnose unfinished branch changes.
 No modo multi_company, o smoke automatizado atual verifica fronteiras anônimas, rejeições de login legado e identidade do release; ele não comprova o carregamento de uma sessão operacional autenticada. Antes de homologar, abrir o SHA publicado no navegador com conta fictícia de staging e confirmar que /api/bootstrap retorna 200, a operação aparece e a tela inicial não entra em ciclo de redescoberta de sessão. Registrar essa evidência junto ao SHA; HTTP 200 dos assets não substitui esse teste.
 
+Se a aba já estava aberta antes do deploy, sair de rascunhos/confirmadores pendentes e recarregá-la antes do QA. Conferir o asset efetivamente carregado na aba e a identidade em `release.json`: o JSON do servidor atualizado não prova que uma aba antiga já está executando o bundle novo. Não repetir mutations para atualizar a interface.
+
 Staging pode conter migrations/grants aditivos de outra entrega em homologação. Capabilities desconhecidas continuam sem conceder acesso ao bundle anterior; a validação de estabilidade deve comparar o snapshot persistido completo, sem confundir filtragem de capabilities com mudança de sessão. Não remover grants ou histórico para fazer o bundle abrir.
 
 For Spec B, record the exact staging SHA and the acceptance evidence in `docs/superpowers/qa/2026-09-15-spec-b-final-closure.md`. Physical printing acceptance by context remains a separate release gate documented in `docs/superpowers/qa/2026-09-12-spec-b-physical-printing-guide.md`.
@@ -94,6 +96,18 @@ Routine production migrations run only inside **Deploy production**. Ordinary CI
 Destructive or data-transforming migrations require a reviewed restore strategy before authorization. Confirm the expected Cloudflare D1 recovery/backup path and schema compatibility before executing the destructive step.
 
 Automatic down-migrations are not the default database rollback strategy.
+
+### Migration 0052 — data efetiva dos recebimentos
+
+Na branch `codex/received-date-tdd` da PR #120, staging é elegível somente por `workflow_dispatch`. O workflow executa `scripts/infra/effective-receipt-staging-preflight.mjs` antes de criar recursos R2 ou aplicar migrations remotas. O pré-flight detecta schema pré/pós-0052 e bloqueia datas impossíveis, divergências entre recibos/movimentos e timestamps não canônicos usados no fallback; preservar essa ordem e esses bloqueios.
+
+Antes de acionar o workflow, revisar a distribuição histórica do D1 de destino, inclusive recibos sem movimentos ou com consenso ainda NULL, e registrar estratégia de restore D1 verificável e compatibilidade de bundle/schema. O bookmark automático de produção não comprova recuperação de staging; esse workflow não registra um bookmark específico desta feature automaticamente. Não forçar backfill para eliminar divergências.
+
+Para uma auditoria estritamente somente de leitura com Wrangler `4.128.0`, não usar `d1 migrations list`: o comando chama `initMigrationsTable` e pode criar a tabela de controle. Confirmar sua existência em `sqlite_master`, consultar `SELECT name FROM d1_migrations ORDER BY id` e comparar os nomes com os arquivos locais; tabela ausente exige registro do bloqueio, sem criá-la durante a auditoria.
+
+Conferir também o [orçamento dos recebimentos efetivos](operations/operational-data-read-budget.md#recebimentos-efetivos--pr-120) e a [matriz da Task 11](superpowers/qa/2026-10-17-effective-receipt-task11.md). CI verde e testes locais não dispensam auditoria, restore, orçamento, impressão física pendente ou aceite do release de staging no SHA exato. Destino e testes usam somente dados fictícios; os bloqueios registrados precisam ser resolvidos antes da publicação.
+
+Separar as evidências: auditoria histórica, plano de tratamento, recuperação e avaliação prévia de orçamento precedem a publicação; homologação funcional e métricas que exigem a candidata publicada são verificadas depois. A [publicação controlada da PR #120 em 18/10](superpowers/qa/2026-10-18-effective-receipt-staging-deploy.md) recebeu autorização específica do usuário, com orçamento integral e impressão física ainda pendentes. Isso não cria dispensa geral dos gates nem autoriza merge/produção.
 
 ### Spec B migrations 0024/0025
 
@@ -150,6 +164,26 @@ If the production smoke check fails, stop further changes and assess code rollba
 Database rollback normally uses a forward fix or restoration from the applicable Cloudflare D1 backup/recovery point. Do not improvise reverse SQL or automatic down-migrations after a failed release.
 
 For destructive operations, the restoration procedure must be understood before the destructive step is authorized.
+
+### Recuperação da migration 0052
+
+O [ensaio de 18/10/2026](superpowers/qa/2026-10-18-effective-receipt-d1-recovery.md) verificou Time Travel/undo em D1 descartável e compatibilidade financeira com snapshots locais. Não restaurou staging. A [documentação Cloudflare](https://developers.cloudflare.com/d1/reference/time-travel/) descreve restore no próprio banco, cancelamento de queries em andamento e retorno de um bookmark para desfazer a operação; não há clone por Time Travel. A retenção depende do plano, sem presumir 30 dias.
+
+1. Em janela autorizada, suspender escritas por procedimento operacional aprovado, incluindo processos de fundo que escrevam. Registrar bundle/release, schema, contagens e transações que ficariam fora do ponto. Preferir correção adiante quando perder essas transações for inaceitável; não reenviar recebimentos automaticamente após restore.
+2. Imediatamente antes da migration, obter e guardar o bookmark pré-migration, banco/ID, horário e SHA. Antes de eventual restore, guardar também um bookmark do estado corrente como ponto de segurança. Para staging, a consulta somente de leitura é:
+
+   ```bash
+   npx --yes wrangler@4.128.0 d1 time-travel info amor-e-sabor-delivery-staging --env staging --json
+   ```
+
+3. Preparar o par código/schema compatível pelos workflows oficiais e seus gates. O candidato exige `received_date`; não pode operar sobre um banco restaurado para pré-0052. O bundle anterior abre o schema aditivo, mas pode interpretar recebimentos retroativos pelo dia técnico antigo. O SHA publicado `f44e10da` usado no ensaio é referência de compatibilidade, não autorização para contornar a exigência de HEAD/CI dos workflows.
+4. Somente após autorização da recuperação e conferência do destino, o comando de restore de staging é o seguinte; o placeholder deve ser substituído pelo ponto aprovado do próprio banco. No Wrangler `4.128.0`, `restore --json` executa sem o prompt interativo: não é dry-run. Por isso, o exemplo preserva a confirmação:
+
+   ```bash
+   npx --yes wrangler@4.128.0 d1 time-travel restore amor-e-sabor-delivery-staging --env staging --bookmark "BOOKMARK_APROVADO"
+   ```
+
+5. Guardar o `previous_bookmark` retornado para eventual undo no mesmo banco. Antes de liberar tráfego/escritas, conferir schema, histórico de migrations somente por leitura, integridade/FKs, contagens e totais financeiros, isolamento, login/bootstrap e fluxos afetados no bundle correto. Conciliar registros posteriores ao ponto. Este procedimento não autoriza executar restore, migration ou publicação por si só.
 
 ## Emergency rule
 

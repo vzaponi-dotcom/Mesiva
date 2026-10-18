@@ -1,5 +1,7 @@
 import { useMutationOwner } from '../../../runtime/session/useMutationOwner.js'
 import { useCallback, useRef, useState } from 'react'
+import { getBusinessDate } from '../../../../../shared/finance.js'
+import { isValidReceivedDate } from '../paymentComposition.js'
 import {
   canReceiveStandaloneOrder,
   getPendingAmount,
@@ -39,6 +41,7 @@ export function useOrderPaymentWorkflow({
   const dialogOwnerRef = useRef(null)
   const [dialogOwner, setDialogOwner] = useState(null)
   const [allocations, setAllocations] = useState([])
+  const [receivedDate, setReceivedDate] = useState('')
   const [, forceRender] = useState(0)
 
   const getOrder = useCallback(
@@ -68,6 +71,7 @@ export function useOrderPaymentWorkflow({
     dialogOwnerRef.current = null
     setDialogOwner(null)
     setAllocations([])
+    setReceivedDate('')
     clearRequestKey(owner)
     return true
   }, [clearRequestKey])
@@ -93,6 +97,7 @@ export function useOrderPaymentWorkflow({
     }
     dialogOwnerRef.current = owner
     setDialogOwner(owner)
+    setReceivedDate(getBusinessDate())
     setAllocations(createInitialPaymentComposition({
       totalCents: orderTotalCents(order),
       defaultPaymentMethod,
@@ -113,6 +118,7 @@ export function useOrderPaymentWorkflow({
       || writesBlocked
       || !isEligible(currentOrder, owner.source)
       || !submittedAllocations
+      || !isValidReceivedDate(receivedDate)
     ) return false
 
     owner.submitting = true
@@ -129,8 +135,9 @@ export function useOrderPaymentWorkflow({
           expectedTotalCents:owner.expectedTotalCents,
           expectedNetReceivedCents:owner.expectedNetReceivedCents,
           allocations:owner.allocations,
+          receivedDate,
         })
-        : await api.registerOrderPayment(owner.orderId, owner.allocations)
+        : await api.registerOrderPayment(owner.orderId, owner.allocations, { receivedDate })
       if (!ownsMutation() || owner.guard !== getSyncGuard()) return false
 
       if (applyOfficialEffects(result) === false) return false
@@ -162,6 +169,7 @@ export function useOrderPaymentWorkflow({
   }, [
     ownsMutation,
     allocations,
+    receivedDate,
     api,
     applyOfficialEffects,
     clearRequestKey,
@@ -181,6 +189,7 @@ export function useOrderPaymentWorkflow({
   const eligible = dialogOwner ? isEligible(order, dialogOwner.source) : false
   const totalCents = orderTotalCents(order)
   const composition = summarizePaymentComposition(allocations, totalCents, paymentOptions)
+  const dateValid = isValidReceivedDate(receivedDate)
 
   const dialog = dialogOwner && eligible ? {
     order,
@@ -188,6 +197,9 @@ export function useOrderPaymentWorkflow({
     supplemental:Boolean(dialogOwner.supplemental),
     allocations,
     setAllocations,
+    receivedDate,
+    setReceivedDate,
+    dateValid,
     paymentOptions,
     composition,
     submitting: Boolean(dialogOwner.submitting),

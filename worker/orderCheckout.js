@@ -1,6 +1,6 @@
 import { validateCustomerIdentity } from '../shared/orderCustomerIdentity.js'
 import { SCHEDULE_MAX_DAYS, validateOrderSchedule } from '../shared/orderTiming.js'
-import { validatePaymentAllocations } from './paymentValidation.js'
+import { resolveReceivedDate, validatePaymentAllocations } from './paymentValidation.js'
 import {
   moneyToCents,
   optionalTextMax,
@@ -112,6 +112,14 @@ export const validateCheckoutInput = (body = {}, idempotencyKey, now = new Date(
   const paymentAllocations = body.paymentAllocations === undefined || body.paymentAllocations === null
     ? null
     : validatePaymentAllocations(body.paymentAllocations)
+  if (body.receivedDate !== undefined && !paymentAllocations) {
+    throw checkoutError('receivedDate', 'A data do recebimento só pode ser informada quando houver pagamento.')
+  }
+  // Keep an omitted date omitted for retries across midnight; the writer
+  // resolves today's business date only when it creates the first receipt.
+  const receivedDate = body.receivedDate === undefined
+    ? undefined
+    : resolveReceivedDate(body.receivedDate, now)
   if (customerIdentity.type === 'table' && paymentAllocations) {
     throw checkoutError('paymentAllocations', 'Pedidos de mesa devem ser recebidos pelo pagamento integral da comanda.')
   }
@@ -134,6 +142,7 @@ export const validateCheckoutInput = (body = {}, idempotencyKey, now = new Date(
     deliveryFeeCents: type === 'Entrega' ? deliveryFeeCents : 0,
     adjustment,
     paymentAllocations,
+    ...(receivedDate !== undefined ? { receivedDate } : {}),
     expectedTableTabId,
     scheduledFor,
     idempotencyKey: stableKey,

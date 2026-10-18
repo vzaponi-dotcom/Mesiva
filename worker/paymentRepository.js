@@ -1,8 +1,7 @@
 import { auditContext, businessEvent } from './access/audit.js'
-import { getBusinessDate } from '../shared/finance.js'
 import { formatOrderDisplayNumber } from '../shared/orderDisplayNumber.js'
 import { mapMovementRow } from './financeRepository.js'
-import { assertPaymentAllocationTotal, validateReceivableOrderIds } from './paymentValidation.js'
+import { assertPaymentAllocationTotal, resolveReceivedDate, validateReceivableOrderIds } from './paymentValidation.js'
 import { preparePolicyGuards, readPaymentMethodExpectations, rethrowPolicyChange } from './operationalPolicyGuards.js'
 import { closeTableTabIfSettled, loadOrderById, mapTableTabRow } from './repositories.js'
 import { clearSettingsAssertions, hashSettingsPayload, prepareSettingsAssertion } from './settingsTransactions.js'
@@ -28,11 +27,12 @@ const mapReceipt = (row, allocations) => ({
   total: centsToMoney(row.total_cents),
   tableTabId: row.table_tab_id ?? null,
   paidAt: row.paid_at,
+  receivedDate: row.received_date ?? null,
   createdAt: row.created_at,
   allocations,
 })
 
-export async function registerOrderPayment(db, businessId, orderId, rawAllocations, now = new Date()) {
+export async function registerOrderPayment(db, businessId, orderId, rawAllocations, now = new Date(), { receivedDate } = {}) {
   const orderRow = await db.prepare(`SELECT o.id, o.order_number, o.status, o.client_name_snapshot,
     o.table_tab_id, o.total_cents, o.content_revision, p.id AS payment_id
     FROM orders o
@@ -47,7 +47,7 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
   const paymentExpectation = await readPaymentMethodExpectations(db, businessId, allocations.map(({ methodCode }) => methodCode))
   const labels = new Map(paymentExpectation.methods.map(({ code, label }) => [code, label]))
   const paidAt = now.toISOString()
-  const movementDate = getBusinessDate(now)
+  const movementDate = resolveReceivedDate(receivedDate, now)
   const receiptId = crypto.randomUUID()
   const paymentId = crypto.randomUUID()
   const policyTxId = crypto.randomUUID()
@@ -57,6 +57,7 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
     table_tab_id: null,
     total_cents: orderRow.total_cents,
     paid_at: paidAt,
+    received_date: movementDate,
     created_at: paidAt,
   }
   const allocationRows = allocations.map(({ methodCode, amountCents }) => ({
@@ -97,8 +98,8 @@ export async function registerOrderPayment(db, businessId, orderId, rawAllocatio
     ...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, policyTxId),
     stateGuard,
     db.prepare(`INSERT INTO payment_receipts
-      (id, business_id, table_tab_id, total_cents, paid_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, null, orderRow.total_cents, paidAt, paidAt),
+      (id, business_id, table_tab_id, total_cents, paid_at, received_date, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, null, orderRow.total_cents, paidAt, movementDate, paidAt),
   ]
   for (const allocation of allocationRows) {
     statements.push(
@@ -176,14 +177,16 @@ export async function registerClientOrdersPayment(
   rawOrderIds,
   rawAllocations,
   now = new Date(),
-  {mutationId} = {},
+  {mutationId,receivedDate} = {},
 ) {
   const orderIds = validateReceivableOrderIds(rawOrderIds)
   const normalizedClientId = typeof clientId === 'string' ? clientId.trim() : ''
   if (!normalizedClientId) throw repositoryError(400, 'VALIDATION_ERROR', 'Cliente inválido para recebimento.')
   if(mutationId!==undefined && (typeof mutationId!=='string'||!mutationId.trim()||mutationId!==mutationId.trim()||mutationId.length>128))
     throw repositoryError(400,'VALIDATION_ERROR','Identificador do recebimento inválido.')
-  const requestHash=await hashSettingsPayload({clientId:normalizedClientId,orderIds,allocations:rawAllocations})
+  const movementDate = resolveReceivedDate(receivedDate, now)
+  const requestHash=await hashSettingsPayload({clientId:normalizedClientId,orderIds,allocations:rawAllocations,
+    ...(receivedDate!==undefined?{receivedDate}:{})})
   const readMutation=()=>mutationId ? db.prepare('SELECT client_id,request_hash,receipt_id,order_ids_json FROM client_payment_mutation_receipts WHERE business_id=? AND mutation_id=?').bind(businessId,mutationId).first() : null
   const replay=async saved=>{
     if(saved.client_id!==normalizedClientId||saved.request_hash!==requestHash)throw clientReceivablesConflict()
@@ -247,7 +250,6 @@ export async function registerClientOrdersPayment(
   )
   const labels = new Map(paymentExpectation.methods.map(({ code, label }) => [code, label]))
   const paidAt = now.toISOString()
-  const movementDate = getBusinessDate(now)
   const receiptId = crypto.randomUUID()
   const policyTxId = crypto.randomUUID()
   const receiptRow = {
@@ -256,6 +258,7 @@ export async function registerClientOrdersPayment(
     table_tab_id: null,
     total_cents: authoritativeTotalCents,
     paid_at: paidAt,
+    received_date: movementDate,
     created_at: paidAt,
   }
   const allocationRows = allocations.map(({ methodCode, amountCents }) => ({
@@ -319,9 +322,9 @@ export async function registerClientOrdersPayment(
     ...preparePolicyGuards(db, businessId, { paymentMethods: paymentExpectation }, policyTxId),
     ...stateGuards,
     db.prepare(`INSERT INTO payment_receipts
-      (id, business_id, table_tab_id, total_cents, paid_at, created_at)
-      VALUES (?, ?, NULL, ?, ?, ?)`).bind(
-      receiptId, businessId, authoritativeTotalCents, paidAt, paidAt,
+      (id, business_id, table_tab_id, total_cents, paid_at, received_date, created_at)
+      VALUES (?, ?, NULL, ?, ?, ?, ?)`).bind(
+      receiptId, businessId, authoritativeTotalCents, paidAt, movementDate, paidAt,
     ),
   ]
 
@@ -427,7 +430,7 @@ export async function registerClientOrdersPayment(
 }
 
 
-export async function registerTableTabPayment(db, businessId, tableTabId, rawAllocations, now = new Date()) {
+export async function registerTableTabPayment(db, businessId, tableTabId, rawAllocations, now = new Date(), {receivedDate} = {}) {
   const tabRow = await db.prepare(`SELECT id, table_id, table_identifier, tab_number, status, opened_at, closed_at
     FROM table_tabs WHERE id = ? AND business_id = ? LIMIT 1`).bind(tableTabId, businessId).first()
   if (!tabRow) throw repositoryError(404, 'TABLE_TAB_NOT_FOUND', 'Comanda não encontrada.')
@@ -452,7 +455,7 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
   )
   const labels = new Map(paymentExpectation.methods.map(({ code, label }) => [code, label]))
   const paidAt = now.toISOString()
-  const movementDate = getBusinessDate(now)
+  const movementDate = resolveReceivedDate(receivedDate, now)
   const receiptId = crypto.randomUUID()
   const policyTxId = crypto.randomUUID()
   const receiptRow = {
@@ -461,6 +464,7 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
     table_tab_id: tableTabId,
     total_cents: authoritativeTotalCents,
     paid_at: paidAt,
+    received_date: movementDate,
     created_at: paidAt,
   }
   const allocationRows = allocations.map(({ methodCode, amountCents }) => ({
@@ -516,8 +520,8 @@ export async function registerTableTabPayment(db, businessId, tableTabId, rawAll
     tabSnapshotGuard,
     ...orderRevisionGuards,
     db.prepare(`INSERT INTO payment_receipts
-      (id, business_id, table_tab_id, total_cents, paid_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, tableTabId, authoritativeTotalCents, paidAt, paidAt),
+      (id, business_id, table_tab_id, total_cents, paid_at, received_date, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(receiptId, businessId, tableTabId, authoritativeTotalCents, paidAt, movementDate, paidAt),
   ]
 
   for (const allocation of allocationRows) {

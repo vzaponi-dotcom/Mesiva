@@ -167,3 +167,25 @@ test('scheduled table checkout rejects expectedTableTabId because a reservation 
     && /reserva|agend/i.test(error.message)
   ))
 })
+
+
+test('checkout accepts a distinct effective receipt date only for paid orders', () => {
+  const now = new Date('2026-09-21T15:00:00Z')
+  const payload = {
+    clientId:'c1',type:'Retirada',orderDate:'2026-09-21',
+    items:[{productId:'p1',quantity:1}],
+    paymentAllocations:[{methodCode:'pix',amountCents:8000}],
+  }
+  const paid = validateCheckoutInput({...payload,receivedDate:'2026-09-19'},'checkout-receive',now)
+  assert.equal(paid.orderDate,'2026-09-21')
+  assert.equal(paid.receivedDate,'2026-09-19')
+  assert.equal(validateCheckoutInput(payload,'checkout-default',now).receivedDate,undefined)
+  for (const receivedDate of ['2026-09-22','2026-02-30',null,'2026-09-19T00:00:00Z']) {
+    assert.throws(() => validateCheckoutInput({...payload,receivedDate},'checkout-invalid',now),
+      {status:400,code:'VALIDATION_ERROR',field:'receivedDate'})
+  }
+  for (const receivedDate of ['2026-09-19',null]) {
+    assert.throws(() => validateCheckoutInput({...payload,paymentAllocations:null,receivedDate},'checkout-unpaid',now),
+      {status:400,code:'VALIDATION_ERROR',field:'receivedDate'})
+  }
+})

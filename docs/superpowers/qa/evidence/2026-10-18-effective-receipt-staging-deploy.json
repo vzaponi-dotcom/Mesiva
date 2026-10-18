@@ -1,0 +1,347 @@
+{
+  "at": "2026-10-18T04:31:52.869Z",
+  "sha": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+  "environment": "staging",
+  "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+  "authorization": {
+    "source": "User conversation after explaining pre-migration historical audit vs post-deployment functional acceptance",
+    "request": "Pode seguir então",
+    "scope": "Controlled staging deployment/migration via official workflow and subsequent fictional-data acceptance; no merge or production",
+    "monthlyBudgetApproved": false,
+    "physicalPrintingApproved": false
+  },
+  "workflow": {
+    "id": 39097117765,
+    "url": "https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39097117765",
+    "conclusion": "success",
+    "startedAt": "2026-10-18T04:26:54Z",
+    "completedAt": "2026-10-18T04:28:07Z",
+    "steps": [
+      {
+        "name": "Set up job",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:26:55Z",
+        "completedAt": "2026-10-18T04:26:56Z"
+      },
+      {
+        "name": "Checkout",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:26:56Z",
+        "completedAt": "2026-10-18T04:26:57Z"
+      },
+      {
+        "name": "Setup Node",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:26:57Z",
+        "completedAt": "2026-10-18T04:26:58Z"
+      },
+      {
+        "name": "Require successful validation of this commit",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:26:58Z",
+        "completedAt": "2026-10-18T04:26:59Z"
+      },
+      {
+        "name": "Install dependencies",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:26:59Z",
+        "completedAt": "2026-10-18T04:27:03Z"
+      },
+      {
+        "name": "Validate frontend architecture",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:03Z",
+        "completedAt": "2026-10-18T04:27:03Z"
+      },
+      {
+        "name": "Lint",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:03Z",
+        "completedAt": "2026-10-18T04:27:04Z"
+      },
+      {
+        "name": "Build",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:04Z",
+        "completedAt": "2026-10-18T04:27:06Z"
+      },
+      {
+        "name": "Record GitHub release identity",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:06Z",
+        "completedAt": "2026-10-18T04:27:06Z"
+      },
+      {
+        "name": "Apply migrations to local D1",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:06Z",
+        "completedAt": "2026-10-18T04:27:34Z"
+      },
+      {
+        "name": "Validate staging Worker bundle",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:34Z",
+        "completedAt": "2026-10-18T04:27:36Z"
+      },
+      {
+        "name": "Check staging credentials",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:36Z",
+        "completedAt": "2026-10-18T04:27:36Z"
+      },
+      {
+        "name": "Require the latest branch commit",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:36Z",
+        "completedAt": "2026-10-18T04:27:37Z"
+      },
+      {
+        "name": "Audit effective receipts (read-only, before staging writes)",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:37Z",
+        "completedAt": "2026-10-18T04:27:41Z"
+      },
+      {
+        "name": "Ensure staging R2 bucket",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:41Z",
+        "completedAt": "2026-10-18T04:27:44Z"
+      },
+      {
+        "name": "Show pending staging migrations",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:44Z",
+        "completedAt": "2026-10-18T04:27:46Z"
+      },
+      {
+        "name": "Apply staging migrations",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:46Z",
+        "completedAt": "2026-10-18T04:27:49Z"
+      },
+      {
+        "name": "Configure staging PIN only before account cutover",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:49Z",
+        "completedAt": "2026-10-18T04:27:52Z"
+      },
+      {
+        "name": "Deploy staging",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:27:52Z",
+        "completedAt": "2026-10-18T04:28:02Z"
+      },
+      {
+        "name": "Verify staging login",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:02Z",
+        "completedAt": "2026-10-18T04:28:04Z"
+      },
+      {
+        "name": "Verify staging deep links",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:04Z",
+        "completedAt": "2026-10-18T04:28:05Z"
+      },
+      {
+        "name": "Summarize staging URL",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:05Z",
+        "completedAt": "2026-10-18T04:28:05Z"
+      },
+      {
+        "name": "Post Setup Node",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:05Z",
+        "completedAt": "2026-10-18T04:28:05Z"
+      },
+      {
+        "name": "Post Checkout",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:05Z",
+        "completedAt": "2026-10-18T04:28:06Z"
+      },
+      {
+        "name": "Complete job",
+        "conclusion": "success",
+        "startedAt": "2026-10-18T04:28:06Z",
+        "completedAt": "2026-10-18T04:28:06Z"
+      }
+    ]
+  },
+  "release": {
+    "at": "2026-10-18T04:28:21.077Z",
+    "environment": "staging",
+    "commit": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+    "ref": "refs/heads/codex/received-date-tdd",
+    "runUrl": "https://github.com/vzaponi-dotcom/Mesiva/actions/runs/39097117765"
+  },
+  "recovery": {
+    "preMigrationBookmark": "0000054d-00000000-00005108-2e88208415938c0de4edc73c73e36334",
+    "capturedAt": "2026-10-18T04:26:37.172Z",
+    "methodReport": "2026-10-18-effective-receipt-d1-recovery.md",
+    "restored": false
+  },
+  "auditBefore": {
+    "at": "2026-10-18T04:25:48.144Z",
+    "migrations": 55,
+    "pending": [
+      "0052_effective_receipt_date.sql"
+    ],
+    "audit": {
+      "hasReceivedDate": false,
+      "receipts": 195,
+      "needsManualReview": 195,
+      "distribution": {
+        "empty": 0,
+        "canonical": 0,
+        "consensus_legacy": 195,
+        "legacy_no_movement": 0,
+        "BLOCKED_conflicting_movements": 0,
+        "BLOCKED_invalid_movement_date": 0,
+        "BLOCKED_movement_amount_mismatch": 0,
+        "BLOCKED_receipt_movement_mismatch": 0,
+        "BLOCKED_invalid_paid_at": 0,
+        "BLOCKED_invalid_received_date": 0
+      }
+    },
+    "rowsRead": 1671,
+    "rowsWritten": 0
+  },
+  "auditAfter": {
+    "at": "2026-10-18T04:28:32.354Z",
+    "migrations": 56,
+    "pending": [],
+    "audit": {
+      "hasReceivedDate": true,
+      "receipts": 195,
+      "needsManualReview": 0,
+      "distribution": {
+        "empty": 0,
+        "canonical": 195,
+        "consensus_legacy": 0,
+        "legacy_no_movement": 0,
+        "BLOCKED_conflicting_movements": 0,
+        "BLOCKED_invalid_movement_date": 0,
+        "BLOCKED_movement_amount_mismatch": 0,
+        "BLOCKED_receipt_movement_mismatch": 0,
+        "BLOCKED_invalid_paid_at": 0,
+        "BLOCKED_invalid_received_date": 0
+      }
+    },
+    "rowsRead": 1674,
+    "rowsWritten": 0
+  },
+  "financialPreservation": {
+    "before": {
+      "at": "2026-10-18T04:26:31.096Z",
+      "phase": "pre",
+      "sha": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+      "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+      "readOnly": true,
+      "tables": {
+        "payment_receipts": {
+          "rows": 195,
+          "totalCents": 1790836,
+          "sha256": "a38db963aa91a8a2e5bde4e10dbdded7e3a2cd87135a53fc620c58f6c4f7e194"
+        },
+        "payments": {
+          "rows": 287,
+          "totalCents": 1777436,
+          "sha256": "ef721f2d6637654c39580e44fb07cb6efdc6223c06314e83d38e5e96728acf78"
+        },
+        "payment_allocations": {
+          "rows": 210,
+          "totalCents": 1790836,
+          "sha256": "325f7657356fef2ed54ef3d0b2ec5cbd5a3bbcf07e4d71851c14f2d6ab3b1394"
+        },
+        "movements": {
+          "rows": 222,
+          "totalCents": 2020024,
+          "sha256": "7009eae840136d204a218cc810ce36cb79f36b772c28da0d42394b0aa8c8b884"
+        }
+      },
+      "rowsRead": 1201,
+      "rowsWritten": 0
+    },
+    "after": {
+      "at": "2026-10-18T04:28:25.076Z",
+      "phase": "post",
+      "sha": "68404745c7b47b2d2e4e31ece5f0812a1c3d3400",
+      "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+      "readOnly": true,
+      "tables": {
+        "payment_receipts": {
+          "rows": 195,
+          "totalCents": 1790836,
+          "sha256": "a38db963aa91a8a2e5bde4e10dbdded7e3a2cd87135a53fc620c58f6c4f7e194"
+        },
+        "payments": {
+          "rows": 287,
+          "totalCents": 1777436,
+          "sha256": "ef721f2d6637654c39580e44fb07cb6efdc6223c06314e83d38e5e96728acf78"
+        },
+        "payment_allocations": {
+          "rows": 210,
+          "totalCents": 1790836,
+          "sha256": "325f7657356fef2ed54ef3d0b2ec5cbd5a3bbcf07e4d71851c14f2d6ab3b1394"
+        },
+        "movements": {
+          "rows": 222,
+          "totalCents": 2020024,
+          "sha256": "7009eae840136d204a218cc810ce36cb79f36b772c28da0d42394b0aa8c8b884"
+        }
+      },
+      "rowsRead": 1201,
+      "rowsWritten": 0,
+      "originalFinancialFieldsPreserved": true
+    },
+    "scope": "Only original selected financial columns; received_date intentionally added/backfilled, not included in original hash"
+  },
+  "postChecks": {
+    "at": "2026-10-18T04:28:26.655Z",
+    "databaseId": "73a1c0c1-142f-4247-8ffc-e858ab2ac400",
+    "readOnly": true,
+    "foreignKeyViolations": 0,
+    "receipts": {
+      "receipts": 195,
+      "dated": 195,
+      "totalCents": 1790836
+    },
+    "plan": [
+      "SEARCH payment_receipts USING COVERING INDEX payment_receipts_business_received_date_idx (business_id=? AND received_date>? AND received_date<?)"
+    ],
+    "rowsRead": 5417,
+    "rowsWritten": 0,
+    "status": "PASS"
+  },
+  "migration": {
+    "file": "0052_effective_receipt_date.sql",
+    "via": "GitHub Actions",
+    "commandsReported": 4,
+    "sqlDurationReportedMs": 11.47,
+    "rowsRead": null,
+    "rowsWritten": null,
+    "metricsLimitation": "Workflow CLI did not expose rows_read/rows_written for migration; do not substitute local benchmark or affected receipts"
+  },
+  "authentication": {
+    "anonymousWorkflowSmoke": "PASS multi_company",
+    "authenticatedBrowser": "BLOCKED_LOGIN_REQUIRED",
+    "credentialsRequestedThrough": "User login in visible staging tab; no password requested in chat",
+    "authenticatedBootstrap": "NOT_EXECUTED"
+  },
+  "qa": {
+    "local": {
+      "pass": 13,
+      "blocked": 2
+    },
+    "stagingHistoricalMigration": "PASS",
+    "stagingFunctionalAcceptance": "BLOCKED_LOGIN_REQUIRED",
+    "physicalPrinting": "BLOCKED",
+    "monthlyBudget": "BLOCKED_NOT_PROVEN",
+    "task11Accepted": false
+  },
+  "noProductionDeployment": true,
+  "noMerge": true,
+  "noProductionBusinessDataQueried": true
+}

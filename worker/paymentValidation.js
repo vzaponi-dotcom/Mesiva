@@ -1,4 +1,6 @@
 import { DEFAULT_PAYMENT_METHODS } from '../shared/businessPolicies.js'
+import { getBusinessDate } from '../shared/finance.js'
+import { validateIsoDate } from './validation.js'
 
 const PAYMENT_CODES = new Set(DEFAULT_PAYMENT_METHODS.methods.map(({ code }) => code))
 
@@ -8,6 +10,15 @@ const invalid = (field, message = 'Composição de pagamento inválida.') => {
     code: 'VALIDATION_ERROR',
     field,
   })
+}
+
+// An omitted date is compatible with existing payment clients; explicit invalid values fail closed.
+export function resolveReceivedDate(value, now = new Date()) {
+  const today = getBusinessDate(now)
+  if (value === undefined) return today
+  const date = validateIsoDate(value, 'receivedDate')
+  if (date > today) invalid('receivedDate', 'A data do recebimento não pode estar no futuro.')
+  return date
 }
 
 const assertExactKeys = (value, allowed, field) => {

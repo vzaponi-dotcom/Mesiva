@@ -179,3 +179,56 @@ test('Task 12 requires open table tab settlement through its own payment flow', 
   assert.equal(db.sqlite.prepare('SELECT status FROM table_tabs WHERE id = ?').get(tableOrder.tableTabId).status, 'open')
   assert.equal(db.sqlite.prepare('SELECT count(*) n FROM payments').get().n,0)
 })
+
+test('retroactive standalone receipt uses one financial date for split movements while preserving actual registration timestamps', async () => {
+  const db = new PaymentDb()
+  const order = await createOrder(db, BUSINESS, orderInput('backdated-receipt'), NOW)
+  const registeredAt = new Date(+NOW + 60_000)
+  const result = await registerOrderPayment(db, BUSINESS, order.id, split, registeredAt, {
+    receivedDate: '2026-09-19',
+  })
+
+  const receipt = db.sqlite.prepare('SELECT received_date, paid_at, created_at FROM payment_receipts WHERE id=?').get(result.receipt.id)
+  assert.equal(result.receipt.receivedDate, '2026-09-19')
+  assert.equal(receipt.received_date, '2026-09-19')
+  assert.equal(receipt.paid_at, registeredAt.toISOString())
+  assert.equal(receipt.created_at, registeredAt.toISOString())
+  assert.deepEqual(db.sqlite.prepare(
+    "SELECT movement_date, created_at FROM movements WHERE receipt_id=? AND source='order-payment' ORDER BY value_cents",
+  ).all(result.receipt.id).map(row => ({ ...row })), [
+    { movement_date: '2026-09-19', created_at: registeredAt.toISOString() },
+    { movement_date: '2026-09-19', created_at: registeredAt.toISOString() },
+  ])
+  assert.equal(db.sqlite.prepare('SELECT paid_at FROM payments WHERE receipt_id=?').get(result.receipt.id).paid_at, registeredAt.toISOString())
+  assert.equal(db.sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 1)
+  assert.equal(db.sqlite.prepare('SELECT COUNT(*) n FROM payment_allocations').get().n, 2)
+  assert.equal(db.sqlite.prepare("SELECT SUM(value_cents) n FROM movements WHERE source='order-payment'").get().n, 8000)
+})
+
+test('standalone receipt defaults to São Paulo business day for legacy callers', async () => {
+  const db = new PaymentDb()
+  const order = await createOrder(db, BUSINESS, orderInput('default-receipt'), NOW)
+  const registeredAt = new Date('2026-09-22T02:30:00.000Z')
+  const result = await registerOrderPayment(db, BUSINESS, order.id, [
+    { methodCode: 'pix', amountCents: 8000 },
+  ], registeredAt)
+  assert.equal(result.receipt.receivedDate, '2026-09-21')
+  assert.equal(db.sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date, '2026-09-21')
+  assert.equal(db.sqlite.prepare("SELECT movement_date FROM movements WHERE source='order-payment'").get().movement_date, '2026-09-21')
+})
+
+test('standalone receipt rejects future/invalid date without writing a receipt, payment, movement or usage metadata', async () => {
+  const db = new PaymentDb()
+  const order = await createOrder(db, BUSINESS, orderInput('invalid-receipt-date'), NOW)
+  for (const receivedDate of ['2026-09-22', '2026-02-30', null, '2026-09-20T00:00:00Z']) {
+    await assert.rejects(
+      registerOrderPayment(db, BUSINESS, order.id, split, NOW, { receivedDate }),
+      { status: 400, code: 'VALIDATION_ERROR', field: 'receivedDate' },
+    )
+  }
+  for (const table of ['payment_receipts', 'payment_allocations', 'payments']) {
+    assert.equal(db.sqlite.prepare('SELECT count(*) n FROM ' + table).get().n, 0, table)
+  }
+  assert.equal(db.sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-payment'").get().n, 0)
+  assert.equal(db.sqlite.prepare("SELECT first_used_at FROM business_payment_methods WHERE code='pix'").get().first_used_at, null)
+})

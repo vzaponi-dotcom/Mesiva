@@ -1,6 +1,6 @@
 import {readableOrderStatuses} from './financialCandidates.js'
 import {mapOrderItemRow} from '../repositories.js'
-import {PAYMENT_ALLOCATIONS_JSON_SELECT,PAYMENT_SETTLEMENT_SQL_SELECT,mapOrderPaymentFields} from '../orderPaymentReadModel.js'
+import {PAYMENT_ALLOCATIONS_JSON_SELECT,PAYMENT_SETTLEMENT_SQL_SELECT,PAYMENT_RECEIVED_DATE_SQL_SELECT,mapOrderPaymentFields} from '../orderPaymentReadModel.js'
 const rows=result=>result.results || []
 // Minimal canonical fields for totals and selection. Historical item payloads are not loaded here.
 export async function readOrderHeaders(db,businessId,{granted,clientId,customersOnly=false,kind,paid=false,searchPayments=false,dateRange}={}){
@@ -23,7 +23,7 @@ export async function readOrderHeaders(db,businessId,{granted,clientId,customers
   else if(paid)clauses.push("NULLIF(p.id,'') IS NOT NULL")
   const result=await db.prepare(`SELECT o.id,o.order_number,o.client_id,o.client_name_snapshot,o.client_phone_snapshot,
     o.customer_identity_type,o.table_tab_id,o.type,o.order_date,o.status,o.promised_payment_date,
-    o.total_cents,o.content_revision,o.created_at,o.finished_at,o.cancelled_at,p.id AS payment_id,p.amount_cents AS paid_amount_cents,p.method AS payment_method,p.paid_at,
+    o.total_cents,o.content_revision,o.created_at,o.finished_at,o.cancelled_at,p.id AS payment_id,p.amount_cents AS paid_amount_cents,p.method AS payment_method,p.paid_at,${PAYMENT_RECEIVED_DATE_SQL_SELECT},
     ${searchPayments?PAYMENT_ALLOCATIONS_JSON_SELECT:`p.receipt_id,${PAYMENT_SETTLEMENT_SQL_SELECT}`},r.id AS refund_movement_id,tr.id AS table_reservation_id,tt.table_identifier
     FROM ${from}
     ${paid&&!activeOnly?'':'LEFT JOIN payments p ON p.business_id=o.business_id AND p.order_id=o.id'}

@@ -56,9 +56,23 @@ test('secondary filter detection ignores an empty filter set', () => {
 
 test('received today is net payments minus same-day refunds', () => {
   const movements = [
-    { type: 'entrada', source: 'order-payment', value: 100, createdAt: '2026-09-18T10:00:00.000Z' },
-    { type: 'saida', source: 'order-refund', value: 30, createdAt: '2026-09-18T11:00:00.000Z' },
+    { type: 'entrada', source: 'order-payment', value: 100, movementDate: '2026-09-18', createdAt: '2026-09-18T10:00:00.000Z' },
+    { type: 'saida', source: 'order-refund', value: 30, movementDate: '2026-09-18', createdAt: '2026-09-18T11:00:00.000Z' },
     { type: 'entrada', source: 'manual', value: 999, createdAt: '2026-09-18T12:00:00.000Z' },
   ]
   assert.equal(calculateReceivedToday(movements, '2026-09-18'), 70)
+})
+
+
+test('Task 7: received today respects movement_date, not createdAt, while preserving refund policy',()=>{
+  const movements=[
+    {type:'entrada',source:'order-payment',value:100,movementDate:'2026-10-15',createdAt:'2026-10-17T15:00:00Z'},
+    {type:'saida',source:'order-refund',value:10,movementDate:'2026-10-15',createdAt:'2026-10-17T15:00:00Z'},
+    {type:'entrada',source:'order-payment',value:50,movementDate:'2026-10-17',createdAt:'2026-10-17T15:00:00Z'},
+    {type:'saida',source:'order-edit-refund',value:20,movementDate:'2026-10-17',createdAt:'2026-10-17T15:00:00Z'},
+    {type:'entrada',source:'manual',value:999,movementDate:'2026-10-17',createdAt:'2026-10-17T15:00:00Z'},
+    {type:'entrada',source:'order-payment',value:30,movementDate:'2026-10-17',createdAt:'2026-10-17T15:00:00Z',deletedAt:'2026-10-17T16:00:00Z'},
+  ]
+  assert.equal(calculateReceivedToday(movements,'2026-10-15'),90)
+  assert.equal(calculateReceivedToday(movements,'2026-10-17'),50)
 })

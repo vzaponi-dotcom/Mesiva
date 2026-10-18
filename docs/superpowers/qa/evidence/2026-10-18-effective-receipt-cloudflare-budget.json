@@ -1,0 +1,7210 @@
+{
+  "execution": {
+    "startedAt": "2026-10-18T03:51:35.638Z",
+    "completedAt": "2026-10-18T03:51:44.381Z",
+    "sha": "c7ef7100ab8050216ea2fbfaf7d8c88ca16a1df0",
+    "accountHash": "748b0258b295",
+    "readOnly": true,
+    "applicationRemoteMigration": false,
+    "stagingDeployment": false,
+    "productionBusinessDataQueried": false,
+    "credentialsPublished": false
+  },
+  "status": "BLOCKED",
+  "reason": "Candidate operation CPU, complete account billing baseline and approved concentrated workload limits unavailable; no budget waiver inferred.",
+  "billing": {
+    "subscriptions": {
+      "httpStatus": 403,
+      "codes": [
+        10000
+      ]
+    },
+    "browser": "LOGIN_REQUIRED_NO_ACCOUNT_SELECTED",
+    "plan": null,
+    "cycleStart": null,
+    "invoiceUsd": null,
+    "workersUsageModel": "standard",
+    "paidAllocationsConditional": {
+      "rowsRead": 25000000000,
+      "rowsWritten": 50000000,
+      "workerRequests": 10000000,
+      "workerCpuMs": 30000000,
+      "durableRequests": 1000000,
+      "durableDurationGbS": 400000,
+      "durableRowsRead": 25000000000,
+      "durableRowsWritten": 50000000,
+      "d1StorageGb": 5,
+      "durableStorageGb": 5,
+      "r2StorageGb": 10,
+      "r2ClassA": 1000000,
+      "r2ClassB": 10000000,
+      "logs": 20000000
+    }
+  },
+  "analytics": {
+    "interpretation": "Aggregates only, adaptive Workers sampling; rolling UTC window is not the billing cycle; no observations never prove zero usage.",
+    "datasets": {
+      "d1AnalyticsAdaptiveGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {
+              "readQueries": 314019,
+              "rowsRead": 15795570,
+              "rowsWritten": 161434,
+              "writeQueries": 117820
+            },
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 7,
+            "total": {
+              "readQueries": 1084010,
+              "rowsRead": 173325649,
+              "rowsWritten": 709033,
+              "writeQueries": 504108
+            },
+            "otherResources": {
+              "readQueries": 947,
+              "rowsRead": 27965,
+              "rowsWritten": 1,
+              "writeQueries": 1
+            }
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 17,
+            "total": {
+              "readQueries": 2853853,
+              "rowsRead": 19152995431,
+              "rowsWritten": 2370757,
+              "writeQueries": 1698552
+            },
+            "otherResources": {
+              "readQueries": 85527,
+              "rowsRead": 2741317,
+              "rowsWritten": 87,
+              "writeQueries": 39
+            }
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 67,
+            "total": {
+              "readQueries": 13270278,
+              "rowsRead": 70218951149,
+              "rowsWritten": 6781889,
+              "writeQueries": 5066948
+            },
+            "otherResources": {
+              "readQueries": 731891,
+              "rowsRead": 20886129,
+              "rowsWritten": 8139,
+              "writeQueries": 642
+            }
+          }
+        },
+        "rows": [
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-19"
+            },
+            "sum": {
+              "readQueries": 21096,
+              "rowsRead": 1906944,
+              "rowsWritten": 2897,
+              "writeQueries": 2617
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-21"
+            },
+            "sum": {
+              "readQueries": 46763,
+              "rowsRead": 3907961,
+              "rowsWritten": 9949,
+              "writeQueries": 6403
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-10"
+            },
+            "sum": {
+              "readQueries": 31331,
+              "rowsRead": 12887338,
+              "rowsWritten": 25718,
+              "writeQueries": 17681
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-05"
+            },
+            "sum": {
+              "readQueries": 64566,
+              "rowsRead": 22346149,
+              "rowsWritten": 12513,
+              "writeQueries": 11067
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-09"
+            },
+            "sum": {
+              "readQueries": 781,
+              "rowsRead": 315943,
+              "rowsWritten": 879,
+              "writeQueries": 619
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-30"
+            },
+            "sum": {
+              "readQueries": 164360,
+              "rowsRead": 44310023,
+              "rowsWritten": 21329,
+              "writeQueries": 21077
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-29"
+            },
+            "sum": {
+              "readQueries": 211566,
+              "rowsRead": 58242860,
+              "rowsWritten": 26678,
+              "writeQueries": 25511
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-21"
+            },
+            "sum": {
+              "readQueries": 242730,
+              "rowsRead": 52171791,
+              "rowsWritten": 42383,
+              "writeQueries": 39330
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-11"
+            },
+            "sum": {
+              "readQueries": 80651,
+              "rowsRead": 2610499,
+              "rowsWritten": 44,
+              "writeQueries": 21
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-09"
+            },
+            "sum": {
+              "readQueries": 533663,
+              "rowsRead": 7182611686,
+              "rowsWritten": 503946,
+              "writeQueries": 359076
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "readQueries": 52254,
+              "rowsRead": 19657891,
+              "rowsWritten": 6186,
+              "writeQueries": 5557
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-28"
+            },
+            "sum": {
+              "readQueries": 62995,
+              "rowsRead": 19837856,
+              "rowsWritten": 7497,
+              "writeQueries": 5438
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-17"
+            },
+            "sum": {
+              "readQueries": 283021,
+              "rowsRead": 13276246,
+              "rowsWritten": 152763,
+              "writeQueries": 111787
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-07"
+            },
+            "sum": {
+              "readQueries": 119571,
+              "rowsRead": 50424143,
+              "rowsWritten": 126329,
+              "writeQueries": 89423
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-12"
+            },
+            "sum": {
+              "readQueries": 454605,
+              "rowsRead": 5888016462,
+              "rowsWritten": 429276,
+              "writeQueries": 306692
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-27"
+            },
+            "sum": {
+              "readQueries": 31601,
+              "rowsRead": 5919903,
+              "rowsWritten": 4201,
+              "writeQueries": 3319
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-22"
+            },
+            "sum": {
+              "readQueries": 140659,
+              "rowsRead": 33763807,
+              "rowsWritten": 30287,
+              "writeQueries": 21677
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-19"
+            },
+            "sum": {
+              "readQueries": 187660,
+              "rowsRead": 33060510,
+              "rowsWritten": 38223,
+              "writeQueries": 34687
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-23"
+            },
+            "sum": {
+              "readQueries": 69960,
+              "rowsRead": 10961965,
+              "rowsWritten": 8172,
+              "writeQueries": 6230
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-28"
+            },
+            "sum": {
+              "readQueries": 274442,
+              "rowsRead": 120365642,
+              "rowsWritten": 42469,
+              "writeQueries": 38878
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-30"
+            },
+            "sum": {
+              "readQueries": 344014,
+              "rowsRead": 171411104,
+              "rowsWritten": 55641,
+              "writeQueries": 50917
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-01"
+            },
+            "sum": {
+              "readQueries": 259499,
+              "rowsRead": 138901928,
+              "rowsWritten": 44341,
+              "writeQueries": 40235
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-20"
+            },
+            "sum": {
+              "readQueries": 27654,
+              "rowsRead": 1989255,
+              "rowsWritten": 3133,
+              "writeQueries": 2828
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "readQueries": 113901,
+              "rowsRead": 25138975,
+              "rowsWritten": 9826,
+              "writeQueries": 9518
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "readQueries": 373737,
+              "rowsRead": 149949442,
+              "rowsWritten": 56338,
+              "writeQueries": 52565
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-13"
+            },
+            "sum": {
+              "readQueries": 137,
+              "rowsRead": 3140,
+              "rowsWritten": 1,
+              "writeQueries": 1
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-27"
+            },
+            "sum": {
+              "readQueries": 809,
+              "rowsRead": 307181,
+              "rowsWritten": 104,
+              "writeQueries": 101
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-06"
+            },
+            "sum": {
+              "readQueries": 170178,
+              "rowsRead": 72899256,
+              "rowsWritten": 57930,
+              "writeQueries": 47613
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-17"
+            },
+            "sum": {
+              "readQueries": 30998,
+              "rowsRead": 2519324,
+              "rowsWritten": 8671,
+              "writeQueries": 6033
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "readQueries": 724540,
+              "rowsRead": 7028434638,
+              "rowsWritten": 724459,
+              "writeQueries": 524699
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-12"
+            },
+            "sum": {
+              "readQueries": 2847,
+              "rowsRead": 77759,
+              "rowsWritten": 34,
+              "writeQueries": 14
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-22"
+            },
+            "sum": {
+              "readQueries": 89844,
+              "rowsRead": 10115606,
+              "rowsWritten": 11183,
+              "writeQueries": 10000
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-13"
+            },
+            "sum": {
+              "readQueries": 539657,
+              "rowsRead": 6433436276,
+              "rowsWritten": 526136,
+              "writeQueries": 378475
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "readQueries": 1361,
+              "rowsRead": 537319,
+              "rowsWritten": 1576,
+              "writeQueries": 1093
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-20"
+            },
+            "sum": {
+              "readQueries": 128,
+              "rowsRead": 27996,
+              "rowsWritten": 17,
+              "writeQueries": 17
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-06"
+            },
+            "sum": {
+              "readQueries": 798578,
+              "rowsRead": 9415325414,
+              "rowsWritten": 488878,
+              "writeQueries": 369850
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-09"
+            },
+            "sum": {
+              "readQueries": 312848,
+              "rowsRead": 10031069,
+              "rowsWritten": 121,
+              "writeQueries": 48
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-07"
+            },
+            "sum": {
+              "readQueries": 62304,
+              "rowsRead": 392149,
+              "rowsWritten": 1043,
+              "writeQueries": 287
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-03"
+            },
+            "sum": {
+              "readQueries": 92181,
+              "rowsRead": 28231588,
+              "rowsWritten": 18922,
+              "writeQueries": 16710
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-05"
+            },
+            "sum": {
+              "readQueries": 472587,
+              "rowsRead": 5752372858,
+              "rowsWritten": 97630,
+              "writeQueries": 90669
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-16"
+            },
+            "sum": {
+              "readQueries": 281082,
+              "rowsRead": 32369359,
+              "rowsWritten": 137842,
+              "writeQueries": 95913
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-03"
+            },
+            "sum": {
+              "readQueries": 243374,
+              "rowsRead": 139974125,
+              "rowsWritten": 36149,
+              "writeQueries": 33149
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-18"
+            },
+            "sum": {
+              "readQueries": 168352,
+              "rowsRead": 27715103,
+              "rowsWritten": 32513,
+              "writeQueries": 30032
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "readQueries": 192240,
+              "rowsRead": 56597992,
+              "rowsWritten": 37324,
+              "writeQueries": 34132
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-14"
+            },
+            "sum": {
+              "readQueries": 624204,
+              "rowsRead": 6634951161,
+              "rowsWritten": 630488,
+              "writeQueries": 456445
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-29"
+            },
+            "sum": {
+              "readQueries": 324671,
+              "rowsRead": 145959276,
+              "rowsWritten": 52683,
+              "writeQueries": 48832
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-04"
+            },
+            "sum": {
+              "readQueries": 19022,
+              "rowsRead": 179315173,
+              "rowsWritten": 4802,
+              "writeQueries": 3457
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-14"
+            },
+            "sum": {
+              "readQueries": 945,
+              "rowsRead": 21954,
+              "rowsWritten": 7,
+              "writeQueries": 2
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "readQueries": 392118,
+              "rowsRead": 117364551,
+              "rowsWritten": 366110,
+              "writeQueries": 258982
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-02"
+            },
+            "sum": {
+              "readQueries": 340042,
+              "rowsRead": 192188762,
+              "rowsWritten": 52636,
+              "writeQueries": 49021
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-16"
+            },
+            "sum": {
+              "readQueries": 43713,
+              "rowsRead": 3070143,
+              "rowsWritten": 17888,
+              "writeQueries": 13408
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-26"
+            },
+            "sum": {
+              "readQueries": 220544,
+              "rowsRead": 73197871,
+              "rowsWritten": 43366,
+              "writeQueries": 39191
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-10"
+            },
+            "sum": {
+              "readQueries": 793735,
+              "rowsRead": 11750687394,
+              "rowsWritten": 757689,
+              "writeQueries": 542248
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-26"
+            },
+            "sum": {
+              "readQueries": 114728,
+              "rowsRead": 20713372,
+              "rowsWritten": 13071,
+              "writeQueries": 12490
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "readQueries": 160321,
+              "rowsRead": 4031382,
+              "rowsWritten": 6527,
+              "writeQueries": 225
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "readQueries": 52131,
+              "rowsRead": 4698061,
+              "rowsWritten": 25758,
+              "writeQueries": 17984
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-23"
+            },
+            "sum": {
+              "readQueries": 248964,
+              "rowsRead": 62742034,
+              "rowsWritten": 44363,
+              "writeQueries": 41780
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-11"
+            },
+            "sum": {
+              "readQueries": 2837,
+              "rowsRead": 914611,
+              "rowsWritten": 3225,
+              "writeQueries": 2228
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "readQueries": 947,
+              "rowsRead": 27965,
+              "rowsWritten": 1,
+              "writeQueries": 1
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-12"
+            },
+            "sum": {
+              "readQueries": 30283,
+              "rowsRead": 9165904,
+              "rowsWritten": 36702,
+              "writeQueries": 24902
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-01"
+            },
+            "sum": {
+              "readQueries": 371682,
+              "rowsRead": 75497215,
+              "rowsWritten": 48646,
+              "writeQueries": 42710
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-02"
+            },
+            "sum": {
+              "readQueries": 187299,
+              "rowsRead": 37557818,
+              "rowsWritten": 33456,
+              "writeQueries": 30629
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-14"
+            },
+            "sum": {
+              "readQueries": 33677,
+              "rowsRead": 10472016,
+              "rowsWritten": 35811,
+              "writeQueries": 25664
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-10"
+            },
+            "sum": {
+              "readQueries": 110891,
+              "rowsRead": 3690212,
+              "rowsWritten": 361,
+              "writeQueries": 43
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-07"
+            },
+            "sum": {
+              "readQueries": 772737,
+              "rowsRead": 7810086231,
+              "rowsWritten": 759055,
+              "writeQueries": 548218
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-04"
+            },
+            "sum": {
+              "readQueries": 16359,
+              "rowsRead": 4790446,
+              "rowsWritten": 3548,
+              "writeQueries": 2785
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-18"
+            },
+            "sum": {
+              "readQueries": 31303,
+              "rowsRead": 2453122,
+              "rowsWritten": 4145,
+              "writeQueries": 3714
+            }
+          }
+        ]
+      },
+      "d1StorageAdaptiveGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 4,
+            "total": {},
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 12,
+            "total": {},
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 28,
+            "total": {},
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 101,
+            "total": {},
+            "otherResources": {}
+          }
+        },
+        "rows": [
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-19"
+            },
+            "max": {
+              "databaseSizeBytes": 1077248
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-15"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-07"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-24"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-13"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-21"
+            },
+            "max": {
+              "databaseSizeBytes": 1363968
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-10"
+            },
+            "max": {
+              "databaseSizeBytes": 4157440
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-05"
+            },
+            "max": {
+              "databaseSizeBytes": 3784704
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-09"
+            },
+            "max": {
+              "databaseSizeBytes": 4108288
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-30"
+            },
+            "max": {
+              "databaseSizeBytes": 2170880
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-29"
+            },
+            "max": {
+              "databaseSizeBytes": 2158592
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-16"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-21"
+            },
+            "max": {
+              "databaseSizeBytes": 2232320
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-11"
+            },
+            "max": {
+              "databaseSizeBytes": 1236992
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-23"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-09"
+            },
+            "max": {
+              "databaseSizeBytes": 9334784
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-25"
+            },
+            "max": {
+              "databaseSizeBytes": 1626112
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-28"
+            },
+            "max": {
+              "databaseSizeBytes": 2015232
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-17"
+            },
+            "max": {
+              "databaseSizeBytes": 15470592
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-04"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-07"
+            },
+            "max": {
+              "databaseSizeBytes": 4145152
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-12"
+            },
+            "max": {
+              "databaseSizeBytes": 10518528
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-20"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-02"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-22"
+            },
+            "max": {
+              "databaseSizeBytes": 2785280
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-27"
+            },
+            "max": {
+              "databaseSizeBytes": 1798144
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-01"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-19"
+            },
+            "max": {
+              "databaseSizeBytes": 2072576
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-23"
+            },
+            "max": {
+              "databaseSizeBytes": 1564672
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-28"
+            },
+            "max": {
+              "databaseSizeBytes": 3780608
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-06"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-30"
+            },
+            "max": {
+              "databaseSizeBytes": 4358144
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-01"
+            },
+            "max": {
+              "databaseSizeBytes": 4571136
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-22"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-20"
+            },
+            "max": {
+              "databaseSizeBytes": 1122304
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "max": {
+              "databaseSizeBytes": 1556480
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-25"
+            },
+            "max": {
+              "databaseSizeBytes": 3301376
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-27"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-27"
+            },
+            "max": {
+              "databaseSizeBytes": 3579904
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-13"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-06"
+            },
+            "max": {
+              "databaseSizeBytes": 4145152
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-17"
+            },
+            "max": {
+              "databaseSizeBytes": 4886528
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-14"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-12"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-08"
+            },
+            "max": {
+              "databaseSizeBytes": 8650752
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-10"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-22"
+            },
+            "max": {
+              "databaseSizeBytes": 1409024
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-13"
+            },
+            "max": {
+              "databaseSizeBytes": 11296768
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-21"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-08"
+            },
+            "max": {
+              "databaseSizeBytes": 4112384
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-29"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-20"
+            },
+            "max": {
+              "databaseSizeBytes": 2072576
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-06"
+            },
+            "max": {
+              "databaseSizeBytes": 7110656
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-09"
+            },
+            "max": {
+              "databaseSizeBytes": 1191936
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-30"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-07"
+            },
+            "max": {
+              "databaseSizeBytes": 385024
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-03"
+            },
+            "max": {
+              "databaseSizeBytes": 3551232
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-26"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-05"
+            },
+            "max": {
+              "databaseSizeBytes": 6131712
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-16"
+            },
+            "max": {
+              "databaseSizeBytes": 14024704
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-25"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-11"
+            },
+            "max": {
+              "databaseSizeBytes": 10002432
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-13"
+            },
+            "max": {
+              "databaseSizeBytes": 4308992
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-11"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-03"
+            },
+            "max": {
+              "databaseSizeBytes": 4939776
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-16"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-18"
+            },
+            "max": {
+              "databaseSizeBytes": 1859584
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "max": {
+              "databaseSizeBytes": 3117056
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-14"
+            },
+            "max": {
+              "databaseSizeBytes": 11542528
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-18"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-29"
+            },
+            "max": {
+              "databaseSizeBytes": 4046848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-04"
+            },
+            "max": {
+              "databaseSizeBytes": 5443584
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-14"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-15"
+            },
+            "max": {
+              "databaseSizeBytes": 12836864
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-02"
+            },
+            "max": {
+              "databaseSizeBytes": 4767744
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-05"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-16"
+            },
+            "max": {
+              "databaseSizeBytes": 4718592
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-26"
+            },
+            "max": {
+              "databaseSizeBytes": 3579904
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-10"
+            },
+            "max": {
+              "databaseSizeBytes": 10002432
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-26"
+            },
+            "max": {
+              "databaseSizeBytes": 1699840
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-08"
+            },
+            "max": {
+              "databaseSizeBytes": 1183744
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-19"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-03"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-09-28"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-09-23"
+            },
+            "max": {
+              "databaseSizeBytes": 2928640
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-11"
+            },
+            "max": {
+              "databaseSizeBytes": 4157440
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-15"
+            },
+            "max": {
+              "databaseSizeBytes": 4448256
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-15"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-12"
+            },
+            "max": {
+              "databaseSizeBytes": 4136960
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-08"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-01"
+            },
+            "max": {
+              "databaseSizeBytes": 2772992
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-02"
+            },
+            "max": {
+              "databaseSizeBytes": 3244032
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-14"
+            },
+            "max": {
+              "databaseSizeBytes": 4308992
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-10"
+            },
+            "max": {
+              "databaseSizeBytes": 1224704
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-production",
+              "date": "2026-10-07"
+            },
+            "max": {
+              "databaseSizeBytes": 7757824
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-10-04"
+            },
+            "max": {
+              "databaseSizeBytes": 3633152
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-10813678",
+              "date": "2026-10-17"
+            },
+            "max": {
+              "databaseSizeBytes": 1241088
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-09"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "mesiva-staging",
+              "date": "2026-09-18"
+            },
+            "max": {
+              "databaseSizeBytes": 1056768
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-12"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          },
+          {
+            "dimensions": {
+              "databaseId": "other-d68e06b4",
+              "date": "2026-10-17"
+            },
+            "max": {
+              "databaseSizeBytes": 462848
+            }
+          }
+        ]
+      },
+      "workersInvocationsAdaptive": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {
+              "cpuTimeUs": 189288620,
+              "errors": 0,
+              "requests": 27210
+            },
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 7,
+            "total": {
+              "cpuTimeUs": 1354077580,
+              "errors": 0,
+              "requests": 92490
+            },
+            "otherResources": {
+              "cpuTimeUs": 502650,
+              "errors": 0,
+              "requests": 20
+            }
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 16,
+            "total": {
+              "cpuTimeUs": 4478778080,
+              "errors": 0,
+              "requests": 271390
+            },
+            "otherResources": {
+              "cpuTimeUs": 37443120,
+              "errors": 0,
+              "requests": 1050
+            }
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 67,
+            "total": {
+              "cpuTimeUs": 19215238170,
+              "errors": 60,
+              "requests": 1488900
+            },
+            "otherResources": {
+              "cpuTimeUs": 386019050,
+              "errors": 60,
+              "requests": 9900
+            }
+          }
+        },
+        "rows": [
+          {
+            "avg": {
+              "sampleInterval": 10.136363636363637
+            },
+            "dimensions": {
+              "date": "2026-09-26",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 110774170,
+              "errors": 0,
+              "requests": 13380
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.374479889042997
+            },
+            "dimensions": {
+              "date": "2026-10-15",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 759357310,
+              "errors": 0,
+              "requests": 37400
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.162623300453212
+            },
+            "dimensions": {
+              "date": "2026-10-03",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 374870020,
+              "errors": 0,
+              "requests": 38120
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.370242214532873
+            },
+            "dimensions": {
+              "date": "2026-09-19",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 169968110,
+              "errors": 0,
+              "requests": 32860
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.081900081900082
+            },
+            "dimensions": {
+              "date": "2026-09-26",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 266059250,
+              "errors": 0,
+              "requests": 36930
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-04",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 13706420,
+              "errors": 0,
+              "requests": 1290
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.288770053475936
+            },
+            "dimensions": {
+              "date": "2026-09-28",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 55477720,
+              "errors": 0,
+              "requests": 9620
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.25965379494008
+            },
+            "dimensions": {
+              "date": "2026-10-12",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 836092780,
+              "errors": 0,
+              "requests": 46230
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.197068012496995
+            },
+            "dimensions": {
+              "date": "2026-09-28",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 370290330,
+              "errors": 0,
+              "requests": 42430
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.308613542146476
+            },
+            "dimensions": {
+              "date": "2026-10-01",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 335781430,
+              "errors": 0,
+              "requests": 22380
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.178129638792678
+            },
+            "dimensions": {
+              "date": "2026-09-30",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 159200050,
+              "errors": 0,
+              "requests": 20570
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-14",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 711370,
+              "errors": 0,
+              "requests": 30
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.293612964728313
+            },
+            "dimensions": {
+              "date": "2026-10-05",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 745705280,
+              "errors": 0,
+              "requests": 53990
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.10597302504817
+            },
+            "dimensions": {
+              "date": "2026-09-29",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 195380750,
+              "errors": 0,
+              "requests": 31470
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-12",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 1273900,
+              "errors": 0,
+              "requests": 30
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.63387690689111
+            },
+            "dimensions": {
+              "date": "2026-10-06",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1422794690,
+              "errors": 0,
+              "requests": 80860
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-10",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 53456280,
+              "errors": 0,
+              "requests": 1380
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.638349514563107
+            },
+            "dimensions": {
+              "date": "2026-09-22",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 71413580,
+              "errors": 0,
+              "requests": 9590
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.386538461538462
+            },
+            "dimensions": {
+              "date": "2026-09-29",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 480645190,
+              "errors": 0,
+              "requests": 54010
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-11",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 4200730,
+              "errors": 0,
+              "requests": 240
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.797752808988765
+            },
+            "dimensions": {
+              "date": "2026-09-22",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 127872630,
+              "errors": 0,
+              "requests": 18900
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.846394984326018
+            },
+            "dimensions": {
+              "date": "2026-09-18",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 25196140,
+              "errors": 0,
+              "requests": 3460
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.23076923076923
+            },
+            "dimensions": {
+              "date": "2026-09-27",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 26058910,
+              "errors": 0,
+              "requests": 3990
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.344827586206897
+            },
+            "dimensions": {
+              "date": "2026-10-10",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 38539840,
+              "errors": 0,
+              "requests": 3300
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.079681274900398
+            },
+            "dimensions": {
+              "date": "2026-10-15",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 50067270,
+              "errors": 0,
+              "requests": 5060
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.157068062827225
+            },
+            "dimensions": {
+              "date": "2026-10-12",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 39759150,
+              "errors": 0,
+              "requests": 1940
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 35416200,
+              "errors": 0,
+              "requests": 3170
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.09254498714653
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 319445530,
+              "errors": 0,
+              "requests": 19630
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.323328785811732
+            },
+            "dimensions": {
+              "date": "2026-09-24",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 254050640,
+              "errors": 0,
+              "requests": 33200
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.260162601626016
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 168361650,
+              "errors": 0,
+              "requests": 25240
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.304606240713225
+            },
+            "dimensions": {
+              "date": "2026-09-30",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 530478660,
+              "errors": 0,
+              "requests": 55480
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.170157068062828
+            },
+            "dimensions": {
+              "date": "2026-10-02",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 579817730,
+              "errors": 0,
+              "requests": 54390
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 12.316715542521994
+            },
+            "dimensions": {
+              "date": "2026-09-21",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 296704720,
+              "errors": 0,
+              "requests": 37800
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.351213282247764
+            },
+            "dimensions": {
+              "date": "2026-10-06",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 212709370,
+              "errors": 0,
+              "requests": 16210
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-11",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 34955200,
+              "errors": 0,
+              "requests": 970
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-09-27",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 2103720,
+              "errors": 0,
+              "requests": 160
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.204111175448755
+            },
+            "dimensions": {
+              "date": "2026-10-14",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1086164530,
+              "errors": 0,
+              "requests": 70490
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.219378427787934
+            },
+            "dimensions": {
+              "date": "2026-10-05",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 90807680,
+              "errors": 0,
+              "requests": 5590
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.423880597014925
+            },
+            "dimensions": {
+              "date": "2026-09-23",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 257328990,
+              "errors": 0,
+              "requests": 38270
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.2317880794702
+            },
+            "dimensions": {
+              "date": "2026-10-07",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1398808480,
+              "errors": 0,
+              "requests": 80340
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-02",
+              "scriptName": "other-dbb734de"
+            },
+            "sum": {
+              "cpuTimeUs": 114090,
+              "errors": 10,
+              "requests": 50
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.148148148148149
+            },
+            "dimensions": {
+              "date": "2026-10-03",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 112361510,
+              "errors": 0,
+              "requests": 8220
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.56782334384858
+            },
+            "dimensions": {
+              "date": "2026-10-14",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 37394320,
+              "errors": 0,
+              "requests": 3350
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.237437879624517
+            },
+            "dimensions": {
+              "date": "2026-10-13",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1084148520,
+              "errors": 0,
+              "requests": 55620
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.682592438720398
+            },
+            "dimensions": {
+              "date": "2026-09-18",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 165604980,
+              "errors": 0,
+              "requests": 28120
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.24
+            },
+            "dimensions": {
+              "date": "2026-10-09",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 160084480,
+              "errors": 0,
+              "requests": 3840
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.87557603686636
+            },
+            "dimensions": {
+              "date": "2026-09-20",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 13270730,
+              "errors": 0,
+              "requests": 2360
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.30039011703511
+            },
+            "dimensions": {
+              "date": "2026-09-23",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 59016890,
+              "errors": 0,
+              "requests": 8690
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.372184133202742
+            },
+            "dimensions": {
+              "date": "2026-10-08",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1105190850,
+              "errors": 0,
+              "requests": 84720
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.201238390092879
+            },
+            "dimensions": {
+              "date": "2026-09-25",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 524622200,
+              "errors": 0,
+              "requests": 59310
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 11.714285714285714
+            },
+            "dimensions": {
+              "date": "2026-09-19",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 14634220,
+              "errors": 0,
+              "requests": 2460
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.059249506254115
+            },
+            "dimensions": {
+              "date": "2026-10-02",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 188834530,
+              "errors": 0,
+              "requests": 15280
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 32.5
+            },
+            "dimensions": {
+              "date": "2026-10-09",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 1084250,
+              "errors": 0,
+              "requests": 130
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.130756937381955
+            },
+            "dimensions": {
+              "date": "2026-10-10",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 1822188230,
+              "errors": 0,
+              "requests": 69730
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.24
+            },
+            "dimensions": {
+              "date": "2026-09-24",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 92813280,
+              "errors": 0,
+              "requests": 16640
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-09-25",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 53208560,
+              "errors": 0,
+              "requests": 6610
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.113065326633166
+            },
+            "dimensions": {
+              "date": "2026-10-07",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 135042630,
+              "errors": 0,
+              "requests": 8050
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.285921977223165
+            },
+            "dimensions": {
+              "date": "2026-10-01",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 456252960,
+              "errors": 0,
+              "requests": 42450
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-01",
+              "scriptName": "other-dbb734de"
+            },
+            "sum": {
+              "cpuTimeUs": 431560,
+              "errors": 50,
+              "requests": 210
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-04",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 25301340,
+              "errors": 0,
+              "requests": 1640
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.591397849462366
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 20926970,
+              "errors": 0,
+              "requests": 1970
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-07",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 27519460,
+              "errors": 0,
+              "requests": 1180
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-08",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 106970060,
+              "errors": 0,
+              "requests": 2190
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-08",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 2644010,
+              "errors": 0,
+              "requests": 110
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.293817588247297
+            },
+            "dimensions": {
+              "date": "2026-10-09",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "cpuTimeUs": 971771620,
+              "errors": 0,
+              "requests": 50450
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10.559006211180124
+            },
+            "dimensions": {
+              "date": "2026-09-21",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "cpuTimeUs": 31496870,
+              "errors": 0,
+              "requests": 5100
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 10
+            },
+            "dimensions": {
+              "date": "2026-10-15",
+              "scriptName": "other-10916a6a"
+            },
+            "sum": {
+              "cpuTimeUs": 502650,
+              "errors": 0,
+              "requests": 20
+            }
+          }
+        ]
+      },
+      "workersInvocationsByOwnerAndScriptGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 0,
+            "total": {},
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 0,
+            "total": {},
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 0,
+            "total": {},
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 0,
+            "total": {},
+            "otherResources": {}
+          }
+        },
+        "rows": []
+      },
+      "durableObjectsInvocationsAdaptiveGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {
+              "errors": 82,
+              "requests": 2568
+            },
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "errors": 132,
+              "requests": 3885
+            },
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "errors": 132,
+              "requests": 3885
+            },
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "errors": 132,
+              "requests": 3885
+            },
+            "otherResources": {}
+          }
+        },
+        "rows": [
+          {
+            "avg": {
+              "sampleInterval": 1.0040899795501022
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-56f17385",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "errors": 41,
+              "requests": 491
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-15",
+              "namespaceId": "namespace-56f17385",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "errors": 21,
+              "requests": 475
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1.0141752577319587
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "namespaceId": "namespace-56f17385",
+              "scriptName": "mesiva-staging"
+            },
+            "sum": {
+              "errors": 28,
+              "requests": 787
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "namespaceId": "namespace-145ca816",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "errors": 1,
+              "requests": 55
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1.078961038961039
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-145ca816",
+              "scriptName": "mesiva-production"
+            },
+            "sum": {
+              "errors": 41,
+              "requests": 2077
+            }
+          }
+        ]
+      },
+      "durableObjectsPeriodicGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {
+              "cpuTime": 1126423,
+              "duration": 235.67467340800002,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 967,
+              "rowsRead": 1021,
+              "rowsWritten": 595
+            },
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "cpuTime": 1925801,
+              "duration": 343.88784742400003,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 1069,
+              "rowsRead": 1376,
+              "rowsWritten": 744
+            },
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "cpuTime": 1925801,
+              "duration": 343.88784742400003,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 1069,
+              "rowsRead": 1376,
+              "rowsWritten": 744
+            },
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 5,
+            "total": {
+              "cpuTime": 1925801,
+              "duration": 343.88784742400003,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 1069,
+              "rowsRead": 1376,
+              "rowsWritten": 744
+            },
+            "otherResources": {}
+          }
+        },
+        "rows": [
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "namespaceId": "namespace-145ca816"
+            },
+            "sum": {
+              "cpuTime": 34004,
+              "duration": 0.7322880000000002,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 16,
+              "rowsRead": 23,
+              "rowsWritten": 22
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-145ca816"
+            },
+            "sum": {
+              "cpuTime": 861143,
+              "duration": 229.159692032,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 857,
+              "rowsRead": 702,
+              "rowsWritten": 455
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-15",
+              "namespaceId": "namespace-56f17385"
+            },
+            "sum": {
+              "cpuTime": 291586,
+              "duration": 23.331508224000004,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 42,
+              "rowsRead": 136,
+              "rowsWritten": 57
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-56f17385"
+            },
+            "sum": {
+              "cpuTime": 265280,
+              "duration": 6.514981376000001,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 110,
+              "rowsRead": 319,
+              "rowsWritten": 140
+            }
+          },
+          {
+            "avg": {
+              "sampleInterval": 1
+            },
+            "dimensions": {
+              "date": "2026-10-16",
+              "namespaceId": "namespace-56f17385"
+            },
+            "sum": {
+              "cpuTime": 473788,
+              "duration": 84.14937779200001,
+              "inboundWebsocketMsgCount": 0,
+              "outboundWebsocketMsgCount": 44,
+              "rowsRead": 196,
+              "rowsWritten": 70
+            }
+          }
+        ]
+      },
+      "durableObjectsSqlStorageGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {},
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 3,
+            "total": {},
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 3,
+            "total": {},
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 3,
+            "total": {},
+            "otherResources": {}
+          }
+        },
+        "rows": [
+          {
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-145ca816"
+            },
+            "max": {
+              "storedBytes": 12288
+            }
+          },
+          {
+            "dimensions": {
+              "date": "2026-10-16",
+              "namespaceId": "namespace-56f17385"
+            },
+            "max": {
+              "storedBytes": 12288
+            }
+          },
+          {
+            "dimensions": {
+              "date": "2026-10-17",
+              "namespaceId": "namespace-56f17385"
+            },
+            "max": {
+              "storedBytes": 12288
+            }
+          }
+        ]
+      },
+      "r2OperationsAdaptiveGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 2,
+            "total": {
+              "requests": 59
+            },
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 7,
+            "total": {
+              "requests": 103
+            },
+            "otherResources": {
+              "requests": 1
+            }
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 13,
+            "total": {
+              "requests": 133
+            },
+            "otherResources": {
+              "requests": 7
+            }
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 68,
+            "total": {
+              "requests": 1298
+            },
+            "otherResources": {
+              "requests": 79
+            }
+          }
+        },
+        "rows": [
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-05"
+            },
+            "sum": {
+              "requests": 10
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "requests": 17
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-02"
+            },
+            "sum": {
+              "requests": 12
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "DeleteObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-01"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-26"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "requests": 15
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-27"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-27"
+            },
+            "sum": {
+              "requests": 51
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "DeleteObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-29"
+            },
+            "sum": {
+              "requests": 66
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-06"
+            },
+            "sum": {
+              "requests": 4
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutBucket",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-26"
+            },
+            "sum": {
+              "requests": 104
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 4
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutObject",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-12"
+            },
+            "sum": {
+              "requests": 13
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListObjects",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-29"
+            },
+            "sum": {
+              "requests": 66
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-30"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListBuckets",
+              "bucketName": "other-e3b0c442",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-10"
+            },
+            "sum": {
+              "requests": 10
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 35
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-01"
+            },
+            "sum": {
+              "requests": 62
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-03"
+            },
+            "sum": {
+              "requests": 43
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 5
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutBucket",
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-27"
+            },
+            "sum": {
+              "requests": 24
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-28"
+            },
+            "sum": {
+              "requests": 51
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListMultipartUploads",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 3
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-09"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-10"
+            },
+            "sum": {
+              "requests": 15
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-11"
+            },
+            "sum": {
+              "requests": 4
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-09"
+            },
+            "sum": {
+              "requests": 18
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-05"
+            },
+            "sum": {
+              "requests": 36
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-04"
+            },
+            "sum": {
+              "requests": 6
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 66
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 11
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-29"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-28"
+            },
+            "sum": {
+              "requests": 4
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListObjects",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 8
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-06"
+            },
+            "sum": {
+              "requests": 24
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-30"
+            },
+            "sum": {
+              "requests": 18
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-11"
+            },
+            "sum": {
+              "requests": 3
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 27
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 38
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-16"
+            },
+            "sum": {
+              "requests": 21
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-01"
+            },
+            "sum": {
+              "requests": 30
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-30"
+            },
+            "sum": {
+              "requests": 47
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-14"
+            },
+            "sum": {
+              "requests": 6
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-26"
+            },
+            "sum": {
+              "requests": 153
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-16"
+            },
+            "sum": {
+              "requests": 3
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListBuckets",
+              "bucketName": "other-e3b0c442",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 21
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-17"
+            },
+            "sum": {
+              "requests": 51
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-15"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "PutBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-17"
+            },
+            "sum": {
+              "requests": 8
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-04"
+            },
+            "sum": {
+              "requests": 27
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListMultipartUploads",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 1
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListMultipartUploads",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-11"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "HeadBucket",
+              "bucketName": "mesiva-production",
+              "date": "2026-10-14"
+            },
+            "sum": {
+              "requests": 2
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "ListObjects",
+              "bucketName": "mesiva-production",
+              "date": "2026-09-25"
+            },
+            "sum": {
+              "requests": 3
+            }
+          },
+          {
+            "dimensions": {
+              "actionType": "GetObject",
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-28"
+            },
+            "sum": {
+              "requests": 23
+            }
+          }
+        ]
+      },
+      "r2StorageAdaptiveGroups": {
+        "from": "2026-09-18T00:00:00.000Z",
+        "toExclusive": "2026-10-18T00:00:00.000Z",
+        "available": true,
+        "truncated": false,
+        "requests": 1,
+        "windows": {
+          "1": {
+            "from": "2026-10-17",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 8,
+            "total": {},
+            "otherResources": {}
+          },
+          "3": {
+            "from": "2026-10-15",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 24,
+            "total": {},
+            "otherResources": {}
+          },
+          "7": {
+            "from": "2026-10-11",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 56,
+            "total": {},
+            "otherResources": {}
+          },
+          "30": {
+            "from": "2026-09-18",
+            "toExclusive": "2026-10-18T00:00:00.000Z",
+            "groups": 162,
+            "total": {},
+            "otherResources": {}
+          }
+        },
+        "rows": [
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-28",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-25",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-07",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-01",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-25",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-06",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-05",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-26",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-06",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-03",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-09",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-09",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-26",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-10",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-03",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-08",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-13",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-27",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-26",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-25",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-02",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-09",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-11",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-01",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-10",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-16",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-04",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-17",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-29",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-12",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-10",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-26",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-28",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-24",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-14",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-29",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-11",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-03",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-30",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-11",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-15",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-12",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-06",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-17",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-07",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-27",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-14",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-04",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-09",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-10",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-13",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-05",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-09",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-15",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-14",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-16",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-07",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-10",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-09",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-13",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-15",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-11",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-17",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-10",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-03",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-13",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-17",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-08",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-11",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-15",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-05",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-29",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-09",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-26",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-16",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-13",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-08",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-06",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-09",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-10",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-30",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-17",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-06",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-14",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-17",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-27",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-11",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-27",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-12",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-12",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-08",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-29",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-15",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-17",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-02",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-14",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-14",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-13",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-16",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-04",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-07",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-28",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-02",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-13",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-25",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-30",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-02",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-28",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-30",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-07",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-29",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-03",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-02",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-16",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-07",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-04",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-03",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-11",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-12",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-02",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-06",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-15",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-05",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-16",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-14",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-04",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-15",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-29",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-15",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-10",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-27",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 29,
+              "objectCount": 1,
+              "payloadSize": 88040
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-30",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-11",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-01",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-08",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-05",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-04",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-24",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-01",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-10-12",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-28",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-13",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-25",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-12",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-08",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-01",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-12",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-09-28",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-25",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-16",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-27",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-14",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-production",
+              "date": "2026-10-05",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-16",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 103,
+              "objectCount": 1,
+              "payloadSize": 208843
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-b86e0c83",
+              "date": "2026-10-08",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-09-26",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-17",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "mesiva-staging",
+              "date": "2026-09-30",
+              "storageClass": "InfrequentAccess"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          },
+          {
+            "dimensions": {
+              "bucketName": "other-a07ae914",
+              "date": "2026-10-01",
+              "storageClass": "Standard"
+            },
+            "max": {
+              "metadataSize": 0,
+              "objectCount": 0,
+              "payloadSize": 0
+            }
+          }
+        ]
+      }
+    },
+    "r2Actions": {
+      "classA": 49,
+      "classB": 1247,
+      "free": 2,
+      "unclassified": 0
+    }
+  },
+  "projection": {
+    "workload": {
+      "devices": 5,
+      "tvDevices": 1,
+      "printerDevices": 1,
+      "controlDevices": 1,
+      "hoursPerDay": 12,
+      "days": 31,
+      "changesPerDay": 1500,
+      "connections": 5000,
+      "historyPagesPerDay": 20,
+      "historySearchesPerDay": 10,
+      "pointDetailsPerDay": 50,
+      "customerChecksPerDay": 10,
+      "administrativeChangesPerDay": 20,
+      "surfaceMix": {
+        "orders": 1,
+        "clients": 1,
+        "receivables": 1,
+        "finance": 1
+      }
+    },
+    "counts": {
+      "workload": {
+        "devices": 5,
+        "tvDevices": 1,
+        "printerDevices": 1,
+        "controlDevices": 1,
+        "hoursPerDay": 12,
+        "days": 31,
+        "changesPerDay": 1500,
+        "connections": 5000,
+        "historyPagesPerDay": 20,
+        "historySearchesPerDay": 10,
+        "pointDetailsPerDay": 50,
+        "customerChecksPerDay": 10,
+        "administrativeChangesPerDay": 20,
+        "surfaceMix": {
+          "orders": 1,
+          "clients": 1,
+          "receivables": 1,
+          "finance": 1
+        }
+      },
+      "normal": {
+        "orderCreate": 4650,
+        "orderFinalize": 4650,
+        "payment": 4650,
+        "printMutation": 32549.999999999996,
+        "printHeartbeat": 89280,
+        "printClaim": 669600,
+        "tvReport": 267840,
+        "tvReportChanged": 46500,
+        "controlState": 267840,
+        "stationUpsert": 4000,
+        "authLogin": 4000,
+        "authSession": 10480,
+        "authSelectBusiness": 6480,
+        "printJobs": 0,
+        "printSummary": 0,
+        "kitchenSummary": 21034,
+        "customersPage": 21034,
+        "customerRelationship": 21034,
+        "receivablesGroups": 21034,
+        "receivablesGroupOrders": 21034,
+        "receivablesQuick": 21034,
+        "financeMovements": 21034,
+        "receivablesRefunds": 21034,
+        "financeOverview": 0,
+        "historyPage": 620,
+        "historySearch": 310,
+        "customerDuplicates": 310,
+        "prepareHuman": 4000,
+        "upgradeHuman": 4000,
+        "renewHuman": 89280,
+        "prepareTv": 1000,
+        "upgradeTv": 1000,
+        "renewTv": 22320,
+        "bootstrap": 44456,
+        "byIds": 49600,
+        "tvState": 52964,
+        "printState": 578896,
+        "printStations": 4000
+      },
+      "degraded": {
+        "orderCreate": 4650,
+        "orderFinalize": 4650,
+        "payment": 4650,
+        "printMutation": 32549.999999999996,
+        "printHeartbeat": 89280,
+        "printClaim": 669600,
+        "tvReport": 267840,
+        "tvReportChanged": 46500,
+        "controlState": 267840,
+        "stationUpsert": 4000,
+        "authLogin": 4000,
+        "authSession": 10480,
+        "authSelectBusiness": 6480,
+        "printJobs": 0,
+        "printSummary": 0,
+        "kitchenSummary": 46640,
+        "customersPage": 46640,
+        "customerRelationship": 46640,
+        "receivablesGroups": 46640,
+        "receivablesGroupOrders": 46640,
+        "receivablesQuick": 46640,
+        "financeMovements": 46640,
+        "receivablesRefunds": 46640,
+        "financeOverview": 0,
+        "historyPage": 620,
+        "historySearch": 310,
+        "customerDuplicates": 310,
+        "prepareHuman": 4000,
+        "upgradeHuman": 0,
+        "renewHuman": 0,
+        "prepareTv": 1000,
+        "upgradeTv": 0,
+        "renewTv": 0,
+        "bootstrap": 186560,
+        "byIds": 12400,
+        "tvState": 46640,
+        "printState": 588320,
+        "printStations": 4000
+      }
+    },
+    "normal": {
+      "rowsRead": 9700818476,
+      "rowsWritten": 16250094,
+      "workerRequests": 2433548,
+      "workerCpuMs": null,
+      "durableRequests": 246850,
+      "durableDurationGbS": null,
+      "durableRowsRead": 14775400,
+      "durableRowsWritten": 14775400,
+      "d1StorageGb": null,
+      "durableStorageGb": null,
+      "r2StorageGb": 0,
+      "r2ClassA": 0,
+      "r2ClassB": 0,
+      "logs": 6244296,
+      "incomingAckMessages": 465000
+    },
+    "degraded": {
+      "rowsRead": 16029030520,
+      "rowsWritten": 16812650,
+      "workerRequests": 2629800,
+      "workerCpuMs": null,
+      "durableRequests": 102000,
+      "durableDurationGbS": null,
+      "durableRowsRead": 6528000,
+      "durableRowsWritten": 6528000,
+      "d1StorageGb": null,
+      "durableStorageGb": null,
+      "r2StorageGb": 0,
+      "r2ClassA": 0,
+      "r2ClassB": 0,
+      "logs": 5463600,
+      "incomingAckMessages": 0
+    },
+    "unknownDimensions": [
+      "normal.workerCpuMs",
+      "normal.durableDurationGbS",
+      "normal.d1StorageGb",
+      "normal.durableStorageGb",
+      "normal.rowsRead",
+      "normal.rowsWritten",
+      "normal.workerRequests",
+      "normal.durableRequests",
+      "normal.durableRowsRead",
+      "normal.durableRowsWritten",
+      "normal.r2StorageGb",
+      "normal.r2ClassA",
+      "normal.r2ClassB",
+      "normal.logs",
+      "degraded.workerCpuMs",
+      "degraded.durableDurationGbS",
+      "degraded.d1StorageGb",
+      "degraded.durableStorageGb",
+      "degraded.rowsRead",
+      "degraded.rowsWritten",
+      "degraded.workerRequests",
+      "degraded.durableRequests",
+      "degraded.durableRowsRead",
+      "degraded.durableRowsWritten",
+      "degraded.r2StorageGb",
+      "degraded.r2ClassA",
+      "degraded.r2ClassB",
+      "degraded.logs"
+    ],
+    "passed": false,
+    "provisionalOtherBaseline31": {
+      "rowsRead": 21582333.3,
+      "rowsWritten": 8410.3,
+      "workerRequests": 10230,
+      "workerCpuMs": 398886.3516666666
+    },
+    "cpuSensitivity": [
+      {
+        "cpuMsPerRequest": 5,
+        "normal": {
+          "cpuMs": 12566626.351666667,
+          "cpuOverageUsd": 0
+        },
+        "degraded": {
+          "cpuMs": 13547886.351666667,
+          "cpuOverageUsd": 0
+        }
+      },
+      {
+        "cpuMsPerRequest": 10,
+        "normal": {
+          "cpuMs": 24734366.351666667,
+          "cpuOverageUsd": 0
+        },
+        "degraded": {
+          "cpuMs": 26696886.351666667,
+          "cpuOverageUsd": 0
+        }
+      },
+      {
+        "cpuMsPerRequest": 15,
+        "normal": {
+          "cpuMs": 36902106.35166667,
+          "cpuOverageUsd": 0.13804212703333332
+        },
+        "degraded": {
+          "cpuMs": 39845886.35166667,
+          "cpuOverageUsd": 0.19691772703333332
+        }
+      },
+      {
+        "cpuMsPerRequest": 25,
+        "normal": {
+          "cpuMs": 61237586.35166667,
+          "cpuOverageUsd": 0.6247517270333334
+        },
+        "degraded": {
+          "cpuMs": 66143886.35166667,
+          "cpuOverageUsd": 0.7228777270333333
+        }
+      }
+    ],
+    "assumptions": [
+      "Projeção de regime estável; excedente já acumulado no ciclo não é estornado.",
+      "Cinco dispositivos totais incluem uma TV, uma estação principal e uma tela de controle no padrão; composição é configurável.",
+      "12h/dia,31dias,1500mudanças/dia:10%criação,10%finalização,10%pagamento,70%transições impressão; não é volume observado.",
+      "surfaceMix distribui dispositivos humanos; cada owner montado inclui reconciliação/fallback e invalidação por criação/finalização/pagamento (30% das mudanças); printing não publica orders/finance. Acrescenta20mudanças administrativas/dia para todos os owners. Clientes inclui perfil aberto; recebíveis inclui grupo e busca rápida abertos.",
+      "Por dia:20páginas históricas,10buscas globais,50detalhes porID e10checks de duplicatas, configuráveis; preparação de ações inclui duas leituras canônicas por pagamento/detalhe.",
+      "Login/seleção de empresa uma vez e descoberta de sessão duas vezes por conexão humana; seleção/redescoberta em cada mudança administrativa por dispositivo humano. Reconexões de socket reutilizam sessão na prática; estas são contagens conservadoras, não frequência observada.",
+      "Inclui auth/guards medidos em HTTP,claim2s,heartbeat15s,aging5s/30s,presençaTV5s,controle5s,renovação60s e ACK20:1.",
+      "Owners de leitura incluem montagem e reconciliação inicial do canal; manager de impressão também soma timer próprio e reconciliação realtime300s/30s, sem presumir coalescência entre essas fontes.",
+      "TV pode mudar projeção a cada alteração (limite conservador); heartbeat idêntico não publica.",
+      "DO storage usa limite conservador64linhas porRPC e1porACK; confirmar com métricas SQLite antes de ampliar volume.",
+      "CPU/duração de workerd local não são faturamento Cloudflare; métricas externas e baseline da conta são obrigatórias.",
+      "Outros serviços da conta e armazenamento atual entram pelo baseline; ausência nunca equivale a zero."
+    ]
+  },
+  "concentratedAB": {
+    "baseline": "f44e10da3e523d757dc0a9ceffe575d4331907e0",
+    "candidate": "c7ef7100ab8050216ea2fbfaf7d8c88ca16a1df0",
+    "samePost0052Schema": true,
+    "httpAuthIncluded": false,
+    "fixtureBusiness": "task11",
+    "rows": [
+      {
+        "version": "published-f44e10da",
+        "mode": "null-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 2002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "null-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 2004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "published-f44e10da",
+        "mode": "null-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 20002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "null-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 20004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "published-f44e10da",
+        "mode": "canonical-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 2002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "canonical-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 4002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 2000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 2000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "published-f44e10da",
+        "mode": "canonical-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 20002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "canonical-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 40002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 20000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 20000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "published-f44e10da",
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "receiptCount": 1000,
+        "sqlStatements": 5,
+        "rowsRead": 2002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "receiptCount": 0,
+        "sqlStatements": 5,
+        "rowsRead": 2004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "published-f44e10da",
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "receiptCount": 10000,
+        "sqlStatements": 5,
+        "rowsRead": 20002,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10000,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      },
+      {
+        "version": "candidate-c7ef7100",
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "receiptCount": 0,
+        "sqlStatements": 5,
+        "rowsRead": 20004,
+        "rowsWritten": 0,
+        "perQuery": [
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 10001,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 0,
+            "rowsWritten": 0
+          },
+          {
+            "rowsRead": 1,
+            "rowsWritten": 0
+          }
+        ]
+      }
+    ]
+  },
+  "authenticatedReporting": {
+    "sha": "c7ef7100ab8050216ea2fbfaf7d8c88ca16a1df0",
+    "foreignReceipts": 10000,
+    "measured": [
+      {
+        "mode": "null-in-period",
+        "size": 1000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 3382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 77.3112000000001
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "null-in-period",
+        "size": 1000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 3757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 88.517399999997
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "null-in-period",
+        "size": 1000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 7510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 149.14100000000326
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "null-in-period",
+        "size": 10000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 21382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 109.4387999999999
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "null-in-period",
+        "size": 10000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 21757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 121.15309999999954
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "null-in-period",
+        "size": 10000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 43510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 196.17959999999948
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 1000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 5382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 59.478399999999965
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 1000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 5757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 70.78039999999964
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 1000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 10510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 138.71990000000005
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 10000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 41382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 79.0206999999973
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 10000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 41757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 94.42860000000292
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-in-period",
+        "size": 10000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 73510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 172.97620000000097
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 5382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 65.28719999999885
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 5757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 71.36139999999796
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 1000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 10510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 132.77929999999833
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "kind": "sales",
+        "metrics": {
+          "rowsRead": 41382,
+          "rowsWritten": 14,
+          "sqlStatements": 38,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 2,
+          "localWallMs": 59.715799999998126
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "kind": "csv",
+        "metrics": {
+          "rowsRead": 41757,
+          "rowsWritten": 14,
+          "sqlStatements": 47,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 4,
+          "localWallMs": 72.08680000000095
+        },
+        "httpStatus": 200
+      },
+      {
+        "mode": "canonical-paid-in-period",
+        "size": 10000,
+        "kind": "pdf",
+        "metrics": {
+          "rowsRead": 73510,
+          "rowsWritten": 20,
+          "sqlStatements": 91,
+          "durableRequests": 0,
+          "auditRowsRead": 0,
+          "orderRowsRead": 14,
+          "localWallMs": 119.40940000000046
+        },
+        "httpStatus": 200
+      }
+    ]
+  },
+  "authenticatedWriteProvenance": [
+    {
+      "kind": "sales",
+      "rowsWritten": 14,
+      "operations": [
+        {
+          "operation": "UPDATE identity_sessions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "UPDATE identity_sessions",
+          "rowsWritten": 1
+        }
+      ]
+    },
+    {
+      "kind": "pdf",
+      "rowsWritten": 20,
+      "operations": [
+        {
+          "operation": "UPDATE identity_sessions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "INSERT INTO identity_tx_assertions",
+          "rowsWritten": 2
+        },
+        {
+          "operation": "DELETE FROM identity_tx_assertions",
+          "rowsWritten": 1
+        },
+        {
+          "operation": "UPDATE identity_sessions",
+          "rowsWritten": 1
+        }
+      ]
+    }
+  ],
+  "missing": [
+    "Confirmed subscription, renewal cycle, accrued charges and logs usage",
+    "Candidate billed CPU per operation under equivalent 150 orders/1500 changes/5 devices workload",
+    "Representative DO duration, storage growth and R2/logs/account forecast including other services and staging",
+    "Approved frequency and candidate volume for complete reporting route/CSV/PDF and concentrated canonical receipts"
+  ]
+}

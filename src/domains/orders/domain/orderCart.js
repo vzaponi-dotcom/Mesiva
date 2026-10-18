@@ -133,7 +133,7 @@ export const calculateOrderPreview = (draft = {}) => {
   }
 }
 
-export const buildOrderPayload = (draft = {}, paymentAllocations) => {
+export const buildOrderPayload = (draft = {}, paymentAllocations, { receivedDate } = {}) => {
   const adjustment = draft.adjustment || {}
   const payload = {
     customerIdentity: draft.customerIdentity,
@@ -154,6 +154,7 @@ export const buildOrderPayload = (draft = {}, paymentAllocations) => {
   }
   if (Array.isArray(paymentAllocations) && paymentAllocations.length) {
     payload.paymentAllocations = paymentAllocations.map(({ methodCode, amountCents }) => ({ methodCode, amountCents }))
+    if (receivedDate !== undefined) payload.receivedDate = receivedDate
   }
   if (draft.expectedTableTabId && !(draft.type === 'Local' && draft.scheduledFor)) payload.expectedTableTabId = draft.expectedTableTabId
   if (draft.scheduledFor) payload.scheduledFor = draft.scheduledFor

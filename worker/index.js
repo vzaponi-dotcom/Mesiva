@@ -288,7 +288,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'payments.receive')
     requireCapability(context, 'clients.view')
     assertSameOriginMutation(request)
-    const { orderIds, allocations, mutationId } = await readJson(request)
+    const { orderIds, allocations, mutationId, receivedDate } = await readJson(request)
     const result = await registerClientOrdersPayment(
       financeDb,
       session.businessId,
@@ -296,7 +296,7 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
       validateReceivableOrderIds(orderIds),
       validatePaymentAllocations(allocations),
       new Date(),
-      {mutationId},
+      {mutationId,receivedDate},
     )
     return effectsJson(result, { status: 201 })
   }
@@ -359,8 +359,11 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
   if (paymentMatch && request.method === 'POST') {
     requireCapability(context, 'payments.receive')
     assertSameOriginMutation(request)
-    const { allocations } = await readJson(request)
-    const result = await registerOrderPayment(financeDb, session.businessId, decodeURIComponent(paymentMatch[1]), validatePaymentAllocations(allocations))
+    const { allocations, receivedDate } = await readJson(request)
+    const result = await registerOrderPayment(
+      financeDb, session.businessId, decodeURIComponent(paymentMatch[1]),
+      validatePaymentAllocations(allocations), new Date(), { receivedDate },
+    )
     return effectsJson(result, { status: 201 })
   }
   const supplementMatch=url.pathname.match(/^\/api\/orders\/([^/]+)\/supplemental-payment$/)
@@ -440,12 +443,13 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
     requireCapability(context, 'payments.receive')
     requireCapability(context, 'comandas.view')
     assertSameOriginMutation(request)
-    const { allocations } = await readJson(request)
+    const { allocations, receivedDate } = await readJson(request)
     const result = await registerTableTabPayment(
       financeDb,
       session.businessId,
       decodeURIComponent(tableTabPaymentMatch[1]),
       validatePaymentAllocations(allocations),
+      new Date(), {receivedDate},
     )
     return effectsJson({ ...result, tables: await listTables(env.DB, session.businessId) }, { status: 201 })
   }

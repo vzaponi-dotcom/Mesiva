@@ -1,9 +1,8 @@
 import { auditContext, businessEvent } from './access/audit.js'
-import { getBusinessDate } from '../shared/finance.js'
 import { formatOrderDisplayNumber } from '../shared/orderDisplayNumber.js'
 import { mapMovementRow } from './financeRepository.js'
 import { deriveOrderSettlementBalance, PAYMENT_SETTLEMENT_SQL_SELECT } from './orderPaymentReadModel.js'
-import { assertPaymentAllocationTotal, validatePaymentAllocations } from './paymentValidation.js'
+import { assertPaymentAllocationTotal, resolveReceivedDate, validatePaymentAllocations } from './paymentValidation.js'
 import { readPaymentMethodExpectations, preparePolicyGuards, rethrowPolicyChange } from './operationalPolicyGuards.js'
 import { loadOrderById } from './repositories.js'
 import { hashSettingsPayload, prepareSettingsAssertion, clearSettingsAssertions } from './settingsTransactions.js'
@@ -17,7 +16,7 @@ const nonnegative = n => Number.isSafeInteger(n) && n >= 0
 
 function validateInput(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw invalid()
-  const allowed = new Set(['mutationId','expectedContentRevision','expectedTotalCents','expectedNetReceivedCents','allocations'])
+  const allowed = new Set(['mutationId','expectedContentRevision','expectedTotalCents','expectedNetReceivedCents','allocations','receivedDate'])
   if (Object.keys(raw).some(key => !allowed.has(key))) throw invalid()
   if (typeof raw.mutationId !== 'string' || !raw.mutationId.trim()
     || raw.mutationId.trim().length > 128 || raw.mutationId !== raw.mutationId.trim()
@@ -29,6 +28,7 @@ function validateInput(raw) {
     expectedTotalCents: raw.expectedTotalCents,
     expectedNetReceivedCents: raw.expectedNetReceivedCents,
     allocations: validatePaymentAllocations(raw.allocations),
+    ...(raw.receivedDate !== undefined ? { receivedDate: raw.receivedDate } : {}),
   }
 }
 
@@ -41,7 +41,7 @@ const stateSql = `SELECT o.id,o.order_number,o.client_name_snapshot,o.table_tab_
 
 const mutationSql = `SELECT r.request_hash,r.result_json,e.id AS entry_id,
   e.receipt_id,e.amount_cents,e.created_at,
-  pr.total_cents AS receipt_total_cents,pr.paid_at
+  pr.total_cents AS receipt_total_cents,pr.paid_at,pr.received_date
   FROM order_supplemental_mutation_receipts r
   JOIN order_settlement_entries e
     ON e.business_id=r.business_id AND e.order_id=r.order_id AND e.id=r.settlement_entry_id
@@ -70,7 +70,8 @@ async function replay(db,businessId,orderId,record,hash) {
     entry:{id:record.entry_id,orderId,receiptId:record.receipt_id,amountCents:record.amount_cents,createdAt:record.created_at},
     receipt:{id:record.receipt_id,totalCents:record.receipt_total_cents,
       total:centsToMoney(record.receipt_total_cents),tableTabId:null,
-      paidAt:record.paid_at,createdAt:record.created_at,allocations},
+      paidAt:record.paid_at,receivedDate:record.received_date??null,
+      createdAt:record.created_at,allocations},
     allocations,
     movements:(movementResult.results||[]).map(mapMovementRow),
     order:await loadOrderById(db,businessId,orderId),
@@ -82,6 +83,7 @@ async function replay(db,businessId,orderId,record,hash) {
 // transfer or reprint is performed. Commit all money/audit evidence atomically.
 export async function registerOrderSupplementalPayment(db,businessId,orderId,raw,now=new Date()) {
   const input=validateInput(raw)
+  const day=resolveReceivedDate(input.receivedDate,now)
   const requestHash=await hashSettingsPayload(input)
   const row=await db.prepare(stateSql).bind(businessId,orderId).first()
   if(!row)throw fail(404,'ORDER_NOT_FOUND','Pedido não encontrado.')
@@ -106,7 +108,7 @@ export async function registerOrderSupplementalPayment(db,businessId,orderId,raw
   const actor=auditContext(db,businessId)
   const name=typeof actor.displayName==='string' && actor.displayName.trim()
     ? actor.displayName.trim().slice(0,120):'Acesso legado'
-  const at=now.toISOString(),day=getBusinessDate(now)
+  const at=now.toISOString()
   const transactionId=crypto.randomUUID(),receiptId=crypto.randomUUID(),entryId=crypto.randomUUID()
   const description=`${formatOrderDisplayNumber(row).replace('Pedido','Complemento pedido')} · ${row.client_name_snapshot}`
 
@@ -146,8 +148,8 @@ export async function registerOrderSupplementalPayment(db,businessId,orderId,raw
     ...preparePolicyGuards(db,businessId,{paymentMethods:methods},transactionId),
     guard,
     db.prepare(`INSERT INTO payment_receipts
-      (id,business_id,table_tab_id,total_cents,paid_at,created_at)
-      VALUES(?,?,NULL,?,?,?)`).bind(receiptId,businessId,balance.dueCents,at,at),
+      (id,business_id,table_tab_id,total_cents,paid_at,received_date,created_at)
+      VALUES(?,?,NULL,?,?,?,?)`).bind(receiptId,businessId,balance.dueCents,at,day,at),
   ]
   for(const a of allocationsRows) {
     statements.push(

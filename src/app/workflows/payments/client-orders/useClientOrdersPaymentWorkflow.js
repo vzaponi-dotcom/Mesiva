@@ -1,5 +1,7 @@
 import { useMutationOwner } from '../../../runtime/session/useMutationOwner.js'
 import { useCallback, useRef, useState } from 'react'
+import { getBusinessDate } from '../../../../../shared/finance.js'
+import { isValidReceivedDate } from '../paymentComposition.js'
 import {
   createInitialPaymentComposition,
   summarizePaymentComposition,
@@ -39,6 +41,7 @@ export function useClientOrdersPaymentWorkflow({
   const dialogOwnerRef = useRef(null)
   const [dialogOwner, setDialogOwner] = useState(null)
   const [allocations, setAllocations] = useState([])
+  const [receivedDate, setReceivedDate] = useState('')
   const [, forceRender] = useState(0)
 
   const resolveSelection = useCallback((clientId, orderIds) => {
@@ -69,6 +72,7 @@ export function useClientOrdersPaymentWorkflow({
     dialogOwnerRef.current = null
     setDialogOwner(null)
     setAllocations([])
+    setReceivedDate('')
     clearRequestKey(owner)
     return true
   }, [clearRequestKey])
@@ -94,6 +98,7 @@ export function useClientOrdersPaymentWorkflow({
     }
     dialogOwnerRef.current = owner
     setDialogOwner(owner)
+    setReceivedDate(getBusinessDate())
     setAllocations(createInitialPaymentComposition({
       totalCents,
       defaultPaymentMethod,
@@ -125,6 +130,7 @@ export function useClientOrdersPaymentWorkflow({
       || !canReceivePayments
       || !currentOrders
       || !submittedAllocations
+      || !isValidReceivedDate(receivedDate)
     ) return false
 
     owner.submitting = true
@@ -138,7 +144,7 @@ export function useClientOrdersPaymentWorkflow({
         owner.clientId,
         [...owner.orderIds],
         owner.allocations,
-        {mutationId:owner.mutationId},
+        {mutationId:owner.mutationId,receivedDate},
       )
       if (!ownsMutation() || owner.guard !== getSyncGuard()) return false
 
@@ -169,6 +175,7 @@ export function useClientOrdersPaymentWorkflow({
   }, [
     ownsMutation,
     allocations,
+    receivedDate,
     api,
     applyOfficialEffects,
     canReceivePayments,
@@ -191,6 +198,7 @@ export function useClientOrdersPaymentWorkflow({
     ? selectedOrders.reduce((sum, order) => sum + orderTotalCents(order), 0)
     : 0
   const composition = summarizePaymentComposition(allocations, totalCents, paymentOptions)
+  const dateValid = isValidReceivedDate(receivedDate)
 
   const dialog = dialogOwner && selectedOrders ? {
     clientId: dialogOwner.clientId,
@@ -200,6 +208,9 @@ export function useClientOrdersPaymentWorkflow({
     totalCents,
     allocations,
     setAllocations,
+    receivedDate,
+    setReceivedDate,
+    dateValid,
     paymentOptions,
     composition,
     submitting: Boolean(dialogOwner.submitting),

@@ -1,6 +1,7 @@
 import Button from '../../../shared/ui/Button'
 import { formatOrderDisplayNumber } from '../../../../shared/orderDisplayNumber.js'
 import { formatPaymentSummary } from '../domain/paymentPresentation.js'
+import { getBusinessDate } from '../../../../shared/finance.js'
 
 const timingText = (entry, formatOrderDate) => {
   if (entry.order?.paymentStatus === 'Pago') return 'Quitado'
@@ -27,6 +28,11 @@ function ReceivableDetail({
   const order = entry.order
   const paid = order?.paymentStatus === 'Pago'
   const promise = order?.promisedPaymentDate || null
+  const paidAt=order?.paidAt?new Date(order.paidAt):null
+  const recordedDay=paidAt&&!Number.isNaN(paidAt.getTime())?getBusinessDate(paidAt):null
+  const financialDay=order?.receivedDate||recordedDay
+  const registeredText=paidAt&&!Number.isNaN(paidAt.getTime())
+    ?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}).format(paidAt):null
 
   return (
     <div className="receivable-detail">
@@ -48,6 +54,8 @@ function ReceivableDetail({
         <div><span>Data do pedido</span><strong>{formatOrderDate(order?.orderDate)}</strong></div>
         <div><span>Data prometida</span><strong>{promise ? formatOrderDate(promise) : 'Não definida'}</strong></div>
         {paid && <div><span>Forma de pagamento</span><strong>{formatPaymentSummary(order?.paymentAllocations, order?.paymentMethod || 'Não informada')}</strong></div>}
+        {paid && financialDay && <div><span>Data do recebimento</span><strong>{formatOrderDate(financialDay)}</strong></div>}
+        {paid && recordedDay && financialDay!==recordedDay && <div><span>Registrado em</span><strong>{registeredText}</strong></div>}
       </div>
 
       <div className="receivable-detail-actions">

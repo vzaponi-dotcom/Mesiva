@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { getBusinessDate } from '../../../../shared/finance.js'
 import Button from '../../../shared/ui/Button.jsx'
 import Icon from '../../../shared/ui/Icon.jsx'
 import SystemSelect from '../../../shared/ui/SystemSelect.jsx'
@@ -11,6 +12,7 @@ import {
   paymentOptionsForAllocation,
   removePaymentAllocation,
   summarizePaymentComposition,
+  isValidReceivedDate,
   updatePaymentAllocation,
 } from './paymentComposition.js'
 import './payment-composition.css'
@@ -33,8 +35,12 @@ export default function PaymentCompositionEditor({
   onChange,
   paymentOptions = [],
   disabled = false,
+  receivedDate,
+  onReceivedDateChange,
 }) {
   const summary = summarizePaymentComposition(allocations, totalCents, paymentOptions)
+  const today = getBusinessDate()
+  const dateValid = isValidReceivedDate(receivedDate, today)
   const autoRemainderIndexRef = useRef(null)
 
   const changeRow = (index, patch) => {
@@ -90,6 +96,14 @@ export default function PaymentCompositionEditor({
         <strong>Como o cliente vai pagar?</strong>
         <span>A 1ª forma começa com o valor total. Ao dividir, o restante é preenchido automaticamente.</span>
       </div>
+
+      {onReceivedDateChange && <label className="payment-received-date form-field">
+        <span>Data do recebimento</span>
+        <input type="date" aria-label="Data do recebimento" value={receivedDate || ''}
+          max={today} required aria-invalid={!dateValid}
+          onChange={(event) => onReceivedDateChange(event.target.value)} disabled={disabled} />
+        <small className="form-hint">{dateValid ? 'Use hoje ou uma data anterior ao lançamento.' : 'Informe uma data válida, sem ultrapassar hoje.'}</small>
+      </label>}
 
       <div className="payment-composition-lines">
         {allocations.map((allocation, index) => {

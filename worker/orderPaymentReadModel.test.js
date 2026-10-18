@@ -145,3 +145,42 @@ test('Task 9 historical cancellation refund counts once; foreign business financ
   assert.equal(remote.length,1)
   assert.equal(remote[0].grossReceivedCents,9500)
 })
+
+
+test('Task 8: an original receipt exposes its effective date without changing technical paidAt across list and paid headers',async t=>{
+  const {db,sqlite}=dbFor(t)
+  order(sqlite,'retro-order',8000)
+  receipt(sqlite,'retro-receipt',8000)
+  sqlite.prepare("UPDATE payment_receipts SET received_date='2026-10-10' WHERE id='retro-receipt'").run()
+  original(sqlite,'retro-payment','retro-order','retro-receipt',8000)
+  const {readOrderHeaders}=await import('./readModels/orderHeaders.js')
+  const all=await listOrders(db,BIZ)
+  const header=(await readOrderHeaders(db,BIZ,{granted:new Set(['orders.history','orders.view']),paid:true}))[0]
+  for(const value of [all[0],await loadOrderById(db,BIZ,'retro-order'),header]){
+    assert.equal(value.receivedDate,'2026-10-10')
+    assert.equal(value.paidAt,NOW)
+    assert.equal(value.paymentReceiptId,'retro-receipt')
+  }
+  const historic=paymentModel.mapOrderPaymentFields({
+    total_cents:8000,payment_id:'historic',receipt_id:'legacy',received_date:null,paid_at:'2018-12-01T01:30:00.000Z',
+    paid_amount_cents:8000,
+  })
+  assert.equal(historic.receivedDate,'2018-11-30')
+  assert.equal(historic.paidAt,'2018-12-01T01:30:00.000Z')
+  assert.equal(paymentModel.mapOrderPaymentFields({total_cents:8000}).receivedDate,null)
+})
+
+test('Task 8: two receipts for a supplemented order preserve their separate effective dates without multiplying order rows',async t=>{
+  const {db,sqlite}=dbFor(t)
+  order(sqlite,'edited',9500)
+  receipt(sqlite,'first',8000)
+  original(sqlite,'payment-first','edited','first',8000)
+  sqlite.prepare("UPDATE payment_receipts SET received_date='2026-10-09' WHERE id='first'").run()
+  receipt(sqlite,'extra',1500)
+  sqlite.prepare("UPDATE payment_receipts SET received_date='2026-10-11' WHERE id='extra'").run()
+  supplement(sqlite,'supplement-extra','edited','extra',1500)
+  const list=await listOrders(db,BIZ)
+  assert.equal(list.length,1)
+  assert.equal(list[0].receivedDate,'2026-10-09')
+  assert.equal(list[0].paymentStatus,'Pago')
+})

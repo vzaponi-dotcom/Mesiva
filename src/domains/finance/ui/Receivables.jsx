@@ -64,8 +64,14 @@ const timingLabel = (entry, formatOrderDate) => {
 }
 
 const paidMeta = (order) => {
-  const paidAt = order.paidAt ? new Date(order.paidAt).toLocaleString('pt-BR') : 'Data não informada'
-  return `Quitado · ${formatPaymentSummary(order.paymentAllocations, order.paymentMethod || 'Forma não informada')} · ${paidAt}`
+  const recorded = order.paidAt ? new Date(order.paidAt) : null
+  const paidAt = recorded&&!Number.isNaN(recorded.getTime())
+    ? new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}).format(recorded)
+    : 'Data não informada'
+  const recordedDay=recorded&&!Number.isNaN(recorded.getTime())?getBusinessDate(recorded):null
+  const financialDay=order.receivedDate||recordedDay
+  const financialDate=financialDay?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(financialDay+'T12:00:00Z')):'Data não informada'
+  return `Quitado · ${formatPaymentSummary(order.paymentAllocations, order.paymentMethod || 'Forma não informada')} · Recebido em ${financialDate}${recordedDay&&financialDay!==recordedDay?` · Registrado em ${paidAt}`:''}`
 }
 
 const paidEntry = (order) => ({

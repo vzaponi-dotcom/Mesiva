@@ -1,0 +1,13 @@
+﻿Relatório,Centro de Relatórios
+Operação,Conta Teste 1
+Período,2026-10-18 a 2026-10-18
+Gerado em,2026-10-18T13:37:53.798Z
+Timezone,America/Sao_Paulo
+sort,date-desc
+
+Pedido,Data,Data e hora,Cliente,Telefone,Modalidade,Agendamento,Status,Subtotal,Taxa de entrega,Tipo de ajuste,Valor do ajuste,Total,Recebido,Pendente,Situação financeira,Forma de pagamento,Data(s) do recebimento,Promessa de pagamento,Duração (min),Prazo
+361,18/10/2026,"18/10/2026, 02:01",QA Task11 Staging 18out,,Retirada,Imediato,Em preparo,"R$ 27,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 27,00","R$ 0,00","R$ 27,00",Não pago,Indisponível,Indisponível,Indisponível,Indisponível,Indisponível
+360,18/10/2026,"18/10/2026, 02:01",QA Task11 Staging 18out,,Retirada,Imediato,Em preparo,"R$ 18,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 18,00","R$ 0,00","R$ 18,00",Não pago,Indisponível,Indisponível,Indisponível,Indisponível,Indisponível
+359,18/10/2026,"18/10/2026, 02:00",QA Task11 Staging 18out,,Retirada,Imediato,Em preparo,"R$ 18,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 18,00","R$ 18,00","R$ 0,00",Pago,Pix,2026-10-18,Indisponível,Indisponível,Indisponível
+358,18/10/2026,"18/10/2026, 01:57",QA Task11 Staging 18out,,Retirada,Imediato,Em preparo,"R$ 36,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 36,00","R$ 36,00","R$ 0,00",Pago,Pix + Dinheiro,2026-10-17 + 2026-10-18,Indisponível,Indisponível,Indisponível
+357,18/10/2026,"18/10/2026, 01:48",Hugo,(61) 61616-4616,Entrega,Imediato,Em preparo,"R$ 45,00","R$ 0,00",Indisponível,"R$ 0,00","R$ 45,00","R$ 0,00","R$ 45,00",Não pago,Indisponível,Indisponível,Indisponível,Indisponível,Indisponível

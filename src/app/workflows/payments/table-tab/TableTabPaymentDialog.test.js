@@ -4,6 +4,7 @@ import React from 'react'
 import { act } from 'react-test-renderer'
 import { workspaceHarness, nodeText, buttonNamed } from '../../../../test-support/renderWorkspace.js'
 import { comandaDetail, deferred } from '../../../../test-support/comandaFixtures.js'
+import { getBusinessDate } from '../../../../../shared/finance.js'
 
 test('mounted mobile payment and method sheet release locks together and preserve nested focus', async (t) => {
   const h = await workspaceHarness(t, { mobile: true })
@@ -47,14 +48,14 @@ for (const mobile of [false, true]) test(`full payment dialog uses official meth
   const props = { open: true, detail: comandaDetail, currency: (v) => v.toFixed(2), onClose() {}, onConfirm: (...args) => { calls.push(args); return pending.promise } }
   const r = await h.render(Dialog, props)
   assert.match(nodeText(r.root), /123.45/)
-  assert.equal(r.root.findAllByType('input').length, 1, 'full payment starts with one editable allocation')
+  assert.equal(r.root.findAllByType('input').length, 2, 'one editable allocation and one financial date field')
   assert.equal(nodeText(r.root.findByProps({ role: 'combobox' })), 'Pix')
   await act(async () => r.root.findByProps({ role: 'combobox' }).props.onClick())
   assert.deepEqual(r.root.findAllByProps({ role: 'option' }).map(nodeText), ['Pix', 'Dinheiro', 'Cartão de débito', 'Cartão de crédito', 'Transferência', 'Outro'])
   await act(async () => buttonNamed(r.root, 'Dinheiro').props.onClick())
   const submit = r.root.findByType('form').props.onSubmit
   await act(async () => { void submit({ preventDefault() {} }); void submit({ preventDefault() {} }) })
-  assert.deepEqual(calls, [['tab-42', [{ methodCode: 'cash', amountCents: 12345 }]]])
+  assert.deepEqual(calls, [['tab-42', [{ methodCode: 'cash', amountCents: 12345 }], {receivedDate:getBusinessDate()}]])
   assert.ok(buttonNamed(r.root, 'Confirmar pagamento').props.disabled)
   await act(async () => pending.resolve(false))
   assert.ok(!buttonNamed(r.root, 'Confirmar pagamento').props.disabled, 'failed payment permits retry')
@@ -109,5 +110,92 @@ test('whole-table dialog submits a structured Dinheiro + Pix composition instead
       { methodCode: 'cash', amountCents: 3000 },
       { methodCode: 'pix', amountCents: 5000 },
     ],
+    {receivedDate:getBusinessDate()},
   ]])
+})
+
+
+test('Task 9: comanda date defaults to business today, rejects future, survives failed submit and resets on reopen',async t=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const h=await workspaceHarness(t,{mobile:true})
+  const {default:Dialog}=await h.load('/src/app/workflows/payments/table-tab/TableTabPaymentDialog.jsx')
+  const today=getBusinessDate()
+  const props={open:true,detail:comandaDetail,currency:String,onClose(){},onConfirm:(...args)=>{calls.push(args);return false}}
+  const calls=[]
+  const r=await h.render(Dialog,props)
+  const dateField=()=>r.root.findByProps({'aria-label':'Data do recebimento'})
+  assert.equal(dateField().props.type,'date')
+  assert.equal(dateField().props.value,today)
+  assert.equal(dateField().props.max,today)
+  await act(async()=>dateField().props.onChange({target:{value:'2999-01-01'}}))
+  assert.ok(buttonNamed(r.root,'Confirmar pagamento').props.disabled)
+  await act(async()=>r.root.findByType('form').props.onSubmit({preventDefault(){}}))
+  assert.equal(calls.length,0)
+  await act(async()=>dateField().props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>r.root.findByType('form').props.onSubmit({preventDefault(){}}))
+  assert.equal(calls[0][2].receivedDate,'2026-10-15')
+  assert.equal(dateField().props.value,'2026-10-15')
+  await act(async()=>r.update(React.createElement(Dialog,{...props,open:false})))
+  await act(async()=>r.update(React.createElement(Dialog,props)))
+  assert.equal(dateField().props.value,today)
+})
+
+
+test('Task 9: checkout date is part of confirmed payment, not of save-without-payment',async t=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const h=await workspaceHarness(t)
+  const {default:Checkout}=await h.load('/src/app/workflows/payments/CheckoutPaymentComposition.jsx')
+  const calls=[]
+  const r=await h.render(Checkout,{totalCents:4000,paymentOptions:[{code:'pix',value:'Pix',label:'Pix'}],
+    defaultPaymentMethod:'Pix',onConfirm:(...args)=>calls.push(args),onCancel(){}})
+  const date=r.root.findByProps({'aria-label':'Data do recebimento'})
+  assert.equal(date.props.value,getBusinessDate())
+  assert.equal(date.props.max,getBusinessDate())
+  await act(async()=>date.props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>buttonNamed(r.root,'Confirmar recebimento').props.onClick())
+  assert.equal(calls[0][1],'2026-10-15')
+  assert.deepEqual(calls[0][0],[{methodCode:'pix',amountCents:4000}])
+  await act(async()=>r.root.findByProps({'aria-label':'Data do recebimento'}).props.onChange({target:{value:'2999-01-01'}}))
+  assert.ok(buttonNamed(r.root,'Confirmar recebimento').props.disabled)
+})
+
+test('Task 9: standalone and client dialogs render the same controlled financial date, blocking invalid submissions',async t=>{
+  const h=await workspaceHarness(t)
+  const {default:OrderDialog}=await h.load('/src/app/workflows/payments/order/OrderPaymentDialog.jsx')
+  const {default:ClientDialog}=await h.load('/src/app/workflows/payments/client-orders/ClientOrdersPaymentDialog.jsx')
+  const allocation=[{methodCode:'pix',amountCents:1500}]
+  const options=[{code:'pix',value:'Pix',label:'Pix'}]
+  for(const [Component,extra] of [
+    [OrderDialog,{order:{id:'o1',client:'Ana',orderNumber:1},supplemental:true}],
+    [ClientDialog,{orders:[{id:'o1',orderNumber:1,total:15}],clientName:'Ana'}],
+  ]){
+    const dates=[]
+    const dialog={...extra,totalCents:1500,allocations:allocation,setAllocations(){},
+      paymentOptions:options,composition:{valid:true},receivedDate:'2026-10-15',
+      dateValid:true,setReceivedDate:value=>dates.push(value),submit(){},onClose(){}}
+    const r=await h.render(Component,{dialog,currency:v=>String(v)})
+    const input=r.root.findByProps({'aria-label':'Data do recebimento'})
+    assert.equal(input.props.value,'2026-10-15')
+    assert.equal(input.props.max,getBusinessDate())
+    await act(async()=>input.props.onChange({target:{value:'2026-10-14'}}))
+    assert.deepEqual(dates,['2026-10-14'])
+    await act(async()=>r.update(React.createElement(Component,{dialog:{...dialog,dateValid:false},currency:v=>String(v)})))
+    assert.ok(buttonNamed(r.root,Component===OrderDialog?'Confirmar pagamento':'Confirmar recebimento').props.disabled)
+    await act(async()=>r.unmount())
+  }
+})
+
+test('Task 9: post-edit supplemental payment forwards its chosen date without changing refund flow',async t=>{
+  const h=await workspaceHarness(t)
+  const {default:Dialog}=await h.load('/src/app/workflows/payments/order/OrderEditSettlementDialog.jsx')
+  const calls=[]
+  const order={id:'after-edit',contentRevision:2,totalCents:9500,netReceivedCents:8000,dueCents:1500,refundDueCents:0,paymentId:'old'}
+  const r=await h.render(Dialog,{order,stage:'receive',source:'edit',
+    canReceivePayments:true,paymentOptions:[{code:'pix',value:'Pix',label:'Pix'}],
+    defaultPaymentMethod:'Pix',onReceive:(...args)=>calls.push(args),onClose(){}})
+  const date=r.root.findByProps({'aria-label':'Data do recebimento'})
+  await act(async()=>date.props.onChange({target:{value:'2026-10-15'}}))
+  await act(async()=>buttonNamed(r.root,'Confirmar recebimento').props.onClick())
+  assert.deepEqual(calls[0][1],'2026-10-15')
+  assert.deepEqual(calls[0][0],[{methodCode:'pix',amountCents:1500}])
 })

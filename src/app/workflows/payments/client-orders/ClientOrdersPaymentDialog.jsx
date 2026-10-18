@@ -40,13 +40,15 @@ export default function ClientOrdersPaymentDialog({ dialog, currency }) {
           onChange={dialog.setAllocations}
           paymentOptions={dialog.paymentOptions}
           disabled={dialog.writesBlocked || dialog.submitting}
+          receivedDate={dialog.receivedDate}
+          onReceivedDateChange={dialog.setReceivedDate}
         />
 
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={dialog.onClose}>Cancelar</Button>
           <Button
             type="submit"
-            disabled={dialog.writesBlocked || dialog.submitting || !dialog.composition.valid}
+            disabled={dialog.writesBlocked || dialog.submitting || !dialog.composition.valid || !dialog.dateValid}
           >
             Confirmar recebimento
           </Button>

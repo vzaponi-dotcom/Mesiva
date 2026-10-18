@@ -343,3 +343,24 @@ test('capability and offline-write blocks prevent opening the batch payment work
     probe.unmount()
   }
 })
+
+
+test('Task 9: client batch retries keep received date and mutation id and reject invalid date',async()=>{
+  const {getBusinessDate}=await import('../../../../../shared/finance.js')
+  const calls=[]
+  const p=await mountWorkflow({api:{registerClientOrdersPayment:async(...args)=>{calls.push(args);throw new Error('temporary')}}})
+  await act(async()=>p.getLatest().open({clientId:'c1',orderIds:['o1','o2']}))
+  assert.equal(p.getLatest().dialog.receivedDate,getBusinessDate())
+  await act(async()=>p.getLatest().dialog.setReceivedDate('2999-01-01'))
+  await act(async()=>p.getLatest().dialog.submit())
+  assert.equal(calls.length,0)
+  await act(async()=>p.getLatest().dialog.setReceivedDate('2026-10-15'))
+  await act(async()=>p.getLatest().dialog.submit())
+  await act(async()=>p.getLatest().dialog.submit())
+  assert.deepEqual(calls.map(x=>x[3].receivedDate),['2026-10-15','2026-10-15'])
+  assert.equal(calls[0][3].mutationId,calls[1][3].mutationId)
+  await act(async()=>p.getLatest().close())
+  await act(async()=>p.getLatest().open({clientId:'c1',orderIds:['o1','o2']}))
+  assert.equal(p.getLatest().dialog.receivedDate,getBusinessDate())
+  p.unmount()
+})

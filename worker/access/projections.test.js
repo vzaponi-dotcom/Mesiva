@@ -179,3 +179,111 @@ test('ordinary paid order creation with canonical none adjustment projects its p
   assert.equal(sqlite.prepare('SELECT count(*) n FROM movements WHERE order_id=?').get(data.order.id).n, 1)
 })
 
+
+test('authenticated individual payment route forwards the requested effective day and keeps permission protection', async (t) => {
+  const { env, tokens, active, history, sqlite } = await setup(t)
+  const retroactive = '2026-09-19'
+  const result = await read(env, tokens.operator, `/api/orders/${active.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }],
+    receivedDate: retroactive,
+  })
+  const persisted = sqlite.prepare('SELECT received_date, paid_at FROM payment_receipts WHERE id=?').get(result.receipt.id)
+  assert.equal(persisted.received_date, retroactive)
+  assert.notEqual(persisted.paid_at.slice(0, 10), retroactive)
+  assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").get(result.receipt.id).movement_date, retroactive)
+
+  const denied = await handleRequest(request(tokens.empty, `/api/orders/${history.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }], receivedDate: retroactive,
+  }), env)
+  assert.equal(denied.status, 403)
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 1)
+})
+
+test('individual payment HTTP route rejects a future receipt date without any financial effects', async (t) => {
+  const { env, tokens, active, sqlite } = await setup(t)
+  const future = '9999-12-31'
+  const response = await handleRequest(request(tokens.operator, `/api/orders/${active.id}/payment`, 'POST', {
+    allocations: [{ methodCode: 'pix', amountCents: 2500 }], receivedDate: future,
+  }), env)
+  assert.equal(response.status, 400)
+  const body = await response.json()
+  assert.equal(body.error.code, 'VALIDATION_ERROR')
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n, 0)
+  assert.equal(sqlite.prepare("SELECT COUNT(*) n FROM movements WHERE source='order-payment'").get().n, 0)
+})
+
+
+test('table-tab and client-batch HTTP payments forward the chosen effective date to their shared receipts',async(t)=>{
+  const {env,tokens,history,local,db,input,now,sqlite}=await setup(t)
+  const second=await createOrder(db,BUSINESS,input('date-batch-order'),now)
+  await updateOrderStatus(db,BUSINESS,second.id,now)
+  const date='2026-09-19'
+  const group=await read(env,tokens.operator,'/api/clients/client/receivables/payment','POST',{
+    orderIds:[history.id,second.id],allocations:[{methodCode:'pix',amountCents:5000}],
+    mutationId:'date-http-client',receivedDate:date,
+  })
+  const table=await read(env,tokens.operator,`/api/table-tabs/${local.tableTabId}/payment`,'POST',{
+    allocations:[{methodCode:'cash',amountCents:2500}],receivedDate:date,
+  })
+  for(const result of [group,table]){
+    assert.equal(result.receipt.receivedDate,date)
+    assert.equal(sqlite.prepare('SELECT received_date FROM payment_receipts WHERE id=?').get(result.receipt.id).received_date,date)
+    assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE receipt_id=? AND source='order-payment'").get(result.receipt.id).movement_date,date)
+  }
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,2)
+})
+
+test('table and client payment routes reject future effective date without side effects',async(t)=>{
+  const {env,tokens,history,local,db,input,now,sqlite}=await setup(t)
+  const second=await createOrder(db,BUSINESS,input('future-batch-order'),now)
+  await updateOrderStatus(db,BUSINESS,second.id,now)
+  for(const [path,payload] of [
+    ['/api/clients/client/receivables/payment',{
+      orderIds:[history.id,second.id],allocations:[{methodCode:'pix',amountCents:5000}],mutationId:'future-client',receivedDate:'9999-12-31',
+    }],
+    [`/api/table-tabs/${local.tableTabId}/payment`,{
+      allocations:[{methodCode:'cash',amountCents:2500}],receivedDate:'9999-12-31',
+    }],
+  ]){
+    const response=await handleRequest(request(tokens.operator,path,'POST',payload),env)
+    assert.equal(response.status,400)
+    assert.equal((await response.json()).error.code,'VALIDATION_ERROR')
+  }
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM payment_receipts').get().n,0)
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM movements').get().n,0)
+})
+
+
+test('paid checkout HTTP route persists a distinct financial date while keeping commercial day and print job',async(t)=>{
+  const {env,tokens,sqlite}=await setup(t)
+  const commercialDay=getBusinessDate(new Date())
+  const data=await read(env,tokens.operator,'/api/orders','POST',{
+    customerIdentity:{type:'registered_client',clientId:'client'},type:'Retirada',
+    orderDate:commercialDay,items:[{productId:'product',quantity:1}],
+    paymentAllocations:[{methodCode:'pix',amountCents:2500}],receivedDate:'2026-09-19',
+  })
+  const receipt=sqlite.prepare('SELECT r.received_date,r.paid_at FROM payment_receipts r JOIN payments p ON p.receipt_id=r.id WHERE p.order_id=?').get(data.order.id)
+  assert.equal(data.order.orderDate,commercialDay)
+  assert.equal(receipt.received_date,'2026-09-19')
+  assert.equal(sqlite.prepare("SELECT movement_date FROM movements WHERE source='order-payment' AND order_id=?").get(data.order.id).movement_date,'2026-09-19')
+  assert.equal(sqlite.prepare('SELECT COUNT(*) n FROM print_jobs WHERE order_id=?').get(data.order.id).n,1)
+})
+
+test('checkout HTTP rejects future date and effective date on unpaid orders without persisting effects',async(t)=>{
+  const {env,tokens,sqlite}=await setup(t)
+  const tracked=['orders','payment_receipts','payments','movements','print_jobs']
+  const count=(table)=>sqlite.prepare('SELECT COUNT(*) n FROM '+table).get().n
+  const before=Object.fromEntries(tracked.map(table=>[table,count(table)]))
+  for(const body of [
+    {paymentAllocations:[{methodCode:'pix',amountCents:2500}],receivedDate:'9999-12-31'},
+    {paymentAllocations:null,receivedDate:'2026-09-19'},
+  ]){
+    const response=await handleRequest(request(tokens.operator,'/api/orders','POST',{
+      customerIdentity:{type:'registered_client',clientId:'client'},type:'Retirada',
+      orderDate:getBusinessDate(new Date()),items:[{productId:'product',quantity:1}],...body,
+    }),env)
+    assert.equal(response.status,400)
+    assert.equal((await response.json()).error.code,'VALIDATION_ERROR')
+  }
+  for(const table of tracked) assert.equal(count(table),before[table],table)
+})

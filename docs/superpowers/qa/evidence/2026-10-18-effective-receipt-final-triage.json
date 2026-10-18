@@ -1,0 +1,1047 @@
+{
+  "at": "2026-10-18T15:53:50.741Z",
+  "sha": "759c55b2db428d739fd6f8d1624eaa1f7e9edc23",
+  "status": "PARTIAL_REMAINING_BUDGET",
+  "physicalPrinting": {
+    "status": "NOT_EXECUTED_DEFERRED_BY_USER",
+    "userInstruction": "a impressao fisica nao vamos conseguir testar, pode seguir com as proximas",
+    "markedPass": false,
+    "productionReleaseAuthorized": false
+  },
+  "visual": {
+    "at": "2026-10-18T15:41:52.544Z",
+    "isolatedHarness": true,
+    "baseline": "f44e10da3e523d757dc0a9ceffe575d4331907e0",
+    "candidate": "759c55b2db428d739fd6f8d1624eaa1f7e9edc23",
+    "observations": [
+      {
+        "checkout": {
+          "height": 779.796875,
+          "width": 285,
+          "x": 744,
+          "y": 69.78125
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 783,
+              "y": 442.578125
+            }
+          },
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 783,
+              "y": 639.578125
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 783,
+              "y": 493.578125
+            },
+            "scrollWidth": 53,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 783,
+              "y": 690.578125
+            },
+            "scrollWidth": 53,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "baseline",
+        "viewport": {
+          "height": 900,
+          "width": 1045
+        }
+      },
+      {
+        "checkout": {
+          "height": 891.015625,
+          "width": 285,
+          "x": 729,
+          "y": 69.78125
+        },
+        "date": {
+          "background": "rgb(15, 39, 71)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 239,
+            "x": 752,
+            "y": 396.578125
+          }
+        },
+        "fields": [
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 768,
+              "y": 553.796875
+            }
+          },
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 768,
+              "y": 750.796875
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 768,
+              "y": 604.796875
+            },
+            "scrollWidth": 53,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 768,
+              "y": 801.796875
+            },
+            "scrollWidth": 53,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "candidate",
+        "viewport": {
+          "height": 900,
+          "width": 1045
+        }
+      },
+      {
+        "checkout": {
+          "height": 779.796875,
+          "width": 285,
+          "x": 744,
+          "y": 69.78125
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 783,
+              "y": 442.578125
+            }
+          },
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 783,
+              "y": 639.578125
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 783,
+              "y": 493.578125
+            },
+            "scrollWidth": 53,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 783,
+              "y": 690.578125
+            },
+            "scrollWidth": 53,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "baseline",
+        "viewport": {
+          "height": 900,
+          "width": 1045
+        }
+      },
+      {
+        "checkout": {
+          "height": 891.015625,
+          "width": 285,
+          "x": 729,
+          "y": 69.78125
+        },
+        "date": {
+          "background": "rgb(248, 250, 252)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 239,
+            "x": 752,
+            "y": 396.578125
+          }
+        },
+        "fields": [
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 768,
+              "y": 553.796875
+            }
+          },
+          {
+            "grid": "55px 140px",
+            "rect": {
+              "height": 99,
+              "width": 207,
+              "x": 768,
+              "y": 750.796875
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 768,
+              "y": 604.796875
+            },
+            "scrollWidth": 53,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 53,
+            "rect": {
+              "height": 48,
+              "width": 55,
+              "x": 768,
+              "y": 801.796875
+            },
+            "scrollWidth": 53,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "candidate",
+        "viewport": {
+          "height": 900,
+          "width": 1045
+        }
+      },
+      {
+        "checkout": {
+          "height": 727.703125,
+          "width": 328,
+          "x": 926,
+          "y": 69.78125
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 424.484375
+            }
+          },
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 604.484375
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 458.484375
+            },
+            "scrollWidth": 96,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 638.484375
+            },
+            "scrollWidth": 96,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "baseline",
+        "viewport": {
+          "height": 1000,
+          "width": 1440
+        }
+      },
+      {
+        "checkout": {
+          "height": 838.921875,
+          "width": 328,
+          "x": 926,
+          "y": 69.78125
+        },
+        "date": {
+          "background": "rgb(15, 39, 71)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 260,
+            "x": 949,
+            "y": 378.484375
+          }
+        },
+        "fields": [
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 535.703125
+            }
+          },
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 715.703125
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 569.703125
+            },
+            "scrollWidth": 96,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 749.703125
+            },
+            "scrollWidth": 96,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "candidate",
+        "viewport": {
+          "height": 1000,
+          "width": 1440
+        }
+      },
+      {
+        "checkout": {
+          "height": 727.703125,
+          "width": 328,
+          "x": 926,
+          "y": 69.78125
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 424.484375
+            }
+          },
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 604.484375
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 458.484375
+            },
+            "scrollWidth": 96,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 638.484375
+            },
+            "scrollWidth": 96,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "baseline",
+        "viewport": {
+          "height": 1000,
+          "width": 1440
+        }
+      },
+      {
+        "checkout": {
+          "height": 838.921875,
+          "width": 328,
+          "x": 926,
+          "y": 69.78125
+        },
+        "date": {
+          "background": "rgb(248, 250, 252)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 260,
+            "x": 949,
+            "y": 378.484375
+          }
+        },
+        "fields": [
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 535.703125
+            }
+          },
+          {
+            "grid": "98px 140px",
+            "rect": {
+              "height": 82,
+              "width": 250,
+              "x": 965,
+              "y": 715.703125
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 569.703125
+            },
+            "scrollWidth": 96,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 96,
+            "rect": {
+              "height": 48,
+              "width": 98,
+              "x": 965,
+              "y": 749.703125
+            },
+            "scrollWidth": 96,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "candidate",
+        "viewport": {
+          "height": 1000,
+          "width": 1440
+        }
+      },
+      {
+        "checkout": {
+          "height": 793.703125,
+          "width": 343,
+          "x": 16,
+          "y": 300.59375
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 645.296875
+            }
+          },
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 864.296875
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 662.296875
+            },
+            "scrollWidth": 269,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 881.296875
+            },
+            "scrollWidth": 269,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "baseline",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      {
+        "checkout": {
+          "height": 902.921875,
+          "width": 343,
+          "x": 16,
+          "y": 300.59375
+        },
+        "date": {
+          "background": "rgb(15, 39, 71)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 301,
+            "x": 37,
+            "y": 601.296875
+          }
+        },
+        "fields": [
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 754.515625
+            }
+          },
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 973.515625
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 771.515625
+            },
+            "scrollWidth": 269,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 990.515625
+            },
+            "scrollWidth": 269,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "dark",
+        "version": "candidate",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      {
+        "checkout": {
+          "height": 793.703125,
+          "width": 343,
+          "x": 16,
+          "y": 300.59375
+        },
+        "date": null,
+        "fields": [
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 645.296875
+            }
+          },
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 864.296875
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 662.296875
+            },
+            "scrollWidth": 269,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 881.296875
+            },
+            "scrollWidth": 269,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "baseline",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      {
+        "checkout": {
+          "height": 902.921875,
+          "width": 343,
+          "x": 16,
+          "y": 300.59375
+        },
+        "date": {
+          "background": "rgb(248, 250, 252)",
+          "invalid": "false",
+          "max": "2026-10-18",
+          "rect": {
+            "height": 44,
+            "width": 301,
+            "x": 37,
+            "y": 601.296875
+          }
+        },
+        "fields": [
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 754.515625
+            }
+          },
+          {
+            "grid": "271px",
+            "rect": {
+              "height": 124,
+              "width": 271,
+              "x": 52,
+              "y": 973.515625
+            }
+          }
+        ],
+        "methods": [
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 771.515625
+            },
+            "scrollWidth": 269,
+            "text": "Pix"
+          },
+          {
+            "clientWidth": 269,
+            "rect": {
+              "height": 48,
+              "width": 271,
+              "x": 52,
+              "y": 990.515625
+            },
+            "scrollWidth": 269,
+            "text": "Dinheiro"
+          }
+        ],
+        "pageOverflow": false,
+        "theme": "light",
+        "version": "candidate",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      }
+    ],
+    "keyboard": {
+      "dateInvalid": {
+        "hint": "Informe uma data válida, sem ultrapassar hoje.",
+        "invalid": "true",
+        "keyboardFocusLabel": "Remover forma de pagamento 1",
+        "keyboardFocusOutline": "solid",
+        "nativeRangeOverflow": true,
+        "value": "2026-11-19"
+      },
+      "dateFocus": {
+        "invalid": "false",
+        "label": "Data do recebimento",
+        "outline": "solid",
+        "outlineWidth": "2px"
+      },
+      "menuOpen": {
+        "expanded": "true",
+        "focusLabel": ""
+      },
+      "menuClosed": {
+        "expanded": "false",
+        "focusLabel": "Forma de pagamento"
+      },
+      "nativeDateInputNote": "Programmatic fill changed DOM before native keyboard edit committed React onChange; final validation observed after native Up and Tab."
+    },
+    "sourceChecks": {
+      "paymentCssBaselinePrefixUnchanged": true,
+      "wrapperAndSelectStylesUnchanged": true
+    },
+    "classification": "EXISTING_NARROW_METHOD_SELECTS_REPRODUCED_IN_BASELINE; date field scope passed; not full-app/device certification",
+    "viewportReset": true
+  },
+  "billing": {
+    "subscription": {
+      "observedAt": "2026-10-18T15:46:27.861Z",
+      "source": "Authenticated subscriptions dashboard; only subscription names and renewal retained",
+      "accountHash": "748b0258b295",
+      "workersPlan": "Workers Paid",
+      "r2Plan": "R2 Paid",
+      "renewalDate": "2026-11-08",
+      "planChanged": false,
+      "paymentDetailsRetained": false
+    },
+    "plan": {
+      "observedAt": "2026-10-18T15:48:31.295Z",
+      "source": "Authenticated Workers plans dashboard",
+      "accountHash": "748b0258b295",
+      "currentPlan": "Workers Paid",
+      "displayedBaseMonthlyUsd": 5,
+      "displayedPricing": "US$5/month + usage",
+      "planChanged": false
+    },
+    "usage": {
+      "observedAt": "2026-10-18T15:44:54.287Z",
+      "source": "Cloudflare dashboard billable usage; authenticated UI; read only",
+      "accountHash": "748b0258b295",
+      "billingPeriodLabel": "Nov 2026",
+      "cycleStart": "2026-10-08",
+      "cycleEndInclusive": "2026-11-07",
+      "observedFrom": "2026-10-08",
+      "observedThrough": "2026-10-18",
+      "observedDays": 11,
+      "cycleDays": 31,
+      "displayedUsageCostUsd": 20.15,
+      "displayedProjectedCycleUsageCostUsd": 56.78,
+      "displayedDailyAverageUsd": 1.83,
+      "rows": [
+        "ProdutoUtilização totalUso faturávelCusto de uso",
+        "D1 - Rows Read(first 25 billion included)45,15B 20,15B $20.15Taxa efetiva $0.00 / unit",
+        "Workers Standard Requests(first 10M are included)488,15k 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "D1 - Rows Written(first 50 million included)4,39M 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "D1 - Storage GB-mo(first 5GB included)0,01 GB-months0 GB-months$0.00Nenhum custo de uso neste período de faturamento",
+        "Workers CPU ms(first 30M are included)8,68M 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "R2 Data Storage(First 10GB-Month included)0 GB-months0 GB-months$0.00Nenhum custo de uso neste período de faturamento",
+        "R2 Storage Class A Operations(First 1M included)3 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "R2 Storage Class B Operations(First 10M included)193 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "Durable Objects Compute Duration(GB*S, First 400,000 GB*S is included)343,89 GB-seconds0 GB-seconds$0.00Nenhum custo de uso neste período de faturamento",
+        "Durable Objects Compute Requests(First 1M is included)2,91k 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "Durable Objects Storage Rows Written(First 50M included)744 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "Durable Objects Storage Rows Read(First 25B included)1,38k 0 $0.00Nenhum custo de uso neste período de faturamento",
+        "Durable Objects SQL Storage(First 5 GB-month included)0 GB-months0 GB-months$0.00Nenhum custo de uso neste período de faturamento"
+      ]
+    },
+    "workerUsage": {
+      "observedAt": "2026-10-18T15:47:23.877Z",
+      "source": "Workers and Pages dashboard current billing period; rounded display values",
+      "accountHash": "748b0258b295",
+      "periodDisplay": "October 8 - November 8",
+      "workerUsageCostUsd": 0,
+      "requestsDisplay": "489.16k",
+      "cpuMsDisplay": "8.69M",
+      "observabilityEventsDisplay": "0",
+      "buildMinutesDisplay": "0",
+      "perOperationCpuMeasured": false
+    },
+    "observability": {
+      "at": "2026-10-18T15:47:03.319Z",
+      "accountHash": "748b0258b295",
+      "readOnly": true,
+      "bindingValuesRetained": false,
+      "scripts": {
+        "production": {
+          "available": true,
+          "observability": null,
+          "logpush": false,
+          "usageModel": "standard",
+          "tailConsumerCount": 0
+        },
+        "staging": {
+          "available": true,
+          "observability": null,
+          "logpush": false,
+          "usageModel": "standard",
+          "tailConsumerCount": 0
+        }
+      }
+    },
+    "knownBasePlusObservedUsageUsd": 25.15,
+    "interpretation": "Usage rounded by dashboard; excludes final invoice, taxes/adjustments. Historic incident/account traffic is not attributed to PR120. Current cycle already has D1 overage."
+  },
+  "budget": {
+    "approvedReports": {
+      "salesPerDay": 20,
+      "csvPerDay": 10,
+      "pdfPerDay": 5,
+      "days": 31,
+      "maxReceiptCandidates": 10000,
+      "userApproved": true,
+      "additionalToOperationalModel": true
+    },
+    "scenarios": {
+      "normal": {
+        "core": {
+          "rowsRead": 9700818476,
+          "rowsWritten": 16250094,
+          "workerRequests": 2433548,
+          "workerCpuMs": null,
+          "durableRequests": 246850,
+          "durableDurationGbS": null,
+          "durableRowsRead": 14775400,
+          "durableRowsWritten": 14775400,
+          "d1StorageGb": null,
+          "durableStorageGb": null,
+          "r2StorageGb": 0,
+          "r2ClassA": 0,
+          "r2ClassB": 0,
+          "logs": 6244296,
+          "incomingAckMessages": 465000
+        },
+        "approvedReportingAddition": {
+          "rowsRead": 49995560,
+          "rowsWritten": 16120,
+          "workerRequests": 1085
+        },
+        "provisionalOtherBaseline31": {
+          "rowsRead": 21582333.3,
+          "rowsWritten": 8410.3,
+          "workerRequests": 10230,
+          "workerCpuMs": 398886.3516666666
+        },
+        "totalKnownRowsRead": 9772396369.3,
+        "totalKnownRowsWritten": 16274624.3,
+        "totalKnownWorkerRequests": 2444863,
+        "cpuPerCandidateRequestThresholdMs": 9.693910190296991,
+        "complete": false
+      },
+      "degraded": {
+        "core": {
+          "rowsRead": 16029030520,
+          "rowsWritten": 16812650,
+          "workerRequests": 2629800,
+          "workerCpuMs": null,
+          "durableRequests": 102000,
+          "durableDurationGbS": null,
+          "durableRowsRead": 6528000,
+          "durableRowsWritten": 6528000,
+          "d1StorageGb": null,
+          "durableStorageGb": null,
+          "r2StorageGb": 0,
+          "r2ClassA": 0,
+          "r2ClassB": 0,
+          "logs": 5463600,
+          "incomingAckMessages": 0
+        },
+        "approvedReportingAddition": {
+          "rowsRead": 49995560,
+          "rowsWritten": 16120,
+          "workerRequests": 1085
+        },
+        "provisionalOtherBaseline31": {
+          "rowsRead": 21582333.3,
+          "rowsWritten": 8410.3,
+          "workerRequests": 10230,
+          "workerCpuMs": 398886.3516666666
+        },
+        "totalKnownRowsRead": 16100608413.3,
+        "totalKnownRowsWritten": 16837180.3,
+        "totalKnownWorkerRequests": 2641115,
+        "cpuPerCandidateRequestThresholdMs": 11.251390177956594,
+        "complete": false
+      }
+    },
+    "currentCycleWithinFiveDollarGoal": false,
+    "monthlyReady": false,
+    "missing": [
+      "Representative candidate billed CPU per operation under equivalent normal/degraded workload",
+      "DO duration, storage growth, future staging/other-services forecast under equivalent workload",
+      "Final invoice document not consulted; current open-cycle usage is not a closed invoice; no changed spending ceiling or waiver authorized"
+    ],
+    "currentLogsEvents": 0,
+    "futureLogsAssumedZero": false
+  },
+  "artifacts": [
+    {
+      "file": "task11-triage-baseline-1045-dark.png",
+      "bytes": 56415,
+      "sha256": "99c0dd5a33492e51703f6e1a7f0bc3328997dcd18025f97c84d73f3df39d5e4c"
+    },
+    {
+      "file": "task11-triage-candidate-1045-dark.png",
+      "bytes": 51792,
+      "sha256": "a5b7a8c98501fbecf519655bdeac1bb7ecb609d075281e358cd39ed43896e95a"
+    },
+    {
+      "file": "task11-triage-candidate-390-light.png",
+      "bytes": 58082,
+      "sha256": "2fda5c03452d26a2a369724dc37ab9f12c361527f9712edf1e8326a500ae7977"
+    },
+    {
+      "file": "task11-triage-candidate-390-dark.png",
+      "bytes": 58482,
+      "sha256": "cd18becad4652cae6a226ec0ffd2e1a4ebb7ea31eabde38b4ece0d86b79bd8f3"
+    },
+    {
+      "file": "task11-triage-mobile-date-error.png",
+      "bytes": 59679,
+      "sha256": "09ef24344128e281cea97bb1085c1da88d88618968071aa350d97b4770540e49"
+    }
+  ],
+  "previousCi": {
+    "sha": "759c55b2db428d739fd6f8d1624eaa1f7e9edc23",
+    "run": 39140999318,
+    "status": "success"
+  },
+  "runtimeChanged": false,
+  "financialSubmissions": false,
+  "remoteMigrationOrDeployment": false,
+  "productionBusinessDataQueried": false,
+  "task11Accepted": false
+}

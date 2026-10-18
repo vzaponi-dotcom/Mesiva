@@ -235,3 +235,15 @@ test('completed production cutover one-time Actions are retired from the reposit
     'scripts/infra/productionFinalizationWorkflow.test.js',
   ]) assert.equal(existsSync(path), false, `retired cutover artifact must be absent: ${path}`)
 })
+
+test('Task 11: staging feature branch requires explicit dispatch and read-only receipt audit before ANY remote writes', () => {
+  const workflow = readFileSync(stagingWorkflowPath, 'utf8')
+  assert.match(workflow, /github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/codex\/received-date-tdd'/)
+  assert.doesNotMatch(workflow.slice(workflow.indexOf('on:'), workflow.indexOf('permissions:')), /\n\s*- codex\/received-date-tdd/)
+  const audit=workflow.indexOf('node scripts/infra/effective-receipt-staging-preflight.mjs')
+  const r2=workflow.indexOf('- name: Ensure staging R2 bucket')
+  const migrations=workflow.indexOf('- name: Apply staging migrations')
+  for(const index of [audit,r2,migrations]) assert.notEqual(index,-1)
+  assert.ok(audit<r2 && audit<migrations, 'legacy audit must precede R2 and all remote D1 writes')
+  assert.match(workflow.slice(Math.max(0,audit-240),audit), /if: github\.ref == 'refs\/heads\/codex\/received-date-tdd'/)
+})
