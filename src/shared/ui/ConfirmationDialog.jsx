@@ -11,15 +11,17 @@ function ConfirmationDialog({
   onConfirm,
   onClose,
   disabled = false,
+  submitting = false,
+  loadingLabel = 'Confirmando…',
 }) {
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={submitting ? () => {} : onClose}>
       <div className="form-stack confirmation-dialog-content">
         {message && <p>{message}</p>}
         {details && <div className="payment-summary-card">{details}</div>}
         <div className="form-actions">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={disabled}>{cancelLabel}</Button>
-          <Button type="button" variant={confirmVariant} onClick={onConfirm} disabled={disabled}>{confirmLabel}</Button>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={disabled || submitting}>{cancelLabel}</Button>
+          <Button type="button" variant={confirmVariant} onClick={onConfirm} disabled={disabled} state={submitting ? 'loading' : 'idle'} loadingLabel={loadingLabel}>{confirmLabel}</Button>
         </div>
       </div>
     </Modal>

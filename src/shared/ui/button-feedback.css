@@ -1,0 +1,20 @@
+/* Motion inspired by Spectrum UI Morph Button (Apache-2.0); native CSS adaptation. */
+.button.button-stateful { display: inline-grid; grid-template-columns: 1fr; position: relative; }
+.button.button-feedback { opacity: 1; cursor: wait; }
+.button-feedback-sizer, .button-feedback-content { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+.button-feedback-sizer { display: grid; visibility: hidden; pointer-events: none; padding-inline-start: 26px; }
+.button-feedback-sizer > span { grid-area: 1 / 1; }
+.button-feedback-content { animation: button-feedback-content-in 200ms cubic-bezier(.2,0,0,1); }
+.button.button-feedback-success { background: var(--success-soft); border-color: var(--success); color: var(--success); cursor: default; }
+.button.button-feedback-error { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); cursor: default; }
+.button-feedback-success svg path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: button-feedback-check-in 250ms ease-out forwards; }
+.button-feedback-spinner { flex-shrink: 0; animation: button-feedback-spin 800ms linear infinite; }
+.button-feedback-announcement { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.button:not(:disabled):active { transform: scale(.97); }
+@keyframes button-feedback-spin { to { transform: rotate(360deg); } }
+@keyframes button-feedback-content-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes button-feedback-check-in { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .button-feedback-content, .button-feedback-spinner, .button-feedback-success svg path { animation: none; stroke-dashoffset: 0; }
+  .button:not(:disabled):active { transform: none; }
+}
