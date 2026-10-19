@@ -6,7 +6,7 @@ function Button({ variant = 'primary', icon, children, className = '', state, lo
   const label = { loading: loadingLabel, success: successLabel, error: errorLabel }[state]
   const classes = ['button', `button-${variant}`, state !== undefined && 'button-stateful', feedback && 'button-feedback', feedback && `button-feedback-${state}`, className].filter(Boolean).join(' ')
   const handleClick = (event) => {
-    if (disabled || feedback) { event.preventDefault(); return }
+    if (disabled || feedback) { event?.preventDefault?.(); return }
     return onClick?.(event)
   }
 
