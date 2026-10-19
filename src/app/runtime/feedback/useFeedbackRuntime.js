@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export const TOAST_DISMISS_MS = 2600
-export const SUCCESS_DISMISS_MS = 1800
 export const TOAST_DURATIONS = { success: 4000, info: 4000, warning: 6000, error: 0 }
 
 function createToastQueue(onChange) {
@@ -84,37 +82,20 @@ export function useFeedbackRuntime() {
       queue.dispose()
     }
   }, [queue])
-  const [toastMessage, setToastMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-
-  useEffect(() => {
-    if (!toastMessage) return undefined
-    const timer = setTimeout(() => setToastMessage(''), TOAST_DISMISS_MS)
-    return () => clearTimeout(timer)
-  }, [toastMessage])
-
-  useEffect(() => {
-    if (!successMessage) return undefined
-    const timer = setTimeout(() => setSuccessMessage(''), SUCCESS_DISMISS_MS)
-    return () => clearTimeout(timer)
-  }, [successMessage])
-
-  const showSuccessMessage = useCallback((message = 'Ação salva com sucesso') => {
-    setSuccessMessage(message)
-  }, [])
-
-  const clearFeedback = useCallback(() => { queue.clear(); setToastMessage(''); setSuccessMessage('') }, [queue])
+  const showSuccessMessage = useCallback((message = 'Ação salva com sucesso') => queue.show({ type: 'success', message }), [queue])
+  const showWarningMessage = useCallback(message => queue.show({ type: 'warning', message }), [queue])
+  const showErrorMessage = useCallback(message => queue.show({ type: 'error', message }), [queue])
+  const showContextMessage = useCallback((message, { type = 'info' } = {}) => queue.show({ type, message }), [queue])
 
   return {
     toasts,
     showToast: queue.show,
     dismissToast: queue.dismiss,
     setToastPaused: queue.pause,
-    clearFeedback,
-    toastMessage,
-    successMessage,
-    setToastMessage,
-    setSuccessMessage,
+    clearFeedback: queue.clear,
+    showWarningMessage,
+    showErrorMessage,
+    showContextMessage,
     showSuccessMessage,
   }
 }

@@ -62,5 +62,5 @@ test('Task 5 keeps capability and navigation query ownership in App while inject
   assert.match(app, /setRequestKey/)
   assert.match(app, /showSuccessMessage/)
   assert.match(app, /showApiError/)
-  assert.match(app, /setToastMessage/)
+  assert.match(app, /showWarningMessage/)
 })

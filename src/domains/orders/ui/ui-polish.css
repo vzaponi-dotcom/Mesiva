@@ -1,25 +1,8 @@
-.toast-success {
-  top: 20px;
-  right: auto;
-  bottom: auto;
-  left: 50%;
-  max-width: calc(100vw - 32px);
-  translate: -50% 0;
-}
+
 
 @media (max-width: 640px) {
   .modal-backdrop {
     place-items: center;
     padding: 12px;
-  }
-
-  .toast-success {
-    top: 70px;
-    right: 12px;
-    bottom: auto;
-    left: 12px;
-    width: auto;
-    max-width: none;
-    translate: 0 0;
   }
 }

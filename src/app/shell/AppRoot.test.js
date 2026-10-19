@@ -13,8 +13,7 @@ const baseProps = {
   bootstrapState: 'ready',
   onRetryBootstrap() {},
   retryDisabled: false,
-  toastMessage: '',
-  successMessage: '',
+  toasts: [],
   children: React.createElement('div', { id: 'ready-content' }, 'ready'),
 }
 
@@ -40,7 +39,7 @@ test('AppRoot preserva checking, anonymous, bootstrap error e ready', async (t) 
   assert.equal(retries, 1)
   await act(async () => renderer.update(React.createElement(AppRoot, { ...baseProps, bootstrapState: 'loading' })))
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'Carregando Mesiva' }).length, 1)
-  await act(async () => renderer.update(React.createElement(AppRoot, { ...baseProps, toastMessage: 'Aviso', successMessage: 'Sucesso' })))
+  await act(async () => renderer.update(React.createElement(AppRoot, { ...baseProps, toasts: [{id:'one',type:'warning',message:'Aviso',phase:'visible'},{id:'two',type:'success',message:'Sucesso',phase:'visible'}] })))
   assert.equal(renderer.root.findAllByProps({ 'aria-label': 'Carregando Mesiva' }).length, 0)
   assert.match(nodeText(renderer.root), /ready/)
   assert.match(nodeText(renderer.root), /Aviso/)

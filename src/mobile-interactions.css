@@ -3,9 +3,3 @@
     transform: scale(0.98);
   }
 }
-
-@media (max-width: 820px) {
-  body > .toast-success {
-    z-index: var(--layer-toast);
-  }
-}

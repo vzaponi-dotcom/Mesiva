@@ -77,12 +77,6 @@
   fill: var(--muted);
 }
 
-[data-theme='dark'] .toast-success {
-  border-color: var(--border-strong);
-  background: var(--success-soft);
-  color: var(--success);
-}
-
 [data-theme='dark'] .new-order-category,
 [data-theme='dark'] .new-order-quantity-control button {
   color: var(--text);

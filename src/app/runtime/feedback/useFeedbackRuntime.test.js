@@ -2,7 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import React from 'react'
 import { act, create } from 'react-test-renderer'
-import { SUCCESS_DISMISS_MS, TOAST_DISMISS_MS, useFeedbackRuntime } from './useFeedbackRuntime.js'
+import { useFeedbackRuntime } from './useFeedbackRuntime.js'
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 function createHarness() {
   let current
@@ -13,29 +15,23 @@ function createHarness() {
   return { Harness, getCurrent: () => current }
 }
 
-test('feedback runtime preserves toast/success copy and dismiss timings', async (t) => {
+test('public feedback adapters preserve copy and assign explicit semantics', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] })
   const harness = createHarness()
   let renderer
   await act(async () => { renderer = create(React.createElement(harness.Harness)) })
   t.after(() => renderer.unmount())
 
-  assert.equal(TOAST_DISMISS_MS, 2600)
-  assert.equal(SUCCESS_DISMISS_MS, 1800)
-
-  await act(async () => { harness.getCurrent().setToastMessage('Atenção') })
-  assert.equal(harness.getCurrent().toastMessage, 'Atenção')
-  await act(async () => { t.mock.timers.tick(2599) })
-  assert.equal(harness.getCurrent().toastMessage, 'Atenção')
-  await act(async () => { t.mock.timers.tick(1) })
-  assert.equal(harness.getCurrent().toastMessage, '')
-
-  await act(async () => { harness.getCurrent().showSuccessMessage() })
-  assert.equal(harness.getCurrent().successMessage, 'Ação salva com sucesso')
-  await act(async () => { t.mock.timers.tick(1799) })
-  assert.equal(harness.getCurrent().successMessage, 'Ação salva com sucesso')
-  await act(async () => { t.mock.timers.tick(1) })
-  assert.equal(harness.getCurrent().successMessage, '')
+  await act(async () => {
+    harness.getCurrent().showSuccessMessage('Salvo')
+    harness.getCurrent().showWarningMessage('Revisar')
+    harness.getCurrent().showErrorMessage('Falha')
+  })
+  assert.deepEqual(harness.getCurrent().toasts.map(({type,message}) => [type,message]), [['success','Salvo'],['warning','Revisar'],['error','Falha']])
+  await act(async () => harness.getCurrent().clearFeedback())
+  await act(async () => harness.getCurrent().showContextMessage('Enviado à fila', { type: 'info' }))
+  assert.equal(harness.getCurrent().toasts[0].type, 'info')
+  await act(async () => harness.getCurrent().clearFeedback())
 })
 
 test('toasts wait their turn and identical events remain distinct without restarting existing deadlines', async t => {
