@@ -158,3 +158,39 @@ test('returning to visited screens reuses snapshots and queries without another 
  }
  assert.equal(dataReads().length,before,JSON.stringify(dataReads().slice(before)))
 })
+
+test('A Receber mantém a busca durante atualização e consulta somente após a pausa de digitação',async t=>{
+  const {renderer}=await mount(t,'/financeiro/a-receber',{grants:[...capabilities,'finance.receivables']})
+  const placeholder='Buscar cliente, telefone ou pedido'
+  const search=renderer.root.findByProps({placeholder})
+  const fetchReady=globalThis.fetch,queries=[]
+  let release
+  const pending=new Promise(resolve=>{release=resolve})
+  globalThis.fetch=async(path,...args)=>{
+    const url=new URL(String(path),'https://example.test')
+    if(url.pathname==='/api/reads/finance/receivables'){
+      const typed=url.searchParams.get('search') || ''
+      queries.push(typed)
+      if(typed==='Maria')await pending
+    }
+    return fetchReady(path,...args)
+  }
+  try{
+    await act(async()=>{
+      for(const value of ['M','Ma','Maria'])search.props.onChange({target:{value}})
+    })
+    assert.equal(renderer.root.findByProps({placeholder}),search)
+    assert.equal(search.props.value,'Maria')
+    await act(async()=>{await new Promise(resolve=>setTimeout(resolve,350))})
+    assert.deepEqual(queries.filter(Boolean),['Maria'],'a digitação deve disparar apenas a consulta consolidada')
+    assert.equal(renderer.root.findByProps({placeholder}),search,'o campo não pode desmontar enquanto a consulta está pendente')
+    assert.equal(search.props.value,'Maria')
+    assert.match(nodeText(renderer.root),/Atualizando resultados/)
+    await act(async()=>search.props.onChange({target:{value:'Mariana'}}))
+    assert.equal(search.props.value,'Mariana','a consulta anterior não pode apagar a digitação seguinte')
+  } finally {
+    release()
+    globalThis.fetch=fetchReady
+    await act(async()=>{})
+  }
+})
