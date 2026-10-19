@@ -1,5 +1,5 @@
 import PageSkeleton from '../../../shared/ui/PageSkeleton.jsx'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import '../../../../shared/finance.js'
 import '../../../receivables.css'
 import '../../../receivables-forecast.css'
@@ -107,6 +107,8 @@ function Receivables({
   const { formatOrderDate, getOrderItemsSearchText, getOrderItemsSummary } = orderPresentation
   const { search, displayMode = 'client', activeView, timingFilter, sortMode, exactDateFilter, selectedEntryKey } = queryState
   const patchQuery = (patch) => onQueryChange(patch)
+  const [searchInput, setSearchInput] = useState(search || '')
+  const lastDispatchedSearch = useRef(search)
   const [today, setToday] = useState(() => getBusinessDate())
   const [detailOrder, setDetailOrder] = useState(null)
   const [promiseOrder, setPromiseOrder] = useState(null)
@@ -125,8 +127,21 @@ function Receivables({
   const clientSelection=scoped?{selectedOrderIds:scopedSelection.ids,selectedCount:scopedSelection.ids.length,activeGroupKey:selectedEntryKey,selectionLimit:100,selectionLimitReached:scopedSelection.ids.length>=100,
     clear:scopedSelection.clear,deselectAll:scopedSelection.clear,toggleOrder:id=>scopedSelection.toggle(groupPage?.orders?.find(order=>order.id===id)),
     activateGroup:()=>true,selectAllVisible:()=>scopedSelection.selectVisible(groupPage?.orders || []),reconcile:()=>{}}:legacySelection
-  const normalizedSearch = search.trim().toLowerCase()
+  const normalizedSearch = (search || '').trim().toLowerCase()
+  const mainPending = scoped && !reads.main.data
   const writeDisabled = disabled || (typeof navigator !== 'undefined' && !navigator.onLine)
+
+  useEffect(() => {
+    if (search !== lastDispatchedSearch.current) setSearchInput(search || '')
+  }, [search])
+  useEffect(() => {
+    if (searchInput === search) return undefined
+    const timer = setTimeout(() => {
+      lastDispatchedSearch.current = searchInput
+      onQueryChange({ search: searchInput })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, search, onQueryChange])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -339,7 +354,6 @@ function Receivables({
   const pendingHasActiveFilter = Boolean(normalizedSearch || timingFilter !== 'all' || exactDateFilter)
   const pendingVisibleCount = scoped?(displayMode==='client'?reads.main.data?.matchingGroupCount:reads.main.data?.matchingCount):(displayMode === 'client' ? visibleClientGroups.length : visiblePendingEntries.length)
 
-  if(scoped&&!reads.main.data)return <><AreaNavigation area="finance" /><PageHeader title="A receber" />{reads.main.error?<div role="alert">Não foi possível carregar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>:<PageSkeleton label="Carregando recebimentos" heading={false} />}</>
 
   const detail = selectedEntry ? (
     <ReceivableDetail
@@ -365,11 +379,13 @@ function Receivables({
           className="receivables-forecast-button"
           onClick={() => setForecastOpen(true)}
           aria-label="Previsão de recebimentos"
+          disabled={mainPending}
         >
           <Icon name="chart" size={18} />
           <span>Previsão</span>
         </button>
       </div>
+      {mainPending ? <PageSkeleton label="Carregando resumo de recebimentos" heading={false} /> : (
       <section className="receivables-summary-grid" aria-label="Resumo de recebimentos">
         <button type="button" className="receivables-summary-card" onClick={() => applyTimingFilter('today')}>
           <span className="receivables-summary-icon"><Icon name="clock" size={18} /></span><span>Receber hoje</span><strong>{currency(summary.today.amount)}</strong><small>{summary.today.count} pedido(s)</small>
@@ -381,6 +397,7 @@ function Receivables({
           <span className="receivables-summary-icon"><Icon name="alert" size={18} /></span><span>Em atraso</span><strong>{currency(summary.overdue.amount)}</strong><small>{summary.overdue.count} pendência(s)</small>
         </button>
       </section>
+      )}
 
       <div className="receivables-workspace">
         <section className="surface-card receivables-surface">
@@ -410,7 +427,7 @@ function Receivables({
                 icon="plus"
                 className="receivables-payment-desktop-action"
                 onClick={() => setQuickPaymentOpen(true)}
-                disabled={writeDisabled || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
+                disabled={writeDisabled || mainPending || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
               >
                 Registrar recebimento
               </Button>
@@ -418,12 +435,14 @@ function Receivables({
           )}
 
           <div className="receivables-controls">
-            <label className="search-control"><Icon name="search" size={18} /><input type="search" placeholder={activeView === 'pending' && displayMode === 'client' ? 'Buscar cliente, telefone ou pedido' : 'Buscar identificação, pedido ou produto'} value={search} onChange={(event) => patchQuery({ search: event.target.value })} /></label>
+            <label className="search-control"><Icon name="search" size={18} /><input type="search" placeholder={activeView === 'pending' && displayMode === 'client' ? 'Buscar cliente, telefone ou pedido' : 'Buscar identificação, pedido ou produto'} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} /></label>
             {activeView === 'pending' && <div className="receivables-sort-control"><span>Ordenar</span><SystemSelect label="Ordenar recebimentos" value={sortMode} options={SORT_OPTIONS} onChange={(value) => patchQuery({ sortMode: value })} /></div>}
-            <span className="toolbar-count">{activeView === 'pending' ? pendingVisibleCount : (scoped?reads.main.data.matchingCount:visiblePaidOrders.length)} item(ns)</span>
+            <span className="toolbar-count">{mainPending ? 'Atualizando resultados…' : `${activeView === 'pending' ? pendingVisibleCount : (scoped?reads.main.data.matchingCount:visiblePaidOrders.length)} item(ns)`}</span>
           </div>
 
-          {activeView === 'pending' ? (
+          {mainPending ? (reads.main.error
+            ? <div role="alert">Não foi possível carregar os recebimentos. <button type="button" onClick={reads.main.reload}>Tentar novamente</button></div>
+            : <PageSkeleton label="Carregando recebimentos" heading={false} />) : activeView === 'pending' ? (
             displayMode === 'client' ? (
               <div className={`receivables-client-list${clientSelection.selectedCount > 0 ? ' has-selection' : ''}`} aria-label="Recebimentos pendentes por cliente">
                 {visibleClientGroups.map((group) => (
@@ -474,12 +493,12 @@ function Receivables({
               {!visiblePaidOrders.length && <div className="empty-state receivables-empty-state"><Icon name="check" size={28} /><strong>{allPaidOrders.length ? 'Nenhum recebimento neste filtro' : 'Nenhum recebimento registrado ainda'}</strong><span>{allPaidOrders.length ? 'Tente outro período ou ajuste a busca.' : 'Os pedidos pagos aparecerão aqui.'}</span></div>}
             </div>
           )}
-          {scoped&&reads.main.error&&<p role="alert">Não foi possível atualizar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></p>}
+          {scoped&&reads.main.data&&reads.main.error&&<p role="alert">Não foi possível atualizar os recebimentos.<button type="button" onClick={reads.main.reload}>Tentar novamente</button></p>}
           {scoped&&reads.main.hasMore&&<button type="button" disabled={reads.main.status==='loading-next'} onClick={reads.main.loadNext}>Carregar mais recebimentos</button>}
         </section>
 
         <aside className="receivables-detail-panel" aria-label="Detalhes do recebimento">
-          {activeView === 'pending' && displayMode === 'client' ? (
+          {mainPending ? <p role="status">Atualizando detalhes…</p> : activeView === 'pending' && displayMode === 'client' ? (
             <ReceivableClientPanel
               group={selectedClientGroup}
               readModel={scoped?{...reads.group,selectedCount:scopedSelection.ids.length,selectedTotal:scopedSelection.total}:undefined}
@@ -508,7 +527,7 @@ function Receivables({
           className="receivables-payment-fab"
           aria-label="Registrar recebimento"
           onClick={() => setQuickPaymentOpen(true)}
-          disabled={writeDisabled || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
+          disabled={writeDisabled || mainPending || (scoped?pendingIsGloballyEmpty:quickPaymentEntries.length === 0) || !onRegisterPayment}
         >
           <Icon name="plus" size={20} />
           <span>Registrar recebimento</span>
