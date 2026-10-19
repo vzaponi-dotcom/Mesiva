@@ -237,7 +237,7 @@ function Products({ products, search, currency, onSearchChange, onAdd, onEdit, o
       )}
 
       {canManageProducts && deleteCandidate && (
-        <ConfirmationDialog
+        <ConfirmationDialog submitting={pendingId !== null} loadingLabel="Excluindo…"
           title="Confirmar exclusão"
           message={`Excluir ${deleteCandidate.name}? Esta ação remove o produto do cardápio e não pode ser desfeita.`}
           confirmLabel="Confirmar exclusão"
@@ -248,7 +248,7 @@ function Products({ products, search, currency, onSearchChange, onAdd, onEdit, o
       )}
 
       {canManageProducts && bulkDeleteOpen && (
-        <ConfirmationDialog
+        <ConfirmationDialog submitting={pendingId !== null} loadingLabel="Excluindo…"
           title="Excluir produtos selecionados?"
           message={`Excluir ${selectedProductIds.size} produto(s)? Esta ação remove os itens do cardápio e não pode ser desfeita.`}
           confirmLabel="Excluir selecionados"

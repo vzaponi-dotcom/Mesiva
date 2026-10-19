@@ -59,7 +59,7 @@ function RegisterRefundDialog({ open, order, onClose, onConfirm, submitting = fa
         </div>
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>Voltar</Button>
-          <Button type="submit" disabled={submitting || !refundMethod || originalMethodInactive}>{submitting ? 'Registrando…' : 'Confirmar estorno'}</Button>
+          <Button type="submit" state={submitting ? 'loading' : 'idle'} loadingLabel="Registrando…" disabled={submitting || !refundMethod || originalMethodInactive}>{submitting ? 'Registrando…' : 'Confirmar estorno'}</Button>
         </div>
       </form>
     </Modal>

@@ -89,7 +89,7 @@ function Clients({ readContext,clients = [], orders = [], search = '', sort = 'n
       </div><label className="field"><span>Ordenar por</span><SystemSelect value={filterDraft.sort} options={allowedSort} label="Ordenar clientes" onChange={value => setFilterDraft({ ...filterDraft, sort: value })} /></label></div>
     </Modal>}
     {selected && <ClientRelationshipPanel key={`${ownerKey}:${selected.id}`} readModel={panelModel} client={selected} profile={profile} completeHistory={completeHistory} canViewOrders={canViewOrders} tab={tab} onTabChange={setTab} onClose={closeProfile} currency={currency} disabled={actionsDisabled} onEdit={canUpdateClients ? () => onEdit?.(selected) : undefined} onDelete={canDeleteClients ? () => setDeleteConfirm(true) : undefined} onNewOrder={hasCapability(granted, 'orders.create') && onNewOrder ? () => onNewOrder(selected) : undefined} onRegisterPayment={onRegisterPayment} onRegisterClientOrdersPayment={onRegisterClientOrdersPayment} canReceiveOrder={canReceiveOrder} renderOrderDetail={renderOrderDetail} />}
-    {deleteConfirm && selected && <ConfirmationDialog title="Excluir cliente" message={`Tem certeza que deseja excluir ${selected.name}? Esta ação não pode ser desfeita.`} confirmLabel="Excluir cliente" onClose={() => setDeleteConfirm(false)} onConfirm={confirmDelete} disabled={pendingId !== null} />}
+    {deleteConfirm && selected && <ConfirmationDialog submitting={pendingId !== null} loadingLabel="Excluindo…" title="Excluir cliente" message={`Tem certeza que deseja excluir ${selected.name}? Esta ação não pode ser desfeita.`} confirmLabel="Excluir cliente" onClose={() => setDeleteConfirm(false)} onConfirm={confirmDelete} disabled={pendingId !== null} />}
   </>
 }
 

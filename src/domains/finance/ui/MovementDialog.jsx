@@ -105,7 +105,7 @@ function MovementDialogContent({ movement, today, disabled, onClose, onSubmit, p
       ? movement.categoryLabel || getMovementCategoryLabel(movement)
       : categoryOptions.find((option) => option.type === review.type && option.value === review.category)?.label || review.category
     return (
-      <ConfirmationDialog
+      <ConfirmationDialog submitting={submitting} loadingLabel="Salvando…"
         title={editing ? 'Confirmar alterações' : 'Confirmar movimentação'}
         message={editing ? 'Revise os dados antes de salvar as alterações.' : 'Revise os dados antes de registrar este movimento.'}
         details={(

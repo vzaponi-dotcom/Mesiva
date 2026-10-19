@@ -9,6 +9,7 @@ export default function CheckoutPaymentComposition({
   paymentOptions,
   defaultPaymentMethod,
   disabled = false,
+  submitting = false,
   onCancel,
   onConfirm,
 }) {
@@ -33,7 +34,7 @@ export default function CheckoutPaymentComposition({
         onReceivedDateChange={setReceivedDate}
       />
       <div className="form-actions">
-        <Button type="button" onClick={() => payload && dateValid && onConfirm?.(payload, receivedDate)} disabled={disabled || !payload || !dateValid}>Confirmar recebimento</Button>
+        <Button type="button" onClick={() => payload && dateValid && onConfirm?.(payload, receivedDate)} disabled={disabled || !payload || !dateValid} state={submitting ? 'loading' : 'idle'} loadingLabel="Recebendo…">Confirmar recebimento</Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={disabled}>Voltar</Button>
       </div>
     </div>

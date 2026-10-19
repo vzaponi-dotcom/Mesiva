@@ -56,6 +56,7 @@ const initialAdjustment = (value) => {
 }
 
 function NewOrder({
+  submitting = false,
   clients,
   products,
   tables = [],
@@ -411,8 +412,10 @@ function NewOrder({
     updateQuickClient(patch.phone === undefined ? patch : { ...patch, phone: formatPhone(patch.phone) })
   }
 
+  const [pendingIntent, setPendingIntent] = useState(null)
+  const submitIntentRef = useRef(null)
   const save = async (paymentAllocations, bypassManualPrintWarning = false, intent = 'save', receivedDate) => {
-    if (disabled || !canSubmit) return false
+    if (disabled || submitIntentRef.current || !canSubmit) return false
     if (editReservationMode
       && reservationContext?.hasManualPrintHistory
       && !bypassManualPrintWarning) {
@@ -420,6 +423,9 @@ function NewOrder({
       return false
     }
 
+    submitIntentRef.current = paymentAllocations ? 'receive' : intent
+    setPendingIntent(submitIntentRef.current)
+    try {
     setCheckoutError('')
     const result = editOrderMode
       ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
@@ -442,6 +448,7 @@ function NewOrder({
       return false
     }
     return true
+    } finally { submitIntentRef.current = null; setPendingIntent(null) }
   }
 
   const cartProps = {
@@ -597,6 +604,7 @@ function NewOrder({
               onRemove: (lineId) => setItems((current) => removeCartItem(current, lineId)),
             }}
             checkoutProps={{
+              submitting, pendingIntent,
               draft,
               preview,
               currency,

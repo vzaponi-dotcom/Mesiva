@@ -21,7 +21,7 @@ const PRESENTATION_OPTIONS = [
 ]
 const SIZE_PRESETS = ['P', 'M', 'G']
 
-function ProductForm({ value, onChange, onSubmit, onCancel, disabled = false, editing = false }) {
+function ProductForm({ value, onChange, onSubmit, onCancel, disabled = false, editing = false, submitting = false }) {
   const initializedNewPriceRef = useRef(false)
 
   useEffect(() => {
@@ -222,7 +222,7 @@ function ProductForm({ value, onChange, onSubmit, onCancel, disabled = false, ed
 
       <div className="form-actions product-form-actions">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={disabled}>Cancelar</Button>
-        <Button type="button" onClick={onSubmit} disabled={!canSubmit}>{editing ? 'Salvar alterações' : 'Salvar produto'}</Button>
+        <Button type="button" onClick={onSubmit} disabled={!canSubmit} state={submitting ? 'loading' : 'idle'} loadingLabel="Salvando…">{editing ? 'Salvar alterações' : 'Salvar produto'}</Button>
       </div>
     </div>
   )

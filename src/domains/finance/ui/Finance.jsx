@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Button from '../../../shared/ui/Button'
 import Icon from '../../../shared/ui/Icon'
 import PageHeader from '../../../shared/ui/PageHeader'
@@ -10,6 +10,17 @@ import { groupFinanceMovementsForDisplay } from '../domain/movementPresentation.
 
 function Finance({ movementReadModel,refundReadModel,totals, movements, currency, onAddMovement, onEditMovement, onDeleteMovement, onConfigureOpeningBalance, pendingRefundOrders = [], onRequestRefund, formatCancellationDate = () => 'Data não informada', canManageMovements = true, canRefundPayments = true }) {
   const [movementPendingDelete, setMovementPendingDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const deletingRef = useRef(false)
+  const confirmDelete = async () => {
+    if (deletingRef.current || !movementPendingDelete) return false
+    deletingRef.current = true; setDeleting(true)
+    try {
+      const deleted = await onDeleteMovement?.(movementPendingDelete.id)
+      if (deleted !== false) setMovementPendingDelete(null)
+      return deleted
+    } finally { deletingRef.current = false; setDeleting(false) }
+  }
   const writeDisabled = typeof navigator !== 'undefined' && !navigator.onLine
   const displayMovements = groupFinanceMovementsForDisplay(movements)
 
@@ -96,7 +107,7 @@ function Finance({ movementReadModel,refundReadModel,totals, movements, currency
         {movementReadModel?.hasMore&&<button type="button" disabled={movementReadModel.status==='loading-next'} onClick={movementReadModel.loadNext}>Carregar mais movimentações</button>}
         {!displayMovements.length && <div className="empty-state"><Icon name="finance" size={28} /><strong>Nenhuma movimentação registrada</strong><span>Registre uma entrada ou saída para começar o controle.</span></div>}
       </section>
-      {movementPendingDelete && <ConfirmationDialog title="Excluir movimentação?" message={`A movimentação “${movementPendingDelete.description}” será removida do histórico visível.`} confirmLabel="Excluir movimentação" onConfirm={async () => { const deleted = await onDeleteMovement?.(movementPendingDelete.id); if (deleted !== false) setMovementPendingDelete(null) }} onClose={() => setMovementPendingDelete(null)} disabled={writeDisabled} />}
+      {movementPendingDelete && <ConfirmationDialog submitting={deleting} loadingLabel="Excluindo…" title="Excluir movimentação?" message={`A movimentação “${movementPendingDelete.description}” será removida do histórico visível.`} confirmLabel="Excluir movimentação" onConfirm={confirmDelete} onClose={() => setMovementPendingDelete(null)} disabled={writeDisabled} />}
     </>
   )
 }

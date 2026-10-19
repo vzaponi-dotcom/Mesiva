@@ -105,6 +105,8 @@ export function OrderCheckoutFields({ draft, disabled = false, canAdjustOrders =
 }
 
 function OrderCheckoutSummary({
+  submitting = false,
+  pendingIntent = null,
   draft,
   preview,
   showFields = true,
@@ -167,6 +169,7 @@ function OrderCheckoutSummary({
         renderPaymentComposition?.({
           totalCents: Math.round(Number(preview.total || 0) * 100),
           disabled: disabled || !canSubmit,
+          submitting: submitting && pendingIntent === 'receive',
           onCancel: () => setShowPayment(false),
           onConfirm: onSavePaid,
         })
@@ -177,13 +180,13 @@ function OrderCheckoutSummary({
         : allowImmediatePayment ? 'Salvar pedido mantém o pagamento pendente.' : 'O pagamento é registrado pela comanda.'}</p>
       {!showPayment && (
         <div className="new-order-checkout-actions">
-          <Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button>
-          {canReceiveEdit && <Button type="button" variant="secondary" onClick={() => onSavePaid?.()} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
-          {canRefundEdit && <Button type="button" variant="secondary" onClick={onSaveRefund} disabled={disabled || !canSubmit}>Salvar e registrar devolução</Button>}
+          <Button type="button" onClick={onSavePending} state={submitting && pendingIntent === 'save' ? 'loading' : 'idle'} loadingLabel="Salvando…" disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button>
+          {canReceiveEdit && <Button type="button" variant="secondary" onClick={() => onSavePaid?.()} state={submitting && pendingIntent === 'receive' ? 'loading' : 'idle'} loadingLabel="Salvando…" disabled={disabled || !canSubmit}>Salvar e receber</Button>}
+          {canRefundEdit && <Button type="button" variant="secondary" onClick={onSaveRefund} state={submitting && pendingIntent === 'refund' ? 'loading' : 'idle'} loadingLabel="Salvando…" disabled={disabled || !canSubmit}>Salvar e registrar devolução</Button>}
           {!editOrderMode && allowImmediatePayment && renderPaymentComposition && <Button type="button" variant="secondary" onClick={() => setShowPayment(true)} disabled={disabled || !canSubmit}>Salvar e receber</Button>}
         </div>
       )}
-      {!showPayment && <div className="new-order-mobile-checkout"><div><small>Total da venda</small><strong>{currency(preview.total)}</strong></div><Button type="button" onClick={onSavePending} disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button></div>}
+      {!showPayment && <div className="new-order-mobile-checkout"><div><small>Total da venda</small><strong>{currency(preview.total)}</strong></div><Button type="button" onClick={onSavePending} state={submitting && pendingIntent === 'save' ? 'loading' : 'idle'} loadingLabel="Salvando…" disabled={disabled || !canSubmit}>{editOrderMode ? 'Salvar alterações' : draft.type === 'Local' && draft.scheduledFor ? 'Salvar reserva' : 'Salvar pedido'}</Button></div>}
     </section>
   )
 }

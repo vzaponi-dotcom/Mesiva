@@ -5,6 +5,22 @@ import { act } from 'react-test-renderer'
 import { mountHook } from '../test-support/harness.js'
 import { useProductEditor } from './useProductEditor.js'
 
+test('product submission latches before a render and an old completion cannot close a new editor', async t => {
+  let resolve, calls = 0
+  const hook = await mountHook(t, useProductEditor, { canManageProducts: true, createProduct: () => { calls++; return new Promise(done => { resolve = done }) } })
+  await act(async () => { hook.current().openNewProduct(); hook.current().replaceDraft({ name: 'Primeiro', price: 'R$ 10,00' }) })
+  let first, duplicate
+  await act(async () => { first = hook.current().submit(); duplicate = hook.current().submit() })
+  assert.equal(calls, 1)
+  assert.equal(await duplicate, false)
+  assert.equal(hook.current().submitting, true)
+  await act(async () => { hook.current().cancel(); hook.current().openNewProduct(); hook.current().replaceDraft({ name: 'Segundo', price: 'R$ 20,00' }) })
+  await act(async () => { resolve({ id: 'one' }); await first })
+  assert.equal(hook.current().isOpen, true)
+  assert.equal(hook.current().draft.name, 'Segundo')
+  assert.equal(hook.current().submitting, false)
+})
+
 test('product editor owns new, edit, cancel, submit and close-if-editing lifecycle', async (t) => {
   const creates = []
   const updates = []

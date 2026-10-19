@@ -4,7 +4,7 @@
 .button-feedback-sizer, .button-feedback-content { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
 .button-feedback-sizer { display: grid; visibility: hidden; pointer-events: none; padding-inline-start: 26px; }
 .button-feedback-sizer > span { grid-area: 1 / 1; }
-.button-feedback-content { animation: button-feedback-content-in 200ms cubic-bezier(.2,0,0,1); }
+.button-feedback .button-feedback-content { animation: button-feedback-content-in 200ms cubic-bezier(.2,0,0,1); }
 .button.button-feedback-success { background: var(--success-soft); border-color: var(--success); color: var(--success); cursor: default; }
 .button.button-feedback-error { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); cursor: default; }
 .button-feedback-success svg path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: button-feedback-check-in 250ms ease-out forwards; }

@@ -68,10 +68,10 @@ function OrderDetail({ order, currency, printing, printJob, onClose, onRequestCa
     setPrintingAction(key)
     try {
       await action()
-      if (successMessage) onToast?.(successMessage)
+      if (successMessage) onToast?.(successMessage, { type: 'info' })
       return true
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível concluir a ação de impressão.')
+      onToast?.(error?.message || 'Não foi possível concluir a ação de impressão.', { type: 'error' })
       return false
     } finally {
       setPrintingAction(null)

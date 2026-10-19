@@ -101,7 +101,7 @@ function CancelOrderDialog({
           </div>
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={() => setReviewPayload(null)} disabled={submitting}>Voltar e revisar</Button>
-            <Button type="button" variant="danger" onClick={handleFinalConfirm} disabled={submitting || reviewedMethodInactive || reviewedReasonInactive}>{submitting ? 'Cancelando…' : 'Confirmar cancelamento definitivamente'}</Button>
+            <Button type="button" variant="danger" onClick={handleFinalConfirm} state={submitting ? 'loading' : 'idle'} loadingLabel="Cancelando…" disabled={submitting || reviewedMethodInactive || reviewedReasonInactive}>{submitting ? 'Cancelando…' : 'Confirmar cancelamento definitivamente'}</Button>
           </div>
         </div>
       </Modal>

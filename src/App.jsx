@@ -657,6 +657,10 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         // A edição já foi confirmada, mas a cobrança/devolução ainda não.
         // Não mostrar confirmação final antes da operação financeira.
         if (intent === 'receive' || intent === 'refund') return
+        const offersPrint = canExecutePrinting && Number(order.contentRevision || 0) > Number(context.orderContext?.expectedContentRevision || 0)
+        const offersSettlement = order.totalCents != null && Number(order.totalCents) !== Math.round(Number(context.orderContext?.originalTotal || 0)*100)
+          && ((order.dueCents || 0)>0 || (order.refundDueCents || 0)>0)
+        if (offersPrint || offersSettlement) return
         showSuccessMessage('Pedido atualizado com sucesso')
         return
       }
@@ -675,12 +679,12 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
     if(!editSettlement || editSettlementBusy)return false
     const pendingPrint=editSettlement.print
     if(editSettlement.source!=='finance' && (editSettlement.intent==='receive' || editSettlement.intent==='refund')) {
-      showSuccessMessage('Pedido atualizado. A operação financeira continua pendente.')
+      if (!pendingPrint) showWarningMessage('Pedido atualizado. A operação financeira continua pendente.')
     }
     setEditSettlement(null)
     setEditSettlementError('')
     editSettlementAttemptRef.current=null
-    if(pendingPrint && pendingPrint.owner===accessContextId)setEditedPrintPrompt(pendingPrint)
+    if(pendingPrint && pendingPrint.owner===accessContextId)setEditedPrintPrompt({ ...pendingPrint, completionMessage: editSettlement.intent === 'receive' || editSettlement.intent === 'refund' ? 'Pedido atualizado. A operação financeira continua pendente.' : 'Alterações salvas!' })
     return true
   }
   const submitEditSettlement=async(type,values,receivedDate)=>{
@@ -726,15 +730,15 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
       }
       editSettlementAttemptRef.current=null
       if(type==='receive'){
-        showSuccessMessage('Saldo complementar recebido com sucesso')
+        if (!target.print) showSuccessMessage('Saldo complementar recebido com sucesso')
         setEditSettlement(null)
-        if(target.print)setEditedPrintPrompt(target.print)
+        if(target.print)setEditedPrintPrompt({ ...target.print, completionMessage: 'Saldo complementar recebido com sucesso' })
       }else{
         // Inclusive em devolução parcial: o restante permanece no Financeiro,
         // sem reabrir um modal com a operação anterior já concluída.
-        showSuccessMessage('Devolução registrada com sucesso')
+        if (!target.print) showSuccessMessage('Devolução registrada com sucesso')
         setEditSettlement(null)
-        if(target.print)setEditedPrintPrompt(target.print)
+        if(target.print)setEditedPrintPrompt({ ...target.print, completionMessage: 'Devolução registrada com sucesso' })
       }
       return true
     }catch(error){
@@ -1004,7 +1008,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         {activeTab === 'orders' && <Orders orders={orders} key={accessContextId} finishedTodayCount={readModelEnabled?(kitchenSummary.data?.finishedToday ?? '—'):undefined} officialOrders={orders} now={kitchenNow} currentTiming={currentTiming} search={query.orders.search} onSearchChange={(search) => patchQuery('orders', { search })} currency={currency} onNewOrder={handleNewOrder} onFinalizeOrder={orderCommands.finalizeOrder} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={openOrderPayment} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} onNavigatePrintQueue={() => requestNavigation('print-queue')} printQueueActiveCount={printing.activeJobCount} granted={granted} newOrderIds={newOrderIds} soundEnabled={kitchenSoundEnabled} onSoundEnabledChange={handleKitchenSoundEnabledChange} printing={printing} onToast={showContextMessage} canCreateOrders={canCreateOrders} canFinalizeOrders={canFinalizeOrders} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canUseLocalPreferences={canUseLocalPreferences} canViewPrintQueue={canViewPrintQueue} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} onEditReservation={handleEditFutureReservation} onEditOrder={handleEditOrder} canEditOrders={canEditOrders} />}
         {activeTab === 'history' && <OrderHistory key={accessContextId} readModel={historyReadModel} orders={orders} currentTiming={currentTiming} currency={currency} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={openOrderPayment} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} actionKey={orderCommands.actionKey} printing={printing} onToast={showContextMessage} queryState={query.history} onQueryChange={(patch) => patchQuery('history', patch)} granted={granted} canViewAnalysis={canViewOperationalAnalysis} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} />}
         {activeTab === 'kitchen-tv-control' && <KitchenTvControlSurface key={accessContextId} orders={orders} realtime={globalSession ? realtime : undefined} now={kitchenNow} currentTiming={currentTiming} granted={granted} isOnline={isOnline} onNavigate={requestNavigation} onFeedback={showWarningMessage} />}
-        {activeTab === 'new-order' && newOrderDraft.context && <NewOrderRoute key={newOrderDraft.renderKey ?? 'new-order'} clients={clients} products={products} tables={tables} mode={newOrderDraft.context?.mode || 'create'} orderContext={newOrderDraft.context?.orderContext || null} reservationContext={newOrderDraft.context?.reservationContext || null} initialDraft={newOrderDraft.context?.initialDraft || null} initialTableId={newOrderDraft.context?.tableId || ''} expectedTableTabId={newOrderDraft.context?.expectedTableTabId || ''} currency={currency} disabled={writesBlocked} renderPaymentComposition={(props) => <CheckoutPaymentComposition {...props} paymentOptions={paymentOptions} defaultPaymentMethod={defaultPaymentMethod} />} modalityOptions={modalityOptions} defaultModality={defaultModality} onPolicyChanged={effectiveConfig.refresh} onCancel={() => requestNavigation(newOrderDraft.context?.returnDestination || 'orders')} onCreateClient={quickCreateCustomer} onSubmit={newOrderDraft.submit} onDraftDirtyChange={newOrderDraft.setDirty} canCreateClients={canCreateClients} canAdjustOrders={canAdjustOrders} canBackdateOrders={canBackdateOrders} canReceivePayments={canReceivePayments} canRefundPayments={canRefundPayments} />}
+        {activeTab === 'new-order' && newOrderDraft.context && <NewOrderRoute key={newOrderDraft.renderKey ?? 'new-order'} clients={clients} products={products} tables={tables} mode={newOrderDraft.context?.mode || 'create'} orderContext={newOrderDraft.context?.orderContext || null} reservationContext={newOrderDraft.context?.reservationContext || null} initialDraft={newOrderDraft.context?.initialDraft || null} initialTableId={newOrderDraft.context?.tableId || ''} expectedTableTabId={newOrderDraft.context?.expectedTableTabId || ''} currency={currency} disabled={writesBlocked} submitting={newOrderDraft.checkoutPending} renderPaymentComposition={(props) => <CheckoutPaymentComposition {...props} paymentOptions={paymentOptions} defaultPaymentMethod={defaultPaymentMethod} />} modalityOptions={modalityOptions} defaultModality={defaultModality} onPolicyChanged={effectiveConfig.refresh} onCancel={() => requestNavigation(newOrderDraft.context?.returnDestination || 'orders')} onCreateClient={quickCreateCustomer} onSubmit={newOrderDraft.submit} onDraftDirtyChange={newOrderDraft.setDirty} canCreateClients={canCreateClients} canAdjustOrders={canAdjustOrders} canBackdateOrders={canBackdateOrders} canReceivePayments={canReceivePayments} canRefundPayments={canRefundPayments} />}
         {activeTab === 'clients' && <CustomersWorkspace key={accessContextId} readContext={scopedReadContext} clients={clients} orders={orders} granted={granted} currency={currency} onRegisterPayment={openOrderPayment} onRegisterClientOrdersPayment={openClientOrdersPayment} onNewOrder={client => handleNewOrder({ clientId: client.id, returnTab: 'clients' })} printing={printing} onToast={showContextMessage} search={query.clients.search} sort={query.clients.sort} onSearchChange={(search) => patchQuery('clients', { search })} onSortChange={(sort) => patchQuery('clients', { sort })} writesBlocked={writesBlocked} canCreateClients={canCreateClients} canUpdateClients={canUpdateClients} canDeleteClients={canDeleteClients} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} onDuplicatePhone={showWarningMessage} />}
         <CatalogWorkspace visible={activeTab === 'products'} products={products} search={query.products.search} queryState={query.products} onSearchChange={(search) => patchQuery('products', { search })} onQueryChange={(patch) => patchQuery('products', patch)} currency={currency} writesBlocked={writesBlocked} canManageProducts={canManageProducts} applyOfficialEffects={applyOfficialEffects} setRequestKey={setRequestKey} onSuccess={showSuccessMessage} onError={showApiError} />
         {activeTab === 'print-queue' && <PrintQueue orders={orders} printing={printing} key={accessContextId} realtime={globalSession ? realtime : undefined} reviewJobId={printQueueReviewJobId} onReviewJobConsumed={() => setPrintQueueReviewJobId(null)} onOpenPrintingSettings={canOpenPrintingSettings ? () => requestNavigation('settings-printing') : undefined} onToast={showContextMessage} queryState={query.printQueue} onQueryChange={(patch) => patchQuery('printQueue', patch)} canExecutePrinting={canExecutePrinting} canForcePrinting={canForcePrinting} canDiscardPrinting={canDiscardPrinting} isOnline={isOnline} />}
@@ -1107,7 +1111,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
             <div className="order-edit-print-message">
               <span className="order-edit-print-check" aria-hidden="true"><Icon name="check" size={22} /></span>
               <div>
-                <strong>Alterações salvas!</strong>
+                <strong>{editedPrintPrompt.completionMessage || 'Alterações salvas!'}</strong>
                 <p>Deseja reimprimir o pedido com todos os itens atualizados?</p>
               </div>
             </div>
@@ -1118,7 +1122,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
             <div className="order-edit-print-actions">
               <Button type="button" variant="secondary" className="order-edit-print-decline" disabled={editedPrintBusy}
                 onClick={() => setEditedPrintPrompt(null)}>Não, obrigado</Button>
-              <Button type="button" icon="printer" disabled={editedPrintBusy || !canExecutePrinting || writesBlocked}
+              <Button type="button" icon="printer" state={editedPrintBusy ? 'loading' : 'idle'} loadingLabel="Enviando…" disabled={editedPrintBusy || !canExecutePrinting || writesBlocked}
                 onClick={async () => {
                   if (!editedPrintPrompt || editedPrintBusy || !canExecutePrinting || writesBlocked) return
                   setEditedPrintBusy(true)

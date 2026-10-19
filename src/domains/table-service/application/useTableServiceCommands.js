@@ -122,7 +122,7 @@ export function useTableServiceCommands({
       if (!ownsMutation()) return false
 
       if (applyOfficialEffects({ tables: result.tables, tableTab: result.tableTab }) === false) return false
-      onSuccess(successMessages.transfer)
+      onSuccess(`Comanda transferida: ${validated.source.name} → ${validated.destination.name}`)
       return true
     } catch (error) {
       if (!ownsMutation()) return false
