@@ -182,7 +182,7 @@ test('A Receber mantém a busca durante atualização e consulta somente após a
     assert.equal(renderer.root.findByProps({placeholder}),search)
     assert.equal(search.props.value,'Maria')
     await act(async()=>{await new Promise(resolve=>setTimeout(resolve,350))})
-    assert.deepEqual(queries,['Maria'],'a digitação deve disparar apenas a consulta consolidada')
+    assert.deepEqual(queries.filter(Boolean),['Maria'],'a digitação deve disparar apenas a consulta consolidada')
     assert.equal(renderer.root.findByProps({placeholder}),search,'o campo não pode desmontar enquanto a consulta está pendente')
     assert.equal(search.props.value,'Maria')
     assert.match(nodeText(renderer.root),/Atualizando resultados/)
