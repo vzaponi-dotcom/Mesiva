@@ -1,0 +1,25 @@
+/* Visual reference: Animated Toast, Joly UI (MIT, Copyright (c) 2025 Johuniq). */
+.toast-region { position: fixed; top: max(20px, env(safe-area-inset-top)); left: 50%; translate: -50% 0; z-index: var(--layer-toast, 120); width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 100px); overflow-y: auto; overscroll-behavior: contain; padding: 3px; pointer-events: none; }
+.toast-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.feedback-toast { --toast-tone: var(--info); --toast-soft: var(--info-soft); display: flex; align-items: flex-start; gap: 12px; position: relative; min-width: 0; padding: 14px 12px; border: 1px solid var(--border); border-inline-start: 3px solid var(--toast-tone); border-radius: var(--radius-md); background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); pointer-events: auto; animation: feedback-toast-in 220ms cubic-bezier(.2,0,0,1); }
+.feedback-toast-success { --toast-tone: var(--success); --toast-soft: var(--success-soft); }
+.feedback-toast-error { --toast-tone: var(--danger); --toast-soft: var(--danger-soft); }
+.feedback-toast-warning { --toast-tone: var(--warning); --toast-soft: var(--warning-soft); }
+.feedback-toast-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: var(--radius-sm); background: var(--toast-soft); color: var(--toast-tone); }
+.feedback-toast-copy { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.feedback-toast-copy strong { display: block; font-weight: 750; margin-bottom: 3px; }
+.feedback-toast-copy p { margin: 0; font-size: .88rem; line-height: 1.45; color: var(--text-soft); }
+.feedback-toast-close { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-soft); cursor: pointer; }
+.feedback-toast-close:hover { background: var(--surface-strong); }
+.feedback-toast-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.feedback-toast.is-exiting { animation: feedback-toast-out 160ms ease-in forwards; pointer-events: none; }
+.toast-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes feedback-toast-in { from { opacity: 0; transform: translateY(-12px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes feedback-toast-out { to { opacity: 0; transform: translateY(-8px); } }
+@media (max-width: 640px) {
+  .toast-region { top: calc(70px + env(safe-area-inset-top)); width: calc(100vw - 24px); max-height: calc(100dvh - 160px); }
+  .feedback-toast-close { min-width: 44px; height: 44px; flex-basis: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback-toast, .feedback-toast.is-exiting { animation: none; }
+}
