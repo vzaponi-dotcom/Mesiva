@@ -1,6 +1,6 @@
 # Feedback de ações: botões com estados e toasts
 
-**Status:** proposta para revisão do proprietário; implementação ainda não iniciada.
+**Status:** especificação aprovada pelo proprietário nesta conversa em 19/10/2026; implementação ainda não iniciada.
 
 **Baseline inspecionada:** `e70a0ad7`, branch `codex/melhorias-visuais-2026-10-19`.
 
@@ -114,4 +114,4 @@ O plano de execução deve enumerar as chamadas concretas migradas por superfíc
 
 ## 10. Próximo marco
 
-Após revisão desta especificação pelo proprietário, escrever o plano com arquivos, contratos, testes e ordem de migração. A aprovação dos exemplos do 21st.dev aprova a direção visual; não significa que esta especificação escrita já foi revisada, nem autoriza publicação.
+A especificação foi aprovada pelo proprietário nesta conversa. O próximo marco é revisar o [plano de implementação](../plans/2026-10-19-action-feedback.md), com arquivos, contratos, testes e ordem de migração, e selecionar o método de execução. A aprovação não autoriza publicação.
