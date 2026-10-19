@@ -426,28 +426,28 @@ function NewOrder({
     submitIntentRef.current = paymentAllocations ? 'receive' : intent
     setPendingIntent(submitIntentRef.current)
     try {
-    setCheckoutError('')
-    const result = editOrderMode
-      ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
-      : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations, { receivedDate }))
-    if (result?.code === 'POLICY_CHANGED') {
-      setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
-      await onPolicyChanged?.()
-      return false
-    }
-    if (result?.ok === false) {
-      setCheckoutError(result.message || (editReservationMode
-        ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
-        : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.'))
-      return false
-    }
-    if (!result) {
-      setCheckoutError(editReservationMode
-        ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
-        : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.')
-      return false
-    }
-    return true
+      setCheckoutError('')
+      const result = editOrderMode
+        ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
+        : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations, { receivedDate }))
+      if (result?.code === 'POLICY_CHANGED') {
+        setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
+        await onPolicyChanged?.()
+        return false
+      }
+      if (result?.ok === false) {
+        setCheckoutError(result.message || (editReservationMode
+          ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
+          : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.'))
+        return false
+      }
+      if (!result) {
+        setCheckoutError(editReservationMode
+          ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
+          : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.')
+        return false
+      }
+      return true
     } finally { submitIntentRef.current = null; setPendingIntent(null) }
   }
 

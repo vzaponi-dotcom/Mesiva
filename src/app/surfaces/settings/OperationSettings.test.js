@@ -69,7 +69,7 @@ test('Operation and Modalities routes open one shared operations resource', asyn
   assert.equal(operations.resources.operations.draft.timing.scheduledPrepLeadMinutes, adminFixture.data.timing.scheduledPrepLeadMinutes)
 })
 
-test('confirmed operation save reports success and failed save stays silent', async (t) => {
+test('confirmed operation save acknowledges on its button and failed save has no success', async (t) => {
   const h = await workspaceHarness(t)
   h.document.documentElement.dataset = {}
   const [{ default: Settings }, { ThemeProvider }] = await Promise.all([
@@ -90,13 +90,17 @@ test('confirmed operation save reports success and failed save stays silent', as
     onSuccessMessage: (message) => messages.push(message),
   }))
   const screen = await h.render(Page)
+  t.mock.timers.enable({ apis: ['setTimeout'] })
 
   await act(async () => buttonNamed(screen.root, 'Salvar altera\u00e7\u00f5es').props.onClick())
-  assert.deepEqual(messages, ['Configura\u00e7\u00f5es de opera\u00e7\u00e3o salvas com sucesso'])
+  assert.equal(nodeText(buttonNamed(screen.root, 'Salvar alterações').findByProps({ role: 'status' })), 'Salvo')
+  assert.deepEqual(messages, [])
+  await act(async () => t.mock.timers.tick(1800))
 
   saveResult = false
   await act(async () => buttonNamed(screen.root, 'Salvar altera\u00e7\u00f5es').props.onClick())
-  assert.equal(messages.length, 1)
+  assert.equal(nodeText(buttonNamed(screen.root, 'Salvar alterações').findByProps({ role: 'status' })), '')
+  assert.equal(messages.length, 0)
 })
 
 test('operation Cancel delegates to the explicit discard-and-return action', async (t) => {

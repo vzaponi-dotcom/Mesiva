@@ -42,6 +42,8 @@ test('A Receber renders only ordinary pending and paid orders from a mixed datas
   const { NavigationProvider } = await vite.ssrLoadModule('/src/app/navigation/NavigationContext.jsx')
   const hadWindow = Object.hasOwn(globalThis, 'window')
   const originalWindow = globalThis.window
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { onLine: true } })
   globalThis.window = {
     setInterval: () => 1,
     clearInterval: () => {},
@@ -109,6 +111,8 @@ test('A Receber renders only ordinary pending and paid orders from a mixed datas
     assert.match(rendered, /Cliente quitado/)
     assert.doesNotMatch(rendered, /Mesa quitada/)
   } finally {
+    if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator)
+    else delete globalThis.navigator
     if (hadWindow) globalThis.window = originalWindow
     else delete globalThis.window
     await vite.close()

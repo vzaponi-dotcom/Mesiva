@@ -26,7 +26,7 @@ test('refresh after opening A never retargets the confirmed intention to B', asy
   await openConfirmation(renderer)
 
   await act(async () => renderer.update(React.createElement(TableTransferDialog, { ...props, tables: [source('B'), destination] })))
-  const confirm = renderer.root.findAllByType('button').filter((node) => nodeText(node) === 'Transferir comanda').at(-1)
+  const confirm = renderer.root.findAllByType('button').find(button => button.props['aria-label'] === 'Transferir comanda')
   await act(async () => confirm.props.onClick())
 
   assert.deepEqual(calls, [])
@@ -84,7 +84,7 @@ test('App refreshes official data after an identity conflict without retrying th
   await act(async () => buttonNamed(renderer.root, 'Transferir comanda').props.onClick())
   await openConfirmation(renderer)
   const bootstrapCallsBeforeConflict = bootstrapCalls
-  const confirm = renderer.root.findAllByType('button').filter((node) => nodeText(node) === 'Transferir comanda').at(-1)
+  const confirm = renderer.root.findAllByType('button').find(button => button.props['aria-label'] === 'Transferir comanda')
   await act(async () => confirm.props.onClick())
 
   assert.deepEqual(transferBodies, [{ destinationTableId: 'destination', expectedTableTabId: 'A' }])

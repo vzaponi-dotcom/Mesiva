@@ -9,7 +9,6 @@ const successMessages = Object.freeze({
   rename: 'Mesa renomeada com sucesso',
   activate: 'Mesa ativada com sucesso',
   deactivate: 'Mesa desativada com sucesso',
-  transfer: 'Comanda transferida com sucesso',
 })
 
 export function useTableServiceCommands({

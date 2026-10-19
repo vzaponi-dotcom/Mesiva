@@ -8,7 +8,7 @@ import { filterPrintQueueJobs, getPrintQueueSearchText, PRINT_QUEUE_STATUS_FILTE
 import { formatOrderCustomerIdentity } from '../../../../shared/orderPrintDocument.js'
 import { getPrintJobDetails } from './printQueueDetails.js'
 import { DEFAULT_PRINT_QUEUE_QUERY, sortPrintQueueJobsForDisplay } from './printQueueQuery.js'
-import { nodeText, workspaceHarness } from '../../../test-support/renderWorkspace.js'
+import { buttonNamed, nodeText, workspaceHarness } from '../../../test-support/renderWorkspace.js'
 
 const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 
@@ -849,10 +849,8 @@ test('bulk discard button confirms, respects discard capability and reports reta
   assert.match(nodeText(renderer.root), /Descartar pendências da fila\?/)
   assert.equal(bulkCalls, 0)
 
-  const matchingDiscardButtons = renderer.root.findAllByType('button')
-    .filter((node) => nodeText(node).trim() === 'Descartar pendências')
-  assert.ok(matchingDiscardButtons.length >= 2)
-  const confirm = matchingDiscardButtons.at(-1)
+  const confirm = buttonNamed(renderer.root.findByProps({ role: 'dialog' }), 'Descartar pendências')
+  assert.ok(confirm)
   await act(async () => { await confirm.props.onClick(); await Promise.resolve(); await Promise.resolve() })
 
   assert.equal(bulkCalls, 1)

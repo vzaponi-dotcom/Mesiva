@@ -130,7 +130,7 @@ test('A6 keeps comanda identity across transfer, navigation, payment, and order 
     state.transferResponse = () => response({ error: { code: 'TABLE_TAB_CHANGED', message: 'A comanda mudou.' } }, 409)
     await openTransferConfirmation(renderer)
     const readsBefore = state.bootstrapCalls
-    const confirm = renderer.root.findAllByType('button').filter((button) => nodeText(button) === 'Transferir comanda').at(-1)
+    const confirm = buttonNamed(renderer.root.findByProps({ role: 'dialog' }), 'Transferir comanda')
     await act(async () => confirm.props.onClick())
     assert.deepEqual(state.transferCalls, [{ path: '/api/tables/table-1/transfer', body: { destinationTableId: 'table-5', expectedTableTabId: 'tab-A' } }])
     assert.equal(state.bootstrapCalls, readsBefore + 1)
