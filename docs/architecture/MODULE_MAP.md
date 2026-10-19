@@ -149,6 +149,7 @@ O índice público não deve ser tratado como inventário completo de todas as f
 | [`src/app/navigation/registry.js`](../../src/app/navigation/registry.js) | Destinos, paths, grupos e capabilities de navegação | Adicionar/alterar menu, deep link ou acesso por tela |
 | [`src/app/navigation/adminRouter.jsx`](../../src/app/navigation/adminRouter.jsx) | Roteador administrativo | Mudanças de navegação/Routing do admin |
 | [`src/app/runtime/session/useSessionRuntime.js`](../../src/app/runtime/session/useSessionRuntime.js) | Descoberta/seleção de sessão e geração de contexto | Login, troca de empresa, perda de grants, invalidação |
+| [`src/app/runtime/feedback/useFeedbackRuntime.js`](../../src/app/runtime/feedback/useFeedbackRuntime.js) | Coleção, fila FIFO, pausas e timers de avisos | Tipos de feedback e limpeza de sessão; apresentação em [`ToastRegion`](../../src/shared/ui/ToastRegion.jsx) pelo [`AppRoot`](../../src/app/shell/AppRoot.jsx) |
 | [`src/app/runtime/data/useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js) | Bootstrap legado ou por superfície, coleções parciais declaradas, efeitos protegidos e fallback | Refresh/reconciliação, dados obsoletos, transição de sessão, 401/409 |
 | [`src/app/workflows/payments/`](../../src/app/workflows/payments/) | Recebimento de pedido, comanda, lote de cliente; editor/composição | Qualquer implementação de pagamento dividido/quitação |
 | [`src/app/workflows/refunds/`](../../src/app/workflows/refunds/) | Coordenação de registro de estorno | Cancelamento pago e estorno posterior |

@@ -1,6 +1,6 @@
 # Feedback de ações: botões com estados e toasts
 
-**Status:** especificação aprovada pelo proprietário nesta conversa em 19/10/2026; implementação ainda não iniciada.
+**Status:** especificação aprovada pelo proprietário nesta conversa em 19/10/2026; implementação local concluída; validação final e revisão independente em fechamento.
 
 **Baseline inspecionada:** `e70a0ad7`, branch `codex/melhorias-visuais-2026-10-19`.
 

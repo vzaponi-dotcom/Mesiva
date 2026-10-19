@@ -1,6 +1,6 @@
 # Feedback de ações — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** integrar o visual aprovado de botões com estados e toasts, confirmando cada ação no contexto que permanece visível.
 
@@ -10,7 +10,7 @@
 
 **Spec:** [especificação aprovada em 19/10/2026](../specs/2026-10-19-action-feedback-design.md).
 
-**Status:** plano preparado para revisão; método de execução ainda não selecionado. Baseline: `bbd925a8`, branch `codex/melhorias-visuais-2026-10-19`.
+**Status:** aprovado e executado nesta conversa, com implementação própria e revisão independente final em andamento. Baseline: `bbd925a8`, branch `codex/melhorias-visuais-2026-10-19`.
 
 ## Global Constraints
 
@@ -55,11 +55,11 @@
 
 **Interfaces:** `Button({ state = 'idle', loadingLabel, successLabel = 'Concluído', errorLabel = 'Falhou', ...existingProps })`. Não recebe `onAction`. `ConfirmationDialog` ganha `submitting = false` e `loadingLabel = 'Confirmando…'`, distintos de `disabled`; encaminha ao botão principal. Ícones novos somente se não houver equivalente adequado.
 
-- [ ] Escrever testes RED de `Button`: estados controlados, atributos HTML/`type="submit"`/`onClick`/`preventDefault`, ícone existente, conteúdo JSX, disabled externo e carregamento que impede clique/Enter; não executar nenhuma mutation por conta própria. Usar assertions `assert.equal(button.props['aria-busy'], true)`, `assert.equal(button.props.disabled, true)`, `assert.equal(calls, 0)` durante loading e `assert.equal(submits, 1)` para acionamento válido. Testar também que atualização para `idle` preserva o handler original.
-- [ ] Rodar `node --test src/shared/ui/Button.test.js`; confirmar falha pelas props/comportamentos ainda ausentes.
-- [ ] Conferir as licenças nas fontes oficiais e registrar atribuição antes de copiar trechos. Implementar o contrato visual e CSS da spec; manter área estável pela composição dos rótulos, não por largura rígida. O caller controla o resultado e os 1.800 ms, não o `Button`. Preservar peso/tamanho/variantes existentes e foco visível.
-- [ ] Rodar o teste novamente; todos passam. Conferir botão comum e botão com rótulo longo no preview antes de migrar consumidores.
-- [ ] Commit local somente dos arquivos desta tarefa: `feat(ui): adicionar estados visuais aos botões`.
+- [x] Escrever testes RED de `Button`: estados controlados, atributos HTML/`type="submit"`/`onClick`/`preventDefault`, ícone existente, conteúdo JSX, disabled externo e carregamento que impede clique/Enter; não executar nenhuma mutation por conta própria. Usar assertions `assert.equal(button.props['aria-busy'], true)`, `assert.equal(button.props.disabled, true)`, `assert.equal(calls, 0)` durante loading e `assert.equal(submits, 1)` para acionamento válido. Testar também que atualização para `idle` preserva o handler original.
+- [x] Rodar `node --test src/shared/ui/Button.test.js`; confirmar falha pelas props/comportamentos ainda ausentes.
+- [x] Conferir as licenças nas fontes oficiais e registrar atribuição antes de copiar trechos. Implementar o contrato visual e CSS da spec; manter área estável pela composição dos rótulos, não por largura rígida. O caller controla o resultado e os 1.800 ms, não o `Button`. Preservar peso/tamanho/variantes existentes e foco visível.
+- [x] Rodar o teste novamente; todos passam. Conferir botão comum e botão com rótulo longo no preview antes de migrar consumidores.
+- [x] Commit local somente dos arquivos desta tarefa: `feat(ui): adicionar estados visuais aos botões`.
 
 ## Task 2: coleção e ciclo de vida dos toasts
 
@@ -67,11 +67,11 @@
 
 **Interfaces:** `useFeedbackRuntime()` oferece `toasts`, `showToast({ type, title?, message }) -> id`, `dismissToast(id)`, `setToastPaused(id, reason, paused)` e `clearFeedback()`. Cada item expõe `id`, conteúdo tipado e fase `visible|exiting`; a fila excedente é interna. `reason` é `hover|focus|document`. `ToastRegion({ toasts, onDismiss, onPause })` apresenta a coleção e mantém regiões de anúncio educado/erro montadas antes das mensagens; pausa por documento oculto é controlada pelo runtime. Suporte temporário às saídas antigas até a tarefa 3.
 
-- [ ] Escrever testes RED com timers/Date falsos: `assert.equal(visible.length, 3)` após quatro eventos, quarto aviso só inicia os 4.000 ms após promoção; duas mensagens iguais têm IDs distintos; erro continua visível após 60.000 ms; atenção só expira em 6.000 ms. Testar pausa hover+foco+documento (remover uma razão não retoma enquanto outra existir), re-render sem reset, fechamento durante pausa, ordem FIFO e `clearFeedback()` cancelando timers/fila/anúncios. Testar unmount sem atualização tardia.
-- [ ] Rodar `node --test src/app/runtime/feedback/useFeedbackRuntime.test.js src/shared/ui/ToastRegion.test.js`; observar RED.
-- [ ] Implementar no runtime existente: IDs locais monotônicos, até três visíveis, promoção após saída de 160 ms; restantes aguardam sem timer. Timer estável por ID usa tempo restante e cancela no cleanup. Sem polling/intervalo, storage, HTTP ou provider duplicado. Regiões acessíveis e botão de fechar com nome; CSS/SVG seguem spec e variantes semânticas.
-- [ ] Repetir o comando de testes; todos passam. `ToastRegion` testa mensagens/fechamento/anúncios/eventos de pausa, sem testes que apenas espelhem classes.
-- [ ] Commit: `feat(ui): centralizar fila e apresentação de toasts`.
+- [x] Escrever testes RED com timers/Date falsos: `assert.equal(visible.length, 3)` após quatro eventos, quarto aviso só inicia os 4.000 ms após promoção; duas mensagens iguais têm IDs distintos; erro continua visível após 60.000 ms; atenção só expira em 6.000 ms. Testar pausa hover+foco+documento (remover uma razão não retoma enquanto outra existir), re-render sem reset, fechamento durante pausa, ordem FIFO e `clearFeedback()` cancelando timers/fila/anúncios. Testar unmount sem atualização tardia.
+- [x] Rodar `node --test src/app/runtime/feedback/useFeedbackRuntime.test.js src/shared/ui/ToastRegion.test.js`; observar RED.
+- [x] Implementar no runtime existente: IDs locais monotônicos, até três visíveis, promoção após saída de 160 ms; restantes aguardam sem timer. Timer estável por ID usa tempo restante e cancela no cleanup. Sem polling/intervalo, storage, HTTP ou provider duplicado. Regiões acessíveis e botão de fechar com nome; CSS/SVG seguem spec e variantes semânticas.
+- [x] Repetir o comando de testes; todos passam. `ToastRegion` testa mensagens/fechamento/anúncios/eventos de pausa, sem testes que apenas espelhem classes.
+- [x] Commit: `feat(ui): centralizar fila e apresentação de toasts`.
 
 ## Task 3: integração global e retirada das apresentações antigas
 
@@ -79,11 +79,11 @@
 
 **Interfaces:** `AppRoot({ toasts, onDismissToast, onPauseToast, ...existingProps })` monta `ToastRegion` fora das superfícies que podem fechar. Em `App.jsx`, adapters estáveis para `onSuccess(message)` e os callbacks de erro/atenção/info enviam `showToast` tipado; `clearFeedback()` roda no reset de sessão/contexto, também antes de renderizar dados da nova empresa. Não trocar owners das mutations.
 
-- [ ] Escrever RED no harness do shell: toast sobrevive ao fechamento de modal/navegação permitida, nova empresa e logout removem os avisos antes de exibir o novo contexto, auth/bootstrap continuam corretos. Assertions: `assert.equal(successOverlays.length, 0)`, `assert.equal(toastsForNewContext.length, 0)` e cada evento oficial gera exatamente uma mensagem. Migrar os testes estáticos antigos para o contrato aprovado sem eliminar as proteções de camadas/mobile/privacidade.
-- [ ] Rodar `node --test src/app/shell/AppRoot.feedback.test.js src/successFeedbackRegression.test.js src/mobileConsistencyRegression.test.js src/mobileViewportRegression.test.js`; confirmar RED.
-- [ ] Substituir `Toast`/`Success` inline; migrar todas as chamadas `setToastMessage`, `setSuccessMessage`, `toastMessage`, `successMessage` da aplicação, removendo os adapters legados do runtime quando não houver consumidores. Onde uma prop externa ainda se chamar `onToast(message)`, manter o contrato com adapter tipado explícito pela origem, sem heurística textual. Preservar 401/403, guards, banners e notificações.
-- [ ] Repetir os testes e `rg -n 'toast-success|toast-icon|success-confirmation|success-feedback.css' src -g '*.jsx' -g '*.js' -g '*.css'`; nenhuma dependência ativa das apresentações removidas. Referências históricas em documentação não são código morto a excluir.
-- [ ] Commit: `refactor(ui): substituir feedback global por toasts tipados`.
+- [x] Escrever RED no harness do shell: toast sobrevive ao fechamento de modal/navegação permitida, nova empresa e logout removem os avisos antes de exibir o novo contexto, auth/bootstrap continuam corretos. Assertions: `assert.equal(successOverlays.length, 0)`, `assert.equal(toastsForNewContext.length, 0)` e cada evento oficial gera exatamente uma mensagem. Migrar os testes estáticos antigos para o contrato aprovado sem eliminar as proteções de camadas/mobile/privacidade.
+- [x] Rodar `node --test src/app/shell/AppRoot.feedback.test.js src/successFeedbackRegression.test.js src/mobileConsistencyRegression.test.js src/mobileViewportRegression.test.js`; confirmar RED.
+- [x] Substituir `Toast`/`Success` inline; migrar todas as chamadas `setToastMessage`, `setSuccessMessage`, `toastMessage`, `successMessage` da aplicação, removendo os adapters legados do runtime quando não houver consumidores. Onde uma prop externa ainda se chamar `onToast(message)`, manter o contrato com adapter tipado explícito pela origem, sem heurística textual. Preservar 401/403, guards, banners e notificações.
+- [x] Repetir os testes e `rg -n 'toast-success|toast-icon|success-confirmation|success-feedback.css' src -g '*.jsx' -g '*.js' -g '*.css'`; nenhuma dependência ativa das apresentações removidas. Referências históricas em documentação não são código morto a excluir.
+- [x] Commit: `refactor(ui): substituir feedback global por toasts tipados`.
 
 ## Task 4: mutations que fecham ou removem o botão
 
@@ -91,11 +91,11 @@
 
 **Interfaces:** preservar callbacks e retornos atuais (`false`/objeto/`true`) dos commands/workflows. Derivar `state='loading'` de `submitting`, `busy`, `actionKey`, `pendingAction` ou do estado de edição já proprietário. Editor sem latch de envio ganha ref local e `submitting`, expostos pelo próprio hook e limpos no finally/owner correto; não criar um executor genérico de Promise. No checkout, passar `submitting={newOrderDraft.checkoutPending}` de `App.jsx` a `NewOrder` e ao `OrderCheckoutSummary`, separado de `disabled`; `pendingIntent='save'|'receive'|'refund'|null`, local ao formulário, identifica o botão acionado. Desabilitar os demais sem fazê-los parecer envios independentes; aplicar ao controle mobile correspondente. Limpar a intenção no finally/unmount e não aproveitar estado de formulário anterior.
 
-- [ ] Escrever RED para as famílias do mapa: entrada rápida duplicada chama API uma vez; `false` mantém formulário sem check; retorno oficial fecha sem espera artificial e mostra um toast; sessão/edição trocada durante resposta não fecha nem confirma a tela nova. Na comanda, `assert.equal(successCount, 0)` até a reconciliação oficial e `assert.equal(successCount, 1)` depois. Na edição com próxima etapa, `assert.equal(globalSuccessCount, 0)` enquanto o próximo diálogo mostra pedido salvo e pendência financeira/reimpressão.
-- [ ] Rodar `node --test src/actionFeedbackFlows.test.js src/domains/catalog/application/useProductEditor.test.js src/domains/customers/application/useCustomerEditor.test.js src/operationalPayment.test.js src/domains/orders/ui/OrderEditing.test.js src/app/workflows/payments/table-tab/tableTabPaymentReconciliation.test.js`; confirmar o RED do comportamento novo, sem alterar expectativas financeiras existentes.
-- [ ] Integrar loading em todas as mutations enumeradas no mapa, incluindo ações mobile do checkout e confirmações de exclusão/duplicidade. Ajustar `App.jsx` para não emitir sucesso redundante quando abre settlement/reimpressão; usar a mensagem na etapa seguinte. Informar origem/destino na transferência quando disponíveis oficialmente; não montar check em card que já saiu do filtro. Manter erros locais e reconciliação.
-- [ ] Repetir o comando; rodar também os testes dos commands/workflows modificados por caminho explícito. Confirmar no harness uma chamada por ação, nenhum atraso mínimo e nenhuma leitura adicional criada pelo feedback.
-- [ ] Commit: `feat(ui): integrar feedback aos fluxos operacionais`.
+- [x] Escrever RED para as famílias do mapa: entrada rápida duplicada chama API uma vez; `false` mantém formulário sem check; retorno oficial fecha sem espera artificial e mostra um toast; sessão/edição trocada durante resposta não fecha nem confirma a tela nova. Na comanda, `assert.equal(successCount, 0)` até a reconciliação oficial e `assert.equal(successCount, 1)` depois. Na edição com próxima etapa, `assert.equal(globalSuccessCount, 0)` enquanto o próximo diálogo mostra pedido salvo e pendência financeira/reimpressão.
+- [x] Rodar `node --test src/actionFeedbackFlows.test.js src/domains/catalog/application/useProductEditor.test.js src/domains/customers/application/useCustomerEditor.test.js src/operationalPayment.test.js src/domains/orders/ui/OrderEditing.test.js src/app/workflows/payments/table-tab/tableTabPaymentReconciliation.test.js`; confirmar o RED do comportamento novo, sem alterar expectativas financeiras existentes.
+- [x] Integrar loading em todas as mutations enumeradas no mapa, incluindo ações mobile do checkout e confirmações de exclusão/duplicidade. Ajustar `App.jsx` para não emitir sucesso redundante quando abre settlement/reimpressão; usar a mensagem na etapa seguinte. Informar origem/destino na transferência quando disponíveis oficialmente; não montar check em card que já saiu do filtro. Manter erros locais e reconciliação.
+- [x] Repetir o comando; rodar também os testes dos commands/workflows modificados por caminho explícito. Confirmar no harness uma chamada por ação, nenhum atraso mínimo e nenhuma leitura adicional criada pelo feedback.
+- [x] Commit: `feat(ui): integrar feedback aos fluxos operacionais`.
 
 ## Task 5: confirmação no botão persistente e rascunhos
 
@@ -103,11 +103,11 @@
 
 **Interfaces:** shell continua recebendo `state`, `onSave`, `onReconcile`, `onReload` e `onDiscard`; acrescentar `feedbackScopeKey` quando o componente puder sobreviver à troca de recurso. Estado visual transitório local é invalidado por recurso/contexto, mudança do rascunho ou unmount. `onSave`/`onReconcile` com `true` oficial podem confirmar; `false`, carga inicial ou simples `status='ready'` não podem. `busyKeys` e resultado confirmado já existentes continuam donos da configuração de impressão.
 
-- [ ] Escrever RED: sucesso oficial mostra “Salvo” por 1.800 ms; editar novamente retorna imediatamente a “Salvar alterações”; `false`, sem mudanças, conflito, `unconfirmed`, load/reload e resposta de scope anterior não mostram sucesso. Rascunho alterado durante envio não mostra check para a versão nova. Reconciliação confirmada do mesmo envio pode mostrar check, sem novo write. Salvar impressora que fecha editor mantém feedback visível fora dele; envio de teste nunca diz “Impresso”.
-- [ ] Rodar `node --test src/app/surfaces/settings/components/SettingsEditorShell.feedback.test.js src/app/surfaces/settings/components/SettingsPrimitives.test.js src/settingsPrintingPolicy.test.js src/components/PrintingSettings.test.js src/components/PrintingConflictRecovery.test.js`; confirmar RED dos novos casos.
-- [ ] Implementar estado/timer estritamente visual no shell; representar saving/error confirmados pelo owner, limpar quando rascunho muda e não sobrescrever conflito/incerteza por timer. Manter feedback de “Não há alterações” separado de sucesso. Reutilizar mensagens locais para rascunhos; evitar toast duplicado de confirmação. Aplicar critério equivalente aos botões persistentes de impressão, sem mudar QZ/recovery/retries.
-- [ ] Repetir os testes; rodar `node --test src/app/policy-editing/policyEditingController.test.js src/app/policy-editing/PolicyEditingProvider.test.js` e testes das configurações tocadas. Confirmar que reconciliar só usa as consultas já previstas, sem novos requests por animação.
-- [ ] Commit: `feat(ui): confirmar salvamentos persistentes nos botões`.
+- [x] Escrever RED: sucesso oficial mostra “Salvo” por 1.800 ms; editar novamente retorna imediatamente a “Salvar alterações”; `false`, sem mudanças, conflito, `unconfirmed`, load/reload e resposta de scope anterior não mostram sucesso. Rascunho alterado durante envio não mostra check para a versão nova. Reconciliação confirmada do mesmo envio pode mostrar check, sem novo write. Salvar impressora que fecha editor mantém feedback visível fora dele; envio de teste nunca diz “Impresso”.
+- [x] Rodar `node --test src/app/surfaces/settings/components/SettingsEditorShell.feedback.test.js src/app/surfaces/settings/components/SettingsPrimitives.test.js src/settingsPrintingPolicy.test.js src/components/PrintingSettings.test.js src/components/PrintingConflictRecovery.test.js`; confirmar RED dos novos casos.
+- [x] Implementar estado/timer estritamente visual no shell; representar saving/error confirmados pelo owner, limpar quando rascunho muda e não sobrescrever conflito/incerteza por timer. Manter feedback de “Não há alterações” separado de sucesso. Reutilizar mensagens locais para rascunhos; evitar toast duplicado de confirmação. Aplicar critério equivalente aos botões persistentes de impressão, sem mudar QZ/recovery/retries.
+- [x] Repetir os testes; rodar `node --test src/app/policy-editing/policyEditingController.test.js src/app/policy-editing/PolicyEditingProvider.test.js` e testes das configurações tocadas. Confirmar que reconciliar só usa as consultas já previstas, sem novos requests por animação.
+- [x] Commit: `feat(ui): confirmar salvamentos persistentes nos botões`.
 
 ## Task 6: QA integrada, documentação e revisão
 
@@ -125,4 +125,4 @@
 
 Recomendação: **execução própria nesta conversa**, seguida de revisão independente ao final. As tarefas compartilham o runtime e os mesmos consumidores; executar sequencialmente evita edições concorrentes e mantém o contexto. Alternativa: execução com subagentes e revisão por tarefa, com maior custo de coordenação.
 
-Aguardar a revisão deste plano e a escolha do método antes de iniciar código. Continuar no worktree/branch atual, preservando servidores, banco e alterações alheias. Commits locais são marcos de implementação, não autorização de publicação.
+Método aprovado: implementação própria nesta conversa, seguida de uma revisão independente do diff completo. Continuar no worktree/branch atual, preservando servidores, banco e alterações alheias. Commits locais são marcos de implementação, não autorização de publicação.
