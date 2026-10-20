@@ -121,8 +121,8 @@ Essa matriz é o **ponto de partida** para leitura de callers, testes e migratio
 
 ## 6. Contratos não resolvidos e gates
 
-Antes de um plano de implementação executável, discutir:
-1. **PD-01:** política completa de troco em posse do entregador e sequência de eventos;
+Antes de um plano de implementação executável, tratar os itens a seguir. PD-01 foi resolvido no âmbito funcional, e os demais continuam sem aprovação:
+1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.2, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
 2. **PD-02:** para onde mover despesas manuais e estornos se Movimentações for removida;
 3. **PD-03:** tratamento de recebimento parcial genuíno, sem violar quitação integral atual;
 4. **PD-04:** permissão para criar promessa de pagamento no checkout;
