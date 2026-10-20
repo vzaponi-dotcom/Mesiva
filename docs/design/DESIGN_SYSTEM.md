@@ -9,6 +9,8 @@
 
 **Para agentes:** este arquivo responde **como apresentar** o produto, não substitui o [PRD](../product/PRD.md), as [regras de negócio](../product/BUSINESS_RULES.md), a [arquitetura](../architecture/ARCHITECTURE.md), o [mapa de módulos](../architecture/MODULE_MAP.md) ou as [instruções operacionais](../../AGENTS.md). **Não alterar** SVGs, paleta, comportamento, permissões, rotas ou produção apenas com base nesta consolidação.
 
+Feedback de ações da seção 5.1 conferido em `abd74b0d`; evidências e limites na [QA](../superpowers/qa/2026-10-19-action-feedback.md). Demais baselines acima preservadas.
+
 ## 1. Fontes, cronologia e autoridade
 
 | Fonte | O que ela de fato determina | Limitação / relação com as demais |
@@ -166,6 +168,8 @@ Outros componentes internos dos domínios devem ser localizados no [Module Map](
 ### 5.1 Feedback de ações
 
 Quando o botão permanece, confirmar nele por **1.800 ms**, somente após sucesso oficial. Nova edição ou troca de recurso invalida o check anterior. Quando formulário/card desaparece, fechar normalmente e confirmar com toast no destino; não atrasar a operação para mostrar animação. Se outra etapa abre imediatamente, apresentar o resultado parcial nessa etapa sem duplicar confirmação global. Rascunho, conflito e resultado não confirmado preservam seus avisos próprios.
+
+Em configurações, reconsulta oficialmente confirmada pode produzir o mesmo check: aguardar o controller apresentar `ready` para exibi-lo e iniciar sua duração, preservando a tentativa, o recurso e o rascunho correspondentes.
 
 [`useFeedbackRuntime`](../../src/app/runtime/feedback/useFeedbackRuntime.js) é o owner único da fila: três avisos visíveis, excedentes FIFO sem timer até promoção. Sucesso/informação duram **4 s**, atenção **6 s**, erro exige fechamento manual. Hover, foco e documento oculto pausam o tempo restante de forma independente; rerender não reinicia duração. Reset de sessão/empresa limpa coleção, fila e timers. Mensagens não acionam requests nem retries.
 

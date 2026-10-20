@@ -10,7 +10,7 @@
 
 **Spec:** [especificação aprovada em 19/10/2026](../specs/2026-10-19-action-feedback-design.md).
 
-**Status:** aprovado e executado nesta conversa, com implementação própria e revisão independente final em andamento. Baseline: `bbd925a8`, branch `codex/melhorias-visuais-2026-10-19`.
+**Status:** aprovado e executado nesta conversa, com implementação própria e revisão independente final concluída. Baseline: `bbd925a8`, branch `codex/melhorias-visuais-2026-10-19`.
 
 ## Global Constraints
 
@@ -23,7 +23,7 @@
 - Pressão até 0,97; conteúdo até 8 px/200 ms; check 250 ms; spinner 800 ms/volta; toast entra até 12 px/220 ms e sai em 160 ms. Movimento reduzido remove deslocamento, escala, shake e desenho progressivo.
 - Preservar sessões/empresa/capabilities, reconciliação e confirmação do spooler. Nenhum timer visual dispara rede.
 - Verificar licenças antes de incorporar código externo; preservar atribuições exigidas. Fontes escolhidas: Morph Button/Spectrum UI e Animated Toast/Shejan Mahamud, vinculadas na spec.
-- Sem deploy, migrations, mudanças de Worker, TV, sino de novidades, APIs ou dados reais.
+- Sem mudanças de Worker, TV, sino de novidades, APIs, schema ou dados reais. Após a implementação, o proprietário autorizou push, novo PR e staging; merge e produção continuam fora do alcance recebido.
 
 ## Review Focus
 
@@ -115,11 +115,11 @@
 
 **Interfaces:** nenhuma interface nova; validar a integração final dos contratos anteriores e a matriz da spec.
 
-- [ ] Rodar os testes das tarefas anteriores no estado final; executar `npm run test:architecture`, `npm run lint`, `npm run build`, `npm test` e `git diff --check`. Exigir códigos de saída zero, sem eliminar gates nem interpretar saída truncada como sucesso. Confrontar eventual falha com baseline, sem escondê-la.
-- [ ] No ambiente local existente, usar dados fictícios para QA em 320 px e desktop, Mesiva/Clássico e claro/escuro; conferir teclado, foco após modal fechar, zoom, quatro mensagens simultâneas, mensagem longa, hover/foco/aba oculta e movimento reduzido. Conferir loading imediato e ausência de duplo feedback. Registrar screenshot dos estados relevantes e limitações reais.
-- [ ] Comparar no harness/network as chamadas das mesmas ações antes/depois no SHA apropriado: writes idênticos e leituras/reconciliações sem acréscimo. Registrar rotas e contagens; `rows_read`/`rows_written`: sem alteração de SQL/endpoints esperada, sem medição D1 adicional nesta mudança de apresentação. Não declarar economia ou validação física de impressão.
-- [ ] Registrar no Design System props/owners, uso por contexto, duração, fila, pausa e movimento reduzido; preservar avisos de impressão e referência aos originais/licenças verificadas. Revisar todo o diff, consumidores, recursos sem referências e nenhum dado/secret em evidências. Remover apenas resíduos substituídos comprovados.
-- [ ] Revisão independente do diff completo conforme o método de execução escolhido; corrigir achados e repetir apenas os checks invalidados. Commit: `docs(ui): documentar e validar feedback de ações`. Entregar resumo, verificações e riscos; não fazer push/merge/deploy sem alcance de autorização correspondente.
+- [x] Rodar os testes das tarefas anteriores no estado final; executar `npm run test:architecture`, `npm run lint`, `npm run build`, `npm test` e `git diff --check`. Exigir códigos de saída zero, sem eliminar gates nem interpretar saída truncada como sucesso. Confrontar eventual falha com baseline, sem escondê-la.
+- [x] No ambiente local existente, usar dados fictícios para QA em 320 px e desktop, Mesiva/Clássico e claro/escuro; conferir teclado, foco após modal fechar, zoom, quatro mensagens simultâneas, mensagem longa, hover/foco/aba oculta e movimento reduzido. Conferir loading imediato e ausência de duplo feedback. Registrar screenshot dos estados relevantes e limitações reais.
+- [x] Comparar no harness/network as chamadas das mesmas ações antes/depois no SHA apropriado: writes idênticos e leituras/reconciliações sem acréscimo. Registrar rotas e contagens; `rows_read`/`rows_written`: sem alteração de SQL/endpoints esperada, sem medição D1 adicional nesta mudança de apresentação. Não declarar economia ou validação física de impressão.
+- [x] Registrar no Design System props/owners, uso por contexto, duração, fila, pausa e movimento reduzido; preservar avisos de impressão e referência aos originais/licenças verificadas. Revisar todo o diff, consumidores, recursos sem referências e nenhum dado/secret em evidências. Remover apenas resíduos substituídos comprovados.
+- [x] Revisão independente do diff completo conforme o método de execução escolhido; corrigir achados e repetir apenas os checks invalidados. Commit: `docs(ui): documentar e validar feedback de ações`. Entregar resumo, verificações e riscos; não fazer push/merge/deploy sem alcance de autorização correspondente.
 
 ## Handoff
 

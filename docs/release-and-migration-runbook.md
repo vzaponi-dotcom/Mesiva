@@ -79,6 +79,10 @@ Staging pode conter migrations/grants aditivos de outra entrega em homologação
 
 For Spec B, record the exact staging SHA and the acceptance evidence in `docs/superpowers/qa/2026-09-15-spec-b-final-closure.md`. Physical printing acceptance by context remains a separate release gate documented in `docs/superpowers/qa/2026-09-12-spec-b-physical-printing-guide.md`.
 
+### Feedback visual de 19/10/2026
+
+O proprietário autorizou PR, push e staging da branch `codex/melhorias-visuais-2026-10-19`. Ela é elegível somente por `workflow_dispatch`, com PR aberto, CI verde e verificação do SHA mais recente preservados. Não há novas migrations nesta entrega. Merge e produção exigem autorização própria; acompanhar o run e o SHA publicado na descrição do PR.
+
 ## Migration review
 
 Every PR containing a migration must document its production impact.

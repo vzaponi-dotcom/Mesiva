@@ -1,6 +1,6 @@
 # Feedback de ações: botões com estados e toasts
 
-**Status:** especificação aprovada pelo proprietário nesta conversa em 19/10/2026; implementação local concluída; validação final e revisão independente em fechamento.
+**Status:** especificação aprovada pelo proprietário nesta conversa em 19/10/2026; implementação local, validação e revisão independente concluídas.
 
 **Baseline inspecionada:** `e70a0ad7`, branch `codex/melhorias-visuais-2026-10-19`.
 
@@ -23,7 +23,7 @@ Referências são adaptadas à arquitetura e identidade do Mesiva. O texto gené
 - Aplicar o mesmo critério aos salvamentos de configurações que mantenham o botão visível. Estados de rascunho e de sincronização continuam distintos de persistência confirmada.
 - Preservar `Modal`, `ConfirmationDialog`, regras de decisão, validações e avisos locais persistentes; não converter banners em mensagens temporárias.
 
-Ficam fora: redesenho das telas, alterações do sino de novidades, mudança da TV de cozinha, novos endpoints/consultas, novos fluxos de desfazer, alteração de permissões, deploy e migrations.
+Ficam fora: redesenho das telas, alterações do sino de novidades, mudança da TV de cozinha, novos endpoints/consultas, novos fluxos de desfazer, alteração de permissões e migrations. Após a implementação, o proprietário autorizou push, novo PR e staging nesta conversa; merge e produção exigem autorização própria.
 
 ## 3. Adaptação técnica
 
