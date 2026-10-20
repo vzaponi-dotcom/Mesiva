@@ -3,7 +3,7 @@
 **Data:** 19/10/2026
 **Baseline auditada:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266 (consulta de arquivos via GitHub; sem execução local)
 **Status:** auditoria estática documental; não houve alteração de código, migração, consulta a dados privados, deploy ou testes funcionais no ambiente real.
-**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md) — v0.3, PD-01/PD-02/PD-06 aprovados funcionalmente em 20/10/2026
+**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md) — v0.4, PD-01/PD-02/PD-03/PD-04/PD-05/PD-06 aprovados funcionalmente em 20/10/2026
 
 ## 1. Resultado executivo
 
@@ -51,13 +51,13 @@ Em src/domains/orders/application/useOrderCommands.js, finalizeOrder envia updat
 
 worker/orderPaymentPromise.js valida ISO real, bloqueia data anterior ao dia do negócio, impede alterar promessa de pedido cancelado/quitado e a audita. worker/index.js protege PATCH /api/orders/:id/payment-promise com finance.promises.manage. Receivables usa promisedPaymentDate e timing.
 
-**Encaminhamento:** adicionar intenção e momento esperado no checkout sem duplicar promise; preservar capacidade de atualizar posteriormente por grants existentes. Resolver permissão no checkout explicitamente. Mudança de intenção não altera receipt, relatório nem gaveta.
+**Encaminhamento (PD-04 APROVADO FUNCIONALMENTE):** adicionar intenção e momento esperado no checkout sem duplicar promise. Quem tiver permissão de criar pedido (`orders.create`) poderá definir intenção/previsão no próprio ato, **sem receber autorização para editar promessas existentes**; gravação atômica e validação no Worker são obrigatórias. Alteração posterior de `promised_payment_date` continua exigindo `finance.promises.manage` no endpoint atual; atualização posterior da intenção/momento requer grant específico a definir tecnicamente. Informar intenção não concede `payments.receive` e não altera receipt, relatório nem gaveta.
 
 ### C. Recibo de venda versus custódia física
 
 A base de split payment (migrations/0026_split_payments.sql) cria payment_receipts e payment_allocations. Business Rules RN-PAG-03/04 descrevem 1 recibo com múltiplas alocações e entradas automáticas por método. paymentRepository registra receipt/movements; refunds existem em fluxos próprios.
 
-**Encaminhamento:** ao receber em dinheiro direto na gaveta, 1 entrada física vinculada à allocation cash e à sessão. Ao confirmar dinheiro com entregador, 1 recibo oficial + custódia com entregador; repasse ao caixa é transferência de custódia, não novo pagamento. Se a confirmação de entrega e repasse ocorrerem no mesmo ato, transação unificada com idempotência. Métodos Pix/cartão não movimentam cash_operation.
+**Encaminhamento (PD-05 APROVADO FUNCIONALMENTE):** ao receber em dinheiro direto na gaveta, 1 entrada física vinculada à allocation cash e à sessão. **A cobrança em dinheiro pelo entregador só será confirmada pelo funcionário na prestação de contas, no retorno**; despacho da Cozinha não é comprovação. No retorno, efetivar 1 recibo oficial + custódia com entregador, e repasse ao caixa como transferência de custódia, nunca como novo pagamento. Conferência e repasse no mesmo ato exigem transação consistente e idempotente; dinheiro não entregue continua custódia do entregador, não da gaveta. Pix/cartão podem ser recebidos antes por usuário habilitado no fluxo oficial e **não devem ser reprocessados na prestação de contas**; não movimentam cash_operation.
 
 **Atenção:** pagamento por lote de cliente pode compartilhar receipt entre vários pedidos; nunca atribuir o total do receipt novamente por pedido. Reembolsos e complementos precisam de rastreabilidade da parcela efetivamente entregue/retirada.
 
@@ -90,6 +90,10 @@ worker/access/roles.js define templates manager/operator. worker/index.js requer
 A documentação de realtime afirma que Worker/D1 são autoritativos, aviso WebSocket invalida leituras, e fallback HTTP existe. Novas telas por caixa/entregador precisam de snapshots segmentados, agregados feitos no backend, paginação e invalidação com grants. Evitar N+1 de pedidos/custódia e polling adicional por card.
 
 A base visual normativa atual é **Mesiva v1.1**, aprovada em 17/10/2026, não o PDF v1.0 previamente anexado. Os ativos versionados em public/brand devem ser preservados, inclusive o verde de SVG distinto do token da UI; ver Design System. Os mockups anteriores têm função de direção, não prova de contrato.
+
+### I. Parcial insuficiente fora da primeira versão (PD-03 APROVADO FUNCIONALMENTE)
+
+Os workflows de pagamento verificados exigem alocações completas para a quitação autoritativa. A aprovação adia o suporte integral a receber R$ 60 de um pedido de R$ 100 e deixar saldo de R$ 40, sem confundir com um pagamento dividido que some o total. O Caixa v1 deve identificar ocorrência de pagamento insuficiente e manter o pedido pendente, sem recibo parcial improvisado, estado Pago ou suprimento financeiro indevido. **Lacuna técnica ainda aberta:** se o restaurante tomar posse de numerário parcial, exigir uma política explícita de custódia, identificação, reconciliação e devolução; não supor que registrar ocorrência já contabiliza fisicamente esse dinheiro. Não inserir, na implementação da v1, um caminho incompleto que permita recebimento parcial sem esse contrato.
 
 ## 4. Classificação de riscos
 
@@ -127,12 +131,12 @@ Essa matriz é o **ponto de partida** para leitura de callers, testes e migratio
 
 ## 6. Contratos não resolvidos e gates
 
-Antes de um plano de implementação executável, tratar os itens a seguir. **PD-01, PD-02 e PD-06 foram resolvidos no âmbito funcional**. PD-03, PD-04, PD-05, PD-07, PD-08, PD-09 e PD-10, além dos detalhes técnicos de migração e OP-04, permanecem pendentes:
-1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.3, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
+Antes de um plano de implementação executável, tratar os itens a seguir. **PD-01 a PD-06 estão resolvidos no âmbito funcional**. PD-07, PD-08, PD-09 e PD-10, além dos detalhes técnicos de exceções de pagamento parcial, migração e OP-04, permanecem pendentes:
+1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.4, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
 2. **PD-02 — APROVADO FUNCIONALMENTE:** nova organização de Financeiro com Visão geral (Extrato), Caixa, A receber, Despesas e Relatórios; Movimentações legadas preservadas até migração segura. **Pendente tecnicamente:** inventário de despesas manuais, estornos, edições/ajustes e histórico, integração da despesa paga em espécie (OP-04) e retirada futura da rota (PD-10);
-3. **PD-03:** tratamento de recebimento parcial genuíno, sem violar quitação integral atual;
-4. **PD-04:** permissão para criar promessa de pagamento no checkout;
-5. **PD-05:** momento exato de confirmação de dinheiro com entregador (na volta, ou antecipado por operador);
+3. **PD-03 — APROVADO FUNCIONALMENTE:** suporte completo a pagamento parcial genuíno adiado para evolução independente; v1 identificará ocorrência de pagamento insuficiente/saldo não quitado sem registrar recibo de quitação, fingir pagamento, nem usar suprimento para ocultar valor de cliente. **Pendente tecnicamente:** protocolo seguro quando numerário parcial foi fisicamente aceito; não habilitar sua aceitação sem modelo de custódia/reconciliação e testes;
+4. **PD-04 — APROVADO FUNCIONALMENTE:** `orders.create` permite informar intenção e previsão durante criação, com validação atômica e sem conceder edição geral; alterações posteriores exigem grant específico, sendo `finance.promises.manage` já exigida para a data prometida. **Pendente tecnicamente:** autorização granular da edição posterior de intenção e revisão da mutation de checkout;
+5. **PD-05 — APROVADO FUNCIONALMENTE:** cobrança em dinheiro pelo entregador confirmada no retorno por funcionário autorizado na prestação de contas; Pix/cartão podem ser confirmados independentemente via fluxo oficial, sem duplicação. **Pendente tecnicamente:** grants de reconciliação, consistência receipt/custódia/repasse e erros de rede;
 6. **PD-06 — APROVADO FUNCIONALMENTE:** ativação gradual por empresa com preparação e fundo contado na primeira abertura; após ativação numerário físico exige sessão aberta e permissões, sem bloquear Pix/cartão/promessas ou operações legadas de empresas não ativadas. **Pendente tecnicamente:** flag, implantação por etapas, erro/reconciliação e rollback controlado;
 7. **PD-07:** fechamento cego ou não por grants;
 8. **PD-08:** testes/protótipos finais coerentes com o guia visual v1.1;
