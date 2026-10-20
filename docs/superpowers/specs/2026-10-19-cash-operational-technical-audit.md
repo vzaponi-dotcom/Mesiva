@@ -3,7 +3,7 @@
 **Data:** 19/10/2026
 **Baseline auditada:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266 (consulta de arquivos via GitHub; sem execução local)
 **Status:** auditoria estática documental; não houve alteração de código, migração, consulta a dados privados, deploy ou testes funcionais no ambiente real.
-**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md) — v0.4, PD-01/PD-02/PD-03/PD-04/PD-05/PD-06 aprovados funcionalmente em 20/10/2026
+**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md) — v0.5, PD-01 a PD-07 aprovados funcionalmente em 20/10/2026; PD-08 ainda pendente
 
 ## 1. Resultado executivo
 
@@ -91,6 +91,12 @@ A documentação de realtime afirma que Worker/D1 são autoritativos, aviso WebS
 
 A base visual normativa atual é **Mesiva v1.1**, aprovada em 17/10/2026, não o PDF v1.0 previamente anexado. Os ativos versionados em public/brand devem ser preservados, inclusive o verde de SVG distinto do token da UI; ver Design System. Os mockups anteriores têm função de direção, não prova de contrato.
 
+### I. Contagem cega e projeções de fechamento (PD-07 APROVADO FUNCIONALMENTE)
+
+O operador que não possui grant gerencial **não pode receber o saldo esperado ou sua composição numérica antes de efetuar a primeira contagem física**. O controle deverá existir no Worker e nas projeções scoped, não apenas na UI. `cash.close` não implica acesso ao esperado. O grant gerencial e escopo de caixa determinam se a pessoa pode consultar o esperado; roles nominais não bastam. Após a primeira contagem registrada, o sistema apresenta o resultado de conferência/diferença, exige justificativa se houver divergência e preserva trilha de auditoria. Há inferência indireta do esperado a partir da diferença, portanto a finalidade da contagem cega é **evitar enviesar a contagem inicial**, não criar confidencialidade matemática absoluta após a conferência.
+
+**Contratos técnicos ainda pendentes:** campo/capability exato de permissão, política de recálculo e recontagem, snapshots de caixa e valor esperado sob sincronização/fallback, filtragem do backend (inclusive agregados, event payloads e caches) e concorrência fechamento vs recebimentos. Nenhum desses detalhes é uma aprovação implícita de um endpoint ou migration.
+
 ### I. Parcial insuficiente fora da primeira versão (PD-03 APROVADO FUNCIONALMENTE)
 
 Os workflows de pagamento verificados exigem alocações completas para a quitação autoritativa. A aprovação adia o suporte integral a receber R$ 60 de um pedido de R$ 100 e deixar saldo de R$ 40, sem confundir com um pagamento dividido que some o total. O Caixa v1 deve identificar ocorrência de pagamento insuficiente e manter o pedido pendente, sem recibo parcial improvisado, estado Pago ou suprimento financeiro indevido. **Lacuna técnica ainda aberta:** se o restaurante tomar posse de numerário parcial, exigir uma política explícita de custódia, identificação, reconciliação e devolução; não supor que registrar ocorrência já contabiliza fisicamente esse dinheiro. Não inserir, na implementação da v1, um caminho incompleto que permita recebimento parcial sem esse contrato.
@@ -131,14 +137,14 @@ Essa matriz é o **ponto de partida** para leitura de callers, testes e migratio
 
 ## 6. Contratos não resolvidos e gates
 
-Antes de um plano de implementação executável, tratar os itens a seguir. **PD-01 a PD-06 estão resolvidos no âmbito funcional**. PD-07, PD-08, PD-09 e PD-10, além dos detalhes técnicos de exceções de pagamento parcial, migração e OP-04, permanecem pendentes:
+Antes de um plano de implementação executável, tratar os itens a seguir. **PD-01 a PD-07 estão resolvidos no âmbito funcional**. PD-08, PD-09 e PD-10, além de detalhes técnicos de autorização/contagem, exceções de pagamento parcial, migração e OP-04, permanecem pendentes:
 1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.4, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
 2. **PD-02 — APROVADO FUNCIONALMENTE:** nova organização de Financeiro com Visão geral (Extrato), Caixa, A receber, Despesas e Relatórios; Movimentações legadas preservadas até migração segura. **Pendente tecnicamente:** inventário de despesas manuais, estornos, edições/ajustes e histórico, integração da despesa paga em espécie (OP-04) e retirada futura da rota (PD-10);
 3. **PD-03 — APROVADO FUNCIONALMENTE:** suporte completo a pagamento parcial genuíno adiado para evolução independente; v1 identificará ocorrência de pagamento insuficiente/saldo não quitado sem registrar recibo de quitação, fingir pagamento, nem usar suprimento para ocultar valor de cliente. **Pendente tecnicamente:** protocolo seguro quando numerário parcial foi fisicamente aceito; não habilitar sua aceitação sem modelo de custódia/reconciliação e testes;
 4. **PD-04 — APROVADO FUNCIONALMENTE:** `orders.create` permite informar intenção e previsão durante criação, com validação atômica e sem conceder edição geral; alterações posteriores exigem grant específico, sendo `finance.promises.manage` já exigida para a data prometida. **Pendente tecnicamente:** autorização granular da edição posterior de intenção e revisão da mutation de checkout;
 5. **PD-05 — APROVADO FUNCIONALMENTE:** cobrança em dinheiro pelo entregador confirmada no retorno por funcionário autorizado na prestação de contas; Pix/cartão podem ser confirmados independentemente via fluxo oficial, sem duplicação. **Pendente tecnicamente:** grants de reconciliação, consistência receipt/custódia/repasse e erros de rede;
 6. **PD-06 — APROVADO FUNCIONALMENTE:** ativação gradual por empresa com preparação e fundo contado na primeira abertura; após ativação numerário físico exige sessão aberta e permissões, sem bloquear Pix/cartão/promessas ou operações legadas de empresas não ativadas. **Pendente tecnicamente:** flag, implantação por etapas, erro/reconciliação e rollback controlado;
-7. **PD-07:** fechamento cego ou não por grants;
+7. **PD-07 — APROVADO FUNCIONALMENTE:** fechamento com contagem cega por operador, sem saldo esperado e composição numérica antes da primeira contagem; permissão gerencial efetiva controla acesso ao esperado. O backend deve redigir/bloquear campos em consultas, e primeira contagem/recontagens devem ser rastreáveis. **Pendente tecnicamente:** grants exatos, apresentação pós-contagem, política de recontagem e consistência sob concorrência;
 8. **PD-08:** testes/protótipos finais coerentes com o guia visual v1.1;
 9. **PD-09:** identificar eventos de cancelamento/devolução que podem surgir após despacho ou fechamento;
 10. **PD-10 — PENDENTE:** apesar da direção aprovada de **Extrato em Visão geral**, mapear quais ações/estornos/lançamentos/histórico financeiro precisam continuar acessíveis em Despesas, Extrato, Relatórios ou eventual compatibilidade antes de remover Movimentações. Não interpretar a escolha de navegação como autorização de migração destrutiva.
