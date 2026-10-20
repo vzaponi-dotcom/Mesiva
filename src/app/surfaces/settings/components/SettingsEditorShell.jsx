@@ -25,10 +25,10 @@ function SettingsEditorShell({ title, description, scope, effectiveNotice, state
     pending.current = null; setSending(null); setButtonFeedback(null)
   }, [feedbackScopeKey])
   useEffect(() => {
-    if (!buttonFeedback) return undefined
+    if (!buttonFeedback || (state?.status || 'ready') !== 'ready') return undefined
     const timer = setTimeout(() => setButtonFeedback(null), 1800)
     return () => clearTimeout(timer)
-  }, [buttonFeedback])
+  }, [buttonFeedback, state?.status])
   const status = state?.status || 'ready'
   const message = stateMessage(state)
   const errorMessage = typeof state?.error === 'string' ? state.error : state?.error?.message
@@ -54,7 +54,7 @@ function SettingsEditorShell({ title, description, scope, effectiveNotice, state
     try {
       const confirmed = await action()
       if (mounted.current && pending.current === attempt && latest.current.snapshotKey === attempt.snapshotKey
-        && !['unconfirmed', 'conflict', 'error'].includes(latest.current.status)) {
+        && !['conflict', 'error'].includes(latest.current.status)) {
         if (confirmed === true) setButtonFeedback({ snapshotKey, state: 'success' })
         else if (latest.current.error) setButtonFeedback({ snapshotKey, state: 'error' })
       }
@@ -98,7 +98,7 @@ function SettingsEditorShell({ title, description, scope, effectiveNotice, state
       {footerNote && <small className="settings-editor-footer-note">{footerNote}</small>}
       <div className="settings-editor-footer-actions">
         <Button type="button" variant="secondary" onClick={onDiscard} disabled={discardDisabled}>{discardLabel}</Button>
-        <Button type="button" onClick={handleSave} disabled={saveDisabled} state={status === 'saving' || inFlight ? 'loading' : buttonFeedback?.snapshotKey === snapshotKey ? buttonFeedback.state : 'idle'} loadingLabel="Salvando…" successLabel="Salvo">Salvar alterações</Button>
+        <Button type="button" onClick={handleSave} disabled={saveDisabled} state={status === 'saving' || inFlight ? 'loading' : status === 'ready' && buttonFeedback?.snapshotKey === snapshotKey ? buttonFeedback.state : 'idle'} loadingLabel="Salvando…" successLabel="Salvo">Salvar alterações</Button>
       </div>
     </footer>}
     {saveFeedback && <div className="settings-save-feedback" role="status" aria-live="polite">{saveFeedback}</div>}

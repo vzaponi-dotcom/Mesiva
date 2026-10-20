@@ -3,9 +3,46 @@ import assert from 'node:assert/strict'
 import React from 'react'
 import { act } from 'react-test-renderer'
 import { workspaceHarness, buttonNamed, nodeText } from '../../../../test-support/renderWorkspace.js'
+import { createPolicyEditingController } from '../../../policy-editing/policyEditingController.js'
+import { adminFixture, draftFixture } from '../../../../test-support/settingsFixtures.js'
 
 const props = { title: 'Operação', feedbackScopeKey: 'empresa-a:operations', state: { status: 'ready', dirty: true, draft: { name: 'Original' } }, onDiscard() {} }
 const announcement = root => nodeText(buttonNamed(root, 'Salvar alterações').findByProps({ role: 'status' }))
+
+test('official reconciliation acknowledges after the real controller publishes its ready state', async t => {
+  const h = await workspaceHarness(t)
+  const { default: Shell } = await h.load('/src/app/surfaces/settings/components/SettingsEditorShell.jsx')
+  let notify = () => {}, reads = 0, writes = 0, receipts = 0
+  const controller = createPolicyEditingController({
+    context: { ownerId: 'empresa-a', generation: 1, contextId: 'feedback-test', capabilities: ['operations.settings.manage'] },
+    onChange: resources => notify(resources),
+    transport: {
+      load: async () => ++reads === 1 ? adminFixture : { ...adminFixture, revision: 2, data: draftFixture },
+      save: async () => { writes++; throw new TypeError('Resposta perdida') },
+      loadReceipt: async () => { receipts++; return { status: 'confirmed', receipt: { committedRevision: 2 } } },
+    },
+  })
+  await controller.load('operations')
+  controller.edit('operations', draftFixture)
+  assert.equal(await controller.save('operations'), false)
+  assert.equal(controller.getResources().operations.status, 'unconfirmed')
+  function Probe() {
+    const [resources, setResources] = React.useState(() => controller.getResources())
+    React.useEffect(() => { notify = setResources; return () => { notify = () => {} } }, [])
+    return React.createElement(Shell, { ...props, state: resources.operations, onReconcile: () => controller.reconcile('operations') })
+  }
+  const screen = await h.render(Probe)
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  let result
+  await act(async () => { result = await buttonNamed(screen.root, 'Reconsultar').props.onClick() })
+  assert.equal(result, true)
+  assert.equal(controller.getResources().operations.status, 'ready')
+  assert.equal(controller.getResources().operations.dirty, false)
+  assert.deepEqual([writes, reads, receipts], [1, 2, 1])
+  assert.equal(announcement(screen.root), 'Salvo')
+  await act(async () => t.mock.timers.tick(1800))
+  assert.equal(announcement(screen.root), '')
+})
 
 test('persistent save acknowledges only official completion, blocks double activation and expires after 1800ms', async t => {
   const h = await workspaceHarness(t)
