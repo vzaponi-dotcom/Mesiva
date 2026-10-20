@@ -82,7 +82,7 @@ function PaymentForm({ detail, currency, disabled, onClose, onConfirm, paymentOp
         <div className="form-actions">
           <Button type="button" variant="secondary" disabled={busy} onClick={close}>Cancelar</Button>
           <Button
-            type="submit"
+            type="submit" state={busy ? 'loading' : 'idle'} loadingLabel="Recebendo…"
             disabled={disabled || busy || !composition.valid || !dateValid}
           >
             Confirmar pagamento

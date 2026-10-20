@@ -24,6 +24,7 @@ const formatServiceTime = (value) => new Intl.DateTimeFormat('pt-BR', {
 }).format(new Date(value))
 
 function ReservationClosureDialog({
+  submitting = false,
   mode,
   reservation,
   reasonOptions,
@@ -103,7 +104,7 @@ function ReservationClosureDialog({
         {error && <div className="form-error" role="alert">{error}</div>}
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={onClose} disabled={disabled}>Voltar</Button>
-          <Button type="button" variant={mode === 'no-show' ? 'secondary' : 'danger'} onClick={submit} disabled={disabled || !configured}>
+          <Button type="button" variant={mode === 'no-show' ? 'secondary' : 'danger'} onClick={submit} disabled={disabled || !configured} state={submitting ? 'loading' : 'idle'} loadingLabel="Registrando…">
             {confirmLabel}
           </Button>
         </div>
@@ -221,7 +222,7 @@ function TableReservationDetail({
 
       {arrivalOpen && (
         <ConfirmationDialog
-          title="Confirmar chegada"
+          title="Confirmar chegada" submitting={Boolean(actionKey)} loadingLabel="Confirmando…"
           message={`A ${reservation.tableName} passará para Ocupada e a reserva será convertida em comanda.`}
           details={<><strong>{reservation.clientName || reservation.tableName}</strong><span>{formatServiceDate(reservation.scheduledFor)} · {formatServiceTime(reservation.scheduledFor)}</span></>}
           confirmLabel="Confirmar chegada e abrir comanda"
@@ -238,7 +239,7 @@ function TableReservationDetail({
 
       {closureMode && (
         <ReservationClosureDialog
-          mode={closureMode}
+          mode={closureMode} submitting={Boolean(actionKey)}
           reservation={reservation}
           reasonOptions={cancellationOptions}
           reasonRevision={cancellationRevision}

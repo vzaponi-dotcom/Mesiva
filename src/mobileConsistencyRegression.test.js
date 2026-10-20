@@ -17,15 +17,15 @@ test('mobile toast is viewport anchored and cannot stretch between top and botto
   const appRoot = await read('./app/shell/AppRoot.jsx')
   const foundation = await read('./mobile-foundation.css')
   const interactions = await read('./mobile-interactions.css')
-  const polish = await read('./domains/orders/ui/ui-polish.css')
+  const feedbackCss = await read('./shared/ui/toast-feedback.css')
 
   assert.match(appRoot, /import\s+\{\s*createPortal\s*\}\s+from\s+'react-dom'/)
   assert.match(appRoot, /const portal = .*createPortal\(node, document\.body\)/)
-  assert.match(appRoot, /toast-success/)
-  assert.match(polish, /@media\s*\(max-width:\s*640px\)[\s\S]*\.toast-success\s*\{[^}]*top:\s*70px[^}]*bottom:\s*auto/s)
-  assert.doesNotMatch(foundation, /\.toast-success\s*\{[^}]*bottom:/s)
-  assert.doesNotMatch(interactions, /body\s+\.toast-success\s*\{[^}]*bottom:/s)
-  assert.match(interactions, /body\s*>\s*\.toast-success\s*\{[^}]*z-index:\s*var\(--layer-toast\)/s)
+  assert.match(appRoot, /ToastRegion/)
+  assert.match(feedbackCss, /@media\s*\(max-width:\s*640px\)[\s\S]*\.toast-region\s*\{[^}]*top:\s*calc\(70px/s)
+  assert.doesNotMatch(foundation, /\.toast-region\s*\{[^}]*bottom:/s)
+  assert.doesNotMatch(interactions, /\.toast-region\s*\{[^}]*bottom:/s)
+  assert.match(feedbackCss, /z-index:\s*var\(--layer-toast/)
 })
 
 test('reduced motion remains available for mobile transitions', async () => {

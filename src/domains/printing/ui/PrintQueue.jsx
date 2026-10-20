@@ -102,7 +102,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
           pageInfo: payload?.pageInfo || { page: pageNumber, pageSize: 10, totalItems: 0, totalPages: 1 },
         })
       }).catch((error) => {
-        if (error?.name !== 'AbortError') onToast?.(error?.message || 'Não foi possível pré-carregar a fila de impressão.')
+        if (error?.name !== 'AbortError') onToast?.(error?.message || 'Não foi possível pré-carregar a fila de impressão.', { type: 'error' })
       })
     }
   }, [onToast, query])
@@ -141,7 +141,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       prefetchAdjacentPages(nextPage.pageInfo, controller.signal)
     } catch (error) {
       if (error?.name !== 'AbortError' && generation === generationRef.current) {
-        onToast?.(error?.message || 'Não foi possível atualizar a fila de impressão.')
+        onToast?.(error?.message || 'Não foi possível atualizar a fila de impressão.', { type: 'error' })
       }
     } finally {
       if (refreshAbortRef.current === controller) refreshAbortRef.current = null
@@ -228,7 +228,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
   const getUnknownAttempt = (job) => job?.attempt || job?.attempts?.find((attempt) => attempt?.status === 'unknown' && !attempt?.resolution) || null
   const runAction = async (action) => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return false
     }
     if ((FORCE_ACTIONS.has(action) && !canForcePrinting) || (EXECUTE_ACTIONS.has(action) && !canExecutePrinting) || (DISCARD_ACTIONS.has(action) && !canDiscardPrinting) || !selectedJob || actionPending) return false
@@ -247,7 +247,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       pageCacheRef.current.clear()
       await refreshPanel()
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível concluir a operação.')
+      onToast?.(error?.message || 'Não foi possível concluir a operação.', { type: 'error' })
     } finally {
       setActionPending(false)
       setConfirmation(null)
@@ -255,7 +255,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
   }
   const requestAction = (action) => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return false
     }
     if ((FORCE_ACTIONS.has(action) && !canForcePrinting) || (EXECUTE_ACTIONS.has(action) && !canExecutePrinting) || (DISCARD_ACTIONS.has(action) && !canDiscardPrinting)) return false
@@ -269,7 +269,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
   }
   const confirmReprint = async () => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return false
     }
     if (!canExecutePrinting || !selectedJob || !reprintCopies || actionPending) return false
@@ -281,14 +281,14 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       pageCacheRef.current.clear()
       await refreshPanel()
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível concluir a reimpressão.')
+      onToast?.(error?.message || 'Não foi possível concluir a reimpressão.', { type: 'error' })
     } finally {
       setActionPending(false)
     }
   }
   const runRecoveryAction = async (action) => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return
     }
     if (recoveryPending) return
@@ -299,14 +299,14 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       pageCacheRef.current.clear()
       await refreshPanel()
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível continuar a recuperação da impressão.')
+      onToast?.(error?.message || 'Não foi possível continuar a recuperação da impressão.', { type: 'error' })
     } finally {
       setRecoveryPending(false)
     }
   }
   const requestBulkDiscard = () => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return false
     }
     if (!canDiscardPrinting || bulkDiscardPending || bulkDiscardCandidateCount === 0) return false
@@ -316,7 +316,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
 
   const confirmBulkDiscard = async () => {
     if (!isOnline) {
-      onToast?.(OFFLINE_MUTATION_MESSAGE)
+      onToast?.(OFFLINE_MUTATION_MESSAGE, { type: 'warning' })
       return false
     }
     if (!canDiscardPrinting || bulkDiscardPending || !printing?.requestDiscardPendingJobs) return false
@@ -337,7 +337,7 @@ function PrintQueue({ orders = [], printing, reviewJobId = null, onReviewJobCons
       }
       return true
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível descartar as pendências da fila.')
+      onToast?.(error?.message || 'Não foi possível descartar as pendências da fila.', { type: 'error' })
       return false
     } finally {
       setBulkDiscardPending(false)

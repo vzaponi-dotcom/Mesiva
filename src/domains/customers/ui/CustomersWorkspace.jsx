@@ -100,7 +100,8 @@ function CustomersWorkspace({
           onChange={editor.updateDraft}
           onSubmit={editor.submit}
           onCancel={editor.cancel}
-          disabled={writesBlocked || editor.checkingDuplicates}
+          disabled={writesBlocked || editor.checkingDuplicates || editor.submitting}
+          submitting={editor.submitting}
         />
       )}
       {(editor.editing ? canUpdateClients : canCreateClients) && editor.duplicateDialog && (
@@ -109,7 +110,8 @@ function CustomersWorkspace({
           onCancel={editor.dismissDuplicate}
           onUseExisting={editor.useExistingDuplicate}
           onConfirm={editor.confirmDuplicate}
-          disabled={writesBlocked || editor.checkingDuplicates}
+          disabled={writesBlocked || editor.checkingDuplicates || editor.submitting}
+          submitting={editor.submitting}
           cancelLabel="Cancelar"
           useExistingLabel="Usar cliente existente"
           confirmLabel="Cadastrar mesmo assim"

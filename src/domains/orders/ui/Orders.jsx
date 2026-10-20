@@ -136,8 +136,8 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
     if (!canFinalizeOrders || !finalizeCandidate || actionsDisabled) return false
     const order = finalizeCandidate
     await runAction(`finish:${order.id}`, async () => {
-      await onFinalizeOrder(order.id)
-      setFinalizeCandidate(null)
+      const accepted = await onFinalizeOrder(order.id)
+      if (accepted !== false) setFinalizeCandidate(null)
     })
   }
 
@@ -297,6 +297,7 @@ function Orders({ finishedTodayCount,orders, officialOrders = orders, now, curre
       {canFinalizeOrders && finalizeCandidate && (
         <ConfirmationDialog
           title="Confirmar finalização"
+          submitting={pendingAction === `finish:${finalizeCandidate.id}`} loadingLabel="Finalizando…"
           message={`${formatOrderDisplayNumber(finalizeCandidate)} de ${finalizeCandidate.client} sairá da fila de preparo. Confirme antes de continuar.`}
           confirmLabel="Confirmar finalização"
           confirmVariant="primary"

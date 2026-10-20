@@ -32,7 +32,7 @@ export default function OrderPaymentDialog({ dialog, currency }) {
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={dialog.onClose}>Cancelar</Button>
           <Button
-            type="submit"
+            type="submit" state={dialog.submitting ? 'loading' : 'idle'} loadingLabel="Recebendo…"
             disabled={dialog.writesBlocked || dialog.submitting || !dialog.composition.valid || !dialog.dateValid}
           >
             Confirmar pagamento

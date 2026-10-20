@@ -71,7 +71,7 @@ export default function OrderEditSettlementDialog({
         {refundCents>refundDueCents && <p className="form-error" role="alert">O valor informado supera a devolução pendente.</p>}
         <div className="form-actions">
           <Button type="button" variant="secondary" onClick={()=>onStageChange('offer')} disabled={busy}>Voltar</Button>
-          <Button type="submit" disabled={busy||!selected||!Number.isSafeInteger(refundCents)||refundCents<=0||refundCents>refundDueCents}>
+          <Button type="submit" state={submitting ? 'loading' : 'idle'} loadingLabel="Registrando…" disabled={busy||!selected||!Number.isSafeInteger(refundCents)||refundCents<=0||refundCents>refundDueCents}>
             {submitting?'Registrando…':'Confirmar devolução registrada'}
           </Button>
         </div>

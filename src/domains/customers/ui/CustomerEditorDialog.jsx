@@ -3,6 +3,7 @@ import Modal from '../../../shared/ui/Modal'
 import { formatPhone } from '../../../shared/utils/formFormatting.js'
 
 function CustomerEditorDialog({
+  submitting = false,
   open,
   editing,
   value,
@@ -14,7 +15,7 @@ function CustomerEditorDialog({
   if (!open) return null
 
   return (
-    <Modal title={editing ? 'Editar cliente' : 'Novo cliente'} onClose={onCancel}>
+    <Modal title={editing ? 'Editar cliente' : 'Novo cliente'} onClose={submitting ? () => {} : onCancel}>
       <div className="form-stack">
         <label className="form-field">
           <span>Nome</span>
@@ -48,8 +49,8 @@ function CustomerEditorDialog({
           />
         </label>
         <div className="form-actions">
-          <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>
-          <Button type="button" disabled={disabled || !value.name.trim()} onClick={onSubmit}>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancelar</Button>
+          <Button type="button" disabled={disabled || !value.name.trim()} onClick={onSubmit} state={submitting ? 'loading' : 'idle'} loadingLabel="Salvando…">
             {editing ? 'Salvar alterações' : 'Adicionar cliente'}
           </Button>
         </div>

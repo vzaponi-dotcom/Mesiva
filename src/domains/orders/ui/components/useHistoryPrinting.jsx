@@ -29,10 +29,10 @@ export default function useHistoryPrinting({ orders, printing, canExecutePrintin
     setBusyOrderId(orderId)
     try {
       await action()
-      if (message) onToast?.(message)
+      if (message) onToast?.(message, { type: 'info' })
       return true
     } catch (error) {
-      onToast?.(error?.message || 'Não foi possível concluir a ação de impressão.')
+      onToast?.(error?.message || 'Não foi possível concluir a ação de impressão.', { type: 'error' })
       return false
     } finally {
       busy.current = false
@@ -42,7 +42,7 @@ export default function useHistoryPrinting({ orders, printing, canExecutePrintin
   const executePrint = async (order, expectedKey) => {
     const action = getPrintAction(order)
     if (!action?.enabled || action.key !== expectedKey) {
-      onToast?.('A impressão mudou de estado. Confira as opções atuais do pedido.')
+      onToast?.('A impressão mudou de estado. Confira as opções atuais do pedido.', { type: 'warning' })
       setConfirmation(null)
       return false
     }

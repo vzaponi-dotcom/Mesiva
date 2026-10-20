@@ -46,7 +46,7 @@ function OpeningBalanceDialogContent({ settings, today, currentBalance, disabled
 
   if (review) {
     return (
-      <ConfirmationDialog
+      <ConfirmationDialog submitting={submitting} loadingLabel="Salvando…"
         title={editing ? 'Confirmar alteração do saldo inicial' : 'Confirmar saldo inicial'}
         message="O saldo atual será recalculado a partir da nova configuração de abertura."
         details={(

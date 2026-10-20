@@ -1,13 +1,15 @@
 # Mesiva — Design System e aplicação visual no produto
 
 - **Tipo:** documentação viva da identidade aplicada ao produto, tokens, temas, componentes e critérios de revisão.
-- **Versão:** v0.3 — centralização documental no GitHub em 17/10/2026 (baseline de implementação de v0.2 preservada).
+- **Versão:** v0.4 — feedback de ações aprovado em 19/10/2026; demais baselines de v0.3 preservadas.
 - **Baselines de implementação:** inspeção original em `master@e595f7ed2a801fde6ffab231194788430cc53316`; temas, CSS, assets SVG e componentes de Cozinha/TV reconferidos em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d`. Não equivale à reauditoria visual de todas as telas.
 - **Fontes de marca:** [governança GitHub dos guias v1.1 e v1.0](identidade-visual/README.md) (quatro binários incorporados e verificados na branch da PR #119), [refinamento aprovado de logo (02/10/2026)](../operations/2026-10-02-mesiva-logo-refinement.md), [atualização de ícones (02/10/2026)](../operations/2026-10-02-github-releases-and-mesiva-icons.md) e ativos em [`public/brand/`](../../public/brand/).
 - **Escopo:** documentação da direção aprovada no guia, decisões posteriores registradas e **implementação observável no repositório**; não é redesign, auditoria WCAG completa ou homologação de dispositivos.
 - **Situação normativa:** a **edição v1.1 foi aprovada** em 17/10/2026, conciliando editorialmente os ativos de 02/10 com o guia original. **Seus arquivos PDF/Word e os da v1.0 foram incorporados à branch da PR #119 com hashes verificados**; as cinco divergências abaixo permanecem como registro histórico e decisões distintas de implementação.
 
 **Para agentes:** este arquivo responde **como apresentar** o produto, não substitui o [PRD](../product/PRD.md), as [regras de negócio](../product/BUSINESS_RULES.md), a [arquitetura](../architecture/ARCHITECTURE.md), o [mapa de módulos](../architecture/MODULE_MAP.md) ou as [instruções operacionais](../../AGENTS.md). **Não alterar** SVGs, paleta, comportamento, permissões, rotas ou produção apenas com base nesta consolidação.
+
+Feedback de ações da seção 5.1 conferido em `abd74b0d`; evidências e limites na [QA](../superpowers/qa/2026-10-19-action-feedback.md). Demais baselines acima preservadas.
 
 ## 1. Fontes, cronologia e autoridade
 
@@ -146,12 +148,13 @@ A tela [`DevicePreferences.jsx`](../../src/app/surfaces/settings/local/DevicePre
 
 | Componente | Arquivo | Contrato e diretriz |
 | --- | --- | --- |
-| **Button** | [Button.jsx](../../src/shared/ui/Button.jsx) | Prop `variant` (padrão `primary`), `icon`, `children`; repassa atributos nativos de `button`. Para ação destrutiva, conferir `variant="danger"` e confirmar o fluxo. |
+| **Button** | [Button.jsx](../../src/shared/ui/Button.jsx) | `variant` (padrão `primary`), `icon`, `children` e atributos nativos. Estado visual opcional `state="idle\|loading\|success\|error"`; rótulos `loadingLabel`, `successLabel`, `errorLabel`. O workflow determina o resultado; o botão não interpreta Promises. |
 | **Icon** | [Icon.jsx](../../src/shared/ui/Icon.jsx) | Conjunto SVG interno nomeado. Reutilizar nomes existentes; ícone auxilia, não substitui rótulo acessível. |
 | **PageHeader** | [PageHeader.jsx](../../src/shared/ui/PageHeader.jsx) | `eyebrow`, `title`, `description`, `actions`. Manter hierarquia de título e acesso às ações. |
 | **StatusBadge** | [StatusBadge.jsx](../../src/shared/ui/StatusBadge.jsx) | Deriva classe de status e permite `label`; componentes da área determinam a semântica real. Respeitar `--badge-radius`/`--badge-font-weight`. |
 | **Modal** | [Modal.jsx](../../src/shared/ui/Modal.jsx) | Portal, `role="dialog"`, `aria-modal`, Escape, foco inicial, ciclo de Tab, restauro de foco e trava de scroll. Não eliminar esse contrato ao redesenhar. |
-| **ConfirmationDialog** | [ConfirmationDialog.jsx](../../src/shared/ui/ConfirmationDialog.jsx) | Confirmação com ação perigosa por padrão, texto de decisão e cancelamento. |
+| **ConfirmationDialog** | [ConfirmationDialog.jsx](../../src/shared/ui/ConfirmationDialog.jsx) | Confirmação com ação perigosa por padrão. `submitting`/`loadingLabel` distinguem envio de `disabled` por permissão; envio bloqueia fechamento e novo acionamento. |
+| **ToastRegion** | [ToastRegion.jsx](../../src/shared/ui/ToastRegion.jsx) | Apresenta `toasts`, `onDismiss`, `onPause`; montado pelo shell fora dos formulários. Fila e timers pertencem ao runtime de feedback. |
 | **BottomSheet** | [BottomSheet.jsx](../../src/shared/ui/BottomSheet.jsx) | Painel modal móvel com controle de foco/scroll; consultar comportamento de sobreposição no mobile. |
 | **SystemSelect** | [SystemSelect.jsx](../../src/shared/ui/SystemSelect.jsx) | Seletor customizado: lista desktop, bottom sheet no mobile (até 820 px), teclado e seleção. Revisar labels e nomes longos. |
 | **StatCard** | [StatCard.jsx](../../src/shared/ui/StatCard.jsx) | Resumos quantitativos; manter números e unidades legíveis e rótulos claros. |
@@ -161,6 +164,18 @@ A tela [`DevicePreferences.jsx`](../../src/app/surfaces/settings/local/DevicePre
 Outros componentes internos dos domínios devem ser localizados no [Module Map](../architecture/MODULE_MAP.md). O documento **não** recomenda trocar toda a interface por uma biblioteca nova nem centralizar elementos específicos de negócio indiscriminadamente em `src/shared/ui/`.
 
 **Foco e menus:** o CSS global inclui `:focus-visible`; controles não podem depender somente de mouse. O `Modal` e o `BottomSheet` devem manter Escape/foco; o `SystemSelect` precisa continuar acessível por teclado, fechar quando apropriado e não ficar encoberto por modais. Em menus de ações, fechar após escolha e indicar indisponibilidade com texto/estado, não apenas opacidade.
+
+### 5.1 Feedback de ações
+
+Quando o botão permanece, confirmar nele por **1.800 ms**, somente após sucesso oficial. Nova edição ou troca de recurso invalida o check anterior. Quando formulário/card desaparece, fechar normalmente e confirmar com toast no destino; não atrasar a operação para mostrar animação. Se outra etapa abre imediatamente, apresentar o resultado parcial nessa etapa sem duplicar confirmação global. Rascunho, conflito e resultado não confirmado preservam seus avisos próprios.
+
+Em configurações, reconsulta oficialmente confirmada pode produzir o mesmo check: aguardar o controller apresentar `ready` para exibi-lo e iniciar sua duração, preservando a tentativa, o recurso e o rascunho correspondentes.
+
+[`useFeedbackRuntime`](../../src/app/runtime/feedback/useFeedbackRuntime.js) é o owner único da fila: três avisos visíveis, excedentes FIFO sem timer até promoção. Sucesso/informação duram **4 s**, atenção **6 s**, erro exige fechamento manual. Hover, foco e documento oculto pausam o tempo restante de forma independente; rerender não reinicia duração. Reset de sessão/empresa limpa coleção, fila e timers. Mensagens não acionam requests nem retries.
+
+Toasts usam texto, ícone e tokens semânticos, superfície opaca, conteúdo centralizado verticalmente e fechamento acessível; desktop até **420 px**, mobile com margens/safe-area e área de fechar de **44 px**. Regiões `status`/`alert` anunciam sem mover foco. `Button` mantém largura pelos rótulos, `aria-busy` durante envio e impede acionamento desabilitado; o owner da mutation mantém também seu bloqueio síncrono. Movimento reduzido remove animações, preservando o texto de estado.
+
+Referências visuais escolhidas: [Morph Button / Spectrum UI](https://www.spectrumhq.in/docs/morph-button) (Apache-2.0) e [Animated Toast / Joly UI](https://www.jolyui.dev/docs/components/feedback/animated-toast) ([MIT, Johuniq](https://github.com/Johuniq/jolyui/blob/main/LICENSE)). A implementação é uma adaptação nativa em JSX/CSS/SVG, sem novas bibliotecas. [Spec aprovada](../superpowers/specs/2026-10-19-action-feedback-design.md) e [QA por SHA](../superpowers/qa/2026-10-19-action-feedback.md). Conexão, validação, recuperação de impressão e confirmação humana/spooler continuam persistentes; envio de teste não significa impressão física concluída.
 
 ## 6. Superfícies e responsividade
 

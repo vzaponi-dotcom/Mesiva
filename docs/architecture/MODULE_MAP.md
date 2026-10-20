@@ -1,12 +1,14 @@
 # Mesiva — Mapa de módulos e responsabilidades
 
 - **Tipo:** documentação viva de localização de código, ownership funcional e contratos de integração.
-- **Versão:** v0.2 — atualização focal em 17/10/2026 (edição inicial 13/10/2026).
+- **Versão:** v0.3 — owner de feedback atualizado em 19/10/2026; demais baselines preservadas.
 - **Baselines:** mapa inicial em `master@e595f7ed2a801fde6ffab231194788430cc53316`; owners de edição, snapshots, realtime e TV reconferidos em `master@9289523f9b3c6094ed8f27a66b05aa527f25d16d`. Não equivale a reauditoria de todos os exports.
 - **Escopo verificado:** árvore do repositório, os **10 `src/domains/*/index.js` públicos**, adaptadores de API, composição da aplicação, testes de contratos selecionados e checker de imports.
 - **Limite:** este é um mapa de **primeira leitura**, não uma lista completa de todos os exports/funções/rotas nem um grafo de dependências calculado sobre todos os arquivos. Os caminhos são da baseline indicada; uma nova branch precisa reconferi-los.
 
 Use este documento para saber **onde começar e o que não mover**. A [arquitetura](ARCHITECTURE.md) explica o desenho geral e as fronteiras de confiança; o [PRD](../product/PRD.md) explica as capacidades; as [regras de negócio](../product/BUSINESS_RULES.md) registram invariantes; o [Design System](../design/DESIGN_SYSTEM.md) orienta a interface; o [AGENTS.md](../../AGENTS.md) define o processo de desenvolvimento. Specs antigas são histórico, não ownership atual.
+
+Atualização focal de feedback: `useFeedbackRuntime`, `ToastRegion` e integração do shell conferidos em `abd74b0d`; [QA](../superpowers/qa/2026-10-19-action-feedback.md). Não representa nova auditoria de todos os módulos.
 
 ## 1. Busca rápida: tarefa → ponto de entrada
 
@@ -149,6 +151,7 @@ O índice público não deve ser tratado como inventário completo de todas as f
 | [`src/app/navigation/registry.js`](../../src/app/navigation/registry.js) | Destinos, paths, grupos e capabilities de navegação | Adicionar/alterar menu, deep link ou acesso por tela |
 | [`src/app/navigation/adminRouter.jsx`](../../src/app/navigation/adminRouter.jsx) | Roteador administrativo | Mudanças de navegação/Routing do admin |
 | [`src/app/runtime/session/useSessionRuntime.js`](../../src/app/runtime/session/useSessionRuntime.js) | Descoberta/seleção de sessão e geração de contexto | Login, troca de empresa, perda de grants, invalidação |
+| [`src/app/runtime/feedback/useFeedbackRuntime.js`](../../src/app/runtime/feedback/useFeedbackRuntime.js) | Coleção, fila FIFO, pausas e timers de avisos | Tipos de feedback e limpeza de sessão; apresentação em [`ToastRegion`](../../src/shared/ui/ToastRegion.jsx) pelo [`AppRoot`](../../src/app/shell/AppRoot.jsx) |
 | [`src/app/runtime/data/useOperationalDataRuntime.js`](../../src/app/runtime/data/useOperationalDataRuntime.js) | Bootstrap legado ou por superfície, coleções parciais declaradas, efeitos protegidos e fallback | Refresh/reconciliação, dados obsoletos, transição de sessão, 401/409 |
 | [`src/app/workflows/payments/`](../../src/app/workflows/payments/) | Recebimento de pedido, comanda, lote de cliente; editor/composição | Qualquer implementação de pagamento dividido/quitação |
 | [`src/app/workflows/refunds/`](../../src/app/workflows/refunds/) | Coordenação de registro de estorno | Cancelamento pago e estorno posterior |

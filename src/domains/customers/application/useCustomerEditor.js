@@ -17,13 +17,16 @@ export function useCustomerEditor({
   const generation=useRef(0),pendingCheck=useRef(null),currentOwner=useRef(ownerKey),allowed=useRef(null)
   currentOwner.current=ownerKey;allowed.current={writesBlocked,canCreateClients,canUpdateClients}
   const [checkingDuplicates,setCheckingDuplicates]=useState(false)
-  useEffect(()=>()=>{generation.current+=1;pendingCheck.current=null},[])
+  const pendingSubmit = useRef(null)
+  const [submitting, setSubmitting] = useState(false)
+  useEffect(()=>()=>{generation.current+=1;pendingCheck.current=null;pendingSubmit.current=null},[])
   const [draft, setDraft] = useState(emptyDraft)
   const [editingClientId, setEditingClientId] = useState(null)
   const [isOpen, setIsOpen] = useState(false)
   const [duplicateDialog, setDuplicateDialog] = useState(null)
 
   const reset = useCallback(() => {
+    pendingSubmit.current=null;setSubmitting(false)
     generation.current+=1;pendingCheck.current=null;setCheckingDuplicates(false)
     setEditingClientId(null)
     setDraft(emptyDraft())
@@ -33,6 +36,7 @@ export function useCustomerEditor({
 
   const openNewClient = useCallback(() => {
     if (!canCreateClients || writesBlocked) return false
+    pendingSubmit.current=null;setSubmitting(false)
     generation.current+=1;pendingCheck.current=null;setCheckingDuplicates(false)
     setDuplicateDialog(null)
     setEditingClientId(null)
@@ -43,6 +47,7 @@ export function useCustomerEditor({
 
   const editClient = useCallback((client) => {
     if (!canUpdateClients || writesBlocked || !client) return false
+    pendingSubmit.current=null;setSubmitting(false)
     generation.current+=1;pendingCheck.current=null;setCheckingDuplicates(false)
     setDuplicateDialog(null)
     setEditingClientId(client.id)
@@ -63,21 +68,27 @@ export function useCustomerEditor({
   }), [draft])
 
   const persist = useCallback(async (action) => {
-    if (!(action === 'update' ? canUpdateClients : canCreateClients) || writesBlocked || !draft.name.trim()) return false
+    if (pendingSubmit.current || !(action === 'update' ? canUpdateClients : canCreateClients) || writesBlocked || !draft.name.trim()) return false
     const draftGeneration=generation.current,owner=currentOwner.current
     const nextPayload = payload()
-    const client = action === 'update'
-      ? await updateClient(editingClientId, nextPayload)
-      : await createClient(nextPayload)
-    if (!client) return false
-    if(draftGeneration===generation.current&&owner===currentOwner.current)reset()
-    return true
+    const attempt = { generation: draftGeneration, owner }
+    pendingSubmit.current = attempt; setSubmitting(true)
+    try {
+      const client = action === 'update'
+        ? await updateClient(editingClientId, nextPayload)
+        : await createClient(nextPayload)
+      if (!client || draftGeneration!==generation.current || owner!==currentOwner.current) return false
+      reset()
+      return true
+    } finally {
+      if (pendingSubmit.current === attempt) { pendingSubmit.current = null; setSubmitting(false) }
+    }
   }, [canCreateClients, canUpdateClients, createClient, draft.name, editingClientId, payload, reset, updateClient, writesBlocked])
 
   const submit = useCallback(async () => {
     const action = editingClientId !== null ? 'update' : 'create'
     if (!(action === 'update' ? canUpdateClients : canCreateClients) || writesBlocked || !draft.name.trim()) return false
-    if(pendingCheck.current)return false
+    if(pendingCheck.current || pendingSubmit.current)return false
     const draftGeneration=generation.current,owner=currentOwner.current,check={}
     const stillCurrent=()=>draftGeneration===generation.current&&owner===currentOwner.current&&!allowed.current.writesBlocked&&(action==='update'?allowed.current.canUpdateClients:allowed.current.canCreateClients)
     let duplicate
@@ -132,7 +143,7 @@ export function useCustomerEditor({
   }, [editingClientId, reset])
 
   return {
-    draft,checkingDuplicates,
+    draft,checkingDuplicates,submitting,
     editing: editingClientId !== null,
     editingClientId,
     isOpen,

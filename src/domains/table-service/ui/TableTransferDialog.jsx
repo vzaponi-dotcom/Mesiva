@@ -9,6 +9,7 @@ function TableTransferDialog({ sourceTable, tables, disabled, onClose, onTransfe
   const [confirming, setConfirming] = useState(false)
   const [expectedTableTabId] = useState(() => sourceTable.openTableTab?.id ?? sourceTable.openTableTabId ?? '')
   const submittingRef = useRef(false)
+  const [submitting, setSubmitting] = useState(false)
   const destinations = useMemo(
     () => getTransferDestinations(tables, sourceTable.id),
     [sourceTable.id, tables],
@@ -24,11 +25,13 @@ function TableTransferDialog({ sourceTable, tables, disabled, onClose, onTransfe
       return
     }
     submittingRef.current = true
+    setSubmitting(true)
     try {
       const transferred = await onTransfer(sourceTable.id, destination.id, expectedTableTabId)
       if (transferred) onClose()
     } finally {
       submittingRef.current = false
+      setSubmitting(false)
     }
   }
 
@@ -36,6 +39,7 @@ function TableTransferDialog({ sourceTable, tables, disabled, onClose, onTransfe
     return (
       <ConfirmationDialog
         title="Confirmar transferência"
+        submitting={submitting} loadingLabel="Transferindo…"
         message={`Transferir ${sourceTable.name} → ${destination.name}?`}
         confirmLabel="Transferir comanda"
         confirmVariant="primary"

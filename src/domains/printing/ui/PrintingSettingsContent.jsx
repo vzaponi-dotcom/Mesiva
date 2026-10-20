@@ -172,7 +172,7 @@ function PrintingSettingsContent({ printing, settings, granted, onReviewConflict
           : policyState?.error && <div className="printing-feedback printing-feedback-error" role="alert"><p>{policyState.error}</p><Button type="button" variant="secondary" onClick={() => policyState.status === 'unconfirmed' ? settings.reconcilePolicy() : settings.reloadPolicy()}>{policyState.status === 'unconfirmed' ? 'Reconsultar' : 'Tentar novamente'}</Button></div>}
         {canEditPolicy && policyState?.dirty && <footer className="printing-settings-footer">
           <Button type="button" variant="secondary" onClick={() => settings?.discardPolicy?.()} disabled={policyBlocked}>Cancelar</Button>
-          <Button type="button" onClick={() => run('policy', () => settings.savePolicy(), 'Política de impressão salva.')} disabled={policyBlocked || busyKeys.has('policy')}>Salvar política</Button>
+          <Button type="button" state={busyKeys.has('policy') ? 'loading' : 'idle'} loadingLabel="Salvando…" onClick={() => run('policy', () => settings.savePolicy(), 'Política de impressão salva.')} disabled={policyBlocked || busyKeys.has('policy')}>Salvar política</Button>
         </footer>}
       </section>}
 
@@ -238,7 +238,7 @@ function PrintingSettingsContent({ printing, settings, granted, onReviewConflict
         />}
         {canConfigureStation && stationState?.dirty && <footer className="printing-settings-footer">
           <Button type="button" variant="secondary" onClick={() => settings?.discardStation?.()} disabled={stationBlocked}>Cancelar</Button>
-          <Button type="button" onClick={() => run('station', () => settings.saveStation(), 'Estação salva.')} disabled={stationBlocked || busyKeys.has('station')}>Salvar estação</Button>
+          <Button type="button" state={busyKeys.has('station') ? 'loading' : 'idle'} loadingLabel="Salvando…" onClick={() => run('station', () => settings.saveStation(), 'Estação salva.')} disabled={stationBlocked || busyKeys.has('station')}>Salvar estação</Button>
         </footer>}
       </section>}
 
@@ -272,7 +272,7 @@ function PrintingSettingsContent({ printing, settings, granted, onReviewConflict
           </div>
 
           {isQz && (canConfigureStation || canExecutePrinting) && <div className="printing-local-actions">
-            {canExecutePrinting && <Button type="button" variant="secondary" icon="printer" onClick={() => run('test', () => settings.testPrint(), 'Teste enviado com 1 via.')} disabled={localBusy || !printerReady}>Testar impressão</Button>}
+            {canExecutePrinting && <Button type="button" variant="secondary" icon="printer" state={busyKeys.has('test') ? 'loading' : 'idle'} loadingLabel="Enviando…" onClick={() => run('test', () => settings.testPrint(), 'Teste enviado com 1 via.')} disabled={localBusy || !printerReady}>Testar impressão</Button>}
             {canConfigureStation && <Button type="button" variant="secondary" onClick={() => setPrinterEditing((current) => !current)} disabled={localBusy}>{printerEditing ? 'Fechar seleção' : 'Trocar impressora'}</Button>}
           </div>}
         </div>
@@ -280,8 +280,8 @@ function PrintingSettingsContent({ printing, settings, granted, onReviewConflict
         {isQz && canConfigureStation && printerEditing && <div className="printing-printer-editor">
           <SystemSelect value={selectedPrinter} onChange={setPrinterSelection} options={printerOptions} placeholder="Selecione a impressora" label="Impressora QZ" disabled={localBusy} />
           <div className="printing-actions-row">
-            <Button type="button" variant="secondary" onClick={() => run('discover', () => settings.refreshPrinters())} disabled={localBusy}>Atualizar lista</Button>
-            <Button type="button" onClick={async () => { const saved = await run('printer', () => settings.savePrinter(selectedPrinter), 'Impressora local salva.'); if (saved) setPrinterEditing(false) }} disabled={localBusy || !selectedPrinter}>Salvar impressora</Button>
+            <Button type="button" variant="secondary" state={busyKeys.has('discover') ? 'loading' : 'idle'} loadingLabel="Atualizando…" onClick={() => run('discover', () => settings.refreshPrinters())} disabled={localBusy}>Atualizar lista</Button>
+            <Button type="button" state={busyKeys.has('printer') ? 'loading' : 'idle'} loadingLabel="Salvando…" onClick={async () => { const saved = await run('printer', () => settings.savePrinter(selectedPrinter), 'Impressora local salva.'); if (saved) setPrinterEditing(false) }} disabled={localBusy || !selectedPrinter}>Salvar impressora</Button>
           </div>
         </div>}
 
@@ -291,7 +291,7 @@ function PrintingSettingsContent({ printing, settings, granted, onReviewConflict
       {feedback && <p className="printing-feedback printing-global-feedback" role="status">{feedback}</p>}
     </div>
 
-    {confirmPrimary && <ConfirmationDialog title="Tornar estação principal" message="Esta estação passará a ser a única responsável pela impressão automática. Confirme para continuar." confirmLabel="Tornar principal" confirmVariant="primary" onClose={() => setConfirmPrimary(false)} onConfirm={async () => { const saved = await run('primary', () => settings.makePrimary(), 'Esta estação agora é a principal.'); if (saved) setConfirmPrimary(false) }} disabled={primaryBlocked || busyKeys.has('primary')} />}
+    {confirmPrimary && <ConfirmationDialog submitting={busyKeys.has('primary')} loadingLabel="Confirmando…" title="Tornar estação principal" message="Esta estação passará a ser a única responsável pela impressão automática. Confirme para continuar." confirmLabel="Tornar principal" confirmVariant="primary" onClose={() => setConfirmPrimary(false)} onConfirm={async () => { const saved = await run('primary', () => settings.makePrimary(), 'Esta estação agora é a principal.'); if (saved) setConfirmPrimary(false) }} disabled={primaryBlocked || busyKeys.has('primary')} />}
   </>
 }
 

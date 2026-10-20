@@ -11,6 +11,22 @@ const clients = [
   { id: 'maria', name: 'Maria Silva', phone: '(11) 98888-8888', address: 'Jardim' },
 ]
 
+test('customer save latches immediately and a failed result keeps the editable draft', async t => {
+  let resolve, calls = 0
+  const h = await mount({ clients: [], createClient: () => { calls++; return new Promise(done => { resolve = done }) } })
+  t.after(async () => { await act(async () => h.renderer.unmount()) })
+  await act(async () => { h.editor.openNewClient(); h.editor.updateDraft({ name: 'Cliente de teste', phone: '', address: '' }) })
+  let first, duplicate
+  await act(async () => { first = h.editor.submit(); duplicate = h.editor.submit() })
+  assert.equal(calls, 1)
+  assert.equal(await duplicate, false)
+  assert.equal(h.editor.submitting, true)
+  await act(async () => { resolve(false); await first })
+  assert.equal(h.editor.isOpen, true)
+  assert.equal(h.editor.draft.name, 'Cliente de teste')
+  assert.equal(h.editor.submitting, false)
+})
+
 async function mount(overrides = {}) {
   let current
   const calls = {

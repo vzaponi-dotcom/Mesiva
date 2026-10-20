@@ -40,7 +40,6 @@ export function SettingsSurface({
   onSoundProfileChange,
   onSoundVolumeChange,
   onPreviewSound,
-  onSuccessMessage,
   writesBlocked = false,
 }) {
   const policyEditing = usePolicyEditing()
@@ -71,9 +70,8 @@ export function SettingsSurface({
     onNavigate?.('settings-home')
     return true
   }
-  const savePolicy = async (policyId, successMessage, scopeId, transient) => {
+  const savePolicy = async (policyId, scopeId, transient) => {
     const saved = await save(policyId, scopeId, transient)
-    if (saved === true) onSuccessMessage?.(successMessage)
     return saved
   }
   const review = async (policyId, scopeId) => reviewConflict(policyId, scopeId)
@@ -91,7 +89,7 @@ export function SettingsSurface({
       readOnly={!(granted instanceof Set && granted.has('business.profile.manage'))}
       writesBlocked={writesBlocked}
       onEdit={(draft) => edit('businessProfile', draft)}
-      onSave={(transient) => savePolicy('businessProfile', 'Identidade da operação salva com sucesso', undefined, transient)}
+      onSave={(transient) => savePolicy('businessProfile', undefined, transient)}
       onDiscard={() => cancel('businessProfile')}
       onReconcile={() => reconcile('businessProfile')}
       onReload={() => load('businessProfile')}
@@ -106,7 +104,7 @@ export function SettingsSurface({
       readOnly={!(granted instanceof Set && granted.has('operations.settings.manage'))}
       initialSection={section === 'settings-modalities' ? 'modalities' : 'timing'}
       onEdit={(draft) => edit('operations', draft)}
-      onSave={() => savePolicy('operations', 'Configurações de operação salvas com sucesso')}
+      onSave={() => savePolicy('operations')}
       onDiscard={() => cancel('operations')}
       onReconcile={() => reconcile('operations')}
       onReload={() => load('operations')}
@@ -118,7 +116,7 @@ export function SettingsSurface({
       resourceState={resources.paymentMethods}
       readOnly={!(granted instanceof Set && granted.has('payments.settings.manage'))}
       onEdit={(draft) => edit('paymentMethods', draft)}
-      onSave={() => savePolicy('paymentMethods', 'Configurações de pagamento salvas com sucesso')}
+      onSave={() => savePolicy('paymentMethods')}
       onDiscard={() => cancel('paymentMethods')}
       onReconcile={() => reconcile('paymentMethods')}
       onReload={() => load('paymentMethods')}
@@ -131,7 +129,7 @@ export function SettingsSurface({
       resourceState={resources.cancellationReasons}
       readOnly={!(granted instanceof Set && granted.has('orders.settings.manage'))}
       onEdit={(draft) => edit('cancellationReasons', draft)}
-      onSave={() => savePolicy('cancellationReasons', 'Motivos de cancelamento salvos com sucesso')}
+      onSave={() => savePolicy('cancellationReasons')}
       onDiscard={() => cancel('cancellationReasons')}
       onReconcile={() => reconcile('cancellationReasons')}
       onReload={() => load('cancellationReasons')}
@@ -144,7 +142,7 @@ export function SettingsSurface({
       resourceState={resources.financeCategories}
       readOnly={!(granted instanceof Set && granted.has('finance.categories.manage'))}
       onEdit={(draft) => edit('financeCategories', draft)}
-      onSave={() => savePolicy('financeCategories', 'Categorias financeiras salvas com sucesso')}
+      onSave={() => savePolicy('financeCategories')}
       onDiscard={() => cancel('financeCategories')}
       onReconcile={() => reconcile('financeCategories')}
       onReload={() => load('financeCategories')}

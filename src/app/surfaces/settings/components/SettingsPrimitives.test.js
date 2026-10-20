@@ -41,7 +41,7 @@ test('editor shell exposes a pending-draft status without saving automatically',
     onSave: () => { saves += 1 }, onDiscard() {}, children: null,
   })
 
-  assert.match(nodeText(screen.root.findByProps({ role: 'status' })), /alterações pendentes/i)
+  assert.match(screen.root.findAllByProps({ role: 'status' }).map(nodeText).join(' '), /alterações pendentes/i)
   assert.equal(saves, 0)
 })
 

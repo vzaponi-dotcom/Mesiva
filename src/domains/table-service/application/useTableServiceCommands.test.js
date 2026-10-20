@@ -179,7 +179,7 @@ test('transfer captures exact identity and applies tables plus tableTab in one o
   assert.deepEqual(calls, [['table-1', 'table-5', 'tab-A']])
   assert.deepEqual(commits.at(-1), { tables: returnedTables, tableTab: returnedTab })
   assert.equal(refreshCalls, 0)
-  assert.deepEqual(successes, ['Comanda transferida com sucesso'])
+  assert.deepEqual(successes, ['Comanda transferida: Mesa 1 → Mesa 5'])
   assert.deepEqual(keys, ['table:transfer:table-1', null])
   probe.unmount()
 })

@@ -9,7 +9,6 @@ const successMessages = Object.freeze({
   rename: 'Mesa renomeada com sucesso',
   activate: 'Mesa ativada com sucesso',
   deactivate: 'Mesa desativada com sucesso',
-  transfer: 'Comanda transferida com sucesso',
 })
 
 export function useTableServiceCommands({
@@ -122,7 +121,7 @@ export function useTableServiceCommands({
       if (!ownsMutation()) return false
 
       if (applyOfficialEffects({ tables: result.tables, tableTab: result.tableTab }) === false) return false
-      onSuccess(successMessages.transfer)
+      onSuccess(`Comanda transferida: ${validated.source.name} → ${validated.destination.name}`)
       return true
     } catch (error) {
       if (!ownsMutation()) return false

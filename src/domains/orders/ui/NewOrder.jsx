@@ -56,6 +56,7 @@ const initialAdjustment = (value) => {
 }
 
 function NewOrder({
+  submitting = false,
   clients,
   products,
   tables = [],
@@ -411,8 +412,10 @@ function NewOrder({
     updateQuickClient(patch.phone === undefined ? patch : { ...patch, phone: formatPhone(patch.phone) })
   }
 
+  const [pendingIntent, setPendingIntent] = useState(null)
+  const submitIntentRef = useRef(null)
   const save = async (paymentAllocations, bypassManualPrintWarning = false, intent = 'save', receivedDate) => {
-    if (disabled || !canSubmit) return false
+    if (disabled || submitIntentRef.current || !canSubmit) return false
     if (editReservationMode
       && reservationContext?.hasManualPrintHistory
       && !bypassManualPrintWarning) {
@@ -420,28 +423,32 @@ function NewOrder({
       return false
     }
 
-    setCheckoutError('')
-    const result = editOrderMode
-      ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
-      : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations, { receivedDate }))
-    if (result?.code === 'POLICY_CHANGED') {
-      setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
-      await onPolicyChanged?.()
-      return false
-    }
-    if (result?.ok === false) {
-      setCheckoutError(result.message || (editReservationMode
-        ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
-        : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.'))
-      return false
-    }
-    if (!result) {
-      setCheckoutError(editReservationMode
-        ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
-        : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.')
-      return false
-    }
-    return true
+    submitIntentRef.current = paymentAllocations ? 'receive' : intent
+    setPendingIntent(submitIntentRef.current)
+    try {
+      setCheckoutError('')
+      const result = editOrderMode
+        ? await onSubmit(buildOrderEditPayload(numericDraft), { intent })
+        : await onSubmit(buildOrderPayload(numericDraft, paymentAllocations, { receivedDate }))
+      if (result?.code === 'POLICY_CHANGED') {
+        setPolicyReviewError('A política de modalidades foi alterada. Revise o tipo do pedido antes de confirmar novamente.')
+        await onPolicyChanged?.()
+        return false
+      }
+      if (result?.ok === false) {
+        setCheckoutError(result.message || (editReservationMode
+          ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
+          : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.'))
+        return false
+      }
+      if (!result) {
+        setCheckoutError(editReservationMode
+          ? 'Não foi possível salvar as alterações. Seus dados continuam aqui para tentar novamente.'
+          : 'Não foi possível salvar a venda. Seus dados continuam aqui para tentar novamente.')
+        return false
+      }
+      return true
+    } finally { submitIntentRef.current = null; setPendingIntent(null) }
   }
 
   const cartProps = {
@@ -597,6 +604,7 @@ function NewOrder({
               onRemove: (lineId) => setItems((current) => removeCartItem(current, lineId)),
             }}
             checkoutProps={{
+              submitting, pendingIntent,
               draft,
               preview,
               currency,

@@ -7,6 +7,7 @@ function ClientDuplicateModal({
   onUseExisting,
   onConfirm,
   disabled = false,
+  submitting = false,
   cancelLabel = 'Cancelar',
   useExistingLabel = 'Usar cliente existente',
   confirmLabel = 'Cadastrar mesmo assim',
@@ -16,13 +17,13 @@ function ClientDuplicateModal({
   return (
     <Modal
       title="Encontramos um cliente com este nome"
-      onClose={onCancel}
+      onClose={submitting ? () => {} : onCancel}
       footer={(
         <div className="duplicate-client-actions">
           <Button type="button" variant="ghost" onClick={onCancel} disabled={disabled}>
             {cancelLabel}
           </Button>
-          <Button type="button" variant="secondary" onClick={onConfirm} disabled={disabled}>
+          <Button type="button" variant="secondary" onClick={onConfirm} disabled={disabled} state={submitting ? 'loading' : 'idle'} loadingLabel="Cadastrando…">
             {confirmLabel}
           </Button>
           <Button type="button" onClick={onUseExisting} disabled={disabled}>

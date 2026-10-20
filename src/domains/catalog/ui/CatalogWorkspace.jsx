@@ -28,6 +28,7 @@ export default function CatalogWorkspace({
     onError,
   })
   const editor = useProductEditor({
+    ownerKey: applyOfficialEffects,
     createProduct: commands.createProduct,
     updateProduct: commands.updateProduct,
     writesBlocked,

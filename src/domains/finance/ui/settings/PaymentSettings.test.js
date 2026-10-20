@@ -223,12 +223,16 @@ test('payment save confirms only after success and Cancel discards then returns 
     onSuccessMessage: (message) => messages.push(message),
   }))
   const screen = await h.render(Page)
+  t.mock.timers.enable({ apis: ['setTimeout'] })
 
   await act(async () => buttonNamed(screen.root, 'Salvar alterações').props.onClick())
-  assert.deepEqual(messages, ['Configurações de pagamento salvas com sucesso'])
+  assert.equal(nodeText(buttonNamed(screen.root, 'Salvar alterações').findByProps({ role: 'status' })), 'Salvo')
+  assert.deepEqual(messages, [])
+  await act(async () => t.mock.timers.tick(1800))
   saved = false
   await act(async () => buttonNamed(screen.root, 'Salvar alterações').props.onClick())
-  assert.equal(messages.length, 1)
+  assert.equal(nodeText(buttonNamed(screen.root, 'Salvar alterações').findByProps({ role: 'status' })), '')
+  assert.equal(messages.length, 0)
   await act(async () => buttonNamed(screen.root, 'Cancelar').props.onClick())
   assert.deepEqual(calls, ['discard', 'settings-home'])
 })
