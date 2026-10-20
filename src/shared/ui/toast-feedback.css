@@ -1,7 +1,7 @@
 /* Visual reference: Animated Toast, Joly UI (MIT, Copyright (c) 2025 Johuniq). */
 .toast-region { position: fixed; top: max(20px, env(safe-area-inset-top)); left: 50%; translate: -50% 0; z-index: var(--layer-toast, 120); width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 100px); overflow-y: auto; overscroll-behavior: contain; padding: 3px; pointer-events: none; }
 .toast-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.feedback-toast { --toast-tone: var(--info); --toast-soft: var(--info-soft); display: flex; align-items: flex-start; gap: 12px; position: relative; min-width: 0; padding: 14px 12px; border: 1px solid var(--border); border-inline-start: 3px solid var(--toast-tone); border-radius: var(--radius-md); background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); pointer-events: auto; animation: feedback-toast-in 220ms cubic-bezier(.2,0,0,1); }
+.feedback-toast { --toast-tone: var(--info); --toast-soft: var(--info-soft); display: flex; align-items: center; gap: 12px; position: relative; min-width: 0; padding: 14px 12px; border: 1px solid var(--border); border-inline-start: 3px solid var(--toast-tone); border-radius: var(--radius-md); background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); pointer-events: auto; animation: feedback-toast-in 220ms cubic-bezier(.2,0,0,1); }
 .feedback-toast-success { --toast-tone: var(--success); --toast-soft: var(--success-soft); }
 .feedback-toast-error { --toast-tone: var(--danger); --toast-soft: var(--danger-soft); }
 .feedback-toast-warning { --toast-tone: var(--warning); --toast-soft: var(--warning-soft); }
