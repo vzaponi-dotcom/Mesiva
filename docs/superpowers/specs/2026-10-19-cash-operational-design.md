@@ -1,6 +1,6 @@
 # Spec — Caixa Operacional, Entregadores e Recebimentos da Mesiva
 
-**Versão:** 0.1 — proposta para revisão funcional e técnica
+**Versão:** 0.2 — controle de troco do entregador aprovado; demais propostas pendentes de revisão funcional e técnica
 **Data:** 19/10/2026
 **Baseline de consulta:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266
 **Status:** documentação em DRAFT; NÃO IMPLEMENTADO; sem autorização para migrations, staging, merge ou produção
@@ -25,6 +25,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 | Pedido sem pagamento | Operador deve informar intenção: Dinheiro, Pix, Cartão ou A definir; "A definir" permite seguir |
 | Previsão | O pedido pode ser pago em outra data e permanece em A receber |
 | Dinheiro do entregador | Não entra na gaveta antes de repasse físico confirmado |
+| Troco antecipado ao entregador | **Aprovado para a primeira versão**: fundo de troco transferido à custódia do entregador, reconciliado no retorno, sem despesa/receita fictícia |
 | Fechamento | Apura numerário físico esperado versus contado; cobrança futura não cria diferença; justificativa exigida quando diverge |
 | Interface | Desktop prioritário, no padrão Mesiva, focado no dia; sem "Novo pedido" ou ação de despacho na tela de Caixa |
 | Movimentações | A rota atual não deve simplesmente ser apagada; estudar substituição gradual e realocação de despesas/estornos |
@@ -80,7 +81,15 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **EN-09:** Se o funcionário só confirmar cobrança e repasse no retorno, pode haver uma ação de prestação de contas que crie, em uma única transação autoritativa, recibo/alocações canônicos + confirmação de custódia + repasse físico, mantendo a rastreabilidade dos fatos. Se a cobrança havia sido confirmada antes, repasse **somente transfere custódia**. Nunca duplicar os recibos.
 
-**EN-10:** Troco entregue antecipadamente ao entregador é transferência de numerário à sua custódia, não despesa nem venda; preservar o fundo enviado, troco dado ao cliente e devolução. **Decisão pendente:** política de repasses com troco e se entra na primeira entrega ou versão posterior.
+**EN-10 — Troco do entregador (APROVADO PARA V1):** A Mesiva deve permitir retirar um fundo de troco de uma sessão física aberta, sob autorização e saldo disponível, e vinculá-lo à custódia de um entregador e à saída da rota. Não criar despesa, receita ou recibo de venda para esse adiantamento.
+
+**EN-10a:** Quando o cliente pagar em dinheiro, registrar: valor bruto recebido, valor efetivamente devolvido ao cliente como troco, valor líquido da venda, identificação do pedido e responsável pela conferência. Uma venda de R$ 65,00 paga com R$ 100,00 e troco de R$ 35,00 vale R$ 65,00 de receita, ainda que o entregador tenha recebido fisicamente R$ 100,00.
+
+**EN-10b:** Saldo físico do entregador = fundo de troco recebido + dinheiro bruto recebido de clientes - troco pago a clientes - repasses confirmados - devoluções/transferências autorizadas. Todos os fatos em centavos, vinculados a eventos, com validação de saldo e proteção contra concorrência. Troco insuficiente ou divergente deve gerar ocorrência e não acerto silencioso.
+
+**EN-10c:** No retorno, conferir separadamente (i) valor de vendas em dinheiro e (ii) fundo de troco/adiantamento que retorna. Exemplo: fundo de R$ 50,00, venda de R$ 65,00, cliente entrega R$ 100,00 e recebe R$ 35,00; entregador deve trazer R$ 115,00, sendo R$ 50,00 de fundo e R$ 65,00 de venda. O repasse aumenta a gaveta fisicamente em R$ 115,00; o saldo consolidado do restaurante cresce R$ 65,00 considerando a saída prévia do fundo. Criar **um único** recibo canônico pela venda, nunca outro pelo fundo ou pelo repasse.
+
+**EN-10d:** Permitir repasses parciais do valor que o entregador deve, mantendo diferença como custódia pendente, com justificativa e visibilidade, mesmo se a sessão que enviou o fundo já tiver sido fechada. O repasse é registrado na sessão realmente aberta que receber o dinheiro; nunca voltar a modificar uma sessão encerrada. Proibir repasse acima da custódia comprovada sem operação específica autorizada.
 
 **EN-11:** Pagamento insuficiente/recebimento parcial arbitrário não poderá contornar regras atuais que exigem quitação autoritativa integral por recibo. Preservar ocorrência/pendência e encaminhar para resolução autorizada sem falsear pedido Pago. **Decisão pendente:** suporte financeiro a pagamento parcial genuíno como evolução posterior.
 
@@ -116,7 +125,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **OP-07:** Cada comando financeiro exige chave de idempotência e verificação de revisão/estado; replay idêntico devolve resultado anterior e replay divergente gera conflito. Falha após gravação deve reconciliar no servidor antes de nova execução.
 
-**OP-08:** Saldo esperado da sessão = fundo inicial + entradas físicas confirmadas + suprimentos + transferências recebidas - sangrias - transferências enviadas - devoluções/saídas físicas confirmadas. Não incluir recebimentos Pix/cartão, vendas não pagas, promessas, cobrança prevista ou dinheiro ainda com entregador.
+**OP-08:** Saldo esperado da sessão = fundo inicial + entradas físicas confirmadas (inclusive repasses de entregador) + suprimentos + transferências recebidas - sangrias - transferências enviadas - fundos de troco enviados ao entregador - devoluções/saídas físicas confirmadas. Não incluir recebimentos Pix/cartão, vendas não pagas, promessas, cobrança prevista ou dinheiro ainda com entregador. No repasse, valor do fundo que retorna aumenta fisicamente a gaveta, mas não gera faturamento.
 
 **OP-09:** O saldo inicial global de finance_settings (fluxo financeiro por empresa, possivelmente negativo) é independente do fundo físico da sessão (>=0). Não migrar nem reutilizar o primeiro automaticamente como abertura de gaveta.
 
@@ -223,6 +232,11 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-43 | 10k pedidos + várias sessões | Queries indexáveis, sem N+1 nem histórico global |
 | QA-44 | Concorrência fechamento vs pagamento | Nunca grava em sessão fechada ou perde crédito |
 | QA-45 | Recibo retroativo posterior | Não altera caixa já fechado; datas oficiais preservadas |
+| QA-46 | Enviar R$ 50 de troco ao entregador | Gaveta reduz R$ 50; custódia aumenta R$ 50; receita/despesa não muda |
+| QA-47 | Cliente paga R$ 100 com R$ 35 de troco por venda de R$ 65 | Venda oficial R$ 65; custódia calculada corretamente; sem recibo de R$ 100 |
+| QA-48 | Repasse de R$ 115 (R$ 50 fundo + R$ 65 venda) | Gaveta +R$ 115 após prévia saída de R$ 50; variação consolidada +R$ 65; sem duplicação |
+| QA-49 | Repasse parcial e troca de turno | Saldo remanescente em custódia; recebimento na sessão futura sem reabrir caixa antigo |
+| QA-50 | Fundo de troco sem pedido/entrega concluída | Troco permanece em custódia até retorno/ajuste autorizado, sem despesa fictícia |
 
 ## 13. Fases candidatas — sem implementação autorizada
 
@@ -237,7 +251,7 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 
 ## 14. Pendências para revisão antes do plano técnico
 
-**PD-01 — Escopo da primeira entrega:** incluir ou adiar controle formal do troco em posse do entregador.
+**PD-01 — RESOLVIDO / APROVADO:** o controle formal do troco em posse do entregador entra na primeira versão. Regras definidas em EN-10 a EN-10d; exigirá validação técnica da granularidade dos eventos e de recibos.
 
 **PD-02 — Gastos/Movimentações:** preservar despesas manuais em área financeira própria provisoriamente ou criar nova superfície de "Despesas" já nesta iniciativa. A exclusão da rota atual não está aprovada.
 
@@ -265,4 +279,4 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 - [Autorização](../../../shared/settingsAccess.js) e [perfis](../../../worker/access/roles.js).
 - [Auditoria técnica desta proposta](2026-10-19-cash-operational-technical-audit.md).
 
-**Gate:** esta versão é documental e necessita revisão/aceite do usuário. Nenhum item pendente será tratado silenciosamente como aprovado.
+**Gate:** esta versão é documental. Apenas o escopo de troco do entregador (PD-01) foi adicionalmente aprovado; PD-02 a PD-08 continuam pendentes. Nenhum item pendente será tratado silenciosamente como aprovado.
