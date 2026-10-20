@@ -3,7 +3,7 @@
 **Data:** 19/10/2026
 **Baseline auditada:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266 (consulta de arquivos via GitHub; sem execução local)
 **Status:** auditoria estática documental; não houve alteração de código, migração, consulta a dados privados, deploy ou testes funcionais no ambiente real.
-**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md)
+**Spec vinculada:** [2026-10-19-cash-operational-design.md](2026-10-19-cash-operational-design.md) — v0.3, PD-01/PD-02/PD-06 aprovados funcionalmente em 20/10/2026
 
 ## 1. Resultado executivo
 
@@ -19,7 +19,7 @@ A Mesiva **não possui** hoje caixa físico modelado por sessões, somatório de
 
 **Achado crítico:** o caixa físico deve ser um ledger de custódia ligado às operações oficiais existentes, não novo motor paralelo de pagamentos ou espelho da tela Movimentações.
 
-**Recomendação de implementação:** migrations aditivas e separação de owner (Financeiro/Caixa e Entregadores), preservar todos os recibos/movimentos históricos, introduzir UI de caixa como superfície independente, não remover /financeiro/movimentacoes na primeira rodada.
+**Recomendação de implementação:** migrations aditivas e separação de owner (Financeiro/Caixa e Entregadores). A organização **aprovada** prevê Visão geral com aba Extrato, Caixa, A receber, Despesas e Relatórios. Preservar todos os recibos/movimentos históricos, introduzir UI de Caixa independente e não remover /financeiro/movimentacoes na primeira rodada. A ativação física é opt-in por empresa, com configuração anterior ao corte.
 
 ## 2. Matriz de evidências e lacunas
 
@@ -65,7 +65,7 @@ A base de split payment (migrations/0026_split_payments.sql) cria payment_receip
 
 migrations/0009_finance_cash_flow.sql contém finance_settings com opening_balance_cents/opening_date por empresa. worker/financeRepository.js oferece movimentações manuais por tipo, categoria, data e método. O formulário na Finance UI mantém Novo movimento, Saldo inicial, edição/exclusão lógica, estornos pendentes e lista financeira com entradas e saídas.
 
-**Encaminhamento:** **não** desativar a rota ou o CRUD manual agora. A solução futura precisa mapear origem e destino de cada tipo de registro. Uma despesa operacional pode ser bancária (sem alterar gaveta) ou paga com dinheiro em espécie (altera uma gaveta identificada). Sangria para cofre não é despesa. Uma despesa paga pela gaveta não pode ser novamente lançada como sangria.
+**Encaminhamento (PD-02 APROVADO FUNCIONALMENTE):** navegação alvo **Financeiro > Visão geral (aba Extrato), Caixa, A receber, Despesas e Relatórios**; Despesas é o ponto de registro de custos/fornecedores independentemente de meio de pagamento, separado de sangrias/suprimentos. Uma despesa bancária não altera gaveta; pagamento físico em espécie por gaveta deverá lançar uma única saída vinculada, nunca nova sangria pelo mesmo fato. **Não** desativar /financeiro/movimentacoes nem seu CRUD manual agora: os consumidores, estornos, saldo inicial global, categorias, histórico e operações alternativas ainda precisam de inventário/migração/homologação antes de retirada. A organização do menu está aprovada, não o detalhamento de migração ou prazo de exclusão.
 
 ### E. Sessão física vs recebimento retroativo
 
@@ -79,7 +79,13 @@ worker/access/roles.js define templates manager/operator. worker/index.js requer
 
 **Encaminhamento:** novas capabilities cash.* e vínculos por register_id; exigir ambos no backend. Não conceder movimentações financeiras gerais via cash.withdraw/supply. Planos de migração dos grants devem evitar escalonamento silencioso de operadores existentes.
 
-### G. Realtime, custo e layout
+### G. Ativação gradual por restaurante (PD-06 APROVADO FUNCIONALMENTE)
+
+**Fluxo aprovado:** preparar caixas, permissões e eventual entregador padrão por empresa sem cortar os pagamentos existentes; primeira abertura com numerário contado como fundo real; ativar o controle obrigatório de ingressos/saídas físicos após esse marco. Antes do opt-in, manter compatibilidade. Depois, pagamentos com numerário diretamente na gaveta exigem sessão aberta e grants; sem sessão, a confirmação financeira em dinheiro não pode ser marcada como concluída. Pix/cartão e pedidos para pagamento futuro permanecem disponíveis. Entradas/saídas de troco, repasses e despesas efetivamente pagos pela gaveta também precisam de sessão. Não fazer backfill de pagamentos históricos nem usar finance_settings.opening_balance_cents como fundo de gaveta. Não desativar com sessão aberta; conservar custódia/histórico ao trocar configuração.
+
+**Contratos técnicos ainda necessários:** flag por empresa, transição entre preparação/ativação, autorização de abertura, consistência de split payments, comportamento com troco/entregador em trânsito, recuperação de comandos/timeout, logs/auditoria de opt-in e exceções de rollback. A aprovação funcional não autoriza implementar migrations.
+
+### H. Realtime, custo e layout
 
 A documentação de realtime afirma que Worker/D1 são autoritativos, aviso WebSocket invalida leituras, e fallback HTTP existe. Novas telas por caixa/entregador precisam de snapshots segmentados, agregados feitos no backend, paginação e invalidação com grants. Evitar N+1 de pedidos/custódia e polling adicional por card.
 
@@ -121,17 +127,17 @@ Essa matriz é o **ponto de partida** para leitura de callers, testes e migratio
 
 ## 6. Contratos não resolvidos e gates
 
-Antes de um plano de implementação executável, tratar os itens a seguir. PD-01 foi resolvido no âmbito funcional, e os demais continuam sem aprovação:
-1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.2, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
-2. **PD-02:** para onde mover despesas manuais e estornos se Movimentações for removida;
+Antes de um plano de implementação executável, tratar os itens a seguir. **PD-01, PD-02 e PD-06 foram resolvidos no âmbito funcional**. PD-03, PD-04, PD-05, PD-07, PD-08, PD-09 e PD-10, além dos detalhes técnicos de migração e OP-04, permanecem pendentes:
+1. **PD-01 — RESOLVIDO FUNCIONALMENTE:** o usuário aprovou controle de troco do entregador na primeira versão. A Spec v0.3, EN-10 a EN-10d e QA-46 a QA-50 formalizam fundo enviado, troco pago, retorno, repasse parcial e impossibilidade de reabrir sessão antiga. Permanece obrigatória a validação técnica de eventos/recibos antes do DDL;
+2. **PD-02 — APROVADO FUNCIONALMENTE:** nova organização de Financeiro com Visão geral (Extrato), Caixa, A receber, Despesas e Relatórios; Movimentações legadas preservadas até migração segura. **Pendente tecnicamente:** inventário de despesas manuais, estornos, edições/ajustes e histórico, integração da despesa paga em espécie (OP-04) e retirada futura da rota (PD-10);
 3. **PD-03:** tratamento de recebimento parcial genuíno, sem violar quitação integral atual;
 4. **PD-04:** permissão para criar promessa de pagamento no checkout;
 5. **PD-05:** momento exato de confirmação de dinheiro com entregador (na volta, ou antecipado por operador);
-6. **PD-06:** regra opt-in para exigir caixa aberto nos pagamentos em espécie;
+6. **PD-06 — APROVADO FUNCIONALMENTE:** ativação gradual por empresa com preparação e fundo contado na primeira abertura; após ativação numerário físico exige sessão aberta e permissões, sem bloquear Pix/cartão/promessas ou operações legadas de empresas não ativadas. **Pendente tecnicamente:** flag, implantação por etapas, erro/reconciliação e rollback controlado;
 7. **PD-07:** fechamento cego ou não por grants;
 8. **PD-08:** testes/protótipos finais coerentes com o guia visual v1.1;
 9. **PD-09:** identificar eventos de cancelamento/devolução que podem surgir após despacho ou fechamento;
-10. **PD-10:** quais partes do histórico Financeiro podem continuar disponíveis somente em Relatórios sem perder ações existentes.
+10. **PD-10 — PENDENTE:** apesar da direção aprovada de **Extrato em Visão geral**, mapear quais ações/estornos/lançamentos/histórico financeiro precisam continuar acessíveis em Despesas, Extrato, Relatórios ou eventual compatibilidade antes de remover Movimentações. Não interpretar a escolha de navegação como autorização de migração destrutiva.
 
 **Sequência de gates exigida:** Spec aprovada -> plano técnico -> inspeção de chamadas/esquema/tests -> migrations aditivas com plano reversível -> testes focados e completos -> métricas D1/Cloudflare -> CI verde por SHA -> staging com dados fictícios -> QA do usuário -> autorização explícita de merge -> autorização de produção separada. Não executar migrations remotas nem inferir autorização do aceite documental.
 
