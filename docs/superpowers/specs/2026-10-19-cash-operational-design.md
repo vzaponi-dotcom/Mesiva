@@ -1,7 +1,7 @@
 # Spec — Caixa Operacional, Entregadores e Recebimentos da Mesiva
 
-**Versão:** 0.4 — decisões funcionais PD-01 a PD-06 aprovadas; PD-07/PD-08 e contratos técnicos permanecem pendentes
-**Atualização:** 20/10/2026 (aprovações funcionais de PD-03, PD-04 e PD-05; PD-01, PD-02 e PD-06 preservadas)
+**Versão:** 0.5 — decisões funcionais PD-01 a PD-07 aprovadas; PD-08 e contratos técnicos permanecem pendentes
+**Atualização:** 20/10/2026 (PD-07: contagem cega do operador com visibilidade gerencial; PD-01 a PD-06 preservadas)
 **Data:** 19/10/2026
 **Baseline de consulta:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266
 **Status:** documentação em DRAFT; NÃO IMPLEMENTADO; sem autorização para migrations, staging, merge ou produção
@@ -28,6 +28,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 | Dinheiro do entregador | Não entra na gaveta antes de repasse físico confirmado |
 | Troco antecipado ao entregador | **Aprovado para a primeira versão**: fundo de troco transferido à custódia do entregador, reconciliado no retorno, sem despesa/receita fictícia |
 | Fechamento | Apura numerário físico esperado versus contado; cobrança futura não cria diferença; justificativa exigida quando diverge |
+| Contagem cega (PD-07) | **Aprovado:** operador preenche primeira contagem sem consultar saldo esperado; acesso prévio ao esperado depende de permissão gerencial efetiva, verificada no Worker |
 | Interface | Desktop prioritário, no padrão Mesiva, focado no dia; sem "Novo pedido" ou ação de despacho na tela de Caixa |
 | Organização do Financeiro | **Aprovado:** Visão geral (com aba Extrato), Caixa, A receber, Despesas e Relatórios; despesas financeiras separadas do caixa físico |
 | Movimentações legadas | A migração funcional será gradual; **não** remover rota, histórico, lançamentos manuais, estornos ou recursos existentes antes de substituição e homologação |
@@ -149,6 +150,12 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **FC-06:** Fechamento não cancela pedidos, não registra recebimentos automáticos nem muda data comercial/financeira para "encaixar o dia". Registros oficiais de recebimento preservam received_date e paid_at/created_at factual.
 
+**FC-07 — Contagem cega (PD-07 APROVADO):** no procedimento de fechamento realizado por operador sem permissão gerencial de visualização, o sistema **não exibe nem entrega previamente** o saldo físico esperado ou sua composição numérica. O operador informa a contagem do numerário físico sem conhecer o valor calculado. O Worker deve aplicar a mesma restrição aos read models/endpoints, inclusive respostas em segundo plano; ocultar apenas por CSS não é controle de acesso. A contagem é efetivada com revalidação de sessão e grants antes de comparação ou fechamento.
+
+**FC-08 — Visibilidade gerencial (PD-07 APROVADO):** o saldo esperado e a composição podem ser consultados por usuário com **permissão gerencial efetiva correspondente**, independentemente do título do perfil exibido na UI; permissões persistidas, escopo do caixa e contexto da empresa são a autoridade. Ter `cash.close` não concede automaticamente acesso gerencial ao saldo esperado. O plano técnico definirá o identificador exato da capability e a projeção/redação de campos; não presumir que todo gerente já tem o grant nas bases existentes.
+
+**FC-09 — Resultado da conferência (PD-07 APROVADO):** após o operador registrar sua contagem, a interface deverá permitir revisar o resultado da conferência/diferença e exigir justificativa quando houver divergência, sem permitir acertos automáticos. A primeira contagem e eventuais recontagens/correções devem ser rastreáveis. **Detalhes ainda técnicos:** momento de revelação do valor esperado após envio, política de recontagem, arredondamento/apresentação e eventual validação adicional de divergências. A contagem cega busca reduzir viés de conferência, não promete segredo matemático permanente do esperado.
+
 ### 8.1 Ativação gradual por restaurante (PD-06 — APROVADO)
 
 **AT-01 — Configuração sem corte imediato:** habilitação é individual por empresa. Enquanto não ativada, a Mesiva preserva todos os fluxos existentes de recebimento; a preparação pode cadastrar caixas, permissões e entregador padrão sem criar fundo fictício ou bloquear venda.
@@ -173,7 +180,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **Tela Prestação de contas do entregador:** responsável, pedidos atribuídos, intenção original e forma efetiva, status logístico, dívida/cobrança esperada, campos de conferência, dinheiro confirmado e saldo ainda em posse; seletor de caixa de destino; salvar pendências sem falsa quitação; confirmação transacional. Quando "outra data", oferecer ligação ao A receber.
 
-**Tela Fechamento:** composição, campo dinheiro contado, diferença instantânea, justificativa condicional, repasses pendentes informativos, detalhes e confirmação. Ver distinção visual entre dinheiro faltando na gaveta e pagamento futuro.
+**Tela Fechamento (PD-07 aprovada):** operador primeiro vê campo de dinheiro contado, instruções de conferência e pendências apenas informativas; **saldo esperado e composição numérica ficam ocultos antes da submissão da contagem para quem não possui grant gerencial**. Após o registro, permite conferência da divergência, justificativa condicional e encerramento com auditoria; responsável autorizado gerencial pode consultar composição/esperado via permissão efetiva. Manter em áreas visualmente distintas dinheiro faltando na gaveta versus pagamento futuro/repasse em trânsito.
 
 **Telas auxiliares:** cadastro de caixas e entregadores; configurações de permissões; histórico paginado por sessão/caixa; detalhes dos eventos e estornos; A receber como owner da cobrança futura. **Visão geral > Extrato** mostra o histórico financeiro sem se confundir com o histórico imutável de sessões do Caixa. **Financeiro > Despesas** registra despesas, inclusive pagamentos não realizados com numerário físico.
 
@@ -282,6 +289,11 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-69 | Pix/cartão foi confirmado antes da volta do entregador | Prestação de contas consulta quitação oficial e não duplica recibo |
 | QA-70 | Entregador retorna com dinheiro recebido mas não repassado | Custódia permanece pendente; gaveta não aumenta |
 
+| QA-71 | Operador inicia fechamento cego | Saldo esperado e composição numérica não aparecem antes da primeira contagem |
+| QA-72 | Operador sem grant gerencial tenta obter saldo esperado por endpoint/read model | Worker bloqueia/redige dados; não basta ocultar no frontend |
+| QA-73 | Gerente com permissão efetiva e escopo do caixa consulta esperado | Acesso autorizado à composição e ao valor esperado; perfil isolado não basta |
+| QA-74 | Operador conclui primeira contagem e existe divergência | Resultado apresentado no fluxo posterior, justificativa exigida, primeira contagem auditada e sem ajuste automático |
+
 ## 13. Fases candidatas — sem implementação autorizada
 
 1. Modelo e UI de intenção de pagamento e reuso da promessa em pedido/A receber.
@@ -307,7 +319,7 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 
 **PD-06 — RESOLVIDO / APROVADO FUNCIONALMENTE:** ativação por restaurante em três etapas (configuração, primeira abertura com contagem do fundo, controle ativo). Antes da ativação, manter recebimentos legados. Depois, operações que ingressem ou retirem numerário físico do restaurante exigem caixa/sessão abertos e autorização; sem sessão válida, não confirmar recebimento em dinheiro como concluído. Pix/cartão e promessas continuam disponíveis. Contratos técnicos de implantação, reversibilidade e tratamento de sessões em trânsito devem ser definidos no plano de implementação.
 
-**PD-07 — Consultas gerenciais:** políticas de fechamento cego, acesso ao valor esperado e limitação de visibilidade por grant.
+**PD-07 — RESOLVIDO / APROVADO FUNCIONALMENTE:** opção A de **contagem cega para operador**, com acesso ao saldo esperado e sua composição condicionado à **permissão gerencial efetiva**. Não enviar dados do esperado a operador não autorizado antes da contagem; a conferência e a divergência são tratadas após registro auditável. O desenho exato de grants, resultados pós-contagem e recontagem continua pendente tecnicamente, sem desfazer a decisão funcional.
 
 **PD-08 — Evidências de protótipos:** capturas anteriores foram exploratórias e não constituem UI implementada; validar coerência dos estados e campos com esta spec antes de aprovar a tela final.
 
@@ -323,4 +335,4 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 - [Autorização](../../../shared/settingsAccess.js) e [perfis](../../../worker/access/roles.js).
 - [Auditoria técnica desta proposta](2026-10-19-cash-operational-technical-audit.md).
 
-**Gate:** esta versão é documental. **Aprovados funcionalmente:** PD-01 (troco do entregador), PD-02 (organização do Financeiro), PD-03 (postergar suporte completo a pagamentos parciais com pendências explícitas), PD-04 (criação de intenção/promessa por autor de pedido e edição posterior com grant específico), PD-05 (confirmação da cobrança em dinheiro no retorno do entregador e Pix/cartão pelo fluxo oficial) e PD-06 (ativação gradual). **Permanecem pendentes de aprovação:** PD-07, PD-08 e análises técnicas/operacionais de exceções, OP-04/PD-10 e demais contratos não detalhados. Nenhuma aprovação de implementação, migration, staging, merge ou produção é inferida.
+**Gate:** esta versão é documental. **Aprovados funcionalmente:** PD-01 (troco do entregador), PD-02 (organização do Financeiro), PD-03 (postergar suporte completo a pagamentos parciais com pendências explícitas), PD-04 (criação de intenção/promessa por autor de pedido e edição posterior com grant específico), PD-05 (confirmação da cobrança em dinheiro no retorno do entregador e Pix/cartão pelo fluxo oficial), PD-06 (ativação gradual) e **PD-07 (contagem cega do operador, valor esperado sujeito a grant gerencial)**. **Permanece pendente de aprovação visual:** PD-08. Continuam em aberto análises técnicas/operacionais de exceções, OP-04/PD-10 e demais contratos não detalhados. Nenhuma aprovação de implementação, migration, staging, merge ou produção é inferida.
