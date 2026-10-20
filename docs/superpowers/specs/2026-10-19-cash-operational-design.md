@@ -1,7 +1,7 @@
 # Spec — Caixa Operacional, Entregadores e Recebimentos da Mesiva
 
-**Versão:** 0.3 — troco do entregador, organização-alvo do Financeiro e ativação gradual aprovados; demais contratos pendentes
-**Atualização:** 20/10/2026 (aprovação funcional de PD-02 e PD-06)
+**Versão:** 0.4 — decisões funcionais PD-01 a PD-06 aprovadas; PD-07/PD-08 e contratos técnicos permanecem pendentes
+**Atualização:** 20/10/2026 (aprovações funcionais de PD-03, PD-04 e PD-05; PD-01, PD-02 e PD-06 preservadas)
 **Data:** 19/10/2026
 **Baseline de consulta:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266
 **Status:** documentação em DRAFT; NÃO IMPLEMENTADO; sem autorização para migrations, staging, merge ou produção
@@ -32,6 +32,9 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 | Organização do Financeiro | **Aprovado:** Visão geral (com aba Extrato), Caixa, A receber, Despesas e Relatórios; despesas financeiras separadas do caixa físico |
 | Movimentações legadas | A migração funcional será gradual; **não** remover rota, histórico, lançamentos manuais, estornos ou recursos existentes antes de substituição e homologação |
 | Ativação gradual | **Aprovado:** opt-in por restaurante, configuração prévia, primeira abertura com valor físico contado e exigência de caixa aberto/autorizado para dinheiro físico após ativação |
+| Pagamentos parciais | **PD-03 aprovada:** suporte completo adiado para evolução futura; identificar exceção/pendência sem quitação fictícia, recibo parcial improvisado ou suprimento indevido |
+| Permissão da promessa | **PD-04 aprovada:** operador autorizado a criar pedido informa intenção/previsão na criação; alterações posteriores exigem capability específica |
+| Conferência do entregador | **PD-05 aprovada:** cobrança em espécie é confirmada pelo funcionário na prestação de contas quando o entregador retorna; Pix/cartão podem ser confirmados separadamente pelo workflow oficial |
 
 ## 3. Vocabulário e estados independentes
 
@@ -56,9 +59,9 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **IP-03:** Persistir intenção e contexto de expectativa em campos/versionamento próprios e exibi-los em detalhe/histórico. Não reutilizar payment_allocations nem movimentos como registros de intenção.
 
-**IP-04:** A intenção pode mudar enquanto houver saldo pendente, com auditoria e autorização. Ao receber, as alocações efetivas têm precedência. A intenção histórica permanece consultável e não deve ser reclassificada silenciosamente.
+**IP-04 (PD-04 aprovada):** A intenção pode mudar enquanto houver saldo pendente, com auditoria e autorização **específica para edição posterior**, não derivada apenas de orders.create. Ao receber, as alocações efetivas têm precedência. A intenção histórica permanece consultável e não deve ser reclassificada silenciosamente.
 
-**IP-05:** Usar orders.promised_payment_date e as regras de A receber existentes, sem ledger duplicado. Ao criar o pedido, definir contrato de gravação atômica pedido+promessa; a mutação posterior já exige finance.promises.manage. Concessão de permissão para informar a previsão **no próprio checkout** deverá ser formalizada no plano técnico, sem abrir edição geral de promessas a qualquer operador.
+**IP-05 (PD-04 aprovada):** Usar orders.promised_payment_date e as regras de A receber existentes, sem ledger duplicado. **Na criação do pedido**, o funcionário autorizado a criar pedidos (`orders.create`) pode informar intenção, momento esperado e promessa sem permissão adicional de gestão de promessas; o Worker valida os campos e grava o pedido+expectativa atomicamente. **Após a criação**, alterar promessa existente exige a capability específica já vigente `finance.promises.manage`; editar intenção/momento posteriormente também requer autorização específica do Worker (reutilizar a capability pertinente ou definir outra granularidade no plano técnico), sem conceder esse poder automaticamente a `orders.create`. O contrato de validação, autoria e efeitos deve ser formalizado no plano técnico; usuário sem capacidade de receber pagamentos não adquire `payments.receive` por informar intenção.
 
 **IP-06:** Para comanda/mesa, a intenção por pedido é informativa; quitação integral da comanda continua no workflow oficial, sem atalho para receber pedido avulso associado a comanda. Reserva futura também não equivale a pagamento.
 
@@ -74,15 +77,15 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **EN-04:** Prestação de contas sem app do entregador: funcionário autorizado confere cada entrega: entregue/pago; entregue/não pago com promessa nova; não entregue/nova tentativa; não entregue/cancelamento por fluxo autorizado; paga em método diferente. Situação logística de entrega após despacho é um registro adicional, não sobrescrita indevida do estado da Cozinha.
 
-**EN-05:** Ao mudar Dinheiro previsto para Pix/Cartão real, registrar exclusivamente a forma efetivamente confirmada no workflow oficial. Pix/cartão nunca aumentam caixa físico; não afirmar confirmação bancária automática sem integração externa. A data financeira oficial do recibo segue o contrato vigente.
+**EN-05 (PD-05 aprovada):** Ao mudar Dinheiro previsto para Pix/Cartão real, registrar exclusivamente a forma efetivamente confirmada no workflow oficial. A confirmação de Pix/cartão pode ocorrer independentemente da volta do entregador, por usuário habilitado no fluxo oficial de recebimento, com verificação aplicável; não criar dependência artificial da prestação de contas. Pix/cartão nunca aumentam caixa físico; não afirmar confirmação bancária automática sem integração externa. A data financeira oficial do recibo segue o contrato vigente.
 
 **EN-06:** Se o cliente não paga e promete outra data, continuar no A receber, atualizar promessa com permissão, registrar ocorrência de cobrança e retirar a expectativa de numerário imediato. Não registrar "recebido com entregador" nem diferença na gaveta.
 
-**EN-07:** Dinheiro em espécie efetivamente confirmado como cobrado pelo entregador deve ter custódia "entregador", com valor, pedido/recibo e identidade. Registrar recibo **uma única vez**. A posterior transferência ao caixa gera um evento de custódia, **nunca um segundo payment_receipt** nem nova receita.
+**EN-07 (PD-05 aprovada):** Sem app do entregador nem confirmação automática no despacho, a cobrança em espécie feita pelo entregador **só será confirmada pelo funcionário autorizado na prestação de contas, no retorno**. Até essa conferência, a intenção e a saída da Cozinha não geram recibo de dinheiro cobrado nem custódia confirmada de venda. Depois da conferência, dinheiro efetivamente confirmado como cobrado fica com custódia "entregador", com valor, pedido/recibo, responsável pela confirmação e identidade do entregador. Registrar o recibo oficial **uma única vez**. A posterior transferência ao caixa gera evento de custódia, **nunca um segundo payment_receipt** nem nova receita.
 
 **EN-08:** Repasse integral ou parcial precisa selecionar caixa aberto e autorizado; comparar valor entregue com custódia pendente. Repasse menor reduz somente o dinheiro sob responsabilidade do entregador; o restante permanece pendente para próximas prestações de contas, sem ser deficiência da gaveta. Proibir repasse superior ao saldo de custódia sem fonte comprovada.
 
-**EN-09:** Se o funcionário só confirmar cobrança e repasse no retorno, pode haver uma ação de prestação de contas que crie, em uma única transação autoritativa, recibo/alocações canônicos + confirmação de custódia + repasse físico, mantendo a rastreabilidade dos fatos. Se a cobrança havia sido confirmada antes, repasse **somente transfere custódia**. Nunca duplicar os recibos.
+**EN-09 (PD-05 aprovada):** No retorno, a prestação de contas conduzida por funcionário autorizado é o momento de confirmar cobrança em **dinheiro** do entregador e apurar custódia/repasse, em uma operação autoritativa e idempotente conforme o contrato técnico. Se cobrança e repasse ocorrerem no mesmo ato, criar, de modo consistente, recibo/alocações canônicos + confirmação de custódia + repasse físico, com rastreabilidade e **sem dupla venda**. Se Pix/cartão já foram confirmados antes pelo fluxo oficial, a prestação de contas apenas consulta esses recebimentos e não os repete. Se o dinheiro confirmado ainda não foi fisicamente entregue, manter custódia pendente com o entregador. Nunca duplicar recibos.
 
 **EN-10 — Troco do entregador (APROVADO PARA V1):** A Mesiva deve permitir retirar um fundo de troco de uma sessão física aberta, sob autorização e saldo disponível, e vinculá-lo à custódia de um entregador e à saída da rota. Não criar despesa, receita ou recibo de venda para esse adiantamento.
 
@@ -94,7 +97,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **EN-10d:** Permitir repasses parciais do valor que o entregador deve, mantendo diferença como custódia pendente, com justificativa e visibilidade, mesmo se a sessão que enviou o fundo já tiver sido fechada. O repasse é registrado na sessão realmente aberta que receber o dinheiro; nunca voltar a modificar uma sessão encerrada. Proibir repasse acima da custódia comprovada sem operação específica autorizada.
 
-**EN-11:** Pagamento insuficiente/recebimento parcial arbitrário não poderá contornar regras atuais que exigem quitação autoritativa integral por recibo. Preservar ocorrência/pendência e encaminhar para resolução autorizada sem falsear pedido Pago. **Decisão pendente:** suporte financeiro a pagamento parcial genuíno como evolução posterior.
+**EN-11 (PD-03 aprovada):** **Suporte financeiro completo a pagamentos parciais fica fora da primeira versão** do Caixa e será objeto de evolução independente. Pedido de R$ 100 com pagamento real de R$ 60 e saldo de R$ 40 não é equivalente ao split R$ 60 Pix + R$ 40 dinheiro quitado no mesmo recebimento. A primeira versão deve permitir **identificar ocorrência/pagamento insuficiente informado e saldo ainda em aberto**, para tratamento autorizado, sem alterar o status para Pago, emitir recibo de quitação parcial improvisado, apagar dívida, nem classificar dinheiro de cliente como suprimento ou receita fictícia. Caso exista dinheiro parcialmente recebido fisicamente, **não fingir que o valor inexiste nem lançar em gaveta sem reconciliação**: o contrato específico de tratamento e custódia da exceção requer resolução técnica e operacional antes de habilitar essa aceitação em produção. A interface não deve incentivar receber parcialmente na v1 sem fluxo consistente.
 
 ## 6. Cadastro, sessões e autorização de caixa
 
@@ -270,6 +273,16 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-60 | Retirada futura de Movimentações | Só após migração das ações/estornos/histórico, sem perda ou dupla exposição de comandos |
 | QA-61 | Tentar desativar controle com sessão aberta | Bloqueio e preservação de histórico/custódia |
 
+| QA-62 | Pagamento parcialmente informado em pedido de R$ 100 (R$ 60 recebidos, R$ 40 pendentes) | Não marcar Pago nem simular recibo integral; sinalizar ocorrência e encaminhar à resolução autorizada |
+| QA-63 | Tentar usar suprimento para contabilizar parcial de cliente | Impedir falsa classificação de recebimento como suprimento |
+| QA-64 | Criar pedido sem recebimento, com intenção e promessa pelo operador com orders.create | Gravação atômica, sem exigir finance.promises.manage no checkout nem registrar pagamento |
+| QA-65 | Operador só com orders.create tenta editar promessa depois | Acesso negado no Worker, sem alterar vencimento |
+| QA-66 | Usuário com grant específico edita promessa e intenção pendente | Validação/auditoria e nenhuma movimentação financeira |
+| QA-67 | Pedido sai para entrega com dinheiro previsto | Sem recibo nem custódia confirmada ao despachar |
+| QA-68 | Entregador retorna e operador confirma cobrança em dinheiro e repasse | Um só recibo canônico e transferência de custódia rastreável |
+| QA-69 | Pix/cartão foi confirmado antes da volta do entregador | Prestação de contas consulta quitação oficial e não duplica recibo |
+| QA-70 | Entregador retorna com dinheiro recebido mas não repassado | Custódia permanece pendente; gaveta não aumenta |
+
 ## 13. Fases candidatas — sem implementação autorizada
 
 1. Modelo e UI de intenção de pagamento e reuso da promessa em pedido/A receber.
@@ -287,11 +300,11 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 
 **PD-02 — RESOLVIDO / APROVADO FUNCIONALMENTE:** Financeiro terá Visão geral (com Extrato interno), Caixa, A receber, Despesas e Relatórios. Despesa é operação financeira e só repercute no caixa quando houver pagamento físico em dinheiro. A tela Movimentações existente permanece operacional até substituição segura. **Pendente de detalhamento técnico, não de direção funcional:** migração de registros/ações/estornos e eventual retirada da rota legada, registrada em PD-10 e OP-04. Nenhuma exclusão ou data de remoção foi aprovada.
 
-**PD-03 — Recebimento parcial genuíno:** manter como pendência e não falsear quitação, ou ampliar o fluxo financeiro em iniciativa independente.
+**PD-03 — RESOLVIDO / APROVADO FUNCIONALMENTE:** suporte completo a recebimento parcial genuíno fica para evolução futura. Na v1, distinguir pagamento insuficiente de pagamento dividido quitado, identificar e preservar a pendência de cliente sem falsa quitação, recibo parcial ou suprimento fictício. Procedimento de dinheiro parcial fisicamente aceito permanece **risco técnico/operacional a resolver antes de habilitar**, sem presumir que a v1 já suportará recebê-lo.
 
-**PD-04 — Data de promessa no checkout:** regra de autorização para operador de pedido sem conceder edição retroativa geral; definir e homologar.
+**PD-04 — RESOLVIDO / APROVADO FUNCIONALMENTE:** quem pode criar pedidos informa intenção e previsão na criação, sem permissão adicional; o Worker valida e persiste atomicamente. Alterar posteriormente exige capability específica, preservando `finance.promises.manage` para mudança de promessa já existente e estabelecendo autorização específica para edição posterior da intenção no plano técnico. `orders.create` não concede direito geral de alterar promessas ou confirmar pagamentos.
 
-**PD-05 — Confirmação de cobrança pelo entregador:** na v1 só pela prestação de contas no restaurante; se houver confirmação de cobrança antes de repasse, definir qual operador e quais provas são exigidas.
+**PD-05 — RESOLVIDO / APROVADO FUNCIONALMENTE:** a cobrança em dinheiro pelo entregador é confirmada por funcionário autorizado **na prestação de contas do retorno**, sem app de entregador e sem presumir pagamento na saída da Cozinha. A confirmação real de Pix/cartão pode ocorrer independentemente pelo recebimento oficial, evitando confirmações duplicadas na prestação de contas. O nível específico de permissão, registro de conferência e atomicidade serão detalhados no plano técnico.
 
 **PD-06 — RESOLVIDO / APROVADO FUNCIONALMENTE:** ativação por restaurante em três etapas (configuração, primeira abertura com contagem do fundo, controle ativo). Antes da ativação, manter recebimentos legados. Depois, operações que ingressem ou retirem numerário físico do restaurante exigem caixa/sessão abertos e autorização; sem sessão válida, não confirmar recebimento em dinheiro como concluído. Pix/cartão e promessas continuam disponíveis. Contratos técnicos de implantação, reversibilidade e tratamento de sessões em trânsito devem ser definidos no plano de implementação.
 
@@ -311,4 +324,4 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 - [Autorização](../../../shared/settingsAccess.js) e [perfis](../../../worker/access/roles.js).
 - [Auditoria técnica desta proposta](2026-10-19-cash-operational-technical-audit.md).
 
-**Gate:** esta versão é documental. **Aprovados funcionalmente:** PD-01 (troco do entregador), PD-02 (organização do Financeiro) e PD-06 (ativação gradual). **Permanecem pendentes:** PD-03, PD-04, PD-05, PD-07 e PD-08, além do detalhamento OP-04/PD-10 e demais contratos técnicos. Nenhuma aprovação de implementação, migration, staging, merge ou produção é inferida.
+**Gate:** esta versão é documental. **Aprovados funcionalmente:** PD-01 (troco do entregador), PD-02 (organização do Financeiro), PD-03 (postergar suporte completo a pagamentos parciais com pendências explícitas), PD-04 (criação de intenção/promessa por autor de pedido e edição posterior com grant específico), PD-05 (confirmação da cobrança em dinheiro no retorno do entregador e Pix/cartão pelo fluxo oficial) e PD-06 (ativação gradual). **Permanecem pendentes de aprovação:** PD-07, PD-08 e análises técnicas/operacionais de exceções, OP-04/PD-10 e demais contratos não detalhados. Nenhuma aprovação de implementação, migration, staging, merge ou produção é inferida.
