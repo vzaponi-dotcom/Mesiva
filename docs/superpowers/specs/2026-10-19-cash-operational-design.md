@@ -272,7 +272,6 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-59 | Navegação alvo do Financeiro | Visão geral com aba Extrato; Caixa/A receber/Despesas/Relatórios distinguíveis |
 | QA-60 | Retirada futura de Movimentações | Só após migração das ações/estornos/histórico, sem perda ou dupla exposição de comandos |
 | QA-61 | Tentar desativar controle com sessão aberta | Bloqueio e preservação de histórico/custódia |
-
 | QA-62 | Pagamento parcialmente informado em pedido de R$ 100 (R$ 60 recebidos, R$ 40 pendentes) | Não marcar Pago nem simular recibo integral; sinalizar ocorrência e encaminhar à resolução autorizada |
 | QA-63 | Tentar usar suprimento para contabilizar parcial de cliente | Impedir falsa classificação de recebimento como suprimento |
 | QA-64 | Criar pedido sem recebimento, com intenção e promessa pelo operador com orders.create | Gravação atômica, sem exigir finance.promises.manage no checkout nem registrar pagamento |
