@@ -1,6 +1,7 @@
 # Spec — Caixa Operacional, Entregadores e Recebimentos da Mesiva
 
-**Versão:** 0.2 — controle de troco do entregador aprovado; demais propostas pendentes de revisão funcional e técnica
+**Versão:** 0.3 — troco do entregador, organização-alvo do Financeiro e ativação gradual aprovados; demais contratos pendentes
+**Atualização:** 20/10/2026 (aprovação funcional de PD-02 e PD-06)
 **Data:** 19/10/2026
 **Baseline de consulta:** master f3f4e8a7305f49bb81dbf1997a98a57ca330d266
 **Status:** documentação em DRAFT; NÃO IMPLEMENTADO; sem autorização para migrations, staging, merge ou produção
@@ -28,7 +29,9 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 | Troco antecipado ao entregador | **Aprovado para a primeira versão**: fundo de troco transferido à custódia do entregador, reconciliado no retorno, sem despesa/receita fictícia |
 | Fechamento | Apura numerário físico esperado versus contado; cobrança futura não cria diferença; justificativa exigida quando diverge |
 | Interface | Desktop prioritário, no padrão Mesiva, focado no dia; sem "Novo pedido" ou ação de despacho na tela de Caixa |
-| Movimentações | A rota atual não deve simplesmente ser apagada; estudar substituição gradual e realocação de despesas/estornos |
+| Organização do Financeiro | **Aprovado:** Visão geral (com aba Extrato), Caixa, A receber, Despesas e Relatórios; despesas financeiras separadas do caixa físico |
+| Movimentações legadas | A migração funcional será gradual; **não** remover rota, histórico, lançamentos manuais, estornos ou recursos existentes antes de substituição e homologação |
+| Ativação gradual | **Aprovado:** opt-in por restaurante, configuração prévia, primeira abertura com valor físico contado e exigência de caixa aberto/autorizado para dinheiro físico após ativação |
 
 ## 3. Vocabulário e estados independentes
 
@@ -117,7 +120,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **OP-03:** Transferência: exige origem/destino distintos, abertos, autorizados, valor válido; saída+entrada na mesma transação, valor líquido consolidado zero.
 
-**OP-04:** Despesa realmente paga com dinheiro de caixa: apenas um fato físico/financeiro, com vínculo único e sem dupla sangria. **Decisão pendente:** criar fluxo específico de despesa em numerário na v1 ou manter gestão de despesas fora do Caixa até módulo de contas/finanças separado.
+**OP-04:** Despesa realmente paga com dinheiro de caixa: apenas um fato físico/financeiro, com vínculo único e sem dupla sangria. O **local funcional aprovado** para registrar despesas é Financeiro > Despesas, independente do Caixa. Se a despesa for efetivamente paga com numerário de gaveta, seu efeito físico deve ocorrer uma única vez, associado a uma sessão aberta/autorizada, sem sangria duplicada; despesas por Pix, cartão ou transferência não alteram a gaveta. **Permanece pendente:** contrato técnico, tratamento das despesas manuais legadas e sequência de disponibilização da operação integrada de despesa em dinheiro na v1.
 
 **OP-05:** Estorno/devolução: apenas diminui gaveta quando saída em espécie efetivamente confirmada **nesta sessão**. Não confundir registrar estorno bancário/documental com saída física.
 
@@ -143,7 +146,25 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **FC-06:** Fechamento não cancela pedidos, não registra recebimentos automáticos nem muda data comercial/financeira para "encaixar o dia". Registros oficiais de recebimento preservam received_date e paid_at/created_at factual.
 
+### 8.1 Ativação gradual por restaurante (PD-06 — APROVADO)
+
+**AT-01 — Configuração sem corte imediato:** habilitação é individual por empresa. Enquanto não ativada, a Mesiva preserva todos os fluxos existentes de recebimento; a preparação pode cadastrar caixas, permissões e entregador padrão sem criar fundo fictício ou bloquear venda.
+
+**AT-02 — Primeiro marco físico:** gerente/usuário autorizado define o início do controle e abre a primeira sessão contando o valor real na gaveta (fundo inicial >= 0). O saldo financeiro geral já existente em finance_settings e os pagamentos anteriores não são convertidos automaticamente em fundo de caixa nem recriados como operações físicas. Cada nova empresa/caixa tem sua própria sessão.
+
+**AT-03 — Operação pós-ativação:** após opt-in, qualquer recebimento de **dinheiro físico que entra diretamente no restaurante** deve identificar uma sessão aberta e autorizada; o mesmo vale para sangria, suprimento, transferência, pagamento de despesa em espécie por gaveta e entrega/retorno de fundo de troco. Se há um único caixa elegível, o sistema pode pré-selecioná-lo; com vários, segue CX-04.
+
+**AT-04 — Sem caixa aberto:** não criar evento físico nem registrar como recebido em dinheiro um pagamento sem sessão válida. Exibir bloqueio claro e permitir que um usuário autorizado abra caixa; pagamentos por Pix/cartão e criação de pedidos não pagos/prometidos continuam possíveis. Em pagamento dividido, validação da parte em dinheiro e confirmação oficial devem ser consistentes/atômicas: nunca deixar pagamento parcialmente confirmado apenas por uma falha de caixa.
+
+**AT-05 — Custódia do entregador:** pagamento em dinheiro que o entregador realmente recebeu pode ser reconhecido no fluxo autorizado de prestação de contas, vinculado à sua custódia; o dinheiro **só entra na gaveta** quando houver repasse confirmado para uma sessão aberta. Não exigir caixa do balcão para marcar pedido como ainda não pago ou mudar sua promessa de pagamento.
+
+**AT-06 — Continuidade, isolamento e corte:** não migrar recibos/lançamentos históricos para sessões antigas, não reabrir sessões fechadas e não afetar outras empresas que ainda não ativaram a funcionalidade. A migração técnica deve prever flag por empresa e caminho seguro de retomada após falha de rede, sem duplo registro de pagamento.
+
+**AT-07 — Desativação controlada:** não permitir desativação normal com sessão aberta. Se houver numerário em custódia de entregadores ou pendências de reconciliação, manter rastreabilidade e exigir procedimento específico antes de desligar controles; o contrato de exceção/rollback será definido no plano técnico. Desativação não pode apagar livros físicos ou produzir lançamento retroativo.
+
 ## 9. Telas e navegação — desktop prioritário
+
+**Mapa alvo de navegação (PD-02 — APROVADO):** Financeiro inclui **Visão geral** (indicadores consolidados e aba **Extrato** para histórico de movimentos financeiros), **Caixa** (sessões e numerário físico), **A receber** (dívidas e promessas), **Despesas** (custos/fornecedores, quaisquer meios de pagamento) e **Relatórios** (análises). "Extrato" é uma aba de Visão geral, não novo item principal de menu. A página "Movimentações" atual é preservada enquanto seus recursos e usuários ainda dependerem dela; a sua retirada posterior requer inventário, migração funcional, testes e autorização próprios. Não converter toda movimentação financeira em evento de caixa.
 
 **Tela Caixa do dia:** cabeçalho Financeiro / Caixa; seletor de caixa autorizado (ou único pré-selecionado); status Aberto/Fechado; cartões Saldo físico esperado, Dinheiro recebido em sessão, Cobranças na rota e Custódia de entregadores aguardando repasse. Painel central grande com composição do saldo + Sangria / Suprimento / Transferir / Fechar, e Abertura quando fechado. Lista apenas de pedidos **relevantes para recebimento/conferência operacional**, não catálogo geral; últimas operações auditáveis e separação explícita do A receber. Nunca incluir Novo pedido nem outro botão Saiu para entrega.
 
@@ -151,7 +172,7 @@ O Financeiro atual guarda movimentos, pagamentos e recibos e possui A receber, m
 
 **Tela Fechamento:** composição, campo dinheiro contado, diferença instantânea, justificativa condicional, repasses pendentes informativos, detalhes e confirmação. Ver distinção visual entre dinheiro faltando na gaveta e pagamento futuro.
 
-**Telas auxiliares:** cadastro de caixas e entregadores; configurações de permissões; histórico paginado por sessão/caixa; detalhes dos eventos e estornos; A receber como owner da cobrança futura.
+**Telas auxiliares:** cadastro de caixas e entregadores; configurações de permissões; histórico paginado por sessão/caixa; detalhes dos eventos e estornos; A receber como owner da cobrança futura. **Visão geral > Extrato** mostra o histórico financeiro sem se confundir com o histórico imutável de sessões do Caixa. **Financeiro > Despesas** registra despesas, inclusive pagamentos não realizados com numerário físico.
 
 **Visual:** consultar [Design System](../../design/DESIGN_SYSTEM.md) e [guia Mesiva v1.1](../../design/identidade-visual/README.md), ambos vigentes no repositório; reutilizar componentes e temas claro/escuro, tokens e logos versionados, não copiar valores/legendas artificiais dos mockups. Meta: leitura rápida e densidade útil; desktop primeiro, responsividade e acessibilidade antes de produção.
 
@@ -177,10 +198,10 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 - **Cozinha:** chamada oficial updateOrderStatus('Finalizado') permanece owner de "Saiu para entrega" para Entrega. A atribuição logística deve acompanhar o evento sem falsear entrega ou pagamento.
 - **Recebimentos:** reaproveitar workers/paymentRepository, novos recibos somente pelos métodos oficiais; respeitar split allocation, comanda integral, pagamentos por lote, complementos e estornos.
 - **A receber:** aproveitar orders.promised_payment_date, filtros e permissionamento atual; evitar segundo ledger de dívida.
-- **Financeiro:** nenhuma remoção imediata do recurso Movimentações; preservar categorias, saldo financeiro histórico, lançamento manual e estornos; descontinuar superfície só após migração funcional explicitamente aprovada e testes.
+- **Financeiro (PD-02 aprovado):** estrutura-alvo Visão geral (aba Extrato), Caixa, A receber, Despesas e Relatórios. Despesas são financeiras e podem não envolver o caixa físico; somente uma despesa efetivamente paga em dinheiro por gaveta gera um único efeito físico vinculado. Nenhuma remoção imediata do recurso Movimentações; preservar categorias, saldo financeiro histórico, lançamentos manuais, estornos e consumidores até migração funcional explícita e testes.
 - **Multiempresa:** identidade da empresa derivada do contexto autenticado, FKs compostas e grants do Worker; nenhum ID de caixa ou entregador de outra empresa é aceito.
 - **Reatividade:** Worker/D1 são autoridade; eventos apenas invalidam snapshots por superfície. Sem polling novo por card, sem N+1, sem carregar histórico inteiro; leituras paginadas e totais do servidor.
-- **Compatibilidade:** ativação progressiva por empresa; caixa desativado não bloqueia recebimentos já existentes; nenhum dado histórico do financeiro presumido como "gaveta" nem backfill fictício.
+- **Compatibilidade (PD-06 aprovado):** ativação progressiva por empresa com configuração prévia e primeira abertura com fundo fisicamente contado; restaurante não ativado conserva fluxos existentes. Após opt-in, ingresso/saída física de dinheiro requer sessão aberta e permissão, sem bloquear Pix/cartão nem promessa futura; nenhum dado financeiro histórico presumido como gaveta nem backfill fictício.
 - **Ações assíncronas:** conflito, offline, reconnect, replay idempotente, troca de empresa/permissões e sessão fechada devem dar erro explícito sem movimento duplicado.
 
 ## 12. Matriz de aceite/homologação (proposta)
@@ -238,6 +259,18 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-49 | Repasse parcial e troca de turno | Saldo remanescente em custódia; recebimento na sessão futura sem reabrir caixa antigo |
 | QA-50 | Fundo de troco sem pedido/entrega concluída | Troco permanece em custódia até retorno/ajuste autorizado, sem despesa fictícia |
 
+| QA-51 | Restaurante ainda não ativou Caixa | Checkout e pagamentos existentes seguem disponíveis, sem sessão artificial |
+| QA-52 | Configurar caixa e permissões antes da ativação | Não migra movimentos históricos nem bloqueia vendas |
+| QA-53 | Primeira abertura com R$ 180 e saldo financeiro histórico de R$ 3.000 | Fundo físico = R$ 180; histórico permanece intacto |
+| QA-54 | Caixa ativo, receber em dinheiro sem sessão aberta | Bloqueio sem recibo falsamente confirmado; abertura oferecida ao autorizado |
+| QA-55 | Caixa ativo, Pix/cartão ou promessa sem sessão aberta | Permitidos, sem lançamentos físicos |
+| QA-56 | Caixa ativo, pagamento dividido com parcela cash sem sessão | Operação não gera quitação parcial acidental ou cobrança duplicada |
+| QA-57 | Despesa em Pix/transferência | Registro financeiro sem alterar saldo da gaveta |
+| QA-58 | Despesa paga em dinheiro de caixa | Um registro financeiro + uma única saída física vinculada, sem sangria duplicada |
+| QA-59 | Navegação alvo do Financeiro | Visão geral com aba Extrato; Caixa/A receber/Despesas/Relatórios distinguíveis |
+| QA-60 | Retirada futura de Movimentações | Só após migração das ações/estornos/histórico, sem perda ou dupla exposição de comandos |
+| QA-61 | Tentar desativar controle com sessão aberta | Bloqueio e preservação de histórico/custódia |
+
 ## 13. Fases candidatas — sem implementação autorizada
 
 1. Modelo e UI de intenção de pagamento e reuso da promessa em pedido/A receber.
@@ -253,7 +286,7 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 
 **PD-01 — RESOLVIDO / APROVADO:** o controle formal do troco em posse do entregador entra na primeira versão. Regras definidas em EN-10 a EN-10d; exigirá validação técnica da granularidade dos eventos e de recibos.
 
-**PD-02 — Gastos/Movimentações:** preservar despesas manuais em área financeira própria provisoriamente ou criar nova superfície de "Despesas" já nesta iniciativa. A exclusão da rota atual não está aprovada.
+**PD-02 — RESOLVIDO / APROVADO FUNCIONALMENTE:** Financeiro terá Visão geral (com Extrato interno), Caixa, A receber, Despesas e Relatórios. Despesa é operação financeira e só repercute no caixa quando houver pagamento físico em dinheiro. A tela Movimentações existente permanece operacional até substituição segura. **Pendente de detalhamento técnico, não de direção funcional:** migração de registros/ações/estornos e eventual retirada da rota legada, registrada em PD-10 e OP-04. Nenhuma exclusão ou data de remoção foi aprovada.
 
 **PD-03 — Recebimento parcial genuíno:** manter como pendência e não falsear quitação, ou ampliar o fluxo financeiro em iniciativa independente.
 
@@ -261,7 +294,7 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 
 **PD-05 — Confirmação de cobrança pelo entregador:** na v1 só pela prestação de contas no restaurante; se houver confirmação de cobrança antes de repasse, definir qual operador e quais provas são exigidas.
 
-**PD-06 — Caixa físico habilitado sem sessão aberta:** precisar mecanismo de transição para não bloquear o checkout legado durante implantação; decidir comportamento de bloqueio do dinheiro físico após opt-in.
+**PD-06 — RESOLVIDO / APROVADO FUNCIONALMENTE:** ativação por restaurante em três etapas (configuração, primeira abertura com contagem do fundo, controle ativo). Antes da ativação, manter recebimentos legados. Depois, operações que ingressem ou retirem numerário físico do restaurante exigem caixa/sessão abertos e autorização; sem sessão válida, não confirmar recebimento em dinheiro como concluído. Pix/cartão e promessas continuam disponíveis. Contratos técnicos de implantação, reversibilidade e tratamento de sessões em trânsito devem ser definidos no plano de implementação.
 
 **PD-07 — Consultas gerenciais:** políticas de fechamento cego, acesso ao valor esperado e limitação de visibilidade por grant.
 
@@ -279,4 +312,4 @@ Cada fase exige planejamento separado com riscos, migrations aditivas, rollback,
 - [Autorização](../../../shared/settingsAccess.js) e [perfis](../../../worker/access/roles.js).
 - [Auditoria técnica desta proposta](2026-10-19-cash-operational-technical-audit.md).
 
-**Gate:** esta versão é documental. Apenas o escopo de troco do entregador (PD-01) foi adicionalmente aprovado; PD-02 a PD-08 continuam pendentes. Nenhum item pendente será tratado silenciosamente como aprovado.
+**Gate:** esta versão é documental. **Aprovados funcionalmente:** PD-01 (troco do entregador), PD-02 (organização do Financeiro) e PD-06 (ativação gradual). **Permanecem pendentes:** PD-03, PD-04, PD-05, PD-07 e PD-08, além do detalhamento OP-04/PD-10 e demais contratos técnicos. Nenhuma aprovação de implementação, migration, staging, merge ou produção é inferida.
