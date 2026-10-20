@@ -258,7 +258,6 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-48 | Repasse de R$ 115 (R$ 50 fundo + R$ 65 venda) | Gaveta +R$ 115 após prévia saída de R$ 50; variação consolidada +R$ 65; sem duplicação |
 | QA-49 | Repasse parcial e troca de turno | Saldo remanescente em custódia; recebimento na sessão futura sem reabrir caixa antigo |
 | QA-50 | Fundo de troco sem pedido/entrega concluída | Troco permanece em custódia até retorno/ajuste autorizado, sem despesa fictícia |
-
 | QA-51 | Restaurante ainda não ativou Caixa | Checkout e pagamentos existentes seguem disponíveis, sem sessão artificial |
 | QA-52 | Configurar caixa e permissões antes da ativação | Não migra movimentos históricos nem bloqueia vendas |
 | QA-53 | Primeira abertura com R$ 180 e saldo financeiro histórico de R$ 3.000 | Fundo físico = R$ 180; histórico permanece intacto |
