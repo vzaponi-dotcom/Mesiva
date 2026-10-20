@@ -288,7 +288,6 @@ Esses são **nomes conceituais**, não migrations aprovadas. Definir chaves comp
 | QA-68 | Entregador retorna e operador confirma cobrança em dinheiro e repasse | Um só recibo canônico e transferência de custódia rastreável |
 | QA-69 | Pix/cartão foi confirmado antes da volta do entregador | Prestação de contas consulta quitação oficial e não duplica recibo |
 | QA-70 | Entregador retorna com dinheiro recebido mas não repassado | Custódia permanece pendente; gaveta não aumenta |
-
 | QA-71 | Operador inicia fechamento cego | Saldo esperado e composição numérica não aparecem antes da primeira contagem |
 | QA-72 | Operador sem grant gerencial tenta obter saldo esperado por endpoint/read model | Worker bloqueia/redige dados; não basta ocultar no frontend |
 | QA-73 | Gerente com permissão efetiva e escopo do caixa consulta esperado | Acesso autorizado à composição e ao valor esperado; perfil isolado não basta |
