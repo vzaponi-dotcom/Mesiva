@@ -156,3 +156,9 @@
 .day-conference-entry>strong{font-size:.78rem}
 .day-conference-drawer .modal-header,.day-conference-drawer .modal-body{padding-left:16px;padding-right:16px}
 }
+
+@media(max-width:380px){
+.day-conference-receipt-heading{flex-wrap:wrap}
+.day-conference-receipt-heading>strong{margin-left:auto}
+.day-conference-receipt-details dl{grid-template-columns:1fr}
+}
