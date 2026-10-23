@@ -467,9 +467,9 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                   </div>
                   <div className="day-conference-receipt-foot">
                     <span>{entry.type==='saida'?'Devolução registrada':entryTitle(entry,detail.method)}</span>
-                    {linked.length===1&&<button type="button" className="day-conference-drill-button"
+                    {linked.length===1&&<button type="button" className="day-conference-drill-button" aria-label="Ver pedido"
                       onClick={()=>openOrderPreview(linked[0],entry)}>Ver pedido <Icon name="arrow-right" size={15}/></button>}
-                    {linked.length>1&&<button type="button" className="day-conference-drill-button"
+                    {linked.length>1&&<button type="button" className="day-conference-drill-button" aria-label={'Ver '+linked.length+' pedidos'}
                       onClick={()=>viewReceiptOrders(entry)}>Ver {linked.length} pedidos <Icon name="arrow-right" size={15}/></button>}
                   </div>
                 </article>
@@ -485,7 +485,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             if(!entry)return <p role="alert" className="day-conference-error">O recebimento não está mais disponível. Volte à lista de lançamentos.</p>
             const linked=entry.linkedOrders||[],clients=receiptClients(linked)
             return <>
-              <button type="button" className="day-conference-back" onClick={backDrawer}>
+              <button type="button" className="day-conference-back" aria-label="Voltar aos recebimentos" onClick={backDrawer}>
                 <Icon name="arrow-left" size={17}/> Voltar aos recebimentos
               </button>
               <h3 className="day-conference-navigation-title" tabIndex={-1}>Pedidos do recebimento</h3>
@@ -513,7 +513,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             const linked=entry?.linkedOrders?.find(order=>order.id===detailView.orderId)
             const order=orderPreview?.id===detailView.orderId?orderPreview.order:null
             return <>
-              <button type="button" className="day-conference-back" onClick={backDrawer}>
+              <button type="button" className="day-conference-back" aria-label={detailView.previous==='orders'?'Voltar aos pedidos':'Voltar aos recebimentos'} onClick={backDrawer}>
                 <Icon name="arrow-left" size={17}/> {detailView.previous==='orders'?'Voltar aos pedidos':'Voltar aos recebimentos'}
               </button>
               <h3 className="day-conference-navigation-title" tabIndex={-1}>Pedido #{order?.orderNumber||linked?.number||'sem número'}</h3>
