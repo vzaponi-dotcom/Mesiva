@@ -86,7 +86,7 @@
 .day-conference-drawer .modal-header{padding:21px 25px}
 .day-conference-drawer .modal-body{padding:12px 25px 20px}
 .day-conference-drawer-content{min-width:0}
-.day-conference-drawer-summary{position:sticky;top:-12px;z-index:2;padding:8px 0 11px;background:var(--surface)}
+.day-conference-drawer-summary{position:sticky;top:0;z-index:2;padding:8px 0 11px;background:var(--surface)}
 .day-conference-drawer-total{padding:14px 15px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px}
 .day-conference-drawer-total>div{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .day-conference-drawer-total small{font-size:.74rem;color:var(--muted)}
