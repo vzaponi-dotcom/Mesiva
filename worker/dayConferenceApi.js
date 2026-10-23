@@ -1,8 +1,8 @@
 import { assertSameOriginMutation, apiError, json, readJson } from './http.js'
 import { requireCapability } from './access/authorization.js'
 import {
-  readConferenceDate, readDayConferenceSummary, readDayConferenceEntries,
-  readDayConferenceHistory, readDayConferenceLatest, completeDayConference,
+  readConferenceDate, readDayConferenceState, readDayConferenceEntries,
+  readDayConferenceHistory, completeDayConference,
 } from './dayConferenceRepository.js'
 
 export async function handleDayConferenceApi(request,env,context,url=new URL(request.url)){
@@ -11,9 +11,7 @@ export async function handleDayConferenceApi(request,env,context,url=new URL(req
   const path=url.pathname,method=request.method,businessId=context.businessId
   if(method==='GET' && path==='/api/finance/day-conference'){
     const date=readConferenceDate(url.searchParams.get('date'))
-    const summary=await readDayConferenceSummary(env.DB,businessId,date)
-    const latest=await readDayConferenceLatest(env.DB,businessId,date)
-    return json({...summary,latest})
+    return json(await readDayConferenceState(env.DB,businessId,date))
   }
   if(method==='GET' && path==='/api/finance/day-conference/entries'){
     const date=readConferenceDate(url.searchParams.get('date'))
