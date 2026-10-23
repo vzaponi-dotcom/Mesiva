@@ -118,6 +118,25 @@
 .day-conference-receipt-details dt{font-size:.7rem;color:var(--muted)}
 .day-conference-receipt-details dd{margin:0;font-size:.74rem;color:var(--text);overflow-wrap:anywhere}
 .day-conference-date input:focus-visible,.day-conference-cell-input input:focus-visible,.day-conference-notes textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+.day-conference-cell-status .day-conference-pending svg{margin-right:4px}
+.day-conference-history-empty{display:grid;justify-items:start;gap:6px;padding:18px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-soft)}
+.day-conference-history-empty svg{color:var(--muted)}
+.day-conference-history-empty strong{font-size:.84rem;color:var(--text)}
+.day-conference-history-empty span{font-size:.76rem;line-height:1.5;color:var(--muted)}
+.day-conference-receipt-links{display:grid;gap:7px;min-width:0;flex:1}
+.day-conference-receipt-links>span,.day-conference-receipt-links>small{font-size:.72rem;color:var(--muted);line-height:1.4}
+.day-conference-linked-order{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 9px}
+.day-conference-linked-order span{font-size:.75rem;color:var(--text-soft);overflow-wrap:anywhere}
+.day-conference-linked-order button{background:none;border:0;color:var(--primary);cursor:pointer;font-size:.74rem;font-weight:750;padding:5px;min-height:32px}
+.day-conference-linked-order button:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:5px}
+.day-conference-order-preview{flex:1 0 100%;min-width:0;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+.day-conference-order-preview-heading{display:flex;justify-content:space-between;gap:10px;font-size:.78rem}
+.day-conference-order-preview p,.day-conference-order-preview li,.day-conference-order-preview small{font-size:.75rem;line-height:1.5}
+.day-conference-order-preview p,.day-conference-order-preview small{color:var(--muted);margin:5px 0}
+.day-conference-order-preview ul{margin:9px 0;padding-left:18px}
+.day-conference-order-preview>strong{font-size:.8rem}
+.day-conference-order-preview>small{display:block}
 @media(max-width:1120px){
 .day-conference-table-head,.day-conference-table-row{grid-template-columns:minmax(125px,1.4fr) minmax(90px,.88fr) minmax(105px,.95fr) minmax(84px,.8fr) minmax(90px,.87fr) minmax(135px,1.2fr);column-gap:8px}
 .day-conference-row-actions{gap:5px}.day-conference-check{padding:0 8px}
