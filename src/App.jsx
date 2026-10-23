@@ -63,6 +63,7 @@ import {
   useTableReservationCommands,
 } from './domains/table-service/index.js'
 import DashboardSurface from './app/surfaces/dashboard/DashboardSurface.jsx'
+import DayConference from './domains/finance/ui/DayConference.jsx'
 import KitchenTvControlSurface from './app/surfaces/kitchen-tv-control/KitchenTvControlSurface.jsx'
 import { ReportingWorkspace } from './domains/reporting/index.js'
 import SettingsPolicyBoundary from './app/surfaces/settings/SettingsPolicyBoundary.jsx'
@@ -102,7 +103,7 @@ import {
 } from './infrastructure/storage/kitchenSoundPreference.js'
 import { getSessionStorage } from './infrastructure/storage/sessionStorage.js'
 
-const IMPLEMENTED_DESTINATIONS = new Set(['orders', 'history', 'kitchen-tv-control', 'new-order', 'comandas', 'print-queue', 'dashboard', 'reports', 'receivables', 'finance', 'clients', 'products', 'tables', 'settings-home', 'settings-business-profile', 'settings-operations', 'settings-modalities', 'settings-payments', 'settings-cancellations', 'settings-finance-categories', 'settings-kitchen-tv', 'settings-printing', 'settings-device', 'my-account', 'access-team', 'access-activity'])
+const IMPLEMENTED_DESTINATIONS = new Set(['orders', 'history', 'kitchen-tv-control', 'new-order', 'comandas', 'print-queue', 'dashboard', 'day-conference', 'reports', 'receivables', 'finance', 'clients', 'products', 'tables', 'settings-home', 'settings-business-profile', 'settings-operations', 'settings-modalities', 'settings-payments', 'settings-cancellations', 'settings-finance-categories', 'settings-kitchen-tv', 'settings-printing', 'settings-device', 'my-account', 'access-team', 'access-activity'])
 const currency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
 function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <AccessSurface {...props} /> } = {}) {
@@ -1003,6 +1004,7 @@ function ApplicationRuntime({ capabilities, renderAccessSurface = (props) => <Ac
         {activeTab==='access-activity'&&scopedActivityDetail.error&&<p role="alert">Não foi possível carregar o pedido.<button type="button" onClick={scopedActivityDetail.reload}>Tentar novamente</button></p>}
         {activityOrder && <OrderDetail order={activityOrder} currency={currency} onClose={() => setActivityDetail(null)} canExecutePrinting={false} canCancelOrders={false} />}
         {activeTab === 'dashboard' && <DashboardSurface key={accessContextId} readContext={scopedReadContext} orders={orders} movements={movements} currency={currency} queryState={query.dashboard} onQueryChange={(patch) => patchQuery('dashboard', patch)} />}
+        {activeTab === 'day-conference' && <DayConference key={accessContextId} canComplete={granted.has('finance.movements.manage')} />}
         {activeTab === 'reports' && <ReportingWorkspace granted={granted} onOpenClient={canViewClients ? (client) => { patchQuery('clients', { search: client?.name || '' }); requestNavigation('clients') } : null} />}
         {activeTab==='orders'&&readModelEnabled&&kitchenSummary.error&&<p role="alert">Não foi possível atualizar o contador de finalizados.<button type="button" onClick={kitchenSummary.reload}>Tentar novamente</button></p>}
         {activeTab === 'orders' && <Orders orders={orders} key={accessContextId} finishedTodayCount={readModelEnabled?(kitchenSummary.data?.finishedToday ?? '—'):undefined} officialOrders={orders} now={kitchenNow} currentTiming={currentTiming} search={query.orders.search} onSearchChange={(search) => patchQuery('orders', { search })} currency={currency} onNewOrder={handleNewOrder} onFinalizeOrder={orderCommands.finalizeOrder} onCancelOrder={orderCommands.cancelOrder} onRegisterPayment={openOrderPayment} paymentDisabled={writesBlocked} paymentOptions={paymentOptions} cancellationOptions={cancellationOptions} cancellationRevision={cancellationRevision} onNavigatePrintQueue={() => requestNavigation('print-queue')} printQueueActiveCount={printing.activeJobCount} granted={granted} newOrderIds={newOrderIds} soundEnabled={kitchenSoundEnabled} onSoundEnabledChange={handleKitchenSoundEnabledChange} printing={printing} onToast={showContextMessage} canCreateOrders={canCreateOrders} canFinalizeOrders={canFinalizeOrders} canCancelOrders={canCancelOrders} canRefundPayments={canRefundPayments} canUseLocalPreferences={canUseLocalPreferences} canViewPrintQueue={canViewPrintQueue} canForcePrinting={canForcePrinting} canExecutePrinting={canExecutePrinting} onEditReservation={handleEditFutureReservation} onEditOrder={handleEditOrder} canEditOrders={canEditOrders} />}
