@@ -473,7 +473,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             <div><h2>Histórico de conferências</h2>
               <p>{readableDate(date)} · Consulte os valores e responsáveis de cada revisão.</p></div>
             {history===null?<Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Ver revisões</Button>
-              :<button type="button" className="day-conference-history-collapse"
+              :<button type="button" className="day-conference-history-collapse" aria-label="Recolher histórico"
                 onClick={()=>{historyGeneration.current++;setHistory(null);setExpandedHistoryId(null);setHistoryError('');setHistoryLoading(false);historyOpener.current?.focus?.()}}>
                 <Icon name="arrow-up" size={16}/> Recolher histórico
               </button>}
