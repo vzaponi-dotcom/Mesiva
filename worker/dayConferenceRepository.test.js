@@ -13,10 +13,21 @@ function fixture(t){
   f.sqlite.exec(`INSERT INTO businesses (id,slug,name,created_at,updated_at)
     VALUES ('a','a','A','2026-10-10','2026-10-10'),('b','b','B','2026-10-10','2026-10-10')`)
   const insert=f.sqlite.prepare(`INSERT INTO movements
-    (id,business_id,type,category,description,value_cents,source,movement_date,created_at,payment_method)
-    VALUES (?,?,?,'Recebimentos','Teste',?,?,?,?,?)`)
+    (id,business_id,type,category,description,value_cents,source,movement_date,created_at,payment_method,receipt_id,payment_allocation_id)
+    VALUES (?,?,?,'Recebimentos','Teste',?,?,?,?,?,?,?)`)
+  const receipt=f.sqlite.prepare(`INSERT INTO payment_receipts
+    (id,business_id,total_cents,paid_at,created_at,received_date) VALUES (?,?,?,?,?,?)`)
+  const allocation=f.sqlite.prepare(`INSERT INTO payment_allocations
+    (id,business_id,receipt_id,method_label,amount_cents,created_at) VALUES (?,?,?,?,?,?)`)
   const add=(id,biz,type,source,cents,method,date=day)=>{
-    insert.run(id,biz,type,cents,source,date,date+'T13:00:00.000Z',method)
+    const created=date+'T13:00:00.000Z'
+    if(source==='order-payment'){
+      receipt.run('receipt-'+id,biz,cents,created,created,date)
+      allocation.run('allocation-'+id,biz,'receipt-'+id,method,cents,created)
+    }
+    insert.run(id,biz,type,cents,source,date,created,method,
+      source==='order-payment'?'receipt-'+id:null,
+      source==='order-payment'?'allocation-'+id:null)
   }
   add('pix-1','a','entrada','order-payment',1000,'Pix')
   add('pix-2','a','entrada','order-payment',500,'Pix')
