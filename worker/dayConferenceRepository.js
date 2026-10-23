@@ -133,7 +133,7 @@ export async function readDayConferenceEntries(db, businessId, date, method, pag
       const placeholders=receiptIds.map(()=>'?').join(',')
       const {results:links=[]}=await db.prepare(`SELECT refs.receipt_id,o.id,o.order_number,o.client_name_snapshot
         FROM (
-          SELECT receipt_id,order_id FROM payments WHERE business_id=? AND receipt_id IN (${placeholders})
+          SELECT receipt_id,order_id FROM payments WHERE business_id=? AND receipt_id IS NOT NULL AND receipt_id IN (${placeholders})
           UNION
           SELECT receipt_id,order_id FROM order_settlement_entries WHERE business_id=? AND receipt_id IN (${placeholders})
             AND kind='supplemental_payment'
