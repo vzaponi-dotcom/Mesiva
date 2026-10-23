@@ -117,3 +117,24 @@ test('CSV downloads the complete selected date through the company client and hi
   await act(async()=>buttonNamed(screen.root,'Ver revisões').props.onClick())
   assert.ok(calls.includes('/api/finance/day-conference/history?date='+date))
 })
+
+test('approved comparison layout keeps Pix first and updates informed and difference indicators without extra reads',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
+  const statCards=screen.root.findAll(n=>n.props?.className?.includes('day-conference-stat surface-card') ||
+    n.props?.className?.includes('surface-card day-conference-stat'))
+  assert.equal(statCards.length,3)
+  const methodRows=screen.root.findAll(n=>n.props?.className==='day-conference-table-row')
+  assert.equal(methodRows.length,2)
+  assert.match(nodeText(methodRows[0]),/Pix/)
+  assert.match(nodeText(methodRows[1]),/Dinheiro/)
+  assert.match(text(screen),/Valor informado/)
+  assert.match(text(screen),/Campos em branco não entram na soma/)
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'200,00'}})
+    amounts(screen)[1].props.onChange({target:{value:'50,00'}})
+  })
+  assert.equal(screen.root.findAll(n=>n.props?.className==='day-conference-stat').length,0)
+  assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
+  assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
+})
