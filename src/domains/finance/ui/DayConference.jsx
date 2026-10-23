@@ -468,9 +468,9 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                   <div className="day-conference-receipt-foot">
                     <span>{entry.type==='saida'?'Devolução registrada':entryTitle(entry,detail.method)}</span>
                     {linked.length===1&&<button type="button" className="day-conference-drill-button"
-                      onClick={()=>openOrderPreview(linked[0],entry)}>Ver pedido <Icon name="chevron-right" size={15}/></button>}
+                      onClick={()=>openOrderPreview(linked[0],entry)}>Ver pedido <Icon name="arrow-right" size={15}/></button>}
                     {linked.length>1&&<button type="button" className="day-conference-drill-button"
-                      onClick={()=>viewReceiptOrders(entry)}>Ver {linked.length} pedidos <Icon name="chevron-right" size={15}/></button>}
+                      onClick={()=>viewReceiptOrders(entry)}>Ver {linked.length} pedidos <Icon name="arrow-right" size={15}/></button>}
                   </div>
                 </article>
               })}
@@ -503,7 +503,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                   className="day-conference-order-list-item" onClick={()=>openOrderPreview(order,entry)}>
                   <span><strong>Pedido #{order.number||'sem número'}</strong>
                     {clients.length!==1&&<small>{order.client||'Cliente não informado'}</small>}</span>
-                  <Icon name="chevron-right" size={18}/>
+                  <Icon name="arrow-right" size={18}/>
                 </button>)}
               </div>
             </>
