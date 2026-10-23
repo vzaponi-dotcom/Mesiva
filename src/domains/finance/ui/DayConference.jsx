@@ -67,6 +67,65 @@ const completedValues = data => {
   }
 }
 
+
+const checkedTotalCents = revision => (revision?.lines||[]).reduce((sum,line)=>sum+line.checkedCents,0)
+const revisionChangeCents = (revision,previous) => previous&&revision.date===previous.date
+  ? checkedTotalCents(revision)-checkedTotalCents(previous):null
+const formatChangeCents = cents => (cents>0?'+ ':cents<0?'− ':'')+formatCents(Math.abs(cents))
+
+function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceVersion=null,expanded=false,onToggle=null}) {
+  const total=checkedTotalCents(revision)
+  const variation=revisionChangeCents(revision,previous)
+  const outdated=Boolean(sourceVersion&&revision.sourceVersion!==sourceVersion)
+  const detailId='day-conference-revision-'+revision.id
+  return <article className={'day-conference-revision'+(mostRecent?' day-conference-revision-latest':'')}>
+    <div className="day-conference-revision-top">
+      <div className="day-conference-revision-info">
+        <span className={'day-conference-revision-label'+(mostRecent?' day-conference-revision-label-latest':'')}>
+          {mostRecent?'Mais recente':'Revisão anterior'}
+        </span>
+        <strong>Revisão {revision.revision} · {formatEntryTime(revision.createdAt)}</strong>
+        <small>{revision.actorName||revision.userId||'Usuário legado'} · {formatTimestamp(revision.createdAt)}</small>
+      </div>
+      <div className="day-conference-revision-amount">
+        <strong>{formatCents(total)}</strong>
+        <small>{statusLabel(revision.status)}</small>
+      </div>
+    </div>
+    {outdated&&<p className="day-conference-revision-outdated">
+      <Icon name="info" size={14}/> {mostRecent?'Os recebimentos mudaram após esta revisão.':'Registro histórico: os recebimentos mudaram depois.'}
+    </p>}
+    {revision.note&&<p className="day-conference-revision-note-label">Com observações registradas</p>}
+    {variation!==null&&<div className="day-conference-revision-change">
+      <span>Variação do valor conferido desde a revisão anterior</span>
+      <strong>{variation===0?'Sem alteração':formatChangeCents(variation)}</strong>
+    </div>}
+    {onToggle&&<button type="button" className="day-conference-revision-toggle"
+      onClick={onToggle} aria-expanded={expanded} aria-controls={detailId}>
+      {expanded?'Ocultar valores':'Ver valores desta revisão'}
+      <Icon name={expanded?'chevron-up':'chevron-down'} size={16}/>
+    </button>}
+    {expanded&&<div className="day-conference-revision-details" id={detailId}>
+      <h3>Valores registrados nesta revisão</h3>
+      <ul className="day-conference-revision-methods">
+        {(revision.lines||[]).map(line=><li key={line.method}>
+          <strong className="day-conference-revision-method-name">{line.method}</strong>
+          <dl className="day-conference-revision-values">
+            <div><dt>Conferido</dt><dd>{formatCents(line.checkedCents)}</dd></div>
+            <div><dt>Diferença</dt><dd className={line.differenceCents===0?'day-conference-revision-match':'day-conference-revision-mismatch'}>{formatCents(line.differenceCents)}</dd></div>
+            <div><dt>Líquido Mesiva</dt><dd>{formatCents(line.netCents)}</dd></div>
+            <div><dt>Bruto / estornos</dt><dd>{formatCents(line.grossCents)} / {formatCents(line.refundCents)}</dd></div>
+          </dl>
+        </li>)}
+      </ul>
+      {revision.note&&<div className="day-conference-revision-note">
+        <strong>Observações registradas</strong><p>{revision.note}</p>
+      </div>}
+      <small className="day-conference-revision-snapshot-note">Valores preservados conforme a conferência foi concluída. Não são recalculados com recebimentos posteriores.</small>
+    </div>}
+  </article>
+}
+
 export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=()=>{} }){
   const client=useContext(ContextApi)
   const request=client?.request || apiRequest
@@ -94,6 +153,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const [orderPreview,setOrderPreview]=useState(null)
   const [history,setHistory]=useState(null)
   const [historyLoading,setHistoryLoading]=useState(false)
+  const [expandedHistoryId,setExpandedHistoryId]=useState(null)
+  const [historyError,setHistoryError]=useState('')
   const [uncertain,setUncertain]=useState(false)
   const [success,setSuccess]=useState('')
   const [exporting,setExporting]=useState(false)
@@ -111,7 +172,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     reads.current=controller
     detailGeneration.current++;orderGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
-    setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
+    setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setHistory(null);setExpandedHistoryId(null);setHistoryError('');setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
     submission.current=null;setExporting(false)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
@@ -130,7 +191,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     const signal=reads.current.signal
     setLoading(true);setError('');setDialog(false)
     detailGeneration.current++;orderGeneration.current++;setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setDetailLoading(false)
-    historyGeneration.current++;setHistory(null);setHistoryLoading(false)
+    historyGeneration.current++;setHistory(null);setExpandedHistoryId(null);setHistoryError('');setHistoryLoading(false)
     try{
       const data=await request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal})
       if(signal.aborted)return
@@ -247,12 +308,14 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const openHistory=async event=>{
     historyOpener.current=event?.currentTarget
     const generation=++historyGeneration.current,signal=reads.current.signal
-    setHistoryLoading(true);setHistory([])
+    setHistoryLoading(true);setHistoryError('');setExpandedHistoryId(null);setHistory([])
     try{
       const result=await request('/api/finance/day-conference/history?'+new URLSearchParams({date}),{signal})
       if(signal.aborted||generation!==historyGeneration.current)return
+      if(!Array.isArray(result?.history))throw new Error('Histórico indisponível. Tente novamente.')
       setHistory(result.history)
-    }catch(err){if(!signal.aborted&&generation===historyGeneration.current)setError(err.message)}
+      setExpandedHistoryId(result.history[0]?.id||null)
+    }catch(err){if(!signal.aborted&&generation===historyGeneration.current)setHistoryError(err.message||'Não foi possível carregar o histórico.')}
     finally{if(!signal.aborted&&generation===historyGeneration.current)setHistoryLoading(false)}
   }
   const finish=async()=>{
@@ -407,32 +470,42 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           </div>}
         </article>
         <section ref={historyPanel} tabIndex={-1} className="surface-card day-conference-history" aria-label="Histórico de conferências">
-          <div className="day-conference-panel-heading">
-            <div><h2>Histórico de conferências</h2><p>Registros concluídos para a data selecionada, com responsável, valores e ressalvas.</p></div>
+          <div className="day-conference-panel-heading day-conference-history-heading">
+            <div><h2>Histórico de conferências</h2>
+              <p>{readableDate(date)} · Consulte os valores e responsáveis de cada revisão.</p></div>
             {history===null?<Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Ver revisões</Button>
-              :<Button variant="secondary" onClick={()=>{historyGeneration.current++;setHistory(null);setHistoryLoading(false);historyOpener.current?.focus()}}>Recolher</Button>}
+              :<button type="button" className="day-conference-history-collapse"
+                onClick={()=>{historyGeneration.current++;setHistory(null);setExpandedHistoryId(null);setHistoryError('');setHistoryLoading(false);historyOpener.current?.focus?.()}}>
+                <Icon name="chevron-up" size={16}/> Recolher histórico
+              </button>}
           </div>
-          {history===null?latest?<div className="day-conference-entry">
-            <div><strong>{readableDate(date)} · {statusLabel(latest.status)}</strong>
-              <small>Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>
-              {stale&&<small>Revisão necessária: os recebimentos foram alterados.</small>}
-              {latest.note&&<small>{latest.note}</small>}</div>
-            <strong>{formatCents(latest.lines.reduce((sum,line)=>sum+line.checkedCents,0))}</strong>
-          </div>:<div className="day-conference-history-empty"><Icon name="calendar" size={23}/>
+          {history===null
+            ?latest?<ConferenceRevisionCard revision={latest} mostRecent sourceVersion={summary?.sourceVersion}/>
+              :<div className="day-conference-history-empty"><Icon name="calendar" size={23}/>
                 <strong>Nenhuma conferência concluída nesta data</strong>
                 <span>Quando uma conferência for registrada, o responsável e os valores aparecerão aqui.</span>
-              </div>:
-          <>
-            <p className="day-conference-note">Até 30 revisões da data selecionada. Altere a data no topo para pesquisar outro dia.</p>
-            {historyLoading?<p>Carregando histórico…</p>:history.length?history.map(item=><div className="day-conference-entry" key={item.id}>
-              <div><strong>{readableDate(item.date)} · {statusLabel(item.status)}</strong>
-                <small>Revisão {item.revision} · {formatTimestamp(item.createdAt)} · {item.actorName||item.userId||'Usuário legado'}</small>
-                {summary?.sourceVersion&&item.date===date&&item.sourceVersion!==summary.sourceVersion&&<small>Desatualizada em relação aos recebimentos desta data.</small>}
-                {item.note&&<small>{item.note}</small>}
-                <details><summary>Valores desta revisão</summary>{item.lines.map(line=><p key={line.method}>{line.method}: bruto {formatCents(line.grossCents)} · estornos {formatCents(line.refundCents)} · líquido {formatCents(line.netCents)} · conferido {formatCents(line.checkedCents)} · diferença {formatCents(line.differenceCents)}</p>)}</details>
-              </div><strong>{formatCents(item.lines.reduce((sum,line)=>sum+line.checkedCents,0))}</strong>
-            </div>):<p>Não há conferências anteriores.</p>}
-          </>}
+              </div>
+            :<>
+              {!historyLoading&&!historyError&&<p className="day-conference-history-count">
+                {history.length} {history.length===1?'revisão encontrada':'revisões encontradas'}
+                {history.length===30?' · Limite de 30 revisões por consulta':''}
+              </p>}
+              {historyLoading?<p role="status" className="day-conference-note">Carregando histórico…</p>
+                :historyError?<div role="alert" className="day-conference-error">
+                  {historyError} <button type="button" onClick={openHistory}>Tentar novamente</button>
+                </div>
+                :history.length?<div className="day-conference-revisions">
+                  {history.map((item,index)=><ConferenceRevisionCard key={item.id}
+                    revision={item} mostRecent={index===0} previous={history[index+1]}
+                    sourceVersion={item.date===date?summary?.sourceVersion:null}
+                    expanded={expandedHistoryId===item.id}
+                    onToggle={()=>setExpandedHistoryId(current=>current===item.id?null:item.id)}/>)}
+                </div>
+                :<div className="day-conference-history-empty"><Icon name="calendar" size={23}/>
+                  <strong>Nenhuma revisão encontrada</strong>
+                  <span>Não há conferências registradas para a data selecionada.</span>
+                </div>}
+            </>}
         </section>
       </>}
       {detail&&<Modal
