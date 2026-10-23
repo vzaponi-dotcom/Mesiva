@@ -17,8 +17,7 @@ export function readConferenceDate(date, now = new Date()) {
   return date
 }
 
-export async function readDayConferenceSummary(db, businessId, date) {
-  const { results = [] } = await db.prepare(`SELECT ${methodSql} AS method,
+const summaryQuery = `SELECT ${methodSql} AS method,
     SUM(CASE WHEN m.type='entrada' THEN m.value_cents ELSE 0 END) AS gross_cents,
     SUM(CASE WHEN m.type='saida' THEN m.value_cents ELSE 0 END) AS refund_cents,
     COUNT(*) AS movement_count, MAX(m.created_at) AS last_created,
@@ -26,13 +25,29 @@ export async function readDayConferenceSummary(db, businessId, date) {
     FROM movements m
     LEFT JOIN payments p ON p.business_id=m.business_id AND p.id=m.payment_id
     WHERE m.business_id=? AND m.movement_date=? AND m.deleted_at IS NULL AND ${sourceClause}
-    GROUP BY ${methodSql} ORDER BY ${methodSql} COLLATE NOCASE, ${methodSql}`).bind(businessId, date).all()
+    GROUP BY ${methodSql} ORDER BY ${methodSql} COLLATE NOCASE, ${methodSql}`
+const summaryFromRows = async (results, date) => {
   const methods = results.map(row => ({
     method: row.method, grossCents: Number(row.gross_cents), refundCents: Number(row.refund_cents),
     netCents: Number(row.gross_cents) - Number(row.refund_cents), count: Number(row.movement_count),
   }))
   const sourceVersion = await sha256Hex(JSON.stringify(results))
   return { date, sourceVersion, methods }
+}
+
+export async function readDayConferenceSummary(db, businessId, date) {
+  const { results = [] } = await db.prepare(summaryQuery).bind(businessId,date).all()
+  return summaryFromRows(results,date)
+}
+
+// Batch both GET reads under one business-session assertion and one D1 snapshot.
+export async function readDayConferenceState(db,businessId,date) {
+  const [group,latest]=await db.batch([
+    db.prepare(summaryQuery).bind(businessId,date),
+    db.prepare(`SELECT * FROM daily_receipt_conferences WHERE business_id=? AND business_date=?
+      ORDER BY revision DESC LIMIT 1`).bind(businessId,date),
+  ])
+  return {...await summaryFromRows(group.results||[],date),latest:decodeConference(latest.results?.[0])}
 }
 
 export async function readDayConferenceEntries(db, businessId, date, method, page) {
