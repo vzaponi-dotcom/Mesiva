@@ -35,3 +35,5 @@ export { createPaymentMethodsPolicy } from './infrastructure/paymentMethodsPolic
 export { createFinanceCategoriesPolicy } from './infrastructure/financeCategoriesPolicy.js'
 
 export { useFinanceReadModel } from './application/useFinanceReadModel.js'
+
+export { default as DayConference } from './ui/DayConference.jsx'
