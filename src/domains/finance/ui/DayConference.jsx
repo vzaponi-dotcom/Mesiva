@@ -223,7 +223,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
           {rows.map((row,index)=>{
             const parsed=parseCents(amounts[row.method]??'')
             const isChecked=Boolean(verified[row.method])&&parsed!==null
-            const diff=isChecked?parsed-row.netCents:null
+            const diff=parsed!==null?parsed-row.netCents:null
             return <article className="surface-card day-conference-method" key={row.method}>
               <div className="day-conference-method-heading"><div><h2>{row.method}</h2><small>{row.count} movimentação(ões)</small></div>
                 <span className={isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>
@@ -242,7 +242,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
                     value={amounts[row.method]??''} disabled={fieldsDisabled} aria-invalid={Boolean(amounts[row.method])&&parsed===null}
                     aria-describedby={Boolean(amounts[row.method])&&parsed===null?'conference-amount-error-'+index:undefined}
                     onChange={event=>{setAmounts(prev=>({...prev,[row.method]:event.target.value}));setVerified(prev=>({...prev,[row.method]:false}))}} />
-                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor com até duas casas decimais (ex.: −10,50).</small>}
+                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor com até duas casas decimais (ex.: -10,50).</small>}
                 </label>
                 <label className="day-conference-verify"><input type="checkbox" checked={isChecked}
                   disabled={fieldsDisabled||parsed===null}

@@ -66,6 +66,8 @@ test('compensated differences stay divergent and a network retry keeps the same 
     amounts(screen)[0].props.onChange({target:{value:'100,00'}})
     amounts(screen)[1].props.onChange({target:{value:'150,00'}})
   })
+  assert.ok(verify(screen).every(field=>!field.props.checked))
+  assert.match(text(screen),/-R\$\s*100,00/,'the difference recalculates before individual verification')
   await act(async()=>{for(const field of verify(screen))field.props.onChange({target:{checked:true}})})
   assert.equal((text(screen).match(/Divergente/g)||[]).length,2)
   assert.equal(buttonNamed(screen.root,'Concluir conferência').props.disabled,true)
