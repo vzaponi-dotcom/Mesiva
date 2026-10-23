@@ -4,6 +4,8 @@ import { apiRequest } from '../../../infrastructure/api/httpClient.js'
 import { ContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { getBusinessDate } from '../../../../shared/finance.js'
 import PageHeader from '../../../shared/ui/PageHeader.jsx'
+import Icon from '../../../shared/ui/Icon.jsx'
+import Modal from '../../../shared/ui/Modal.jsx'
 import Button from '../../../shared/ui/Button.jsx'
 import ConfirmationDialog from '../../../shared/ui/ConfirmationDialog.jsx'
 import { buildDayConferenceCsv } from '../application/dayConferenceCsv.js'
@@ -20,6 +22,15 @@ const parseCents = value => {
 const formatTimestamp = value => new Date(value).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})
 const statusLabel = status => status==='com_ressalva'?'Concluída com ressalva':'Conferida'
 const today = () => getBusinessDate(new Date())
+const readableDate = value => new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'))
+const methodPresentation = value => {
+  const method = String(value).toLocaleLowerCase('pt-BR')
+  if (method.includes('pix')) return { icon: 'pix', description: 'Confira no extrato bancário' }
+  if (method.includes('dinheiro') || method.includes('espécie')) return { icon: 'cash', description: 'Confira entradas em espécie, sem saldo de gaveta' }
+  if (method.includes('débito') || method.includes('debito')) return { icon: 'card', description: 'Confira transações da maquininha' }
+  if (method.includes('crédito') || method.includes('credito')) return { icon: 'card', description: 'Confira transações da maquininha' }
+  return { icon: 'receipt', description: 'Confira o comprovante da forma registrada' }
+}
 const completedValues = data => {
   const lines = data?.latest?.sourceVersion === data?.sourceVersion ? data.latest.lines : []
   return {
@@ -102,6 +113,9 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   const totalGross=rows.reduce((n,row)=>n+row.grossCents,0)
   const totalRefund=rows.reduce((n,row)=>n+row.refundCents,0)
   const totalNet=totalGross-totalRefund
+  const allValuesEntered=rows.length>0 && rows.every(row=>parseCents(amounts[row.method]??'')!==null)
+  const totalEntered=allValuesEntered?rows.reduce((sum,row)=>sum+parseCents(amounts[row.method]),0):null
+  const totalDifference=allValuesEntered?totalEntered-totalNet:null
   const totalEditRefund=rows.reduce((n,row)=>n+(row.editRefundCents || 0),0)
   const allComplete=rows.length>0 && count===rows.length
   const differences=rows.filter(row=>verified[row.method] && parseCents(amounts[row.method])!==null
@@ -190,107 +204,177 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
 
   return <>
     <AreaNavigation area="finance"/>
-    <PageHeader eyebrow="Financeiro" title="Conferência do Dia"
-      description="Compare os recebimentos registrados no Mesiva com o PIX, o relatório de transações de cartões e as entradas em dinheiro." />
-    <div className="day-conference-actions">
-      <label>Data do recebimento <input type="date" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)} /></label>
-      <Button variant="secondary" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
-      <Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Histórico</Button>
-      <Button variant="secondary" onClick={exportCsv} disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…':'Exportar CSV do dia'}</Button>
-    </div>
-    {error&&<p role="alert" className="day-conference-error">{error}</p>}
-    {success&&<p role="status" className="day-conference-notice">{success}</p>}
-    {uncertain&&<p role="status" className="day-conference-notice">A resposta não foi confirmada. Atualize para verificar o registro ou reenvie a mesma conferência com segurança.</p>}
-    {loading?<p role="status">Carregando recebimentos…</p>:summary&&<>
-      <section className="day-conference-stats" aria-label="Resumo dos recebimentos">
-        <div className="surface-card"><small>Recebimentos brutos</small><strong>{formatCents(totalGross)}</strong></div>
-        <div className="surface-card"><small>Estornos identificados</small><strong>{formatCents(totalRefund)}</strong></div>
-        <div className="surface-card"><small>Saldo líquido registrado</small><strong>{formatCents(totalNet)}</strong></div>
-      </section>
-      <p className="day-conference-note">O período considera a data financeira do Mesiva, não a data do pedido ou a confirmação no extrato bancário. Compare o valor externo líquido de estornos identificados. Cartões: compare transações, não repasses líquidos futuros. Dinheiro: confira entradas, não o saldo da gaveta.</p>
-      {totalEditRefund>0&&<p className="day-conference-note">Recebido hoje na Visão geral para esta data: {formatCents(totalNet+totalEditRefund)}. Essa métrica não deduz as devoluções após edição ({formatCents(totalEditRefund)}), já descontadas do líquido desta conferência. O mix da Visão geral mostra os recebimentos brutos.</p>}
-      {summary.integrityIssues>0&&<p role="alert" className="day-conference-error">Há divergências entre movimentos, recibos e alocações. A conclusão está bloqueada; solicite revisão financeira. Nenhum pagamento foi alterado.</p>}
-      {rows.some(row=>row.method==='Não informado')&&<p className="day-conference-notice">Há lançamentos sem forma identificável. Confira-os separadamente; estornos sem evidência não são atribuídos à forma do pagamento original.</p>}
-      {latest&&<div className="day-conference-notice" role="status">
-        <strong>{statusLabel(latest.status)} em {formatTimestamp(latest.createdAt)}</strong>
-        {stale?<span> • Os recebimentos foram alterados após essa conferência. É necessário conferir novamente.</span>
-          :<span> • Conferência já registrada para estes recebimentos.</span>}
-        <div>Responsável: {latest.actorName || latest.userId || 'Usuário legado'} • Revisão {latest.revision}</div>
-        {latest.note&&<div>Observação: {latest.note}</div>}
-      </div>}
-      {!rows.length?<div className="surface-card day-conference-empty">Nenhum recebimento registrado nesta data. Não há valores para conferir.</div>
-        :<section className="day-conference-methods" aria-label="Conferência por forma de pagamento">
-          {rows.map((row,index)=>{
-            const parsed=parseCents(amounts[row.method]??'')
-            const isChecked=Boolean(verified[row.method])&&parsed!==null
-            const diff=parsed!==null?parsed-row.netCents:null
-            return <article className="surface-card day-conference-method" key={row.method}>
-              <div className="day-conference-method-heading"><div><h2>{row.method}</h2><small>{row.count} movimentação(ões)</small></div>
-                <span className={isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>
-                  {isChecked?(diff===0?'Sem diferença':'Divergente'):'Pendente'}
-                </span>
-              </div>
-              <div className="day-conference-values">
-                <div><small>Bruto</small><strong>{formatCents(row.grossCents)}</strong></div>
-                <div><small>Estornos</small><strong>{formatCents(row.refundCents)}</strong></div>
-                <div><small>Líquido Mesiva</small><strong>{formatCents(row.netCents)}</strong></div>
-                <div><small>Diferença</small><strong className={diff!==null&&diff!==0?'day-conference-text-danger':''}>{diff===null?'—':formatCents(diff)}</strong></div>
-              </div>
-              <div className="day-conference-field-row">
-                <label>Valor conferido externamente (R$)
-                  <input inputMode="decimal" autoComplete="off" placeholder="0,00"
-                    value={amounts[row.method]??''} disabled={fieldsDisabled} aria-invalid={Boolean(amounts[row.method])&&parsed===null}
+    <div className="day-conference-page">
+      <PageHeader eyebrow="Financeiro" title="Conferência do dia"
+        description="Compare cada forma de recebimento registrada no Mesiva com seus comprovantes e controles externos."
+        actions={<div className="day-conference-actions">
+          <label className="day-conference-date"><Icon name="calendar" size={17}/><span>Data</span>
+            <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)}/>
+          </label>
+          <Button variant="secondary" icon="download" onClick={exportCsv}
+            disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…':'CSV de lançamentos'}</Button>
+          <Button variant="secondary" icon="history" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
+        </div>}/>
+      {error&&<p role="alert" className="day-conference-error">{error}</p>}
+      {success&&<p role="status" className="day-conference-notice">{success}</p>}
+      {uncertain&&<p role="status" className="day-conference-notice">A resposta não foi confirmada. Atualize para verificar o registro ou reenvie a mesma conferência com segurança.</p>}
+      {loading?<p role="status">Carregando recebimentos…</p>:summary&&<>
+        <section className="day-conference-progress" aria-label="Andamento da conferência">
+          <div>
+            <div className="day-conference-progress-title">
+              <strong>{readableDate(date)}</strong>
+              <span className={stale?'day-conference-bad':sameVersion?'day-conference-good':'day-conference-pending'}>
+                {stale?'Revisão necessária':sameVersion?statusLabel(latest.status):allComplete?(differences.length?'Com divergências':'Pronta para concluir'):'Conferência em andamento'}
+              </span>
+            </div>
+            <p>{sameVersion?'Conferência registrada para estes recebimentos.':stale?'Os recebimentos mudaram desde a última conferência. Confira novamente.':count+' de '+rows.length+' formas de pagamento verificadas.'}</p>
+            {latest&&<small>Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>}
+          </div>
+          <div className="day-conference-progress-track" role="progressbar" aria-label="Formas verificadas" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={sameVersion?rows.length:count}>
+            <span style={{width:(rows.length?(sameVersion?100:count/rows.length*100):0)+'%'}}/>
+          </div>
+        </section>
+        <section className="day-conference-stats" aria-label="Resumo da conferência">
+          <div className="surface-card day-conference-stat">
+            <div className="day-conference-stat-title"><small>Registrado no Mesiva</small><span className="day-conference-stat-icon"><Icon name="receipt" size={18}/></span></div>
+            <strong>{formatCents(totalNet)}</strong><p>Recebimentos líquidos da data</p>
+          </div>
+          <div className="surface-card day-conference-stat">
+            <div className="day-conference-stat-title"><small>Valor informado</small><span className="day-conference-stat-icon is-success"><Icon name="check" size={18}/></span></div>
+            <strong>{totalEntered===null?'—':formatCents(totalEntered)}</strong>
+            <p>{totalEntered===null?'Campos em branco não entram na soma':'Conferido no banco, caixa e maquininhas'}</p>
+          </div>
+          <div className="surface-card day-conference-stat">
+            <div className="day-conference-stat-title"><small>Diferença</small><span className={'day-conference-stat-icon'+(totalDifference!==null&&totalDifference!==0?' is-danger':'')}><Icon name="info" size={18}/></span></div>
+            <strong className={totalDifference!==null&&totalDifference!==0?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
+            <p>{totalDifference===null?'Informe os valores de todas as formas':differences.length?'Verifique diferenças individuais':'Valores totais informados'}</p>
+          </div>
+        </section>
+        {totalEditRefund>0&&<p className="day-conference-note">A Visão geral não deduz devoluções após edição ({formatCents(totalEditRefund)}), já descontadas do líquido desta conferência. Bruto e líquido usam conceitos distintos.</p>}
+        {summary.integrityIssues>0&&<p role="alert" className="day-conference-error">Há divergências entre movimentos, recibos e alocações. A conclusão está bloqueada; solicite revisão financeira. Nenhum pagamento foi alterado.</p>}
+        {rows.some(row=>row.method==='Não informado')&&<p className="day-conference-notice">Há lançamentos sem forma identificável. Confira-os separadamente; estornos sem evidência não são atribuídos à forma original.</p>}
+        <article className="surface-card day-conference-main">
+          <div className="day-conference-panel-heading">
+            <div><h2>Conferir por forma de pagamento</h2><p>Informe o valor encontrado externamente. Clique em “Ver lançamentos” para auditar cada total.</p></div>
+            <span>{rows.reduce((sum,row)=>sum+row.count,0)} lançamentos</span>
+          </div>
+          <div className="day-conference-hint"><Icon name="info" size={18}/><p><strong>Conferência de recebimentos, não de gaveta.</strong> Dinheiro: compare as entradas registradas, não o saldo físico. Pix: verifique o extrato. Cartões: confira as transações da operadora, não os repasses futuros. <strong>Bruto {formatCents(totalGross)} · Estornos {formatCents(totalRefund)}.</strong></p></div>
+          {rows.length?<div className="day-conference-table" aria-label="Conferência por forma de pagamento">
+            <div className="day-conference-table-head" aria-hidden="true"><span>Forma de pagamento</span><span>Mesiva</span><span>Conferido</span><span>Diferença</span><span>Verificação</span><span/></div>
+            {rows.map((row,index)=>{
+              const parsed=parseCents(amounts[row.method]??'')
+              const isChecked=Boolean(verified[row.method])&&parsed!==null
+              const diff=parsed!==null?parsed-row.netCents:null
+              const presentation=methodPresentation(row.method)
+              const state=sameVersion?'Encerrado':isChecked?(diff===0?'Conferido':'Divergente'):parsed===null?'Aguardando valor':'Não conferido'
+              return <div className="day-conference-table-row" key={row.method}>
+                <div className="day-conference-method-name">
+                  <span className="day-conference-method-icon"><Icon name={presentation.icon} size={19}/></span>
+                  <div><strong>{row.method}</strong><small>{presentation.description}</small></div>
+                </div>
+                <div className="day-conference-cell day-conference-cell-mesiva">
+                  <small className="day-conference-value-label">Mesiva</small>
+                  <strong>{formatCents(row.netCents)}</strong>
+                  {(row.refundCents>0||row.grossCents!==row.netCents)&&<small>Bruto {formatCents(row.grossCents)} · Estornos {formatCents(row.refundCents)}</small>}
+                </div>
+                <div className="day-conference-cell day-conference-cell-input">
+                  <label htmlFor={'day-conference-amount-'+index} className="day-conference-value-label">Conferido</label>
+                  <input id={'day-conference-amount-'+index} inputMode="decimal" autoComplete="off" placeholder="0,00"
+                    aria-label={'Valor conferido de '+row.method} value={amounts[row.method]??''} disabled={fieldsDisabled}
+                    aria-invalid={Boolean(amounts[row.method])&&parsed===null}
                     aria-describedby={Boolean(amounts[row.method])&&parsed===null?'conference-amount-error-'+index:undefined}
-                    onChange={event=>{setAmounts(prev=>({...prev,[row.method]:event.target.value}));setVerified(prev=>({...prev,[row.method]:false}))}} />
-                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor com até duas casas decimais (ex.: -10,50).</small>}
-                </label>
-                <label className="day-conference-verify"><input type="checkbox" checked={isChecked}
-                  disabled={fieldsDisabled||parsed===null}
-                  onChange={event=>setVerified(prev=>({...prev,[row.method]:event.target.checked}))} /> Conferido</label>
-                <button type="button" className="day-conference-detail" onClick={event=>openDetail(row.method,event.currentTarget)}>Ver lançamentos</button>
+                    onChange={event=>{setAmounts(prev=>({...prev,[row.method]:event.target.value}));setVerified(prev=>({...prev,[row.method]:false}))}}/>
+                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor com até duas casas (ex.: -10,50).</small>}
+                </div>
+                <div className="day-conference-cell day-conference-cell-diff">
+                  <small className="day-conference-value-label">Diferença</small>
+                  <strong className={diff===null?'day-conference-muted':diff===0?'day-conference-positive':'day-conference-text-danger'}>{diff===null?'—':formatCents(diff)}</strong>
+                </div>
+                <div className="day-conference-cell day-conference-cell-status">
+                  <small className="day-conference-value-label">Verificação</small>
+                  <span className={sameVersion?'day-conference-closed':isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{state}</span>
+                </div>
+                <div className="day-conference-cell day-conference-row-actions">
+                  <button type="button" className="day-conference-detail" onClick={event=>openDetail(row.method,event.currentTarget)}>
+                    <Icon name="eye" size={16}/>Ver lançamentos
+                  </button>
+                  <label className="day-conference-check"><input type="checkbox" aria-label={'Conferir '+row.method} checked={isChecked}
+                    disabled={fieldsDisabled||parsed===null} onChange={event=>setVerified(prev=>({...prev,[row.method]:event.target.checked}))}/>
+                    <span>{isChecked?'Revisar':'Conferir'}</span>
+                  </label>
+                </div>
               </div>
-            </article>
-          })}
-        </section>}
-      {!sameVersion&&rows.length>0&&<section className="surface-card day-conference-finish">
-        <div><h2>Concluir conferência</h2><p>{count} de {rows.length} formas verificadas. Diferenças por forma exigem justificativa mesmo se o total geral coincidir.</p></div>
-        <label>Observação {differences.length?'(obrigatória para divergências)':'(opcional)'}
-          <textarea rows={3} value={note} maxLength={1000} onChange={event=>setNote(event.target.value)} disabled={fieldsDisabled}/>
-        </label>
-        <Button onClick={()=>setDialog(true)} disabled={!canSubmit}>Concluir conferência</Button>
-        {!canComplete&&<small>Seu perfil pode consultar, mas não concluir conferências.</small>}
-      </section>}
-    </>}
-    {detail&&<section ref={detailPanel} tabIndex={-1} className="surface-card day-conference-detail-panel" aria-label={'Lançamentos de '+detail.method}>
-      <div className="day-conference-method-heading"><h2>Lançamentos — {detail.method}</h2>
-        <Button variant="secondary" onClick={()=>{detailGeneration.current++;setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}>Fechar</Button></div>
-      {detail.error&&<p role="alert">{detail.error}</p>}
-      <div className="day-conference-detail-list">
-      {detail.entries.map(entry=><div className="day-conference-entry" key={entry.id}>
-        <div><strong>{entry.source==='order-payment'?'Recebimento':entry.source==='order-edit-refund'?'Devolução após edição':'Estorno'}</strong>
-          <small>{entry.orderNumber?'Pedido #'+entry.orderNumber:'Recebimento compartilhado/sem pedido direto'}</small>
-          <small>Data financeira: {entry.date} • Registrado em {entry.createdAt?formatTimestamp(entry.createdAt):'—'}</small>
-          <small>Movimento: {entry.id} • Recebimento: {entry.receiptId||'Sem vínculo legado'} • Pedido ID: {entry.orderId||'Sem vínculo direto'} • Ativo</small></div>
-        <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
-      </div>)}
-      </div>
-      {detailLoading&&<p role="status">Carregando lançamentos…</p>}
-      {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
-      <p className="day-conference-note">Total {detail.nextPage?'parcial carregado':'dos lançamentos carregados'}: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. {detail.nextPage?'Carregue as próximas páginas para conferir o total completo.':''}</p>
-    </section>}
-    {history!==null&&<section ref={historyPanel} tabIndex={-1} className="surface-card day-conference-history" aria-label="Histórico de conferências">
-      <div className="day-conference-method-heading"><h2>Conferências de {date}</h2>
-        <Button variant="secondary" onClick={()=>{historyGeneration.current++;setHistory(null);setHistoryLoading(false);historyOpener.current?.focus()}}>Fechar</Button></div>
-      <p className="day-conference-note">Até 30 revisões da data selecionada. Altere a data do recebimento acima para pesquisar outro dia.</p>
-      {historyLoading?<p>Carregando histórico…</p>:history.length?history.map(item=><div className="day-conference-entry" key={item.id}>
-        <div><strong>{item.date} • {statusLabel(item.status)}</strong>
-          <small>Revisão {item.revision} • {formatTimestamp(item.createdAt)} • {item.actorName||item.userId||'Usuário legado'}</small>
-          {summary?.sourceVersion&&item.date===date&&item.sourceVersion!==summary.sourceVersion&&<small>Desatualizada em relação aos recebimentos desta data.</small>}
-          {item.note&&<small>{item.note}</small>}
-          <details><summary>Valores desta revisão</summary>{item.lines.map(line=><p key={line.method}>{line.method}: bruto {formatCents(line.grossCents)} • estornos {formatCents(line.refundCents)} • líquido {formatCents(line.netCents)} • conferido {formatCents(line.checkedCents)} • diferença {formatCents(line.differenceCents)}</p>)}</details></div>
-        <strong>{formatCents(item.lines.reduce((total,line)=>total+line.checkedCents,0))}</strong>
-      </div>):<p>Não há conferências anteriores.</p>}
-    </section>}
+            })}
+          </div>:<div className="day-conference-empty">Nenhum recebimento registrado nesta data. Não há valores para conferir.</div>}
+          {rows.length>0&&<div className="day-conference-footer">
+            <div className="day-conference-notes">
+              <label htmlFor="day-conference-notes">Observações da conferência</label>
+              <textarea id="day-conference-notes" rows={3} value={note} maxLength={1000}
+                placeholder="Explique diferenças, lançamentos não encontrados ou providências necessárias…"
+                onChange={event=>setNote(event.target.value)} disabled={fieldsDisabled}/>
+              <small>Se qualquer forma divergir, mesmo que a soma geral seja igual, informe uma justificativa.</small>
+            </div>
+            <div className="day-conference-footer-total">
+              <small>Diferença total informada</small>
+              <strong className={totalDifference!==null&&differences.length?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
+              {differences.length>0&&totalDifference===0&&<small>Existem diferenças que se compensam entre formas.</small>}
+              {!sameVersion&&<Button icon="check" onClick={()=>setDialog(true)} disabled={!canSubmit}>Concluir conferência</Button>}
+              {!canComplete&&<small>Seu perfil pode consultar, mas não concluir conferências.</small>}
+            </div>
+          </div>}
+        </article>
+        <section ref={historyPanel} tabIndex={-1} className="surface-card day-conference-history" aria-label="Histórico de conferências">
+          <div className="day-conference-panel-heading">
+            <div><h2>Histórico de conferências</h2><p>Registros concluídos para a data selecionada, com responsável, valores e ressalvas.</p></div>
+            {history===null?<Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Ver revisões</Button>
+              :<Button variant="secondary" onClick={()=>{historyGeneration.current++;setHistory(null);setHistoryLoading(false);historyOpener.current?.focus()}}>Recolher</Button>}
+          </div>
+          {history===null?latest?<div className="day-conference-entry">
+            <div><strong>{readableDate(date)} · {statusLabel(latest.status)}</strong>
+              <small>Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>
+              {stale&&<small>Revisão necessária: os recebimentos foram alterados.</small>}
+              {latest.note&&<small>{latest.note}</small>}</div>
+            <strong>{formatCents(latest.lines.reduce((sum,line)=>sum+line.checkedCents,0))}</strong>
+          </div>:<p className="day-conference-history-empty">Nenhuma conferência concluída nesta data.</p>:
+          <>
+            <p className="day-conference-note">Até 30 revisões da data selecionada. Altere a data no topo para pesquisar outro dia.</p>
+            {historyLoading?<p>Carregando histórico…</p>:history.length?history.map(item=><div className="day-conference-entry" key={item.id}>
+              <div><strong>{readableDate(item.date)} · {statusLabel(item.status)}</strong>
+                <small>Revisão {item.revision} · {formatTimestamp(item.createdAt)} · {item.actorName||item.userId||'Usuário legado'}</small>
+                {summary?.sourceVersion&&item.date===date&&item.sourceVersion!==summary.sourceVersion&&<small>Desatualizada em relação aos recebimentos desta data.</small>}
+                {item.note&&<small>{item.note}</small>}
+                <details><summary>Valores desta revisão</summary>{item.lines.map(line=><p key={line.method}>{line.method}: bruto {formatCents(line.grossCents)} · estornos {formatCents(line.refundCents)} · líquido {formatCents(line.netCents)} · conferido {formatCents(line.checkedCents)} · diferença {formatCents(line.differenceCents)}</p>)}</details>
+              </div><strong>{formatCents(item.lines.reduce((sum,line)=>sum+line.checkedCents,0))}</strong>
+            </div>):<p>Não há conferências anteriores.</p>}
+          </>}
+        </section>
+      </>}
+      {detail&&<Modal title={'Recebimentos · '+detail.method} onClose={()=>{detailGeneration.current++;setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}
+          className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
+        <div ref={detailPanel} className="day-conference-drawer-content">
+          <p className="day-conference-note">Data financeira: {readableDate(date)}. Cada linha mostra apenas a parcela desta forma de pagamento, não o total do pedido.</p>
+          <div className="day-conference-drawer-total"><small>Valor líquido registrado</small>
+            <strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
+          {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
+          {detail.entries.map(entry=><article className="day-conference-receipt" key={entry.id}>
+            <div className="day-conference-receipt-heading">
+              <div><strong>{entry.orderNumber?'Pedido #'+entry.orderNumber:'Recebimento sem pedido direto'}</strong>
+                <small>{entry.source==='order-payment'?'Recebimento':entry.source==='order-edit-refund'?'Devolução após edição':'Estorno'}</small></div>
+              <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
+            </div>
+            <div className="day-conference-receipt-meta">
+              <div><small>Data do recebimento</small><strong>{readableDate(entry.date)}</strong></div>
+              <div><small>Registrado em</small><strong>{entry.createdAt?formatTimestamp(entry.createdAt):'—'}</strong></div>
+              <div><small>Movimento</small><strong>{entry.id}</strong></div>
+              <div><small>Recibo</small><strong>{entry.receiptId||'Sem vínculo legado'}</strong></div>
+              {entry.orderId&&<div><small>Pedido ID</small><strong>{entry.orderId}</strong></div>}
+            </div>
+          </article>)}
+          {detailLoading&&<p role="status">Carregando lançamentos…</p>}
+          {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
+          <p className="day-conference-note">Total {detail.nextPage?'parcial':'carregado'}: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. {detail.nextPage?'Carregue as próximas páginas para conferir tudo.':''}</p>
+        </div>
+      </Modal>}
     {dialog&&<ConfirmationDialog title="Confirmar conferência"
       message={differences.length?'Existem divergências. A conferência será registrada com ressalva, sem alterar pagamentos.':'Registrar esta conferência? Nenhum pagamento será alterado.'}
       details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}
