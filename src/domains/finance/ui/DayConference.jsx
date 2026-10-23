@@ -103,7 +103,7 @@ function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceV
     {onToggle&&<button type="button" className="day-conference-revision-toggle"
       onClick={onToggle} aria-expanded={expanded} aria-controls={detailId}>
       {expanded?'Ocultar valores':'Ver valores desta revisão'}
-      <Icon name={expanded?'chevron-up':'chevron-down'} size={16}/>
+      <Icon name={expanded?'arrow-down':'arrow-right'} size={16}/>
     </button>}
     {expanded&&<div className="day-conference-revision-details" id={detailId}>
       <h3>Valores registrados nesta revisão</h3>
@@ -476,7 +476,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             {history===null?<Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Ver revisões</Button>
               :<button type="button" className="day-conference-history-collapse"
                 onClick={()=>{historyGeneration.current++;setHistory(null);setExpandedHistoryId(null);setHistoryError('');setHistoryLoading(false);historyOpener.current?.focus?.()}}>
-                <Icon name="chevron-up" size={16}/> Recolher histórico
+                <Icon name="arrow-up" size={16}/> Recolher histórico
               </button>}
           </div>
           {history===null
