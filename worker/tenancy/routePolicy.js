@@ -20,7 +20,7 @@ export function classifyApiRoute(method, path) {
   if (television.get(path)?.includes(method)) return 'public-tv'
   if (/^\/api\/platform\/businesses(?:\/[^/]+(?:\/(?:first-manager-invitation\/resend|suspend|resume|delete|restore|memberships|history|management-attempts\/[^/]+|memberships\/[^/]+\/(?:revoke|reactivate)|invitations\/[^/]+\/(?:cancel|resend)))?)?$/.test(path)) return 'platform'
   if (path === '/api/access/invitations/accept' || path.startsWith('/api/auth/')) return 'unknown'
-  if (path === '/api/bootstrap' || /^\/api\/(orders|clients|products|tables|table-tabs|table-reservations|movements|finance-settings|settings|reporting|printing|business|access)(?:\/|$)/.test(path)
+  if (path === '/api/bootstrap' || /^\/api\/(orders|clients|products|tables|table-tabs|table-reservations|movements|finance|finance-settings|settings|reporting|printing|business|access)(?:\/|$)/.test(path)
     || /^\/api\/kitchen-tv\/(control|settings|approve|revoke)(?:\/|$)/.test(path)) return 'business'
   return 'unknown'
 }
