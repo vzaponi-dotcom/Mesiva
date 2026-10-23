@@ -39,6 +39,7 @@ import { createTableTabPrintDocument } from '../shared/tableTabPrintDocument.js'
 import { handleKitchenTvAdminApi, handleKitchenTvPublicApi } from './kitchenTvApi.js'
 import { handleBusinessProfileApi } from './businessProfileApi.js'
 import { handleReportingApi } from './reporting/api.js'
+import { handleDayConferenceApi } from './dayConferenceApi.js'
 import { handleTableReservationApi } from './tableReservationApi.js'
 import { acceptAccessInvitation } from './access/invitations.js'
 import { handleAccessApi } from './access/api.js'
@@ -196,6 +197,9 @@ const dispatchAuthenticatedApi = async (request, env, session, context, url) => 
 
   const printingResponse = await handlePrintingApi(request, env, context, url)
   if (printingResponse) return printingResponse
+
+  const conferenceResponse = await handleDayConferenceApi(request, env, context, url)
+  if (conferenceResponse) return conferenceResponse
 
   const reportingResponse = await handleReportingApi(request, env, context, url)
   if (reportingResponse) return reportingResponse
