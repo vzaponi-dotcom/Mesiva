@@ -380,5 +380,6 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}
       confirmLabel="Registrar conferência" confirmVariant="primary" submitting={submitting}
       onClose={()=>setDialog(false)} onConfirm={finish}/>}
+    </div>
   </>
 }
