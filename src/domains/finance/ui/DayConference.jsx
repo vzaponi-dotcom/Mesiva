@@ -17,6 +17,14 @@ const parseCents = value => {
 }
 const statusLabel = status => status==='com_ressalva'?'Concluída com ressalva':'Conferida'
 const today = () => getBusinessDate(new Date())
+const completedValues = data => {
+  const lines = data?.latest?.sourceVersion === data?.sourceVersion ? data.latest.lines : []
+  return {
+    amounts: Object.fromEntries(lines.map(line => [line.method,(line.checkedCents/100).toFixed(2).replace('.',',')])),
+    verified: Object.fromEntries(lines.map(line => [line.method,true])),
+    note: lines.length ? data.latest.note : '',
+  }
+}
 
 export default function DayConference({ canComplete=false }){
   const [date,setDate]=useState(today)
@@ -38,7 +46,11 @@ export default function DayConference({ canComplete=false }){
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
     setDetail(null);setHistory(null)
     apiRequest('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
-      .then(data=>{if(!controller.signal.aborted)setSummary(data)})
+      .then(data=>{
+        if(controller.signal.aborted)return
+        const values=completedValues(data)
+        setSummary(data);setAmounts(values.amounts);setVerified(values.verified);setNote(values.note)
+      })
       .catch(err=>{if(!controller.signal.aborted)setError(err.message)})
       .finally(()=>{if(!controller.signal.aborted)setLoading(false)})
     return ()=>controller.abort()
@@ -48,7 +60,8 @@ export default function DayConference({ canComplete=false }){
     setLoading(true);setError('');setDialog(false)
     try{
       const data=await apiRequest('/api/finance/day-conference?date='+encodeURIComponent(date))
-      setSummary(data);setVerified({});setAmounts({});setNote('')
+      const values=completedValues(data)
+      setSummary(data);setAmounts(values.amounts);setVerified(values.verified);setNote(values.note)
     }catch(err){setError(err.message)}
     finally{setLoading(false)}
   }
