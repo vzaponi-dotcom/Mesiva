@@ -137,3 +137,45 @@ test('approved comparison layout keeps Pix first and updates informed and differ
   assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
 })
+
+test('receipt drawer keeps technical IDs collapsed, shows amounts and times, and pages only on request',async t=>{
+  const calls=[]
+  let day
+  const entries=page=>page===1?[
+    {id:'movement-pix-a',receiptId:'receipt-pix-a',date:day,createdAt:day+'T22:40:35Z',amountCents:57400,type:'entrada',source:'order-payment'},
+    {id:'movement-pix-b',receiptId:'receipt-pix-b',date:day,createdAt:day+'T22:40:23Z',amountCents:22200,type:'entrada',source:'order-payment',orderNumber:331,orderId:'order-b'},
+  ]:[
+    {id:'movement-refund',receiptId:'receipt-refund',date:day,createdAt:day+'T21:10:00Z',amountCents:1000,type:'saida',source:'order-refund'},
+  ]
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    const params=new URL(path,'http://local').searchParams
+    day=params.get('date')
+    if(path.includes('/entries?')){
+      const page=Number(params.get('page'))
+      return response({entries:entries(page),nextPage:page===1?2:null})
+    }
+    const data=summary()
+    data.methods[0].count=3
+    return response(data)
+  })
+  assert.equal(calls.length,1,'initial screen loads just the summary')
+  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  const receiptCards=()=>screen.root.findAll(n=>n.props.className==='day-conference-receipt')
+  assert.equal(receiptCards().length,2)
+  assert.match(nodeText(receiptCards()[0]),/PIX recebido/)
+  assert.match(nodeText(receiptCards()[0]),/574,00/)
+  assert.match(nodeText(receiptCards()[0]),/Sem pedido diretamente vinculado/)
+  assert.match(nodeText(receiptCards()[1]),/Pedido #331/)
+  assert.match(text(screen),/Exibindo 2 de 3/)
+  const technical=screen.root.findAllByType('details').filter(n=>n.props.className==='day-conference-receipt-details')
+  assert.equal(technical.length,2)
+  assert.ok(technical.every(n=>n.props.open!==true),'technical identifiers must be collapsed')
+  assert.match(nodeText(technical[0]),/movement-pix-a/)
+  assert.equal(calls.length,2,'expanding native details requires no API call')
+  await act(async()=>buttonNamed(screen.root,'Carregar mais').props.onClick())
+  assert.equal(receiptCards().length,3)
+  assert.match(nodeText(receiptCards()[2]),/Estorno/)
+  assert.match(text(screen),/Exibindo 3 de 3/)
+  assert.equal(calls.length,3,'only explicit pagination loads the next page')
+})
