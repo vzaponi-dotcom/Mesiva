@@ -26,6 +26,13 @@ Alterações na fonte tornam o snapshot anterior desatualizado; seus valores his
 
 Em falha de rede ou resposta desconhecida, a UI preserva a chave e o payload do envio. Pode-se atualizar para verificar o registro ou reenviar a mesma conferência. A API só reproduz sucesso para a mesma chave, payload e ator. Duas pessoas não criam dois snapshots da mesma versão da fonte.
 
+## Identificação dos pedidos no detalhamento
+
+- Os campos para valores externos utilizam a máscara monetária BRL do Mesiva (`R$ 0,00`, com suporte a negativos). Campo vazio continua distinto de zero, e digitar não dispara leituras ou escritas D1.
+- O lançamento financeiro pertence a uma **alocação de recibo**, não necessariamente a um único pedido. Quando o movimento tem `order_id`, usa-se o vínculo direto. Para recibos compartilhados com `order_id=NULL`, a tela busca os vínculos reais em `payments` e `order_settlement_entries` por **uma consulta em lote, restrita aos recibos da página**, apenas para usuários com `orders.view` ou `orders.history`. Sem permissão, nomes de clientes e itens dos pedidos não são retornados.
+- **Ver pedido** consulta **somente o pedido clicado** pela rota autenticada existente `/api/orders/by-ids`. Exibe cliente salvo, modalidade, itens com nomes-snapshot e total **atualmente armazenados**. Esses dados podem ser alterados por edições após o pagamento; **não são um snapshot imutável do momento do recebimento**. O histórico da conferência mantém seu próprio snapshot financeiro imutável.
+- Havendo vários pedidos no mesmo recibo, todos são listados, mas **não se atribui o valor inteiro do recibo a cada pedido**. A auditoria e a soma de receitas continuam baseadas exclusivamente nos movimentos/alocações.
+
 ## Integridade e persistência
 
 As migrations `0053` e `0054` são aditivas. `daily_receipt_conferences` guarda o histórico; `daily_receipt_source_revisions` guarda a revisão por empresa/dia. Triggers incrementam essa revisão em inserção, alteração, exclusão e restauração de movimentos financeiros, inclusive trocas com o mesmo total/quantidade. Mudança de data invalida os dois dias; alterações em recibos/alocações e fallbacks legados também invalidam os dias vinculados.
