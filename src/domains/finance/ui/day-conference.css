@@ -83,60 +83,64 @@
 .day-conference-entry details p{font-size:.76rem;line-height:1.6}
 .day-conference-drawer-backdrop.modal-backdrop{padding:0;place-items:stretch end}
 .day-conference-drawer.modal-card{width:min(580px,100vw);height:100dvh;max-height:100dvh;border-radius:0;border-top:0;border-right:0;border-bottom:0}
-.day-conference-drawer .modal-header{padding:21px 25px}
-.day-conference-drawer .modal-body{padding:12px 25px 20px}
+.day-conference-drawer .modal-header{padding:19px 24px}
+.day-conference-drawer .modal-body{padding:14px 24px 22px;overscroll-behavior:contain}
 .day-conference-drawer-content{min-width:0}
-.day-conference-drawer-summary{position:sticky;top:0;z-index:2;padding:8px 0 11px;background:var(--surface)}
-.day-conference-drawer-total{padding:14px 15px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px}
+.day-conference-drawer-summary{position:sticky;top:-14px;z-index:2;padding:0 0 13px;background:var(--surface)}
+.day-conference-drawer-total{padding:16px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px}
 .day-conference-drawer-total>div{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.day-conference-drawer-total small{font-size:.74rem;color:var(--muted)}
-.day-conference-drawer-total strong{font-size:1.4rem;letter-spacing:-.025em}
-.day-conference-drawer-total p{font-size:.74rem;color:var(--text-soft);line-height:1.5;margin:7px 0 0}
+.day-conference-drawer-total small{font-size:.75rem;color:var(--muted)}
+.day-conference-drawer-total strong{font-size:1.45rem;letter-spacing:-.025em}
+.day-conference-drawer-total p{font-size:.74rem;color:var(--text-soft);line-height:1.5;margin:8px 0 0}
 .day-conference-receipt-list-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;margin:10px 0 12px}
-.day-conference-receipt-list-heading strong{font-size:.85rem}
+.day-conference-receipt-list-heading strong{font-size:.89rem}
 .day-conference-receipt-list-heading small{font-size:.74rem;color:var(--muted)}
-.day-conference-receipt-list{display:grid;gap:9px}
-.day-conference-receipt{min-width:0;padding:12px 14px;border:1px solid var(--border);border-radius:12px}
+.day-conference-receipt-list{display:grid;gap:10px}
+.day-conference-receipt{min-width:0;padding:14px;border:1px solid var(--border);border-radius:12px}
 .day-conference-receipt-heading{display:flex;align-items:start;justify-content:space-between;gap:12px}
-.day-conference-receipt-heading>div{display:grid;gap:4px;min-width:0}
-.day-conference-receipt-heading strong{font-size:.86rem;overflow-wrap:anywhere}
-.day-conference-receipt-heading>strong{font-size:1rem;white-space:nowrap;text-align:right}
-.day-conference-receipt-heading small{display:flex;align-items:center;gap:5px;font-size:.73rem;color:var(--muted);line-height:1.45}
+.day-conference-receipt-heading>div{display:grid;gap:7px;min-width:0}
+.day-conference-receipt-heading strong{font-size:.89rem;overflow-wrap:anywhere}
+.day-conference-receipt-heading>strong{font-size:1.02rem;white-space:nowrap;text-align:right}
+.day-conference-receipt-heading small{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:.74rem;color:var(--muted);line-height:1.5}
 .day-conference-receipt-heading small svg{flex:none}
-.day-conference-receipt-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;margin-top:9px}
-.day-conference-receipt-foot>span{font-size:.72rem;color:var(--muted)}
-.day-conference-receipt-details{min-width:0;font-size:.73rem}
-.day-conference-receipt-details summary{display:flex;align-items:center;justify-content:flex-end;gap:5px;min-height:28px;cursor:pointer;color:var(--primary);font-weight:750;list-style:none}
-.day-conference-receipt-details summary::-webkit-details-marker{display:none}
-.day-conference-receipt-details summary::after{content:'⌄';display:inline-block;font-size:1.05rem;line-height:1;transition:transform .15s}
-.day-conference-receipt-details[open]{flex:1 0 100%}
-.day-conference-receipt-details[open] summary{justify-content:flex-start;margin-top:5px}
-.day-conference-receipt-details[open] summary::after{transform:rotate(180deg)}
-.day-conference-receipt-details summary:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:4px}
-.day-conference-receipt-details dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:8px 0 0;padding:13px 0 1px;border-top:1px solid var(--border)}
-.day-conference-receipt-details dl>div{display:grid;gap:4px;min-width:0}
-.day-conference-receipt-details dt{font-size:.7rem;color:var(--muted)}
-.day-conference-receipt-details dd{margin:0;font-size:.74rem;color:var(--text);overflow-wrap:anywhere}
+.day-conference-receipt-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:12px;padding-top:9px;border-top:1px solid var(--border)}
+.day-conference-receipt-foot>span{font-size:.73rem;color:var(--muted)}
+.day-conference-drill-button{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;min-height:36px;background:none;border:0;padding:4px 0;color:var(--primary);font-size:.8rem;font-weight:750;cursor:pointer}
+.day-conference-drill-button:hover{text-decoration:underline}
+.day-conference-drill-button:focus-visible,.day-conference-back:focus-visible,.day-conference-order-list-item:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:6px}
+.day-conference-back{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:5px 0;border:0;background:none;color:var(--primary);font-size:.83rem;font-weight:750;cursor:pointer}
+.day-conference-navigation-title{font-size:1rem;line-height:1.35;letter-spacing:-.02em;margin:8px 0 15px;outline:none}
+.day-conference-navigation-title:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+.day-conference-receipt-summary{margin-bottom:14px}
+.day-conference-relevant-dates{display:grid;gap:8px;margin:14px 0 17px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.day-conference-relevant-dates span{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--muted);font-size:.75rem;line-height:1.45}
+.day-conference-relevant-dates strong{color:var(--text);font-weight:700;text-align:right}
+.day-conference-order-list{display:grid;gap:2px}
+.day-conference-order-list-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:66px;padding:11px 4px;background:none;border:0;border-bottom:1px solid var(--border);text-align:left;color:var(--text);cursor:pointer}
+.day-conference-order-list-item:hover{background:var(--surface-soft)}
+.day-conference-order-list-item>span{display:grid;gap:6px}
+.day-conference-order-list-item strong{font-size:.86rem}
+.day-conference-order-list-item small{color:var(--muted);font-size:.73rem}
+.day-conference-order-list-item svg{color:var(--muted);flex:none}
+.day-conference-order-overview{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));padding:15px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
+.day-conference-order-overview>div{display:grid;gap:5px;min-width:0}
+.day-conference-order-overview>div:first-child{grid-column:1/-1}
+.day-conference-order-overview span{font-size:.72rem;color:var(--muted)}
+.day-conference-order-overview strong{font-size:.84rem;overflow-wrap:anywhere}
+.day-conference-order-items{margin-top:19px}
+.day-conference-order-items h4{font-size:.9rem;margin:0 0 10px}
+.day-conference-order-items ul{list-style:none;padding:0;margin:0}
+.day-conference-order-items li{padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem;line-height:1.45;overflow-wrap:anywhere}
+.day-conference-order-items p{color:var(--muted);font-size:.8rem}
+.day-conference-order-total{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 0;font-size:.84rem}
+.day-conference-order-total strong{font-size:1.1rem}
+.day-conference-order-disclaimer{margin:11px 0 0;color:var(--muted);font-size:.73rem;line-height:1.55}
 .day-conference-date input:focus-visible,.day-conference-cell-input input:focus-visible,.day-conference-notes textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-
 .day-conference-cell-status .day-conference-pending svg{margin-right:4px}
 .day-conference-history-empty{display:grid;justify-items:start;gap:6px;padding:18px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-soft)}
 .day-conference-history-empty svg{color:var(--muted)}
 .day-conference-history-empty strong{font-size:.84rem;color:var(--text)}
 .day-conference-history-empty span{font-size:.76rem;line-height:1.5;color:var(--muted)}
-.day-conference-receipt-links{display:grid;gap:7px;min-width:0;flex:1}
-.day-conference-receipt-links>span,.day-conference-receipt-links>small{font-size:.72rem;color:var(--muted);line-height:1.4}
-.day-conference-linked-order{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 9px}
-.day-conference-linked-order span{font-size:.75rem;color:var(--text-soft);overflow-wrap:anywhere}
-.day-conference-linked-order button{background:none;border:0;color:var(--primary);cursor:pointer;font-size:.74rem;font-weight:750;padding:5px;min-height:32px}
-.day-conference-linked-order button:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:5px}
-.day-conference-order-preview{flex:1 0 100%;min-width:0;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
-.day-conference-order-preview-heading{display:flex;justify-content:space-between;gap:10px;font-size:.78rem}
-.day-conference-order-preview p,.day-conference-order-preview li,.day-conference-order-preview small{font-size:.75rem;line-height:1.5}
-.day-conference-order-preview p,.day-conference-order-preview small{color:var(--muted);margin:5px 0}
-.day-conference-order-preview ul{margin:9px 0;padding-left:18px}
-.day-conference-order-preview>strong{font-size:.8rem}
-.day-conference-order-preview>small{display:block}
 @media(max-width:1120px){
 .day-conference-table-head,.day-conference-table-row{grid-template-columns:minmax(125px,1.4fr) minmax(90px,.88fr) minmax(105px,.95fr) minmax(84px,.8fr) minmax(90px,.87fr) minmax(135px,1.2fr);column-gap:8px}
 .day-conference-row-actions{gap:5px}.day-conference-check{padding:0 8px}
@@ -179,5 +183,5 @@
 @media(max-width:380px){
 .day-conference-receipt-heading{flex-wrap:wrap}
 .day-conference-receipt-heading>strong{margin-left:auto}
-.day-conference-receipt-details dl{grid-template-columns:1fr}
+ .day-conference-relevant-dates span{display:grid;gap:2px}\n.day-conference-relevant-dates strong{text-align:left}
 }
