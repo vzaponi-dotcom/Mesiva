@@ -33,7 +33,7 @@ export const destinationById = new Map(NAVIGATION_DESTINATIONS.map((item) => [it
 export const AREA_DESTINATION_IDS = Object.freeze({
   access: Object.freeze(['access-team', 'access-activity']),
   orders: Object.freeze(['orders', 'history', 'kitchen-tv-control']),
-  finance: Object.freeze(['dashboard', 'day-conference', 'reports', 'receivables', 'finance']),
+  finance: Object.freeze(['dashboard', 'reports', 'receivables', 'finance', 'day-conference']),
   settings: Object.freeze(['settings-home', 'settings-business-profile', 'settings-operations', 'settings-modalities', 'settings-payments', 'settings-cancellations', 'settings-finance-categories', 'settings-kitchen-tv', 'settings-printing', 'settings-device', 'access-team', 'access-activity']),
 })
 
