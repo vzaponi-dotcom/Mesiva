@@ -183,10 +183,13 @@
 .day-conference-footer-total .button{width:100%}
 .day-conference-entry>strong{font-size:.78rem}
 .day-conference-drawer .modal-header,.day-conference-drawer .modal-body{padding-left:16px;padding-right:16px}
+.day-conference-date input,.day-conference-cell-input input,.day-conference-notes textarea{font-size:16px}
+.day-conference-drill-button,.day-conference-back{min-height:44px}
 }
 
 @media(max-width:380px){
 .day-conference-receipt-heading{flex-wrap:wrap}
 .day-conference-receipt-heading>strong{margin-left:auto}
- .day-conference-relevant-dates span{display:grid;gap:2px}\n.day-conference-relevant-dates strong{text-align:left}
+.day-conference-relevant-dates span{display:grid;gap:2px}
+.day-conference-relevant-dates strong{text-align:left}
 }
