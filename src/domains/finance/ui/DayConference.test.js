@@ -179,3 +179,42 @@ test('receipt drawer keeps technical IDs collapsed, shows amounts and times, and
   assert.match(text(screen),/Exibindo 3 de 3/)
   assert.equal(calls.length,3,'only explicit pagination loads the next page')
 })
+
+test('conference amount input masks BRL cents including negatives and never persists partial typing',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
+  await act(async()=>amounts(screen)[0].props.onChange({target:{value:'123456'}}))
+  assert.equal(amounts(screen)[0].props.value,'R$ 1.234,56')
+  await act(async()=>amounts(screen)[0].props.onChange({target:{value:'-1050'}}))
+  assert.equal(amounts(screen)[0].props.value,'-R$ 10,50')
+  await act(async()=>amounts(screen)[0].props.onChange({target:{value:''}}))
+  assert.equal(amounts(screen)[0].props.value,'')
+  assert.equal(verify(screen)[0].props.checked,false)
+  assert.equal(calls.length,1)
+})
+
+test('order snapshot is lazy, uses the company request and does not imply the shared receipt belongs to one order',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async (path)=>{
+    calls.push(path)
+    if(path.includes('/orders/by-ids'))return response({orders:[{
+      id:'o-1',orderNumber:37,client:'Maria',type:'Retirada',status:'Finalizado',
+      orderDate:'2026-10-15',total:120,items:[{id:'item-a',name:'Pizza',quantity:2}],
+    }]})
+    if(path.includes('/entries?'))return response({nextPage:null,entries:[{
+      id:'movement-1',receiptId:'shared-1',date:'2026-10-15',createdAt:'2026-10-15T16:30:00Z',
+      amountCents:20000,source:'order-payment',type:'entrada',linkedOrders:[
+        {id:'o-1',number:37,client:'Maria'},{id:'o-2',number:38,client:'João'},
+      ],
+    }]})
+    return response(summary())
+  },{canViewOrders:true})
+  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  assert.match(text(screen),/compartilhado entre 2 pedidos/)
+  assert.match(text(screen),/Maria/)
+  assert.equal(calls.filter(x=>x.includes('/orders/by-ids')).length,0,'order details must not load on list open')
+  await act(async()=>screen.root.findAllByType('button').find(n=>nodeText(n)==='Ver pedido').props.onClick())
+  assert.match(text(screen),/Pizza/)
+  assert.match(text(screen),/Dados atualmente registrados/)
+  assert.equal(calls.filter(x=>x.includes('/orders/by-ids')).length,1,'only clicked order loads')
+})
