@@ -4,7 +4,7 @@ export const READ_SURFACE_IDS=Object.freeze([
   'settings-business-profile','settings-operations','settings-modalities','settings-payments',
   'settings-cancellations','settings-finance-categories','settings-kitchen-tv','settings-printing','settings-device',
   'orders','history','kitchen-tv-control','new-order','comandas','print-queue',
-  'dashboard','reports','receivables','finance','clients','products','tables',
+  'dashboard','day-conference','reports','receivables','finance','clients','products','tables',
 ])
 export const SCOPED_COLLECTIONS=Object.freeze(['clients','products','orders','tables','tableTabs','movements','financeSettings'])
 export function getScopedBootstrapCollections(payload){
