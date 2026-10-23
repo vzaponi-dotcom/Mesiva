@@ -279,3 +279,72 @@ test('receipt list never exposes customer or drill action when order-read grant 
   assert.equal(screen.root.findAllByType('button').filter(n=>nodeText(n)==='Ver pedido').length,0)
   assert.equal(calls.length,2,'unauthorized users cannot request order details')
 })
+
+test('revision history presents newest snapshot first with real variation and preserves older records',async t=>{
+  const calls=[]
+  const current=summary('2026-10-23')
+  const sourceVersion=current.sourceVersion
+  const oldVersion='b'.repeat(64)
+  const line=(method,cents,net)=>({
+    method,grossCents:net,refundCents:0,netCents:net,checkedCents:cents,
+    differenceCents:cents-net,
+  })
+  const revisions=[
+    {id:'revision-two',date:'2026-10-23',revision:2,sourceVersion,status:'conferida',
+      createdAt:'2026-10-23T23:03:37Z',actorName:'Victor',
+      note:'Caixa e extratos conferidos.',
+      lines:[line('Dinheiro',29400,29400),line('Pix',22000,22000)]},
+    {id:'revision-one',date:'2026-10-23',revision:1,sourceVersion:oldVersion,status:'conferida',
+      createdAt:'2026-10-23T23:01:41Z',actorName:'Victor',
+      note:'Nota preservada da revisão 1.',
+      lines:[line('Dinheiro',21700,21700),line('Pix',22000,22000)]},
+  ]
+  current.latest=revisions[0]
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    return response(path.includes('/history?')?{history:revisions}:current)
+  })
+  assert.match(text(screen),/Mais recente/)
+  assert.equal(calls.length,1,'preview uses summary snapshot; list stays lazy')
+  await act(async()=>buttonNamed(screen.root,'Ver revisões').props.onClick({currentTarget:{focus(){}}}))
+  const cards=()=>screen.root.findAll(n=>typeof n.props?.className==='string'&&
+    n.props.className.startsWith('day-conference-revision')&&n.type==='article')
+  assert.equal(cards().length,2)
+  assert.match(text(screen),/2 revisões encontradas/)
+  assert.match(nodeText(cards()[0]),/514,00/)
+  assert.match(nodeText(cards()[0]),/Variação do valor conferido desde a revisão anterior/)
+  assert.match(nodeText(cards()[0]),/\+\s*R\$\s*77,00/)
+  assert.match(nodeText(cards()[0]),/Dinheiro/)
+  assert.match(nodeText(cards()[0]),/294,00/)
+  assert.match(nodeText(cards()[0]),/Caixa e extratos conferidos/)
+  assert.match(nodeText(cards()[1]),/437,00/)
+  assert.match(nodeText(cards()[1]),/Registro histórico/)
+  assert.doesNotMatch(text(screen),/Nota preservada da revisão 1\./,
+    'older revision details should be collapsed by default')
+  assert.equal(calls.length,2,'open history issues one bounded request')
+  await act(async()=>buttonNamed(screen.root,'Ver valores desta revisão').props.onClick())
+  assert.match(text(screen),/Nota preservada da revisão 1\./)
+  assert.doesNotMatch(text(screen),/Caixa e extratos conferidos\./,
+    'only selected revision expands')
+  assert.match(text(screen),/217,00/)
+  assert.equal(calls.length,2,'switching revisions never refetches D1')
+  await act(async()=>buttonNamed(screen.root,'Recolher histórico').props.onClick())
+  assert.equal(cards().length,1,'collapse reverts to summary preview')
+  assert.doesNotMatch(text(screen),/Nota preservada da revisão 1\./)
+  assert.equal(calls.length,2)
+})
+
+test('revision history does not invent totals when no previous revision exists',async t=>{
+  const data=summary('2026-10-23')
+  data.latest={id:'only-revision',date:'2026-10-23',revision:1,sourceVersion:data.sourceVersion,
+    createdAt:'2026-10-23T15:00:00Z',status:'com_ressalva',actorName:'Operador',
+    note:'PIX divergente.',lines:[{method:'Pix',grossCents:20000,refundCents:0,netCents:20000,
+      checkedCents:19900,differenceCents:-100}]}
+  const {screen}=await mount(t,async path=>response(path.includes('/history?')?{history:[data.latest]}:data))
+  await act(async()=>buttonNamed(screen.root,'Ver revisões').props.onClick())
+  assert.match(text(screen),/Concluída com ressalva/)
+  assert.match(text(screen),/PIX divergente\./)
+  assert.match(text(screen),/Diferença/)
+  assert.match(text(screen),/-R\$\s*1,00/)
+  assert.doesNotMatch(text(screen),/Variação do valor conferido desde a revisão anterior/)
+})
