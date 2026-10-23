@@ -9,7 +9,8 @@ const methodSql = "COALESCE(NULLIF(m.payment_method,''),'Não informado')"
 
 export function readConferenceDate(date, now = new Date()) {
   if (typeof date !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)
-    || new Date(date + 'T00:00:00Z').toISOString?.()?.slice(0,10) !== date
+    || !Number.isFinite(Date.parse(date + 'T00:00:00Z'))
+    || new Date(date + 'T00:00:00Z').toISOString().slice(0,10) !== date
     || date > getBusinessDate(now)) {
     throw apiError(400, 'INVALID_CONFERENCE_DATE', 'Informe uma data válida até hoje.')
   }
@@ -24,7 +25,7 @@ export async function readDayConferenceSummary(db, businessId, date) {
     MAX(m.id) AS last_id
     FROM movements m
     WHERE m.business_id=? AND m.movement_date=? AND m.deleted_at IS NULL AND ${sourceClause}
-    GROUP BY ${methodSql} ORDER BY ${methodSql} COLLATE NOCASE`).bind(businessId, date).all()
+    GROUP BY ${methodSql} ORDER BY ${methodSql} COLLATE NOCASE, ${methodSql}`).bind(businessId, date).all()
   const methods = results.map(row => ({
     method: row.method, grossCents: Number(row.gross_cents), refundCents: Number(row.refund_cents),
     netCents: Number(row.gross_cents) - Number(row.refund_cents), count: Number(row.movement_count),
