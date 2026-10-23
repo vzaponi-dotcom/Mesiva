@@ -23,6 +23,14 @@ const formatTimestamp = value => new Date(value).toLocaleString('pt-BR',{timeZon
 const statusLabel = status => status==='com_ressalva'?'Concluída com ressalva':'Conferida'
 const today = () => getBusinessDate(new Date())
 const readableDate = value => new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'))
+const methodRank = value => {
+  const method = String(value).toLocaleLowerCase('pt-BR')
+  if (method.includes('pix')) return 0
+  if (method.includes('dinheiro') || method.includes('espécie')) return 1
+  if (method.includes('débito') || method.includes('debito')) return 2
+  if (method.includes('crédito') || method.includes('credito')) return 3
+  return 4
+}
 const methodPresentation = value => {
   const method = String(value).toLocaleLowerCase('pt-BR')
   if (method.includes('pix')) return { icon: 'pix', description: 'Confira no extrato bancário' }
@@ -108,7 +116,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   const latest=summary?.latest
   const stale=latest && (latest.sourceVersion!==summary.sourceVersion || summary.integrityIssues>0)
   const sameVersion=latest && !stale
-  const rows=summary?.methods || []
+  const rows=(summary?.methods || []).toSorted((a,b)=>methodRank(a.method)-methodRank(b.method)||a.method.localeCompare(b.method,'pt-BR'))
   const count=rows.filter(row=>verified[row.method] && parseCents(amounts[row.method])!==null).length
   const totalGross=rows.reduce((n,row)=>n+row.grossCents,0)
   const totalRefund=rows.reduce((n,row)=>n+row.refundCents,0)
