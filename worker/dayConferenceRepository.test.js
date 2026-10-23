@@ -255,3 +255,23 @@ test('ambiguous legacy receipts block every date of their movements, not only th
     assert.ok((await readDayConferenceSummary(f.db,'a',date)).integrityIssues>0,date)
   }
 })
+
+test('shared receipts resolve all linked orders in one bounded read, without assigning receipt total to one order',async t=>{
+  const f=fixture(t)
+  for(const [id,businessId,client] of [['one','a','Cliente Um'],['two','a','Cliente Dois']]){
+    f.sqlite.prepare(`INSERT INTO orders (id,business_id,client_name_snapshot,type,order_date,status,subtotal_cents,total_cents,created_at)
+      VALUES (?,?,?,'Retirada',?,'Finalizado',500,500,?)`).run('order-'+id,businessId,client,day,day+'T12:00:00Z')
+  }
+  for(const [id,cents] of [['one',600],['two',400]]){
+    f.sqlite.prepare(`INSERT INTO payments(id,business_id,order_id,receipt_id,amount_cents,paid_at,created_at)
+      VALUES (?,'a',?,'receipt-pix-1',?,?,?)`).run('payment-'+id,'order-'+id,cents,day+'T13:00:00Z',day+'T13:00:00Z')
+  }
+  const noPermission=await readDayConferenceEntries(f.db,'a',day,'Pix',1,null,false)
+  assert.deepEqual(noPermission.entries.find(e=>e.id==='pix-1').linkedOrders,[])
+  const withPermission=await readDayConferenceEntries(f.db,'a',day,'Pix',1,null,true)
+  const entry=withPermission.entries.find(e=>e.id==='pix-1')
+  assert.equal(entry.amountCents,1000,'movement retains receipt allocation amount, not an order amount')
+  assert.deepEqual(entry.linkedOrders.map(x=>x.client),['Cliente Um','Cliente Dois'])
+  assert.equal(withPermission.entries.length,noPermission.entries.length)
+  assert.deepEqual((await readDayConferenceEntries(f.db,'b',day,'Pix',1,null,true)).entries[0].linkedOrders,[])
+})
