@@ -10,7 +10,7 @@ import './day-conference.css'
 const formatCents = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
 const parseCents = value => {
   const normalized=String(value).trim().replace(',','.')
-  if(!/^\\d+(?:\\.\\d{1,2})?$/.test(normalized))return null
+  if(!/^\d+(?:\.\d{1,2})?$/.test(normalized))return null
   const [whole,decimal='']=normalized.split('.')
   const cents=Number(whole)*100+Number(decimal.padEnd(2,'0'))
   return Number.isSafeInteger(cents) && cents <= 999999999999 ? cents : null
