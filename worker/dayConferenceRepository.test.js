@@ -275,3 +275,11 @@ test('shared receipts resolve all linked orders in one bounded read, without ass
   assert.equal(withPermission.entries.length,noPermission.entries.length)
   assert.deepEqual((await readDayConferenceEntries(f.db,'b',day,'Pix',1,null,true)).entries[0].linkedOrders,[])
 })
+
+test('shared receipt lookup uses the company/receipt covering index',t=>{
+  const f=fixture(t)
+  const rows=f.sqlite.prepare(`EXPLAIN QUERY PLAN SELECT receipt_id,order_id FROM payments
+    WHERE business_id=? AND receipt_id IS NOT NULL AND receipt_id IN (?)`).all('a','receipt-pix-1')
+  assert.ok(rows.some(row=>String(row.detail).includes('payments_business_receipt_order_idx')),
+    'receipt relation should not scan all company payments')
+})
