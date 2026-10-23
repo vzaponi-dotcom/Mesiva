@@ -20,6 +20,11 @@ const parseCents = value => {
   return Number.isSafeInteger(cents) && Math.abs(cents) <= 999999999999 ? cents : null
 }
 const formatTimestamp = value => new Date(value).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})
+const formatEntryTime = value => value ? new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',
+}).format(new Date(value)) : 'Horário não informado'
+const entryTitle = (entry, method) => entry.source === 'order-edit-refund'
+  ? 'Devolução após edição' : entry.type === 'saida' ? 'Estorno' : method.toLocaleUpperCase('pt-BR') + ' recebido'
 const statusLabel = status => status==='com_ressalva'?'Concluída com ressalva':'Conferida'
 const today = () => getBusinessDate(new Date())
 const readableDate = value => new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'))
@@ -360,24 +365,46 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       {detail&&<Modal title={'Recebimentos · '+detail.method} onClose={()=>{detailGeneration.current++;setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}
           className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
         <div ref={detailPanel} className="day-conference-drawer-content">
-          <p className="day-conference-note">Data financeira: {readableDate(date)}. Cada linha mostra apenas a parcela desta forma de pagamento, não o total do pedido.</p>
-          <div className="day-conference-drawer-total"><small>Valor líquido registrado</small>
-            <strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
+          <div className="day-conference-drawer-summary">
+            <div className="day-conference-drawer-total">
+              <div><small>Valor líquido registrado</small><strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
+              <p>Confira cada recebimento com o comprovante externo. Valores de pedidos divididos representam apenas esta forma de pagamento.</p>
+            </div>
+          </div>
+          <div className="day-conference-receipt-list-heading">
+            <strong>Lançamentos de {readableDate(date)}</strong>
+            <small>Exibindo {detail.entries.length} de {rows.find(row=>row.method===detail.method)?.count??detail.entries.length}</small>
+          </div>
           {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
-          {detail.entries.map(entry=><article className="day-conference-receipt" key={entry.id}>
-            <div className="day-conference-receipt-heading">
-              <div><strong>{entry.orderNumber?'Pedido #'+entry.orderNumber:'Recebimento sem pedido direto'}</strong>
-                <small>{entry.source==='order-payment'?'Recebimento':entry.source==='order-edit-refund'?'Devolução após edição':'Estorno'}</small></div>
-              <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
-            </div>
-            <div className="day-conference-receipt-meta">
-              <div><small>Data do recebimento</small><strong>{readableDate(entry.date)}</strong></div>
-              <div><small>Registrado em</small><strong>{entry.createdAt?formatTimestamp(entry.createdAt):'—'}</strong></div>
-              <div><small>Movimento</small><strong>{entry.id}</strong></div>
-              <div><small>Recibo</small><strong>{entry.receiptId||'Sem vínculo legado'}</strong></div>
-              {entry.orderId&&<div><small>Pedido ID</small><strong>{entry.orderId}</strong></div>}
-            </div>
-          </article>)}
+          <div className="day-conference-receipt-list">
+            {detail.entries.map(entry=>{
+              const registeredDay=entry.createdAt?getBusinessDate(new Date(entry.createdAt)):null
+              return <article className="day-conference-receipt" key={entry.id}>
+                <div className="day-conference-receipt-heading">
+                  <div>
+                    <strong>{entryTitle(entry,detail.method)}</strong>
+                    <small><Icon name="clock" size={13}/>{registeredDay&&registeredDay!==entry.date
+                      ? 'Registrado em '+formatTimestamp(entry.createdAt)
+                      : formatEntryTime(entry.createdAt)}</small>
+                  </div>
+                  <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
+                </div>
+                <div className="day-conference-receipt-foot">
+                  <span>{entry.orderNumber?'Pedido #'+entry.orderNumber:entry.orderId?'Pedido vinculado':'Sem pedido diretamente vinculado'}</span>
+                  <details className="day-conference-receipt-details">
+                    <summary>Dados técnicos</summary>
+                    <dl>
+                      <div><dt>Data financeira</dt><dd>{readableDate(entry.date)}</dd></div>
+                      <div><dt>Registrado em</dt><dd>{entry.createdAt?formatTimestamp(entry.createdAt):'—'}</dd></div>
+                      <div><dt>Movimento</dt><dd>{entry.id}</dd></div>
+                      <div><dt>Recibo</dt><dd>{entry.receiptId||'Sem vínculo legado'}</dd></div>
+                      {entry.orderId&&<div><dt>Pedido ID</dt><dd>{entry.orderId}</dd></div>}
+                    </dl>
+                  </details>
+                </div>
+              </article>
+            })}
+          </div>
           {detailLoading&&<p role="status">Carregando lançamentos…</p>}
           {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
           <p className="day-conference-note">Total {detail.nextPage?'parcial':'carregado'}: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. {detail.nextPage?'Carregue as próximas páginas para conferir tudo.':''}</p>
