@@ -29,6 +29,16 @@ const formatEntryTime = value => value ? new Intl.DateTimeFormat('pt-BR', {
 }).format(new Date(value)) : 'Horário não informado'
 const entryTitle = (entry, method) => entry.source === 'order-edit-refund'
   ? 'Devolução após edição' : entry.type === 'saida' ? 'Estorno' : method.toLocaleUpperCase('pt-BR') + ' recebido'
+const receiptClients = linked => [...new Set(linked.map(order=>order.client?.trim()).filter(Boolean))]
+const receiptName = (entry, method, linked) => {
+  if(entry.type==='saida')return entryTitle(entry,method)
+  const clients=receiptClients(linked)
+  return clients.length===1?clients[0]:entryTitle(entry,method)
+}
+const receiptAssociation = (entry, linked) => linked.length>1
+  ? linked.length+' pedidos vinculados'
+  : linked.length===1 ? 'Pedido #'+(linked[0].number||'sem número')
+    : entry.orderNumber ? 'Pedido #'+entry.orderNumber : 'Sem pedido diretamente vinculado'
 const statusLabel = status => status==='com_ressalva'?'Concluída com ressalva':'Conferida'
 const today = () => getBusinessDate(new Date())
 const readableDate = value => new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'))
@@ -63,6 +73,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const reads=useRef(null)
   const detailGeneration=useRef(0)
   const orderGeneration=useRef(0)
+  const drawerScrollPositions=useRef({receipts:0,orders:0})
   const historyGeneration=useRef(0)
   const submission=useRef(null)
   const submittingRef=useRef(false)
@@ -79,6 +90,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const [submitting,setSubmitting]=useState(false)
   const [detail,setDetail]=useState(null)
   const [detailLoading,setDetailLoading]=useState(false)
+  const [detailView,setDetailView]=useState({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
   const [orderPreview,setOrderPreview]=useState(null)
   const [history,setHistory]=useState(null)
   const [historyLoading,setHistoryLoading]=useState(false)
@@ -86,7 +98,12 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const [success,setSuccess]=useState('')
   const [exporting,setExporting]=useState(false)
   const historyOpen=history!==null
-  useEffect(()=>{detailPanel.current?.focus()},[detail?.method])
+  useEffect(()=>{
+    if(!detail)return
+    const scroller=detailPanel.current?.closest?.('.modal-body')
+    if(scroller)scroller.scrollTop=drawerScrollPositions.current[detailView.level]??0
+    detailPanel.current?.querySelector?.('.day-conference-navigation-title')?.focus?.({preventScroll:true})
+  },[detailView,detail?.method])
   useEffect(()=>{if(historyOpen)historyPanel.current?.focus()},[historyOpen])
 
   useEffect(()=>{
@@ -94,7 +111,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     reads.current=controller
     detailGeneration.current++;orderGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
-    setDetail(null);setOrderPreview(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
+    setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
     submission.current=null;setExporting(false)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
@@ -112,7 +129,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     exportOperation.current?.abort();exportOperation.current=null;setExporting(false)
     const signal=reads.current.signal
     setLoading(true);setError('');setDialog(false)
-    detailGeneration.current++;orderGeneration.current++;setDetail(null);setOrderPreview(null);setDetailLoading(false)
+    detailGeneration.current++;orderGeneration.current++;setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setDetailLoading(false)
     historyGeneration.current++;setHistory(null);setHistoryLoading(false)
     try{
       const data=await request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal})
@@ -162,6 +179,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
 
   const openDetail=async (method,opener)=>{
     detailOpener.current=opener;orderGeneration.current++;setOrderPreview(null)
+    drawerScrollPositions.current={receipts:0,orders:0}
+    setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
     const generation=++detailGeneration.current,signal=reads.current.signal
     setDetail({method,entries:[],nextPage:1,error:''});setDetailLoading(true)
     try{
@@ -172,21 +191,48 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({method,entries:[],nextPage:null,error:err.message})}
     finally{if(!signal.aborted&&generation===detailGeneration.current)setDetailLoading(false)}
   }
-  const openOrderPreview=async (linked,movementId)=>{
+  const rememberDrawerScroll=level=>{
+    const scroller=detailPanel.current?.closest?.('.modal-body')
+    if(scroller&&level!=='order')drawerScrollPositions.current[level]=scroller.scrollTop
+  }
+  const viewReceiptOrders=entry=>{
+    rememberDrawerScroll('receipts')
+    drawerScrollPositions.current.orders=0
+    setDetailView({level:'orders',entryId:entry.id,orderId:null,previous:'receipts'})
+  }
+  const backDrawer=()=>{
+    orderGeneration.current++
+    if(detailView.level==='order'){
+      setDetailView({level:detailView.previous,entryId:detailView.entryId,orderId:null,previous:'receipts'})
+    }else if(detailView.level==='orders'){
+      rememberDrawerScroll('orders')
+      setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
+    }
+  }
+  const openOrderPreview=async (linked,entry)=>{
     if(!canViewOrders)return
-    if(orderPreview?.id===linked.id&&orderPreview.movementId===movementId){orderGeneration.current++;setOrderPreview(null);return}
+    const previous=detailView.level==='orders'?'orders':'receipts'
+    rememberDrawerScroll(previous)
+    setDetailView({level:'order',entryId:entry.id,orderId:linked.id,previous})
+    if(orderPreview?.id===linked.id&&orderPreview?.order&&!orderPreview.error)return
     const generation=++orderGeneration.current,detailVersion=detailGeneration.current,signal=reads.current.signal
-    setOrderPreview({id:linked.id,movementId,loading:true})
+    setOrderPreview({id:linked.id,loading:true})
     try{
       const result=await request('/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([linked.id])),{signal})
       if(signal.aborted||generation!==orderGeneration.current||detailVersion!==detailGeneration.current)return
       const order=result?.orders?.find(order=>order.id===linked.id)
-      setOrderPreview({id:linked.id,movementId,loading:false,order:order||null,error:order?'':'Pedido indisponível.'})
+      setOrderPreview({id:linked.id,loading:false,order:order||null,error:order?'':'Pedido indisponível.'})
     }catch(err){
       if(!signal.aborted&&generation===orderGeneration.current&&detailVersion===detailGeneration.current){
-        setOrderPreview({id:linked.id,movementId,loading:false,error:err.message||'Não foi possível consultar o pedido.'})
+        setOrderPreview({id:linked.id,loading:false,error:err.message||'Não foi possível consultar o pedido.'})
       }
     }
+  }
+  const closeDetail=()=>{
+    detailGeneration.current++;orderGeneration.current++
+    setOrderPreview(null);setDetail(null);setDetailLoading(false)
+    setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
+    detailOpener.current?.focus?.()
   }
   const moreDetail=async()=>{
     if(!detail?.nextPage||detailLoading)return
@@ -389,78 +435,115 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           </>}
         </section>
       </>}
-      {detail&&<Modal title={'Recebimentos · '+detail.method} onClose={()=>{detailGeneration.current++;orderGeneration.current++;setOrderPreview(null);setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}
-          className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
+      {detail&&<Modal
+        title={detailView.level==='receipts'?'Recebimentos · '+detail.method:detailView.level==='orders'?'Pedidos do recebimento':'Detalhes do pedido'}
+        onClose={closeDetail} className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
         <div ref={detailPanel} className="day-conference-drawer-content">
-          <div className="day-conference-drawer-summary">
-            <div className="day-conference-drawer-total">
-              <div><small>Valor líquido registrado</small><strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
-              <p>Confira cada recebimento com o comprovante externo. Valores de pedidos divididos representam apenas esta forma de pagamento.</p>
+          {detailView.level==='receipts'&&<>
+            <div className="day-conference-drawer-summary">
+              <div className="day-conference-drawer-total">
+                <div><small>Valor líquido registrado</small><strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
+                <p>{readableDate(date)} · Confira os valores individuais com seus comprovantes externos.</p>
+              </div>
             </div>
-          </div>
-          <div className="day-conference-receipt-list-heading">
-            <strong>Lançamentos de {readableDate(date)}</strong>
-            <small>Exibindo {detail.entries.length} de {rows.find(row=>row.method===detail.method)?.count??detail.entries.length}</small>
-          </div>
-          {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
-          <div className="day-conference-receipt-list">
-            {detail.entries.map(entry=>{
-              const registeredDay=entry.createdAt?getBusinessDate(new Date(entry.createdAt)):null
-              return <article className="day-conference-receipt" key={entry.id}>
-                <div className="day-conference-receipt-heading">
-                  <div>
-                    <strong>{entryTitle(entry,detail.method)}</strong>
-                    <small><Icon name="clock" size={13}/>{registeredDay&&registeredDay!==entry.date
-                      ? 'Registrado em '+formatTimestamp(entry.createdAt)
-                      : formatEntryTime(entry.createdAt)}</small>
+            <div className="day-conference-receipt-list-heading">
+              <strong className="day-conference-navigation-title" tabIndex={-1}>Lançamentos</strong>
+              <small>Exibindo {detail.entries.length} de {rows.find(row=>row.method===detail.method)?.count??detail.entries.length}</small>
+            </div>
+            {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
+            <div className="day-conference-receipt-list">
+              {detail.entries.map(entry=>{
+                const linked=canViewOrders?(entry.linkedOrders||[]):[]
+                const registeredDay=entry.createdAt?getBusinessDate(new Date(entry.createdAt)):null
+                return <article className="day-conference-receipt" key={entry.id}>
+                  <div className="day-conference-receipt-heading">
+                    <div>
+                      <strong>{receiptName(entry,detail.method,linked)}</strong>
+                      <small><Icon name="clock" size={13}/>{registeredDay&&registeredDay!==entry.date
+                        ? 'Registrado em '+formatTimestamp(entry.createdAt)
+                        : formatEntryTime(entry.createdAt)} · {receiptAssociation(entry,linked)}</small>
+                    </div>
+                    <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
                   </div>
-                  <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
-                </div>
-                <div className="day-conference-receipt-foot">
-                  <div className="day-conference-receipt-links">
-                    {canViewOrders&&entry.linkedOrders?.length
-                      ? <>
-                        {entry.linkedOrders.length>1&&<small>Pagamento compartilhado entre {entry.linkedOrders.length} pedidos — o valor acima é do recibo, não de um único pedido.</small>}
-                        {entry.linkedOrders.map(linked=><div className="day-conference-linked-order" key={linked.id}>
-                          <span><strong>Pedido #{linked.number||'—'}</strong>{linked.client&&<> · {linked.client}</>}</span>
-                          <button type="button" aria-expanded={orderPreview?.id===linked.id&&orderPreview.movementId===entry.id} onClick={()=>openOrderPreview(linked,entry.id)}>
-                            {orderPreview?.id===linked.id&&orderPreview.movementId===entry.id?'Ocultar pedido':'Ver pedido'}
-                          </button>
-                        </div>)}
-                      </>
-                      :<span>{entry.orderNumber?'Pedido #'+entry.orderNumber:entry.orderId?'Pedido vinculado':'Sem pedido diretamente vinculado'}</span>}
+                  <div className="day-conference-receipt-foot">
+                    <span>{entry.type==='saida'?'Devolução registrada':entryTitle(entry,detail.method)}</span>
+                    {linked.length===1&&<button type="button" className="day-conference-drill-button"
+                      onClick={()=>openOrderPreview(linked[0],entry)}>Ver pedido <Icon name="chevron-right" size={15}/></button>}
+                    {linked.length>1&&<button type="button" className="day-conference-drill-button"
+                      onClick={()=>viewReceiptOrders(entry)}>Ver {linked.length} pedidos <Icon name="chevron-right" size={15}/></button>}
                   </div>
-                  {orderPreview?.movementId===entry.id&&entry.linkedOrders?.some(linked=>linked.id===orderPreview.id)&&
-                    <div className="day-conference-order-preview" role="region" aria-label="Resumo do pedido">
-                      {orderPreview.loading?<p role="status">Carregando pedido…</p>:orderPreview.error
-                        ?<p role="alert">{orderPreview.error}</p>
-                        :orderPreview.order&&<>
-                          <div className="day-conference-order-preview-heading">
-                            <strong>Pedido #{orderPreview.order.orderNumber}</strong><span>{orderPreview.order.status}</span>
-                          </div>
-                          <p>{orderPreview.order.client||'Cliente não informado'} · {orderPreview.order.type} · {orderPreview.order.orderDate}</p>
-                          <ul>{(orderPreview.order.items||[]).map((item,index)=><li key={item.id||index}>{item.quantity}× {item.name||item.productName||'Item'}</li>)}</ul>
-                          <strong>Total do pedido: {formatCents(Math.round((orderPreview.order.total||0)*100))}</strong>
-                          <small>Dados atualmente registrados no pedido, incluindo os nomes dos itens salvos. Podem ter sido editados após o pagamento.</small>
-                        </>}
-                    </div>}
-                  <details className="day-conference-receipt-details">
-                    <summary>Dados técnicos</summary>
-                    <dl>
-                      <div><dt>Data financeira</dt><dd>{readableDate(entry.date)}</dd></div>
-                      <div><dt>Registrado em</dt><dd>{entry.createdAt?formatTimestamp(entry.createdAt):'—'}</dd></div>
-                      <div><dt>Movimento</dt><dd>{entry.id}</dd></div>
-                      <div><dt>Recibo</dt><dd>{entry.receiptId||'Sem vínculo legado'}</dd></div>
-                      {entry.orderId&&<div><dt>Pedido ID</dt><dd>{entry.orderId}</dd></div>}
-                    </dl>
-                  </details>
+                </article>
+              })}
+            </div>
+            {detailLoading&&<p role="status">Carregando lançamentos…</p>}
+            {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
+            {detail.nextPage&&<p className="day-conference-note">Subtotal dos lançamentos exibidos: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. Carregue as próximas páginas para conferir tudo.</p>}
+            {!detailLoading&&!detail.entries.length&&!detail.error&&<p className="day-conference-history-empty">Nenhum lançamento encontrado nesta forma de pagamento.</p>}
+          </>}
+          {detailView.level==='orders'&&(()=>{
+            const entry=detail.entries.find(item=>item.id===detailView.entryId)
+            if(!entry)return <p role="alert" className="day-conference-error">O recebimento não está mais disponível. Volte à lista de lançamentos.</p>
+            const linked=entry.linkedOrders||[],clients=receiptClients(linked)
+            return <>
+              <button type="button" className="day-conference-back" onClick={backDrawer}>
+                <Icon name="arrow-left" size={17}/> Voltar aos recebimentos
+              </button>
+              <h3 className="day-conference-navigation-title" tabIndex={-1}>Pedidos do recebimento</h3>
+              <div className="day-conference-drawer-total day-conference-receipt-summary">
+                <div><small>Recebido em {detail.method}</small><strong>{formatCents(entry.amountCents)}</strong></div>
+                <p>{clients.length===1?clients[0]+' · ':''}{linked.length} pedidos vinculados</p>
+                <p>Valor da transação, não o total individual dos pedidos.</p>
+              </div>
+              <div className="day-conference-relevant-dates">
+                <span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>
+                <span>Registrado em: <strong>{entry.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+              </div>
+              <div className="day-conference-order-list">
+                {linked.map(order=><button key={order.id} type="button"
+                  className="day-conference-order-list-item" onClick={()=>openOrderPreview(order,entry)}>
+                  <span><strong>Pedido #{order.number||'sem número'}</strong>
+                    {clients.length!==1&&<small>{order.client||'Cliente não informado'}</small>}</span>
+                  <Icon name="chevron-right" size={18}/>
+                </button>)}
+              </div>
+            </>
+          })()}
+          {detailView.level==='order'&&(()=>{
+            const entry=detail.entries.find(item=>item.id===detailView.entryId)
+            const linked=entry?.linkedOrders?.find(order=>order.id===detailView.orderId)
+            const order=orderPreview?.id===detailView.orderId?orderPreview.order:null
+            return <>
+              <button type="button" className="day-conference-back" onClick={backDrawer}>
+                <Icon name="arrow-left" size={17}/> {detailView.previous==='orders'?'Voltar aos pedidos':'Voltar aos recebimentos'}
+              </button>
+              <h3 className="day-conference-navigation-title" tabIndex={-1}>Pedido #{order?.orderNumber||linked?.number||'sem número'}</h3>
+              {orderPreview?.loading&&<p role="status">Carregando pedido…</p>}
+              {orderPreview?.error&&<p role="alert" className="day-conference-error">{orderPreview.error}</p>}
+              {order&&<>
+                <div className="day-conference-order-overview">
+                  <div><span>Cliente</span><strong>{order.client||linked?.client||'Não informado'}</strong></div>
+                  <div><span>Situação</span><strong>{order.status||'Não informado'}</strong></div>
+                  <div><span>Modalidade</span><strong>{order.type||'Não informada'}</strong></div>
                 </div>
-              </article>
-            })}
-          </div>
-          {detailLoading&&<p role="status">Carregando lançamentos…</p>}
-          {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
-          <p className="day-conference-note">Total {detail.nextPage?'parcial':'carregado'}: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. {detail.nextPage?'Carregue as próximas páginas para conferir tudo.':''}</p>
+                <div className="day-conference-order-items">
+                  <h4>Itens do pedido</h4>
+                  {(order.items||[]).length
+                    ?<ul>{order.items.map((item,index)=><li key={item.id||index}>
+                      <span>{item.quantity}× {item.name||item.productName||'Item'}</span>
+                    </li>)}</ul>
+                    :<p>Sem itens disponíveis neste registro.</p>}
+                  <div className="day-conference-order-total"><span>Total atual do pedido</span>
+                    <strong>{formatCents(Math.round((order.total||0)*100))}</strong></div>
+                </div>
+                <div className="day-conference-relevant-dates">
+                  {order.orderDate&&<span>Data do pedido: <strong>{readableDate(order.orderDate)}</strong></span>}
+                  {entry?.date&&<span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>}
+                  <span>Pagamento registrado em: <strong>{entry?.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+                </div>
+                <p className="day-conference-order-disclaimer">Os dados acima são os atuais do pedido e podem ter sido editados após o pagamento. O valor do recebimento não é atribuído integralmente a cada pedido vinculado.</p>
+              </>}
+            </>
+          })()}
         </div>
       </Modal>}
     {dialog&&<ConfirmationDialog title="Confirmar conferência"
