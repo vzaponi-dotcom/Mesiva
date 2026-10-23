@@ -77,7 +77,6 @@ function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceV
   const total=checkedTotalCents(revision)
   const variation=revisionChangeCents(revision,previous)
   const outdated=Boolean(sourceVersion&&revision.sourceVersion!==sourceVersion)
-  const detailId='day-conference-revision-'+revision.id
   return <article className={'day-conference-revision'+(mostRecent?' day-conference-revision-latest':'')}>
     <div className="day-conference-revision-top">
       <div className="day-conference-revision-info">
@@ -101,11 +100,11 @@ function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceV
       <strong>{variation===0?'Sem alteração':formatChangeCents(variation)}</strong>
     </div>}
     {onToggle&&<button type="button" className="day-conference-revision-toggle"
-      onClick={onToggle} aria-expanded={expanded} aria-controls={detailId}>
+      onClick={onToggle} aria-expanded={expanded}>
       {expanded?'Ocultar valores':'Ver valores desta revisão'}
       <Icon name={expanded?'arrow-down':'arrow-right'} size={16}/>
     </button>}
-    {expanded&&<div className="day-conference-revision-details" id={detailId}>
+    {expanded&&<div className="day-conference-revision-details">
       <h3>Valores registrados nesta revisão</h3>
       <ul className="day-conference-revision-methods">
         {(revision.lines||[]).map(line=><li key={line.method}>
