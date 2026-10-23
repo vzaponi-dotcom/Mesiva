@@ -63,6 +63,12 @@ const decodeConference = row => row ? ({
   createdAt:row.created_at,lines:JSON.parse(row.snapshot_json),
 }) : null
 
+export async function readDayConferenceLatest(db,businessId,date) {
+  const row=await db.prepare(`SELECT * FROM daily_receipt_conferences
+    WHERE business_id=? AND business_date=? ORDER BY revision DESC LIMIT 1`).bind(businessId,date).first()
+  return decodeConference(row)
+}
+
 export async function readDayConferenceHistory(db,businessId,date=null) {
   const sql = `SELECT * FROM daily_receipt_conferences WHERE business_id=?${date?' AND business_date=?':''}
     ORDER BY business_date DESC,revision DESC LIMIT 30`
