@@ -13,6 +13,7 @@ import { createPaymentApi } from './app/workflows/payments/paymentApi.js'
 import { createRefundApi } from './app/workflows/refunds/refundApi.js'
 import {
   FinanceWorkspace,
+  DayConference,
   financeCategoryOptionsFromEffective,
   financeCategoryRevisionFromEffective,
   paymentDefaultFromEffective,
@@ -63,7 +64,6 @@ import {
   useTableReservationCommands,
 } from './domains/table-service/index.js'
 import DashboardSurface from './app/surfaces/dashboard/DashboardSurface.jsx'
-import DayConference from './domains/finance/ui/DayConference.jsx'
 import KitchenTvControlSurface from './app/surfaces/kitchen-tv-control/KitchenTvControlSurface.jsx'
 import { ReportingWorkspace } from './domains/reporting/index.js'
 import SettingsPolicyBoundary from './app/surfaces/settings/SettingsPolicyBoundary.jsx'
