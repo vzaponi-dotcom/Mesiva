@@ -5,7 +5,7 @@ import { sha256Hex } from './auth.js'
 const LIST_LIMIT = 50
 const sourceClause = `((m.type='entrada' AND m.source='order-payment')
   OR (m.type='saida' AND m.source IN ('order-refund','order-edit-refund')))`
-const methodSql = "COALESCE(NULLIF(m.payment_method,''),'Não informado')"
+const methodSql = "COALESCE(NULLIF(m.payment_method,''),NULLIF(p.method,''),'Não informado')"
 
 export function readConferenceDate(date, now = new Date()) {
   if (typeof date !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)
@@ -24,6 +24,7 @@ export async function readDayConferenceSummary(db, businessId, date) {
     COUNT(*) AS movement_count, MAX(m.created_at) AS last_created,
     MAX(m.id) AS last_id
     FROM movements m
+    LEFT JOIN payments p ON p.business_id=m.business_id AND p.id=m.payment_id
     WHERE m.business_id=? AND m.movement_date=? AND m.deleted_at IS NULL AND ${sourceClause}
     GROUP BY ${methodSql} ORDER BY ${methodSql} COLLATE NOCASE, ${methodSql}`).bind(businessId, date).all()
   const methods = results.map(row => ({
@@ -41,6 +42,7 @@ export async function readDayConferenceEntries(db, businessId, date, method, pag
     o.order_number,m.movement_date,m.created_at,m.type,m.source,m.value_cents,
     ${methodSql} AS method
     FROM movements m LEFT JOIN orders o ON o.business_id=m.business_id AND o.id=m.order_id
+    LEFT JOIN payments p ON p.business_id=m.business_id AND p.id=m.payment_id
     WHERE m.business_id=? AND m.movement_date=? AND m.deleted_at IS NULL
       AND ${sourceClause} AND ${methodSql}=?
     ORDER BY m.created_at DESC,m.id DESC LIMIT ? OFFSET ?`)
