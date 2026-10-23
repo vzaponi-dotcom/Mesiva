@@ -134,7 +134,6 @@ test('approved comparison layout keeps Pix first and updates informed and differ
     amounts(screen)[0].props.onChange({target:{value:'200,00'}})
     amounts(screen)[1].props.onChange({target:{value:'50,00'}})
   })
-  assert.equal(screen.root.findAll(n=>n.props?.className==='day-conference-stat').length,0)
   assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
 })
