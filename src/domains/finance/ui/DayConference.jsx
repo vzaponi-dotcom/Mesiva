@@ -3,6 +3,7 @@ import AreaNavigation from '../../../app/navigation/AreaNavigation.jsx'
 import { apiRequest } from '../../../infrastructure/api/httpClient.js'
 import { ContextApi } from '../../../infrastructure/api/ContextApi.js'
 import { getBusinessDate } from '../../../../shared/finance.js'
+import { formatSignedBRLCurrencyInput, formatSignedBRLCurrencyValue } from '../../../shared/utils/formFormatting.js'
 import PageHeader from '../../../shared/ui/PageHeader.jsx'
 import Icon from '../../../shared/ui/Icon.jsx'
 import Modal from '../../../shared/ui/Modal.jsx'
@@ -13,11 +14,14 @@ import './day-conference.css'
 
 const formatCents = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
 const parseCents = value => {
-  const normalized=String(value).trim().replace(',','.')
-  if(!/^-?\d+(?:\.\d{1,2})?$/.test(normalized))return null
-  const [whole,decimal='']=normalized.replace('-','').split('.')
-  const cents=(Number(whole)*100+Number(decimal.padEnd(2,'0')))*(normalized.startsWith('-')?-1:1)
-  return Number.isSafeInteger(cents) && Math.abs(cents) <= 999999999999 ? cents : null
+  const text=String(value??''),digits=text.replace(/\D/g,'')
+  if(!digits||digits.length>12)return null
+  const cents=Number(digits)*(text.trim().startsWith('-')?-1:1)
+  return Number.isSafeInteger(cents)&&Math.abs(cents)<=999999999999?cents:null
+}
+const maskCents = value => {
+  const text=String(value??''),digits=text.replace(/\D/g,'').slice(0,12)
+  return formatSignedBRLCurrencyInput((text.trim().startsWith('-')?'-':'')+digits)
 }
 const formatTimestamp = value => new Date(value).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})
 const formatEntryTime = value => value ? new Intl.DateTimeFormat('pt-BR', {
@@ -47,17 +51,18 @@ const methodPresentation = value => {
 const completedValues = data => {
   const lines = data?.latest?.sourceVersion === data?.sourceVersion ? data.latest.lines : []
   return {
-    amounts: Object.fromEntries(lines.map(line => [line.method,(line.checkedCents/100).toFixed(2).replace('.',',')])),
+    amounts: Object.fromEntries(lines.map(line => [line.method,formatSignedBRLCurrencyValue(line.checkedCents/100)])),
     verified: Object.fromEntries(lines.map(line => [line.method,true])),
     note: lines.length ? data.latest.note : '',
   }
 }
 
-export default function DayConference({ canComplete=false, writesBlocked=false, setRequestKey=()=>{} }){
+export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=()=>{} }){
   const client=useContext(ContextApi)
   const request=client?.request || apiRequest
   const reads=useRef(null)
   const detailGeneration=useRef(0)
+  const orderGeneration=useRef(0)
   const historyGeneration=useRef(0)
   const submission=useRef(null)
   const submittingRef=useRef(false)
@@ -74,6 +79,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   const [submitting,setSubmitting]=useState(false)
   const [detail,setDetail]=useState(null)
   const [detailLoading,setDetailLoading]=useState(false)
+  const [orderPreview,setOrderPreview]=useState(null)
   const [history,setHistory]=useState(null)
   const [historyLoading,setHistoryLoading]=useState(false)
   const [uncertain,setUncertain]=useState(false)
@@ -86,9 +92,9 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   useEffect(()=>{
     const controller=new AbortController()
     reads.current=controller
-    detailGeneration.current++;historyGeneration.current++
+    detailGeneration.current++;orderGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
-    setDetail(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
+    setDetail(null);setOrderPreview(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
     submission.current=null;setExporting(false)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
@@ -106,7 +112,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
     exportOperation.current?.abort();exportOperation.current=null;setExporting(false)
     const signal=reads.current.signal
     setLoading(true);setError('');setDialog(false)
-    detailGeneration.current++;setDetail(null);setDetailLoading(false)
+    detailGeneration.current++;orderGeneration.current++;setDetail(null);setOrderPreview(null);setDetailLoading(false)
     historyGeneration.current++;setHistory(null);setHistoryLoading(false)
     try{
       const data=await request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal})
@@ -155,7 +161,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   }
 
   const openDetail=async (method,opener)=>{
-    detailOpener.current=opener
+    detailOpener.current=opener;orderGeneration.current++;setOrderPreview(null)
     const generation=++detailGeneration.current,signal=reads.current.signal
     setDetail({method,entries:[],nextPage:1,error:''});setDetailLoading(true)
     try{
@@ -165,6 +171,22 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       setDetail({method,...result,error:''})
     }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({method,entries:[],nextPage:null,error:err.message})}
     finally{if(!signal.aborted&&generation===detailGeneration.current)setDetailLoading(false)}
+  }
+  const openOrderPreview=async linked=>{
+    if(!canViewOrders)return
+    if(orderPreview?.id===linked.id){orderGeneration.current++;setOrderPreview(null);return}
+    const generation=++orderGeneration.current,detailVersion=detailGeneration.current,signal=reads.current.signal
+    setOrderPreview({id:linked.id,loading:true})
+    try{
+      const result=await request('/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([linked.id])),{signal})
+      if(signal.aborted||generation!==orderGeneration.current||detailVersion!==detailGeneration.current)return
+      const order=result?.orders?.find(order=>order.id===linked.id)
+      setOrderPreview({id:linked.id,loading:false,order:order||null,error:order?'':'Pedido indisponível.'})
+    }catch(err){
+      if(!signal.aborted&&generation===orderGeneration.current&&detailVersion===detailGeneration.current){
+        setOrderPreview({id:linked.id,loading:false,error:err.message||'Não foi possível consultar o pedido.'})
+      }
+    }
   }
   const moreDetail=async()=>{
     if(!detail?.nextPage||detailLoading)return
@@ -292,12 +314,12 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
                 </div>
                 <div className="day-conference-cell day-conference-cell-input">
                   <label htmlFor={'day-conference-amount-'+index} className="day-conference-value-label">Conferido</label>
-                  <input id={'day-conference-amount-'+index} inputMode="decimal" autoComplete="off" placeholder="0,00"
+                  <input id={'day-conference-amount-'+index} inputMode="decimal" autoComplete="off" placeholder="R$ 0,00"
                     aria-label={'Valor conferido de '+row.method} value={amounts[row.method]??''} disabled={fieldsDisabled}
                     aria-invalid={Boolean(amounts[row.method])&&parsed===null}
                     aria-describedby={Boolean(amounts[row.method])&&parsed===null?'conference-amount-error-'+index:undefined}
-                    onChange={event=>{setAmounts(prev=>({...prev,[row.method]:event.target.value}));setVerified(prev=>({...prev,[row.method]:false}))}}/>
-                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor com até duas casas (ex.: -10,50).</small>}
+                    onChange={event=>{setAmounts(prev=>({...prev,[row.method]:maskCents(event.target.value)}));setVerified(prev=>({...prev,[row.method]:false}))}}/>
+                  {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor válido (ex.: -R$ 10,50).</small>}
                 </div>
                 <div className="day-conference-cell day-conference-cell-diff">
                   <small className="day-conference-value-label">Diferença</small>
@@ -305,7 +327,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
                 </div>
                 <div className="day-conference-cell day-conference-cell-status">
                   <small className="day-conference-value-label">Verificação</small>
-                  <span className={sameVersion?'day-conference-closed':isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{state}</span>
+                  <span className={sameVersion?'day-conference-closed':isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{!sameVersion&&!isChecked&&<Icon name="clock" size={12}/>} {state}</span>
                 </div>
                 <div className="day-conference-cell day-conference-row-actions">
                   <button type="button" className="day-conference-detail" onClick={event=>openDetail(row.method,event.currentTarget)}>
@@ -332,6 +354,8 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
               <strong className={totalDifference!==null&&differences.length?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
               {differences.length>0&&totalDifference===0&&<small>Existem diferenças que se compensam entre formas.</small>}
               {!sameVersion&&<Button icon="check" onClick={()=>setDialog(true)} disabled={!canSubmit}>Concluir conferência</Button>}
+              {!sameVersion&&!canSubmit&&canComplete&&!writesBlocked&&!summary?.integrityIssues&&
+                <small role="status">{!allComplete?'Informe e marque como conferidas todas as formas de pagamento.':differences.length&&!note.trim()?'Justifique as divergências antes de concluir.':''}</small>}
               {!canComplete&&<small>Seu perfil pode consultar, mas não concluir conferências.</small>}
             </div>
           </div>}
@@ -348,7 +372,10 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
               {stale&&<small>Revisão necessária: os recebimentos foram alterados.</small>}
               {latest.note&&<small>{latest.note}</small>}</div>
             <strong>{formatCents(latest.lines.reduce((sum,line)=>sum+line.checkedCents,0))}</strong>
-          </div>:<p className="day-conference-history-empty">Nenhuma conferência concluída nesta data.</p>:
+          </div>:<div className="day-conference-history-empty"><Icon name="calendar" size={23}/>
+                <strong>Nenhuma conferência concluída nesta data</strong>
+                <span>Quando uma conferência for registrada, o responsável e os valores aparecerão aqui.</span>
+              </div>:
           <>
             <p className="day-conference-note">Até 30 revisões da data selecionada. Altere a data no topo para pesquisar outro dia.</p>
             {historyLoading?<p>Carregando histórico…</p>:history.length?history.map(item=><div className="day-conference-entry" key={item.id}>
@@ -362,7 +389,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
           </>}
         </section>
       </>}
-      {detail&&<Modal title={'Recebimentos · '+detail.method} onClose={()=>{detailGeneration.current++;setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}
+      {detail&&<Modal title={'Recebimentos · '+detail.method} onClose={()=>{detailGeneration.current++;orderGeneration.current++;setOrderPreview(null);setDetail(null);setDetailLoading(false);detailOpener.current?.focus()}}
           className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
         <div ref={detailPanel} className="day-conference-drawer-content">
           <div className="day-conference-drawer-summary">
@@ -390,7 +417,33 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
                   <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
                 </div>
                 <div className="day-conference-receipt-foot">
-                  <span>{entry.orderNumber?'Pedido #'+entry.orderNumber:entry.orderId?'Pedido vinculado':'Sem pedido diretamente vinculado'}</span>
+                  <div className="day-conference-receipt-links">
+                    {canViewOrders&&entry.linkedOrders?.length
+                      ? <>
+                        {entry.linkedOrders.length>1&&<small>Pagamento compartilhado entre {entry.linkedOrders.length} pedidos — o valor acima é do recibo, não de um único pedido.</small>}
+                        {entry.linkedOrders.map(linked=><div className="day-conference-linked-order" key={linked.id}>
+                          <span><strong>Pedido #{linked.number||'—'}</strong>{linked.client&&<> · {linked.client}</>}</span>
+                          <button type="button" aria-expanded={orderPreview?.id===linked.id} onClick={()=>openOrderPreview(linked)}>
+                            {orderPreview?.id===linked.id?'Ocultar pedido':'Ver pedido'}
+                          </button>
+                        </div>)}
+                      </>
+                      :<span>{entry.orderNumber?'Pedido #'+entry.orderNumber:entry.orderId?'Pedido vinculado':'Sem pedido diretamente vinculado'}</span>}
+                  </div>
+                  {orderPreview&&entry.linkedOrders?.some(linked=>linked.id===orderPreview.id)&&
+                    <div className="day-conference-order-preview" role="region" aria-label="Resumo do pedido">
+                      {orderPreview.loading?<p role="status">Carregando pedido…</p>:orderPreview.error
+                        ?<p role="alert">{orderPreview.error}</p>
+                        :orderPreview.order&&<>
+                          <div className="day-conference-order-preview-heading">
+                            <strong>Pedido #{orderPreview.order.orderNumber}</strong><span>{orderPreview.order.status}</span>
+                          </div>
+                          <p>{orderPreview.order.client||'Cliente não informado'} · {orderPreview.order.type} · {orderPreview.order.orderDate}</p>
+                          <ul>{(orderPreview.order.items||[]).map((item,index)=><li key={item.id||index}>{item.quantity}× {item.name||item.productName||'Item'}</li>)}</ul>
+                          <strong>Total do pedido: {formatCents(Math.round((orderPreview.order.total||0)*100))}</strong>
+                          <small>Dados atualmente registrados no pedido, incluindo os nomes dos itens salvos. Podem ter sido editados após o pagamento.</small>
+                        </>}
+                    </div>}
                   <details className="day-conference-receipt-details">
                     <summary>Dados técnicos</summary>
                     <dl>
