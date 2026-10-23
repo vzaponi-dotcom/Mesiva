@@ -90,7 +90,7 @@ test('explicit refresh discards the history panel so an old list cannot contradi
     id:'old-history',date:'2026-10-14',status:'conferida',revision:1,createdAt:'2026-10-14T15:00:00Z',
     note:'HISTÓRICO ANTIGO',lines:[],
   }]}:summary()))
-  await act(async()=>buttonNamed(screen.root,'Histórico').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Ver revisões').props.onClick())
   assert.match(text(screen),/HISTÓRICO ANTIGO/)
   await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
   assert.doesNotMatch(text(screen),/HISTÓRICO ANTIGO/)
@@ -109,11 +109,11 @@ test('CSV downloads the complete selected date through the company client and hi
     return response(summary())
   })
   h.document.createElement=()=>({click(){downloads.push(this.download)}})
-  await act(async()=>buttonNamed(screen.root,'Exportar CSV do dia').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'CSV de lançamentos').props.onClick())
   const date=screen.root.findAllByType('input').find(n=>n.props.type==='date').props.value
   assert.deepEqual(downloads,['mesiva-recebimentos-'+date+'.csv'])
   assert.equal(calls.filter(path=>path.includes('/entries?')).length,2)
   assert.match(text(screen),/CSV completo/)
-  await act(async()=>buttonNamed(screen.root,'Histórico').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Ver revisões').props.onClick())
   assert.ok(calls.includes('/api/finance/day-conference/history?date='+date))
 })
