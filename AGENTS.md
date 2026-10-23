@@ -36,7 +36,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Relatórios / drawer | `src/domains/reporting/ui/ReportingWorkspace.jsx`; `src/domains/reporting/ui/detail/ReportingOrderDrawer.jsx` |
 | Produtos e preços | `src/domains/catalog/ui/CatalogWorkspace.jsx` |
 | Mesas e comandas | `src/domains/table-service/ui/` |
-| Financeiro / a receber | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx` |
+| Financeiro / a receber / conferência diária | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx`; `src/domains/finance/ui/DayConference.jsx`; [regras da conferência](docs/operations/day-conference.md) |
 | Recebimentos: pedido, comanda, lote de clientes | `src/app/workflows/payments/` |
 | Sincronização / WebSocket e fallback | `src/infrastructure/realtime/`; `src/app/runtime/data/useOperationalDataRuntime.js`; `worker/realtime/`; [operação](docs/operations/realtime-sync.md) |
 | Snapshots / histórico e financeiro paginados | `worker/readModels/`; `shared/scopedReads.js`; `src/infrastructure/realtime/useScopedQuery.js`; `src/infrastructure/api/scopedReadsApi.js` |

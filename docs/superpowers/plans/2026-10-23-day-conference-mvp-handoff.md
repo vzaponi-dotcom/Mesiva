@@ -1,5 +1,7 @@
 # Conferência do Dia — MVP independente do Caixa Operacional
 
+> **Histórico da implementação inicial.** As estimativas e pendências abaixo descrevem o handoff anterior à revisão. Substituídos pelo [guia operacional vigente](../../operations/day-conference.md) e pelo [relatório da revisão técnica](../qa/2026-10-23-day-conference-final-review.md). A PR continua Draft; nenhuma autorização de publicação é concedida por esses documentos.
+
 **Início:** 23/10/2026 · **Branch:** `feature/finance-daily-reconciliation-mvp` · **Status:** desenvolvimento, sem homologação.
 
 ## Produto

@@ -1,0 +1,45 @@
+# Conferência do Dia
+
+Implementação da PR #124, independente do Caixa Operacional da PR #123. A homologação e a publicação seguem o [runbook de release](../release-and-migration-runbook.md). O [relatório técnico](../superpowers/qa/2026-10-23-day-conference-final-review.md) guarda a evidência desta entrega.
+
+## Valores e datas
+
+- Acessar **Financeiro → Conferência do dia** ou **Conferir recebimentos** na Visão geral.
+- A data é `movements.movement_date`, no calendário de São Paulo; pode ser hoje ou anterior. A data comercial do pedido e o horário técnico de registro não substituem o dia financeiro.
+- **Bruto:** entradas `order-payment`, uma por alocação. Um recibo de comanda/lote não é multiplicado pelos pedidos que quitou. Complementos e recebimentos retroativos pertencem ao seu próprio dia financeiro.
+- **Estornos:** saídas `order-refund` e `order-edit-refund`, no dia da devolução. **Líquido = bruto − estornos**. O valor externo aceita sinal negativo, inclusive em dias só com devoluções.
+- A forma vem do próprio movimento; apenas para recebimentos sem rótulo, usar a alocação oficial e, por último, o pagamento legado. Estorno sem evidência própria fica em **Não informado**, mesmo que o pagamento original tenha uma forma conhecida.
+- **Reconciliação com a Visão geral:** o mix mostra bruto; `Recebido hoje` deduz `order-refund`, mas preserva a regra existente de não deduzir `order-edit-refund`. A conferência mostra essa diferença explicitamente quando houver devoluções após edição. Não comparar essas três métricas como se fossem equivalentes.
+- Dinheiro representa entradas registradas, sem afirmar saldo físico de gaveta. Cartões representam transações, sem afirmar repasse bancário líquido ou conciliação externa automática.
+
+Todos os valores trafegam em centavos inteiros seguros. Detalhes são carregados somente ao abrir uma forma, em páginas de até 50 lançamentos; o total carregado é identificado como parcial enquanto houver páginas. **Exportar CSV do dia** percorre todas as formas e páginas da data, com a mesma versão da fonte, e valida contagem/bruto/estornos antes de gerar o arquivo. O CSV identifica data financeira, horário técnico em São Paulo, origem, IDs e valores com sinal em centavos; neutraliza fórmulas em identificadores/rótulos. Mudança da fonte, erro ou cancelamento impede o download parcial. O arquivo não representa fechamento de caixa.
+
+## Concluir e revisar
+
+Ler exige `finance.movements`; concluir exige também `finance.movements.manage`. A API deriva empresa e responsável do contexto autenticado, exige origem válida nas mutations e revalida a sessão/grants na transação. O frontend usa o cliente HTTP contextual oficial.
+
+Cada forma precisa de valor externo válido e confirmação individual. Qualquer diferença exige observação, mesmo que PIX −R$ 100 e dinheiro +R$ 100 resultem em diferença geral zero. A conclusão grava um snapshot com os valores oficiais, valores conferidos, diferenças, nota, revisão, nome e ID do responsável. Ela não edita, bloqueia ou reprocessa pagamentos.
+
+Alterações na fonte tornam o snapshot anterior desatualizado; seus valores históricos continuam preservados. Os detalhes exigem a mesma versão da abertura e recusam paginação sobre dados alterados. Atualizar recarrega valores e descarta os campos ainda não concluídos; trocar de data cancela leituras antigas.
+
+**Histórico** consulta até 30 revisões da data selecionada, com responsável, horário, observação e valores imutáveis. Para pesquisar outro dia, altere a data e abra o histórico novamente. O detalhe mantém a origem da devolução após edição separada dos demais estornos. Na comparação externa, use o líquido dos estornos identificados; o dia financeiro pode diferir do dia do extrato.
+
+Em falha de rede ou resposta desconhecida, a UI preserva a chave e o payload do envio. Pode-se atualizar para verificar o registro ou reenviar a mesma conferência. A API só reproduz sucesso para a mesma chave, payload e ator. Duas pessoas não criam dois snapshots da mesma versão da fonte.
+
+## Integridade e persistência
+
+As migrations `0053` e `0054` são aditivas. `daily_receipt_conferences` guarda o histórico; `daily_receipt_source_revisions` guarda a revisão por empresa/dia. Triggers incrementam essa revisão em inserção, alteração, exclusão e restauração de movimentos financeiros, inclusive trocas com o mesmo total/quantidade. Mudança de data invalida os dois dias; alterações em recibos/alocações e fallbacks legados também invalidam os dias vinculados.
+
+O INSERT do snapshot verifica a revisão e a integridade na própria escrita SQL. A comparação anterior em JavaScript não é sua única proteção. O histórico é lido por empresa e não possui endpoint de edição/exclusão.
+
+A leitura compara movimentos com recibos/alocações oficiais, detectando ausências, duplicações, valores e datas conflitantes. Recibos legados `received_date=NULL` são procurados por limites UTC calculados com o calendário IANA de São Paulo e também por vínculo aos movimentos de cada dia, com deduplicação. Um recibo com alocações distribuídas em datas incompatíveis bloqueia todos os dias afetados. A tela mostra o problema e bloqueia a conclusão; **não corrige dados automaticamente**. Investigar a origem e usar procedimento de correção explicitamente autorizado.
+
+## Custo e verificação
+
+- Abertura: agregado diário + auditoria/revisão da fonte + último snapshot, em um batch de três SELECTs.
+- Detalhe: revisão pontual + página, em um batch; usa o índice diário existente para impedir que o otimizador percorra o histórico pela ordenação de criação.
+- Conclusão: cinco statements em três chamadas D1 no caminho sem conflito; reenvio confirmado usa uma leitura. Não há escrita por digitação nem polling da conferência.
+- Exportação: apenas por solicitação explícita; reutiliza o detalhe paginado, com duas queries em um batch por página. Falha sem arquivo se algum limite da API ou alguma inconsistência impedir a leitura integral. Volumes diários extremos podem exigir exportação no servidor; não introduzir CSV parcial silencioso.
+- A revisão da fonte acrescenta metadados escritos pelos fluxos financeiros. Isso preserva a integridade sem carregar todos os lançamentos para calcular um hash no Worker. Os índices financeiros existentes são reaproveitados; a tabela de revisões possui sua chave empresa/dia.
+
+Reproduzir com `node scripts/infra/day-conference-d1-gate.mjs`, após disponibilizar o Wrangler **4.128.0** no cache. O script usa D1/workerd local, fixtures fictícias e `EXPLAIN QUERY PLAN`; não possui binding remoto. O CI executa esse gate além dos gates existentes. Números medidos, limites e oportunidades ficam no relatório técnico; tempo de IPC local e `meta.duration` de SQL não são CPU/duração do Worker em produção.

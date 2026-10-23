@@ -1,0 +1,61 @@
+{
+  "light": [
+    {
+      "heading": "Conferência do Dia",
+      "scrollWidth": 320,
+      "theme": "light",
+      "width": 320
+    },
+    {
+      "heading": "Conferência do Dia",
+      "scrollWidth": 360,
+      "theme": "light",
+      "width": 375
+    },
+    {
+      "heading": "Conferência do Dia",
+      "scrollWidth": 753,
+      "theme": "light",
+      "width": 768
+    },
+    {
+      "heading": "Conferência do Dia",
+      "scrollWidth": 1009,
+      "theme": "light",
+      "width": 1024
+    },
+    {
+      "heading": "Conferência do Dia",
+      "scrollWidth": 1425,
+      "theme": "light",
+      "width": 1440
+    }
+  ],
+  "dark": [
+    {
+      "scrollWidth": 320,
+      "theme": "dark",
+      "width": 320
+    },
+    {
+      "scrollWidth": 360,
+      "theme": "dark",
+      "width": 375
+    },
+    {
+      "scrollWidth": 753,
+      "theme": "dark",
+      "width": 768
+    },
+    {
+      "scrollWidth": 1009,
+      "theme": "dark",
+      "width": 1024
+    },
+    {
+      "scrollWidth": 1425,
+      "theme": "dark",
+      "width": 1440
+    }
+  ]
+}
