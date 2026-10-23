@@ -8,7 +8,7 @@ const sourceClause = `((m.type='entrada' AND m.source='order-payment')
 const methodSql = "COALESCE(NULLIF(m.payment_method,''),NULLIF(p.method,''),'Não informado')"
 
 export function readConferenceDate(date, now = new Date()) {
-  if (typeof date !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date)
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)
     || !Number.isFinite(Date.parse(date + 'T00:00:00Z'))
     || new Date(date + 'T00:00:00Z').toISOString().slice(0,10) !== date
     || date > getBusinessDate(now)) {
