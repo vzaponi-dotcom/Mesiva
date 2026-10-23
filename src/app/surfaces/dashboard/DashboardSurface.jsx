@@ -5,7 +5,6 @@ import DashboardBarChart from '../../../shared/ui/DashboardBarChart'
 import DashboardPeriodSelector from '../../../shared/ui/DashboardPeriodSelector'
 import Icon from '../../../shared/ui/Icon'
 import PageHeader from '../../../shared/ui/PageHeader'
-import { useNavigation } from '../../navigation/NavigationContext.jsx'
 import StatCard from '../../../shared/ui/StatCard'
 import {useFinanceReadModel} from '../../../domains/finance/index.js'
 import { calculateReceivedToday } from '../../../domains/finance/index.js'
@@ -43,7 +42,6 @@ const compactMoneyFormatter = new Intl.NumberFormat('pt-BR', {
 const formatCompactAxisValue = (value) => compactMoneyFormatter.format(Number(value) || 0)
 
 function DashboardSurface({ orders, movements, readContext, currency, queryState, onQueryChange }) {
-  const { granted, requestNavigation } = useNavigation()
   const period = queryState.period
   const valuesVisible = queryState.valuesVisible
   const setPeriod = (nextPeriod) => onQueryChange({ period: nextPeriod })
@@ -92,7 +90,6 @@ function DashboardSurface({ orders, movements, readContext, currency, queryState
           description="Acompanhe os resultados de hoje e a evolução recente do negócio."
           actions={(
             <>
-            {granted.has('finance.movements') && <button type="button" className="button button-secondary" onClick={() => requestNavigation('day-conference')}>Conferir recebimentos</button>}
             <button
               type="button"
               className="icon-button icon-button-neutral dashboard-privacy-toggle"
