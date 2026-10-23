@@ -122,6 +122,11 @@
 .day-conference-order-list-item strong{font-size:.86rem}
 .day-conference-order-list-item small{color:var(--muted);font-size:.73rem}
 .day-conference-order-list-item svg{color:var(--muted);flex:none}
+.day-conference-order-payment-summary{padding:14px 15px;margin-bottom:13px;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px}
+.day-conference-order-payment-summary>div{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.day-conference-order-payment-summary span{font-size:.74rem;color:var(--muted)}
+.day-conference-order-payment-summary strong{font-size:1.17rem}
+.day-conference-order-payment-summary small{display:block;color:var(--muted);font-size:.74rem;line-height:1.5;margin-top:8px}
 .day-conference-order-overview{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));padding:15px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
 .day-conference-order-overview>div{display:grid;gap:5px;min-width:0}
 .day-conference-order-overview>div:first-child{grid-column:1/-1}
