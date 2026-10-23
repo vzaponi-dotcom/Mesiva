@@ -261,8 +261,21 @@ test('single-order receipt opens detail directly and protects order data without
   assert.match(text(screen),/Luana/)
   assert.equal(calls.filter(path=>path.includes('/orders/by-ids')).length,1)
 
-  const second=await mount(t,fetchImpl,{canViewOrders:false})
-  await act(async()=>buttonNamed(second.screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
-  assert.doesNotMatch(text(second.screen),/Luana|Ver pedido|Ver 1 pedido|private-receipt/)
-  assert.equal(second.screen.root.findAllByType('button').filter(n=>nodeText(n)==='Ver pedido').length,0)
+})
+
+test('receipt list never exposes customer or drill action when order-read grant is absent',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    if(path.includes('/entries?'))return response({entries:[{
+      id:'movement-private',receiptId:'private-receipt',date:'2026-10-15',
+      createdAt:'2026-10-15T15:30:00Z',type:'entrada',source:'order-payment',amountCents:3000,
+      linkedOrders:[{id:'order-a',number:331,client:'Luana'}],
+    }],nextPage:null})
+    return response(summary())
+  },{canViewOrders:false})
+  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  assert.doesNotMatch(text(screen),/Luana|Ver pedido|Ver 1 pedido|private-receipt|movement-private/)
+  assert.equal(screen.root.findAllByType('button').filter(n=>nodeText(n)==='Ver pedido').length,0)
+  assert.equal(calls.length,2,'unauthorized users cannot request order details')
 })
