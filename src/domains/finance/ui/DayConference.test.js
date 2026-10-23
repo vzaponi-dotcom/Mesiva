@@ -138,7 +138,7 @@ test('approved comparison layout keeps Pix first and updates informed and differ
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
 })
 
-test('receipt drawer keeps technical IDs collapsed, shows amounts and times, and pages only on request',async t=>{
+test('receipt drawer shows pertinent dates, hides technical IDs and pages on demand',async t=>{
   const calls=[]
   let day
   const entries=page=>page===1?[
@@ -159,7 +159,7 @@ test('receipt drawer keeps technical IDs collapsed, shows amounts and times, and
     data.methods[0].count=3
     return response(data)
   })
-  assert.equal(calls.length,1,'initial screen loads just the summary')
+  assert.equal(calls.length,1)
   await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
   const receiptCards=()=>screen.root.findAll(n=>n.props.className==='day-conference-receipt')
   assert.equal(receiptCards().length,2)
@@ -168,16 +168,14 @@ test('receipt drawer keeps technical IDs collapsed, shows amounts and times, and
   assert.match(nodeText(receiptCards()[0]),/Sem pedido diretamente vinculado/)
   assert.match(nodeText(receiptCards()[1]),/Pedido #331/)
   assert.match(text(screen),/Exibindo 2 de 3/)
-  const technical=screen.root.findAllByType('details').filter(n=>n.props.className==='day-conference-receipt-details')
-  assert.equal(technical.length,2)
-  assert.ok(technical.every(n=>n.props.open!==true),'technical identifiers must be collapsed')
-  assert.match(nodeText(technical[0]),/movement-pix-a/)
-  assert.equal(calls.length,2,'expanding native details requires no API call')
+  assert.doesNotMatch(text(screen),/movement-pix-a|receipt-pix-a|Dados técnicos|UUID/)
+  assert.equal(calls.length,2,'rendering dates requires no extra request')
   await act(async()=>buttonNamed(screen.root,'Carregar mais').props.onClick())
   assert.equal(receiptCards().length,3)
   assert.match(nodeText(receiptCards()[2]),/Estorno/)
   assert.match(text(screen),/Exibindo 3 de 3/)
-  assert.equal(calls.length,3,'only explicit pagination loads the next page')
+  assert.doesNotMatch(text(screen),/receipt-refund|movement-refund/)
+  assert.equal(calls.length,3,'only explicit pagination loads more')
 })
 
 test('conference amount input masks BRL cents including negatives and never persists partial typing',async t=>{
@@ -193,9 +191,9 @@ test('conference amount input masks BRL cents including negatives and never pers
   assert.equal(calls.length,1)
 })
 
-test('order snapshot is lazy, uses the company request and does not imply the shared receipt belongs to one order',async t=>{
+test('shared PIX is progressive: receipt, orders, order detail, back, without duplicate D1 reads',async t=>{
   const calls=[]
-  const {screen}=await mount(t,async (path)=>{
+  const {screen}=await mount(t,async path=>{
     calls.push(path)
     if(path.includes('/orders/by-ids'))return response({orders:[{
       id:'o-1',orderNumber:37,client:'Maria',type:'Retirada',status:'Finalizado',
@@ -204,17 +202,67 @@ test('order snapshot is lazy, uses the company request and does not imply the sh
     if(path.includes('/entries?'))return response({nextPage:null,entries:[{
       id:'movement-1',receiptId:'shared-1',date:'2026-10-15',createdAt:'2026-10-15T16:30:00Z',
       amountCents:20000,source:'order-payment',type:'entrada',linkedOrders:[
-        {id:'o-1',number:37,client:'Maria'},{id:'o-2',number:38,client:'João'},
+        {id:'o-1',number:37,client:'Maria'},{id:'o-2',number:38,client:'Maria'},
       ],
     }]})
     return response(summary())
   },{canViewOrders:true})
   await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
-  assert.match(text(screen),/compartilhado entre 2 pedidos/)
   assert.match(text(screen),/Maria/)
-  assert.equal(calls.filter(x=>x.includes('/orders/by-ids')).length,0,'order details must not load on list open')
-  await act(async()=>screen.root.findAllByType('button').find(n=>nodeText(n)==='Ver pedido').props.onClick())
+  assert.match(text(screen),/2 pedidos vinculados/)
+  assert.equal((text(screen).match(/Maria/g)||[]).length,1,'common customer should not repeat across a receipt')
+  assert.doesNotMatch(text(screen),/Pedido #37|Pedido #38|shared-1|movement-1/)
+  assert.equal(calls.length,2)
+  await act(async()=>buttonNamed(screen.root,'Ver 2 pedidos').props.onClick())
+  assert.match(text(screen),/Pedidos do recebimento/)
+  assert.match(text(screen),/Pedido #37/)
+  assert.match(text(screen),/Pedido #38/)
+  assert.doesNotMatch(text(screen),/PIX recebido|Dados técnicos|shared-1/)
+  assert.equal(calls.length,2,'order list uses existing page data')
+  await act(async()=>buttonNamed(screen.root,'Pedido #37').props.onClick())
   assert.match(text(screen),/Pizza/)
-  assert.match(text(screen),/Dados atualmente registrados/)
-  assert.equal(calls.filter(x=>x.includes('/orders/by-ids')).length,1,'only clicked order loads')
+  assert.match(text(screen),/Total atual do pedido/)
+  assert.match(text(screen),/Dados acima são os atuais|dados acima são os atuais/i)
+  assert.match(text(screen),/Data financeira/)
+  assert.match(text(screen),/Pagamento registrado em/)
+  assert.doesNotMatch(text(screen),/Pedido #38|movement-1|shared-1/)
+  assert.equal(calls.filter(path=>path.includes('/orders/by-ids')).length,1)
+  await act(async()=>buttonNamed(screen.root,'Voltar aos pedidos').props.onClick())
+  assert.match(text(screen),/Pedido #38/)
+  assert.doesNotMatch(text(screen),/Pizza/)
+  await act(async()=>buttonNamed(screen.root,'Voltar aos recebimentos').props.onClick())
+  assert.match(text(screen),/Ver 2 pedidos/)
+  assert.equal(calls.length,3,'back navigation must not reload D1')
+})
+
+test('single-order receipt opens detail directly and protects order data without grant',async t=>{
+  const calls=[]
+  const fetchImpl=async path=>{
+    calls.push(path)
+    if(path.includes('/orders/by-ids'))return response({orders:[{
+      id:'order-a',orderNumber:331,client:'Luana',type:'Mesa',status:'Finalizado',
+      orderDate:'2026-10-15',total:30,items:[{id:'food',quantity:1,name:'Pizza'}],
+    }]})
+    if(path.includes('/entries?'))return response({entries:[{
+      id:'movement-private',receiptId:'private-receipt',date:'2026-10-15',
+      createdAt:'2026-10-15T15:30:00Z',type:'entrada',source:'order-payment',amountCents:3000,
+      linkedOrders:[{id:'order-a',number:331,client:'Luana'}],
+    }],nextPage:null})
+    return response(summary())
+  }
+  const {screen}=await mount(t,fetchImpl,{canViewOrders:true})
+  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  assert.match(text(screen),/Luana/)
+  assert.match(text(screen),/Pedido #331/)
+  await act(async()=>buttonNamed(screen.root,'Ver pedido').props.onClick())
+  assert.match(text(screen),/Itens do pedido/)
+  assert.doesNotMatch(text(screen),/private-receipt|movement-private/)
+  await act(async()=>buttonNamed(screen.root,'Voltar aos recebimentos').props.onClick())
+  assert.match(text(screen),/Luana/)
+  assert.equal(calls.filter(path=>path.includes('/orders/by-ids')).length,1)
+
+  const second=await mount(t,fetchImpl,{canViewOrders:false})
+  await act(async()=>buttonNamed(second.screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  assert.doesNotMatch(text(second.screen),/Luana|Ver pedido|Ver 1 pedido|private-receipt/)
+  assert.equal(second.screen.root.findAllByType('button').filter(n=>nodeText(n)==='Ver pedido').length,0)
 })
