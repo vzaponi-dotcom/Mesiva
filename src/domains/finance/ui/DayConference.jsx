@@ -520,6 +520,11 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
               {orderPreview?.loading&&<p role="status">Carregando pedido…</p>}
               {orderPreview?.error&&<p role="alert" className="day-conference-error">{orderPreview.error}</p>}
               {order&&<>
+                <div className="day-conference-order-payment-summary">
+                  <div><span>Valor do recebimento em {detail.method}</span>
+                    <strong>{formatCents(entry?.amountCents||0)}</strong></div>
+                  {entry?.linkedOrders?.length>1&&<small>Este recebimento está vinculado a {entry.linkedOrders.length} pedidos; o valor acima não é a parcela individual deste pedido.</small>}
+                </div>
                 <div className="day-conference-order-overview">
                   <div><span>Cliente</span><strong>{order.client||linked?.client||'Não informado'}</strong></div>
                   <div><span>Situação</span><strong>{order.status||'Não informado'}</strong></div>
