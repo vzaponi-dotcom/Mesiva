@@ -19,7 +19,7 @@ export async function handleDayConferenceApi(request,env,context,url=new URL(req
     const date=readConferenceDate(url.searchParams.get('date'))
     const methodName=url.searchParams.get('method')
     const rawPage=url.searchParams.get('page')||'1'
-    if(!/^[1-9]\\d{0,3}$/.test(rawPage))throw apiError(400,'INVALID_CONFERENCE_PAGE','Página inválida.')
+    if(!/^[1-9]\d{0,3}$/.test(rawPage))throw apiError(400,'INVALID_CONFERENCE_PAGE','Página inválida.')
     return json(await readDayConferenceEntries(env.DB,businessId,date,methodName,Number(rawPage)))
   }
   if(method==='GET' && path==='/api/finance/day-conference/history'){
