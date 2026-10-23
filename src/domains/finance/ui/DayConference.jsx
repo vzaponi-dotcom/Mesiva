@@ -172,19 +172,19 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({method,entries:[],nextPage:null,error:err.message})}
     finally{if(!signal.aborted&&generation===detailGeneration.current)setDetailLoading(false)}
   }
-  const openOrderPreview=async linked=>{
+  const openOrderPreview=async (linked,movementId)=>{
     if(!canViewOrders)return
-    if(orderPreview?.id===linked.id){orderGeneration.current++;setOrderPreview(null);return}
+    if(orderPreview?.id===linked.id&&orderPreview.movementId===movementId){orderGeneration.current++;setOrderPreview(null);return}
     const generation=++orderGeneration.current,detailVersion=detailGeneration.current,signal=reads.current.signal
-    setOrderPreview({id:linked.id,loading:true})
+    setOrderPreview({id:linked.id,movementId,loading:true})
     try{
       const result=await request('/api/orders/by-ids?ids='+encodeURIComponent(JSON.stringify([linked.id])),{signal})
       if(signal.aborted||generation!==orderGeneration.current||detailVersion!==detailGeneration.current)return
       const order=result?.orders?.find(order=>order.id===linked.id)
-      setOrderPreview({id:linked.id,loading:false,order:order||null,error:order?'':'Pedido indisponível.'})
+      setOrderPreview({id:linked.id,movementId,loading:false,order:order||null,error:order?'':'Pedido indisponível.'})
     }catch(err){
       if(!signal.aborted&&generation===orderGeneration.current&&detailVersion===detailGeneration.current){
-        setOrderPreview({id:linked.id,loading:false,error:err.message||'Não foi possível consultar o pedido.'})
+        setOrderPreview({id:linked.id,movementId,loading:false,error:err.message||'Não foi possível consultar o pedido.'})
       }
     }
   }
@@ -423,14 +423,14 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                         {entry.linkedOrders.length>1&&<small>Pagamento compartilhado entre {entry.linkedOrders.length} pedidos — o valor acima é do recibo, não de um único pedido.</small>}
                         {entry.linkedOrders.map(linked=><div className="day-conference-linked-order" key={linked.id}>
                           <span><strong>Pedido #{linked.number||'—'}</strong>{linked.client&&<> · {linked.client}</>}</span>
-                          <button type="button" aria-expanded={orderPreview?.id===linked.id} onClick={()=>openOrderPreview(linked)}>
-                            {orderPreview?.id===linked.id?'Ocultar pedido':'Ver pedido'}
+                          <button type="button" aria-expanded={orderPreview?.id===linked.id&&orderPreview.movementId===entry.id} onClick={()=>openOrderPreview(linked,entry.id)}>
+                            {orderPreview?.id===linked.id&&orderPreview.movementId===entry.id?'Ocultar pedido':'Ver pedido'}
                           </button>
                         </div>)}
                       </>
                       :<span>{entry.orderNumber?'Pedido #'+entry.orderNumber:entry.orderId?'Pedido vinculado':'Sem pedido diretamente vinculado'}</span>}
                   </div>
-                  {orderPreview&&entry.linkedOrders?.some(linked=>linked.id===orderPreview.id)&&
+                  {orderPreview?.movementId===entry.id&&entry.linkedOrders?.some(linked=>linked.id===orderPreview.id)&&
                     <div className="day-conference-order-preview" role="region" aria-label="Resumo do pedido">
                       {orderPreview.loading?<p role="status">Carregando pedido…</p>:orderPreview.error
                         ?<p role="alert">{orderPreview.error}</p>
