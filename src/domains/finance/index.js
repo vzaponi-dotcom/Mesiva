@@ -26,7 +26,7 @@ export {
   paymentSearchText,
 } from './domain/paymentPresentation.js'
 
-export { FinanceWorkspace, Receivables } from './ui/financeSurfaces.js'
+export { FinanceWorkspace, Receivables, DayConference } from './ui/financeSurfaces.js'
 
 export { createFinanceApi } from './infrastructure/financeApi.js'
 
@@ -35,5 +35,3 @@ export { createPaymentMethodsPolicy } from './infrastructure/paymentMethodsPolic
 export { createFinanceCategoriesPolicy } from './infrastructure/financeCategoriesPolicy.js'
 
 export { useFinanceReadModel } from './application/useFinanceReadModel.js'
-
-export { default as DayConference } from './ui/DayConference.jsx'
