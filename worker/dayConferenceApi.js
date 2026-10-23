@@ -20,7 +20,8 @@ export async function handleDayConferenceApi(request,env,context,url=new URL(req
     if(!/^[1-9]\d{0,3}$/.test(rawPage))throw apiError(400,'INVALID_CONFERENCE_PAGE','Página inválida.')
     const sourceVersion=url.searchParams.get('sourceVersion')
     if(!sourceVersion||!/^[a-f0-9]{64}$/.test(sourceVersion))throw apiError(400,'INVALID_CONFERENCE_VERSION','Atualize os recebimentos antes de consultar os lançamentos.')
-    return json(await readDayConferenceEntries(env.DB,businessId,date,methodName,Number(rawPage),sourceVersion))
+    return json(await readDayConferenceEntries(env.DB,businessId,date,methodName,Number(rawPage),sourceVersion,
+      context.granted.has('orders.view')||context.granted.has('orders.history')))
   }
   if(method==='GET' && path==='/api/finance/day-conference/history'){
     const date=url.searchParams.has('date')?readConferenceDate(url.searchParams.get('date')):null
