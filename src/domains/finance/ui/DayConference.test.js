@@ -84,7 +84,7 @@ test('read-only and blocked writers cannot conclude or change checked values',as
 })
 
 test('explicit refresh discards the history panel so an old list cannot contradict a new completion',async t=>{
-  const {screen}=await mount(t,async path=>response(path.endsWith('/history')?{history:[{
+  const {screen}=await mount(t,async path=>response(path.includes('/history?date=')?{history:[{
     id:'old-history',date:'2026-10-14',status:'conferida',revision:1,createdAt:'2026-10-14T15:00:00Z',
     note:'HISTÓRICO ANTIGO',lines:[],
   }]}:summary()))
@@ -92,4 +92,26 @@ test('explicit refresh discards the history panel so an old list cannot contradi
   assert.match(text(screen),/HISTÓRICO ANTIGO/)
   await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
   assert.doesNotMatch(text(screen),/HISTÓRICO ANTIGO/)
+})
+
+test('CSV downloads the complete selected date through the company client and history filters that date',async t=>{
+  const calls=[],downloads=[]
+  const {screen,h}=await mount(t,async path=>{
+    calls.push(path)
+    if(path.includes('/history?'))return response({history:[]})
+    if(path.includes('/entries?')){
+      const query=new URL(path,'http://local').searchParams,method=query.get('method')
+      return response({entries:[{id:method,method,date:query.get('date'),type:'entrada',source:'order-payment',
+        createdAt:'2026-10-23T15:00:00Z',amountCents:method==='Pix'?20000:5000}],nextPage:null})
+    }
+    return response(summary())
+  })
+  h.document.createElement=()=>({click(){downloads.push(this.download)}})
+  await act(async()=>buttonNamed(screen.root,'Exportar CSV do dia').props.onClick())
+  const date=screen.root.findAllByType('input').find(n=>n.props.type==='date').props.value
+  assert.deepEqual(downloads,['mesiva-recebimentos-'+date+'.csv'])
+  assert.equal(calls.filter(path=>path.includes('/entries?')).length,2)
+  assert.match(text(screen),/CSV completo/)
+  await act(async()=>buttonNamed(screen.root,'Histórico').props.onClick())
+  assert.ok(calls.includes('/api/finance/day-conference/history?date='+date))
 })

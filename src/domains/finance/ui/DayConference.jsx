@@ -6,6 +6,7 @@ import { getBusinessDate } from '../../../../shared/finance.js'
 import PageHeader from '../../../shared/ui/PageHeader.jsx'
 import Button from '../../../shared/ui/Button.jsx'
 import ConfirmationDialog from '../../../shared/ui/ConfirmationDialog.jsx'
+import { buildDayConferenceCsv } from '../application/dayConferenceCsv.js'
 import './day-conference.css'
 
 const formatCents = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
@@ -36,6 +37,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   const historyGeneration=useRef(0)
   const submission=useRef(null)
   const submittingRef=useRef(false)
+  const exportOperation=useRef(null)
   const detailPanel=useRef(null),detailOpener=useRef(null),historyPanel=useRef(null),historyOpener=useRef(null)
   const [date,setDate]=useState(today)
   const [summary,setSummary]=useState(null)
@@ -52,6 +54,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
   const [historyLoading,setHistoryLoading]=useState(false)
   const [uncertain,setUncertain]=useState(false)
   const [success,setSuccess]=useState('')
+  const [exporting,setExporting]=useState(false)
   const historyOpen=history!==null
   useEffect(()=>{detailPanel.current?.focus()},[detail?.method])
   useEffect(()=>{if(historyOpen)historyPanel.current?.focus()},[historyOpen])
@@ -62,7 +65,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
     detailGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
     setDetail(null);setHistory(null);setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
-    submission.current=null
+    submission.current=null;setExporting(false)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
         if(controller.signal.aborted)return
@@ -72,10 +75,11 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       })
       .catch(err=>{if(!controller.signal.aborted)setError(err.message)})
       .finally(()=>{if(!controller.signal.aborted)setLoading(false)})
-    return ()=>controller.abort()
+    return ()=>{controller.abort();exportOperation.current?.abort();exportOperation.current=null}
   },[date,request])
 
   const reload=async()=>{
+    exportOperation.current?.abort();exportOperation.current=null;setExporting(false)
     const signal=reads.current.signal
     setLoading(true);setError('');setDialog(false)
     detailGeneration.current++;setDetail(null);setDetailLoading(false)
@@ -106,6 +110,23 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
     && !sameVersion && !loading && !submitting && !writesBlocked && !summary?.integrityIssues
   const fieldsDisabled=!canComplete||sameVersion||writesBlocked||submitting||uncertain
 
+  const exportCsv=async()=>{
+    if(exportOperation.current||!summary||loading)return
+    const operation=new AbortController();exportOperation.current=operation
+    setExporting(true);setError('')
+    try{
+      const csv=await buildDayConferenceCsv({request,summary,signal:operation.signal})
+      if(operation.signal.aborted)return
+      const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}))
+      try{
+        const anchor=document.createElement('a');anchor.href=url
+        anchor.download='mesiva-recebimentos-'+date+'.csv';anchor.click()
+        setSuccess('CSV completo da data selecionada exportado.')
+      }finally{URL.revokeObjectURL(url)}
+    }catch(err){if(!operation.signal.aborted)setError(err.message)}
+    finally{if(exportOperation.current===operation){exportOperation.current=null;setExporting(false)}}
+  }
+
   const openDetail=async (method,opener)=>{
     detailOpener.current=opener
     const generation=++detailGeneration.current,signal=reads.current.signal
@@ -133,7 +154,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
     const generation=++historyGeneration.current,signal=reads.current.signal
     setHistoryLoading(true);setHistory([])
     try{
-      const result=await request('/api/finance/day-conference/history',{signal})
+      const result=await request('/api/finance/day-conference/history?'+new URLSearchParams({date}),{signal})
       if(signal.aborted||generation!==historyGeneration.current)return
       setHistory(result.history)
     }catch(err){if(!signal.aborted&&generation===historyGeneration.current)setError(err.message)}
@@ -175,6 +196,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       <label>Data do recebimento <input type="date" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)} /></label>
       <Button variant="secondary" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
       <Button variant="secondary" onClick={openHistory} disabled={historyLoading}>Histórico</Button>
+      <Button variant="secondary" onClick={exportCsv} disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…':'Exportar CSV do dia'}</Button>
     </div>
     {error&&<p role="alert" className="day-conference-error">{error}</p>}
     {success&&<p role="status" className="day-conference-notice">{success}</p>}
@@ -185,7 +207,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
         <div className="surface-card"><small>Estornos identificados</small><strong>{formatCents(totalRefund)}</strong></div>
         <div className="surface-card"><small>Saldo líquido registrado</small><strong>{formatCents(totalNet)}</strong></div>
       </section>
-      <p className="day-conference-note">O período considera a data financeira do Mesiva, não a data do pedido. Cartões: compare transações, não repasses líquidos futuros. Dinheiro: confira entradas, não o saldo da gaveta.</p>
+      <p className="day-conference-note">O período considera a data financeira do Mesiva, não a data do pedido ou a confirmação no extrato bancário. Compare o valor externo líquido de estornos identificados. Cartões: compare transações, não repasses líquidos futuros. Dinheiro: confira entradas, não o saldo da gaveta.</p>
       {totalEditRefund>0&&<p className="day-conference-note">Recebido hoje na Visão geral para esta data: {formatCents(totalNet+totalEditRefund)}. Essa métrica não deduz as devoluções após edição ({formatCents(totalEditRefund)}), já descontadas do líquido desta conferência. O mix da Visão geral mostra os recebimentos brutos.</p>}
       {summary.integrityIssues>0&&<p role="alert" className="day-conference-error">Há divergências entre movimentos, recibos e alocações. A conclusão está bloqueada; solicite revisão financeira. Nenhum pagamento foi alterado.</p>}
       {rows.some(row=>row.method==='Não informado')&&<p className="day-conference-notice">Há lançamentos sem forma identificável. Confira-os separadamente; estornos sem evidência não são atribuídos à forma do pagamento original.</p>}
@@ -245,18 +267,21 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
       {detail.error&&<p role="alert">{detail.error}</p>}
       <div className="day-conference-detail-list">
       {detail.entries.map(entry=><div className="day-conference-entry" key={entry.id}>
-        <div><strong>{entry.source==='order-payment'?'Recebimento':'Estorno'}</strong>
+        <div><strong>{entry.source==='order-payment'?'Recebimento':entry.source==='order-edit-refund'?'Devolução após edição':'Estorno'}</strong>
           <small>{entry.orderNumber?'Pedido #'+entry.orderNumber:'Recebimento compartilhado/sem pedido direto'}</small>
-          <small>Data financeira: {entry.date} • Registrado em {entry.createdAt?formatTimestamp(entry.createdAt):'—'} • {entry.receiptId||entry.id}</small></div>
+          <small>Data financeira: {entry.date} • Registrado em {entry.createdAt?formatTimestamp(entry.createdAt):'—'}</small>
+          <small>Movimento: {entry.id} • Recebimento: {entry.receiptId||'Sem vínculo legado'} • Pedido ID: {entry.orderId||'Sem vínculo direto'} • Ativo</small></div>
         <strong className={entry.type==='saida'?'day-conference-text-danger':''}>{entry.type==='saida'?'− ':''}{formatCents(entry.amountCents)}</strong>
       </div>)}
       </div>
       {detailLoading&&<p role="status">Carregando lançamentos…</p>}
       {detail.nextPage&&!detailLoading&&<Button variant="secondary" onClick={moreDetail}>Carregar mais</Button>}
+      <p className="day-conference-note">Total {detail.nextPage?'parcial carregado':'dos lançamentos carregados'}: {formatCents(detail.entries.reduce((sum,entry)=>sum+(entry.type==='saida'?-entry.amountCents:entry.amountCents),0))}. {detail.nextPage?'Carregue as próximas páginas para conferir o total completo.':''}</p>
     </section>}
     {history!==null&&<section ref={historyPanel} tabIndex={-1} className="surface-card day-conference-history" aria-label="Histórico de conferências">
-      <div className="day-conference-method-heading"><h2>Últimas conferências</h2>
+      <div className="day-conference-method-heading"><h2>Conferências de {date}</h2>
         <Button variant="secondary" onClick={()=>{historyGeneration.current++;setHistory(null);setHistoryLoading(false);historyOpener.current?.focus()}}>Fechar</Button></div>
+      <p className="day-conference-note">Até 30 revisões da data selecionada. Altere a data do recebimento acima para pesquisar outro dia.</p>
       {historyLoading?<p>Carregando histórico…</p>:history.length?history.map(item=><div className="day-conference-entry" key={item.id}>
         <div><strong>{item.date} • {statusLabel(item.status)}</strong>
           <small>Revisão {item.revision} • {formatTimestamp(item.createdAt)} • {item.actorName||item.userId||'Usuário legado'}</small>
@@ -268,7 +293,7 @@ export default function DayConference({ canComplete=false, writesBlocked=false, 
     </section>}
     {dialog&&<ConfirmationDialog title="Confirmar conferência"
       message={differences.length?'Existem divergências. A conferência será registrada com ressalva, sem alterar pagamentos.':'Registrar esta conferência? Nenhum pagamento será alterado.'}
-      details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)}</p>)}</div>}
+      details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}
       confirmLabel="Registrar conferência" confirmVariant="primary" submitting={submitting}
       onClose={()=>setDialog(false)} onConfirm={finish}/>}
   </>

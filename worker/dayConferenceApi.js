@@ -23,7 +23,8 @@ export async function handleDayConferenceApi(request,env,context,url=new URL(req
     return json(await readDayConferenceEntries(env.DB,businessId,date,methodName,Number(rawPage),sourceVersion))
   }
   if(method==='GET' && path==='/api/finance/day-conference/history'){
-    return json({history:await readDayConferenceHistory(env.DB,businessId)})
+    const date=url.searchParams.has('date')?readConferenceDate(url.searchParams.get('date')):null
+    return json({history:await readDayConferenceHistory(env.DB,businessId,date)})
   }
   if(method==='POST' && path==='/api/finance/day-conference'){
     requireCapability(context,'finance.movements.manage')

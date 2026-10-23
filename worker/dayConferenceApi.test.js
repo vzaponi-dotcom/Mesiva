@@ -45,6 +45,10 @@ test('authenticated API isolates totals, entries, immutable snapshots and actor 
   assert.deepEqual((await foreign.json()).history,[])
   const history=await handleRequest(request(f.sessions.A,'/history'),f.env)
   assert.equal((await history.json()).history[0].id,saved.id)
+  const selected=await handleRequest(request(f.sessions.A,'/history?date='+day),f.env)
+  assert.equal((await selected.json()).history[0].id,saved.id)
+  const otherDay=await handleRequest(request(f.sessions.A,'/history?date=2026-10-14'),f.env)
+  assert.deepEqual((await otherDay.json()).history,[])
 })
 
 test('API rejects stale context, absent grants, missing completion permission, CSRF and invalid JSON',async t=>{
@@ -61,7 +65,7 @@ test('API rejects stale context, absent grants, missing completion permission, C
 
 test('API validates dates, page, method and source version before running detail queries',async t=>{
   const f=await setup(t),s=f.sessions.A
-  for(const query of ['?date=2026-02-30','?date=9999-01-01',
+  for(const query of ['?date=2026-02-30','?date=9999-01-01','/history?date=2026-02-30',
     '/entries?date='+day+'&method=Pix&page=0','/entries?date='+day+'&method=Pix',
     '/entries?date='+day+'&method=&sourceVersion='+'a'.repeat(64)]){
     assert.equal((await handleRequest(request(s,query),f.env)).status,400,query)
