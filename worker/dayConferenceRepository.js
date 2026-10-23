@@ -104,11 +104,11 @@ export async function readDayConferenceState(db,businessId,date) {
   return {...await summaryFromRows(group.results||[],date,source.results[0]),latest:decodeConference(latest.results?.[0])}
 }
 
-export async function readDayConferenceEntries(db, businessId, date, method, page, sourceVersion=null) {
+export async function readDayConferenceEntries(db, businessId, date, method, page, sourceVersion=null, includeOrders=false) {
   if (typeof method !== 'string' || !method || method.length > 80) throw apiError(400, 'INVALID_CONFERENCE_METHOD', 'Forma de pagamento inválida.')
   const offset = (page - 1) * LIST_LIMIT
   const query = db.prepare(`SELECT m.id,m.receipt_id,m.order_id,
-    o.order_number,m.movement_date,m.created_at,m.type,m.source,m.value_cents,
+    o.order_number,o.client_name_snapshot,m.movement_date,m.created_at,m.type,m.source,m.value_cents,
     ${methodSql} AS method
     FROM movements m INDEXED BY movements_business_date_active_idx
     LEFT JOIN orders o ON o.business_id=m.business_id AND o.id=m.order_id
@@ -124,14 +124,38 @@ export async function readDayConferenceEntries(db, businessId, date, method, pag
   if(sourceVersion!==null && await sha256Hex(JSON.stringify([date,source.results[0].revision]))!==sourceVersion) {
     throw apiError(409,'CONFERENCE_CHANGED','Os lançamentos mudaram. Atualize os recebimentos antes de consultar novamente.')
   }
-  const results=entries.results || []
+  const results=(entries.results || []).slice(0,LIST_LIMIT)
+  const linked=new Map()
+  if(includeOrders){
+    // Bulk resolution for shared receipts; avoid per-movement order queries and false one-to-one attribution.
+    const receiptIds=[...new Set(results.filter(row=>!row.order_id&&row.receipt_id).map(row=>row.receipt_id))]
+    if(receiptIds.length){
+      const placeholders=receiptIds.map(()=>'?').join(',')
+      const {results:links=[]}=await db.prepare(`SELECT refs.receipt_id,o.id,o.order_number,o.client_name_snapshot
+        FROM (
+          SELECT receipt_id,order_id FROM payments WHERE business_id=? AND receipt_id IN (${placeholders})
+          UNION
+          SELECT receipt_id,order_id FROM order_settlement_entries WHERE business_id=? AND receipt_id IN (${placeholders})
+            AND kind='supplemental_payment'
+        ) refs JOIN orders o ON o.business_id=? AND o.id=refs.order_id
+        ORDER BY refs.receipt_id,o.order_number,o.id`).bind(businessId,...receiptIds,businessId,...receiptIds,businessId).all()
+      for(const row of links){
+        const orders=linked.get(row.receipt_id)||[]
+        orders.push({id:row.id,number:row.order_number,client:row.client_name_snapshot||null})
+        linked.set(row.receipt_id,orders)
+      }
+    }
+  }
   return {
-    entries: results.slice(0,LIST_LIMIT).map(row => ({
-      id:row.id, receiptId:row.receipt_id, orderId:row.order_id, orderNumber:row.order_number,
-      date:row.movement_date, createdAt:row.created_at, type:row.type, source:row.source,
-      amountCents:Number(row.value_cents), method:row.method,
+    entries:results.map(row=>({
+      id:row.id,receiptId:row.receipt_id,orderId:row.order_id,orderNumber:row.order_number,
+      date:row.movement_date,createdAt:row.created_at,type:row.type,source:row.source,
+      amountCents:Number(row.value_cents),method:row.method,
+      linkedOrders:!includeOrders?[]:row.order_id
+        ?[{id:row.order_id,number:row.order_number,client:row.client_name_snapshot||null}]
+        :(linked.get(row.receipt_id)||[]),
     })),
-    nextPage: results.length > LIST_LIMIT ? page + 1 : null,
+    nextPage:(entries.results||[]).length>LIST_LIMIT?page+1:null,
   }
 }
 
