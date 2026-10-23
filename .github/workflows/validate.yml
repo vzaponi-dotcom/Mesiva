@@ -79,6 +79,8 @@ jobs:
         run: node scripts/infra/operational-read-d1-benchmark.mjs
       - name: Validate effective receipt date D1 read/write budget
         run: node scripts/infra/effective-receipt-date-d1-gate.mjs
+      - name: Validate daily conference D1 integrity and read/write budget
+        run: node scripts/infra/day-conference-d1-gate.mjs
       - name: Validate operation profile D1 clean install and upgrade
         run: node scripts/infra/operation-profile-d1-gate.mjs
 

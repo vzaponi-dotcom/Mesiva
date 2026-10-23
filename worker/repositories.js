@@ -8,7 +8,7 @@ import { createOrderPrintDocument } from '../shared/orderPrintDocument.js'
 import { resolveAutomaticOrderPrintAvailableAt, resolvePrintCopies } from '../shared/printContextPolicy.js'
 import { formatOrderDisplayNumber } from '../shared/orderDisplayNumber.js'
 import { formatProductPresentation } from '../shared/productCatalog.js'
-import { mapMovementRow, loadFinanceSettings } from './financeRepository.js'
+import { mapMovementRow, loadFinanceSettings,MOVEMENT_PAYMENT_METHOD_SQL } from './financeRepository.js'
 import { calculateCheckoutTotals } from './orderCheckout.js'
 import { assertPaymentAllocationTotal, resolveReceivedDate, validatePaymentAllocations } from './paymentValidation.js'
 import { prepareAutomaticPrintJobStatement } from './orderPrintingRepository.js'
@@ -162,10 +162,11 @@ export const loadBootstrap = async (db, businessId, effectiveBusinessConfig, gra
   const movementsResult = await db.prepare(`SELECT m.id, m.type, m.category, m.description, m.value_cents, m.source, m.order_id, m.payment_id,
     m.receipt_id, m.payment_allocation_id,
     fc.label AS category_label,
-    CASE WHEN m.source = 'order-payment' THEN COALESCE(m.payment_method, p.method) ELSE m.payment_method END AS payment_method,
+    ${MOVEMENT_PAYMENT_METHOD_SQL} AS payment_method,
     m.movement_date, m.created_at, m.updated_at
     FROM movements m
     LEFT JOIN payments p ON p.id = m.payment_id AND p.business_id = m.business_id
+    LEFT JOIN payment_allocations a ON a.business_id=m.business_id AND a.id=m.payment_allocation_id
     LEFT JOIN business_finance_categories fc ON fc.business_id = m.business_id AND fc.id = m.category
     WHERE m.business_id = ? AND m.deleted_at IS NULL
     ORDER BY m.created_at DESC`).bind(businessId).all()

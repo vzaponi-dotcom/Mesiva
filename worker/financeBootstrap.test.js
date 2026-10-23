@@ -1,40 +1,28 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { loadBootstrap } from './repositories.js'
+import { createSettingsDb } from './test-support/settingsDb.js'
 
-class FinanceBootstrapDb {
-  async batch(statements) { return Promise.all(statements.map(statement => statement.all())) }
-  prepare(sql) {
-    return {
-      bind() {
-        return {
-          async first() {
-            if (sql.includes('FROM businesses')) return { id: 'biz', name: 'Delivery' }
-            if (sql.includes('FROM finance_settings')) return { opening_balance_cents: 15000, opening_date: '2026-09-01', created_at: 'created', updated_at: 'updated' }
-            return null
-          },
-          async all() {
-            if (sql.includes('LEFT JOIN business_finance_categories fc')) {
-              assert.match(sql, /CASE WHEN m\.source = 'order-payment' THEN COALESCE\(m\.payment_method, p\.method\)/)
-              assert.match(sql, /m\.deleted_at IS NULL/)
-              assert.match(sql, /LEFT JOIN payments p/)
-              assert.match(sql, /LEFT JOIN business_finance_categories fc/)
-              return { results: [
-                { id: 'sale', type: 'entrada', category: 'Vendas', description: 'Venda', value_cents: 1000, source: 'order-payment', order_id: 'o1', payment_id: 'p1', payment_method: 'Pix', movement_date: '2026-09-03', created_at: 'c1', updated_at: 'c1' },
-                { id: 'refund', type: 'saida', category: 'Estornos', category_label: null, description: 'Estorno', value_cents: 500, source: 'order-refund', order_id: 'o2', payment_id: 'p2', payment_method: null, movement_date: '2026-09-03', created_at: 'c2', updated_at: 'c2' },
-              ] }
-            }
-            return { results: [] }
-          },
-        }
-      },
-    }
-  }
-}
-
-test('bootstrap exposes active finance movements and opening settings', async () => {
-  const result = await loadBootstrap(new FinanceBootstrapDb(), 'biz')
+test('bootstrap exposes active finance movements, allocation evidence and opening settings', async t => {
+  const f=createSettingsDb();t.after(f.close)
+  f.sqlite.exec(`
+    INSERT INTO businesses(id,slug,name,created_at,updated_at) VALUES('biz','biz','Delivery','2026-09-01','2026-09-01');
+    INSERT INTO finance_settings(business_id,opening_balance_cents,opening_date,created_at,updated_at)
+      VALUES('biz',15000,'2026-09-01','created','updated');
+    INSERT INTO payment_receipts(id,business_id,total_cents,paid_at,received_date,created_at)
+      VALUES('receipt','biz',1000,'2026-09-03','2026-09-03','2026-09-03');
+    INSERT INTO payment_allocations(id,business_id,receipt_id,method_label,amount_cents,created_at)
+      VALUES('allocation','biz','receipt','Pix',1000,'2026-09-03');
+    INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,receipt_id,payment_allocation_id)
+      VALUES('sale','biz','entrada','Vendas','Venda',1000,'order-payment','2026-09-03','2026-09-03','receipt','allocation');
+    INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at)
+      VALUES('refund','biz','saida','Estornos','Estorno',500,'order-refund','2026-09-03','2026-09-03');
+    INSERT INTO movements(id,business_id,type,category,description,value_cents,source,movement_date,created_at,deleted_at)
+      VALUES('deleted','biz','entrada','other_income','Deleted',500,'manual','2026-09-03','2026-09-03','2026-09-04');
+  `)
+  const result = await loadBootstrap(f.db, 'biz')
   assert.equal(result.movements.find((m) => m.id === 'sale').paymentMethod, 'Pix')
   assert.equal(result.movements.find((m) => m.id === 'refund').paymentMethod, null)
+  assert.deepEqual(result.movements.map(m=>m.id).sort(),['refund','sale'])
   assert.deepEqual(result.financeSettings, { openingBalance: 150, openingDate: '2026-09-01', createdAt: 'created', updatedAt: 'updated' })
 })
