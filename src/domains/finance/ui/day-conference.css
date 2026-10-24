@@ -290,11 +290,15 @@
   .day-conference-cell-status{grid-column:1/-1}
   .day-conference-row-actions{grid-column:1/-1}
   .day-conference-help{margin-top:8px}
+  .day-conference-detail,.day-conference-check{min-height:44px}
+  .day-conference-cell-input input{height:44px}
 }
 @media(max-width:380px){
   .day-conference-actions{grid-template-columns:1fr 1fr}
-  .day-conference-actions>.button:nth-child(2){font-size:.71rem}
-  .day-conference-date input{font-size:14px}
+  .day-conference-date{grid-column:1/-1}
+  .day-conference-actions>.button:nth-child(2){font-size:.75rem}
+  .day-conference-actions>.button:last-child{grid-column:auto}
+  .day-conference-date input{font-size:16px}
   .day-conference-progress-meter strong{white-space:normal}
 }
 @media(prefers-reduced-motion:reduce){.day-conference-help summary svg:last-child{transition:none}}
