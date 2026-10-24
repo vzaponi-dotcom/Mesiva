@@ -3,6 +3,7 @@ import Modal from './Modal'
 
 function ConfirmationDialog({
   title,
+  className,
   message,
   details,
   confirmLabel = 'Confirmar',
@@ -15,7 +16,7 @@ function ConfirmationDialog({
   loadingLabel = 'Confirmando…',
 }) {
   return (
-    <Modal title={title} onClose={submitting ? () => {} : onClose}>
+    <Modal title={title} className={className} onClose={submitting ? () => {} : onClose}>
       <div className="form-stack confirmation-dialog-content">
         {message && <p>{message}</p>}
         {details && <div className="payment-summary-card">{details}</div>}

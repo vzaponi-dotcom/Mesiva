@@ -20,7 +20,7 @@ D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O
 
 A edição de pedidos ativos preserva preços históricos, identidade e recebimentos anteriores. Diferenças são conciliadas por saldo complementar ou devolução manual, inclusive em lotes de clientes; Cozinha/TV identificam o pedido editado e a reimpressão é opcional. Consulte [edição de pedidos e saldo](docs/operations/order-editing.md) para regras e estado de homologação da PR #108.
 
-**Financeiro → Conferência do Dia** compara recebimentos por data efetiva e forma, separa bruto, estorno e líquido e registra revisões com responsável e ressalvas. Consulte [operação e limites](docs/operations/day-conference.md). A implementação da PR #124 permanece em Draft, sujeita à homologação; não representa abertura ou fechamento de gaveta.
+**Financeiro → Conferência do Dia** compara recebimentos por data efetiva e forma, separa bruto, estorno e líquido e registra revisões com responsável e ressalvas. As abas de divergências permitem acompanhar pendências de dias anteriores e registrar soluções sem alterar recebimentos ou apagar a conferência original. Consulte [operação e limites](docs/operations/day-conference.md). A conferência não representa abertura ou fechamento de gaveta.
 
 ## Requisitos
 

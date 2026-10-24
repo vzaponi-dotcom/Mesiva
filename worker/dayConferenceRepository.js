@@ -5,6 +5,7 @@ import { hashSettingsPayload } from './settingsTransactions.js'
 import { auditContext } from './access/audit.js'
 import { businessDateRangeUtc } from './reporting/businessDate.js'
 import { MOVEMENT_PAYMENT_METHOD_SQL } from './financeRepository.js'
+import { CONFERENCE_RESOLUTION_REASONS } from '../shared/dayConferenceDiscrepancies.js'
 
 const LIST_LIMIT = 50
 const sourceClause = `((m.type='entrada' AND m.source='order-payment')
@@ -232,4 +233,71 @@ export async function completeDayConference(db,businessId,userId,input,now=new D
     throw apiError(409,'CONFERENCE_ALREADY_DONE','Este dia já foi conferido com estes recebimentos. Consulte o histórico.')
   }
   return decodeConference(saved.results[0])
+}
+
+const discrepancyFields = `d.id,d.business_date,d.method,d.net_cents,d.checked_cents,d.difference_cents,d.status,
+  c.revision,c.actor_name,c.created_at,d.resolved_actor_name,d.resolved_at`
+const discrepancyJoin = `FROM daily_receipt_discrepancies d
+  JOIN daily_receipt_conferences c ON c.id=d.conference_id AND c.business_id=d.business_id`
+const decodeDiscrepancy = row => ({
+  id:row.id,date:row.business_date,method:row.method,netCents:row.net_cents,
+  checkedCents:row.checked_cents,differenceCents:row.difference_cents,status:row.status,
+  revision:row.revision,actorName:row.actor_name,createdAt:row.created_at,
+  resolvedActorName:row.resolved_actor_name,resolvedAt:row.resolved_at,
+  ...(row.conference_id===undefined?{}:{conferenceId:row.conference_id,
+    conferenceNote:row.conference_note,sourceVersion:row.source_version,
+    resolutionReason:row.resolution_reason,resolutionNote:row.resolution_note,
+    resolutionReference:row.resolution_reference,resolvedBy:row.resolved_by}),
+})
+
+export async function readDayConferenceDiscrepancies(db,businessId,status='pending',cursor=null){
+  if(!['pending','resolved'].includes(status))throw apiError(400,'INVALID_DISCREPANCY_FILTER','Situação inválida.')
+  let position=null
+  if(cursor){
+    try{position=JSON.parse(atob(cursor))}catch{throw apiError(400,'INVALID_DISCREPANCY_CURSOR','Página inválida.')}
+    if(typeof cursor!=='string'||cursor.length>1024||!Array.isArray(position)||position.length!==2
+      ||typeof position[0]!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(position[0])
+      ||typeof position[1]!=='string'||!position[1]||position[1].length>200)
+      throw apiError(400,'INVALID_DISCREPANCY_CURSOR','Página inválida.')
+  }
+  const {results=[]}=await db.prepare(`SELECT ${discrepancyFields} ${discrepancyJoin}
+    WHERE d.business_id=? AND d.status=? ${position?'AND (d.business_date,d.id)<(?,?)':''}
+    ORDER BY d.business_date DESC,d.id DESC LIMIT 21`)
+    .bind(businessId,status,...(position||[])).all()
+  const items=results.slice(0,20),last=items.at(-1)
+  return {items:items.map(decodeDiscrepancy),nextCursor:results.length>20?btoa(JSON.stringify([last.business_date,last.id])):null}
+}
+
+export async function readDayConferenceDiscrepancy(db,businessId,id){
+  if(typeof id!=='string'||!id||id.length>200)throw apiError(400,'INVALID_DISCREPANCY_ID','Divergência inválida.')
+  const row=await db.prepare(`SELECT ${discrepancyFields},d.conference_id,c.note AS conference_note,c.source_version,
+    d.resolution_reason,d.resolution_note,d.resolution_reference,d.resolved_by ${discrepancyJoin}
+    WHERE d.business_id=? AND d.id=?`).bind(businessId,id).first()
+  if(!row)throw apiError(404,'DISCREPANCY_NOT_FOUND','Divergência não encontrada nesta empresa.')
+  return decodeDiscrepancy(row)
+}
+
+export async function resolveDayConferenceDiscrepancy(db,businessId,userId,id,input,now=new Date()){
+  if(!input||typeof input!=='object'||Array.isArray(input)||input.confirmed!==true
+    ||typeof input.reason!=='string'||!Object.hasOwn(CONFERENCE_RESOLUTION_REASONS,input.reason)
+    ||typeof input.note!=='string'||!input.note.trim()||input.note.trim().length>1000
+    ||(input.reference!==undefined&&typeof input.reference!=='string')
+    ||(typeof input.reference==='string'&&input.reference.trim().length>200)
+    ||(input.reason==='source_corrected'&&!input.reference?.trim()))
+    throw apiError(400,'INVALID_DISCREPANCY_RESOLUTION','Informe o motivo, a solução e a confirmação; correções de origem exigem uma referência.')
+  const note=input.note.trim(),reference=input.reason==='source_corrected'?input.reference.trim():''
+  const acceptReplay=row=>{
+    if(row.resolutionReason!==input.reason||row.resolutionNote!==note
+      ||row.resolutionReference!==reference||row.resolvedBy!==(userId||null))
+      throw apiError(409,'DISCREPANCY_ALREADY_RESOLVED','Esta divergência já foi resolvida. Consulte a solução registrada.')
+    return row
+  }
+  const original=await readDayConferenceDiscrepancy(db,businessId,id)
+  if(original.status==='resolved')return acceptReplay(original)
+  const actor=auditContext(db,businessId)
+  await db.prepare(`UPDATE daily_receipt_discrepancies SET status='resolved',resolution_reason=?,resolution_note=?,
+    resolution_reference=?,resolved_by=?,resolved_actor_name=?,resolved_at=?
+    WHERE business_id=? AND id=? AND status='pending'`)
+    .bind(input.reason,note,reference,userId||null,actor.displayName||'Acesso legado',now.toISOString(),businessId,id).run()
+  return acceptReplay(await readDayConferenceDiscrepancy(db,businessId,id))
 }

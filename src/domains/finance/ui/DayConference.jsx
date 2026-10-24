@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import AreaNavigation from '../../../app/navigation/AreaNavigation.jsx'
 import { apiRequest } from '../../../infrastructure/api/httpClient.js'
 import { ContextApi } from '../../../infrastructure/api/ContextApi.js'
@@ -9,10 +9,12 @@ import Icon from '../../../shared/ui/Icon.jsx'
 import Modal from '../../../shared/ui/Modal.jsx'
 import Button from '../../../shared/ui/Button.jsx'
 import ConfirmationDialog from '../../../shared/ui/ConfirmationDialog.jsx'
+import DayConferenceDiscrepancies from './DayConferenceDiscrepancies.jsx'
 import { buildDayConferenceCsv } from '../application/dayConferenceCsv.js'
 import './day-conference.css'
 
 const formatCents = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
+const noop=()=>{}
 const parseCents = value => {
   const text=String(value??''),digits=text.replace(/\D/g,'')
   if(!digits||digits.length>12)return null
@@ -125,7 +127,7 @@ function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceV
   </article>
 }
 
-export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=()=>{} }){
+export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=noop }){
   const client=useContext(ContextApi)
   const request=client?.request || apiRequest
   const reads=useRef(null)
@@ -138,6 +140,16 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const exportOperation=useRef(null)
   const detailPanel=useRef(null),detailOpener=useRef(null),historyPanel=useRef(null),historyOpener=useRef(null)
   const [date,setDate]=useState(today)
+  const [tab,setTab]=useState('conference'),[discrepancyBusy,setDiscrepancyBusy]=useState(false)
+  const discrepancyLock=useRef(false)
+  const onDiscrepancyBusy=useCallback(value=>{
+    setDiscrepancyBusy(value)
+    if(value){discrepancyLock.current=true;setRequestKey('day-conference:discrepancy')}
+    else if(discrepancyLock.current){
+      discrepancyLock.current=false
+      setRequestKey(current=>current==='day-conference:discrepancy'?null:current)
+    }
+  },[setRequestKey])
   const [summary,setSummary]=useState(null)
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
@@ -145,6 +157,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const [verified,setVerified]=useState({})
   const [note,setNote]=useState('')
   const [dialog,setDialog]=useState(false)
+  const [discardChange,setDiscardChange]=useState(null)
   const [submitting,setSubmitting]=useState(false)
   const [detail,setDetail]=useState(null)
   const [detailLoading,setDetailLoading]=useState(false)
@@ -172,7 +185,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     detailGeneration.current++;orderGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
     setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setHistory(null);setExpandedHistoryId(null);setHistoryError('');setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
-    submission.current=null;setExporting(false)
+    submission.current=null;setExporting(false);setDiscardChange(null)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
         if(controller.signal.aborted)return
@@ -219,6 +232,20 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const canSubmit=canComplete && allComplete && (!differences.length||Boolean(note.trim()))
     && !sameVersion && !loading && !submitting && !writesBlocked && !summary?.integrityIssues
   const fieldsDisabled=!canComplete||sameVersion||writesBlocked||submitting||uncertain
+  const hasDraft=!sameVersion&&(Object.values(amounts).some(Boolean)||Boolean(note.trim()))
+  const applyChange=nextDate=>{
+    if(nextDate!==undefined){setDate(nextDate);return}
+    setSuccess('')
+    return reload()
+  }
+  const requestChange=nextDate=>{
+    if(nextDate===date)return
+    // Atualizar reconcilia um envio sem resposta, sem abandonar a tentativa.
+    if(hasDraft&&(nextDate!==undefined||!uncertain)){
+      setDiscardChange({date:nextDate});return
+    }
+    return applyChange(nextDate)
+  }
 
   const exportCsv=async()=>{
     if(exportOperation.current||!summary||loading)return
@@ -237,18 +264,25 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     finally{if(exportOperation.current===operation){exportOperation.current=null;setExporting(false)}}
   }
 
-  const openDetail=async (method,opener)=>{
+  const openDetail=async (method,opener,review=null)=>{
     detailOpener.current=opener;orderGeneration.current++;setOrderPreview(null)
     drawerScrollPositions.current={receipts:0,orders:0}
     setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
     const generation=++detailGeneration.current,signal=reads.current.signal
-    setDetail({method,entries:[],nextPage:1,error:''});setDetailLoading(true)
+    const detailDate=review?.date||date
+    let detailContext={method,date:detailDate,entries:[],nextPage:null,error:''}
+    setDetail(detailContext);setDetailLoading(true)
     try{
-      const params=new URLSearchParams({date,method,page:'1',sourceVersion:summary.sourceVersion})
+      const state=review?await request('/api/finance/day-conference?'+new URLSearchParams({date:detailDate}),{signal}):summary
+      if(signal.aborted||generation!==detailGeneration.current)return
+      if(!state?.sourceVersion||!Array.isArray(state.methods))throw new Error('Recebimentos indisponíveis. Atualize e tente novamente.')
+      const row=state.methods.find(item=>item.method===method)
+      detailContext={...detailContext,sourceVersion:state.sourceVersion,netCents:row?.netCents||0,count:row?.count||0}
+      const params=new URLSearchParams({date:detailDate,method,page:'1',sourceVersion:state.sourceVersion})
       const result=await request('/api/finance/day-conference/entries?'+params,{signal})
       if(signal.aborted||generation!==detailGeneration.current)return
-      setDetail({method,...result,error:''})
-    }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({method,entries:[],nextPage:null,error:err.message})}
+      setDetail({...detailContext,...result,error:''})
+    }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({...detailContext,error:err.message})}
     finally{if(!signal.aborted&&generation===detailGeneration.current)setDetailLoading(false)}
   }
   const rememberDrawerScroll=level=>{
@@ -298,7 +332,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     if(!detail?.nextPage||detailLoading)return
     const method=detail.method,page=detail.nextPage,signal=reads.current.signal,generation=detailGeneration.current;setDetailLoading(true)
     try{
-      const result=await request('/api/finance/day-conference/entries?'+new URLSearchParams({date,method,page:String(page),sourceVersion:summary.sourceVersion}),{signal})
+      const result=await request('/api/finance/day-conference/entries?'+new URLSearchParams({date:detail.date,method,page:String(page),sourceVersion:detail.sourceVersion}),{signal})
       if(signal.aborted||generation!==detailGeneration.current)return
       setDetail(current=>current?.method===method?{...current,entries:[...current.entries,...result.entries],nextPage:result.nextPage,error:''}:current)
     }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail(current=>current?{...current,error:err.message}:current)}
@@ -350,72 +384,71 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     <div className="day-conference-page">
       <PageHeader eyebrow="Financeiro / Recebimentos" title="Conferência do dia"
         description="Compare os recebimentos registrados no Mesiva com os valores dos seus comprovantes e controles externos."
-        actions={<div className="day-conference-actions">
+        actions={tab==='conference'?<div className="day-conference-actions">
           <label className="day-conference-date"><Icon name="calendar" size={17}/><span className="day-conference-date-label">Data</span>
-            <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)}/>
+            <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>requestChange(event.target.value)}/>
           </label>
           <Button variant="secondary" icon="download" onClick={exportCsv}
             disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…' :'Exportar CSV'}</Button>
-          <Button variant="secondary" icon="history" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
-        </div>}/>
+          <Button variant="secondary" icon="history" onClick={()=>requestChange()} disabled={loading||submitting}>Atualizar</Button>
+        </div>:null}/>
+      <nav className="day-conference-tabs" aria-label="Conferência e divergências">
+        {[['conference','Conferência'],['pending','Divergências pendentes'],['resolved','Resolvidas']].map(([value,label])=><button
+          key={value} type="button" aria-current={tab===value?'page':undefined} disabled={submitting||discrepancyBusy}
+          onClick={()=>setTab(value)}>{label}</button>)}
+      </nav>
+      <DayConferenceDiscrepancies key={client?.contextId||'legacy'} request={request} visible={tab!=='conference'}
+        status={tab==='resolved'?'resolved':'pending'} canResolve={canComplete} writesBlocked={writesBlocked}
+        onBusyChange={onDiscrepancyBusy} onReview={(item,opener)=>openDetail(item.method,opener,{date:item.date})}/>
+      <div hidden={tab!=='conference'}>
       {error&&<p role="alert" className="day-conference-error">{error}</p>}
       {success&&<p role="status" className="day-conference-notice">{success}</p>}
       {uncertain&&<p role="status" className="day-conference-notice">A resposta não foi confirmada. Atualize para verificar o registro ou reenvie a mesma conferência com segurança.</p>}
       {loading?<p role="status">Carregando recebimentos…</p>:summary&&<>
-        <section className="day-conference-progress" aria-label="Andamento da conferência">
+        {!sameVersion&&<section className="day-conference-progress" aria-label="Andamento da conferência">
           <div>
             <div className="day-conference-progress-title">
               <strong>{readableDate(date)}</strong>
-              <span className={stale?'day-conference-bad':sameVersion?'day-conference-good':'day-conference-pending'}>
-                {stale?'Revisão necessária':sameVersion?statusLabel(latest.status):allComplete?(differences.length?'Com divergências':'Pronta para concluir'):'Conferência em andamento'}
+              <span className={stale?'day-conference-bad':'day-conference-pending'}>
+                {stale?'Revisão necessária':allComplete?(differences.length?'Com divergências':'Pronta para concluir'):'Conferência em andamento'}
               </span>
             </div>
-            <p>{sameVersion?'Conferência registrada para estes recebimentos.':stale?'Os recebimentos mudaram desde a última conferência. Confira novamente.':'Preencha e confirme cada forma de pagamento.'}</p>
+            <p>{stale?'Os recebimentos mudaram desde a última conferência. Confira novamente.':'Preencha e confirme cada forma de pagamento.'}</p>
             {latest&&<small>Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>}
           </div>
           <div className="day-conference-progress-meter">
-            <strong>{sameVersion?rows.length:count} de {rows.length} formas verificadas</strong>
-            <div className="day-conference-progress-track" role="progressbar" aria-label="Formas verificadas" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={sameVersion?rows.length:count}>
-              <span style={{width:(rows.length?(sameVersion?100:count/rows.length*100):0)+'%'}}/>
+            <strong>{count} de {rows.length} formas verificadas</strong>
+            <div className="day-conference-progress-track" role="progressbar" aria-label="Formas verificadas" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={count}>
+              <span style={{width:(rows.length?count/rows.length*100:0)+'%'}}/>
             </div>
           </div>
-        </section>
-        <section className="day-conference-stats" aria-label="Resumo da conferência">
-          <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Registrado no Mesiva</small></div>
-            <strong>{formatCents(totalNet)}</strong><p>Recebimentos líquidos da data</p>
-          </div>
-          <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Valor informado</small></div>
-            <strong>{totalEntered===null?'—':formatCents(totalEntered)}</strong>
-            <p>{totalEntered===null?'Campos em branco não entram na soma':'Conferido no banco, caixa e maquininhas'}</p>
-          </div>
-          <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Diferença</small></div>
-            <strong className={totalDifference!==null&&totalDifference!==0?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
-            <p>{totalDifference===null?'Informe os valores de todas as formas':differences.length?'Verifique diferenças individuais':'Valores totais informados'}</p>
-          </div>
-        </section>
+        </section>}
         {totalEditRefund>0&&<p className="day-conference-note">A Visão geral não deduz devoluções após edição ({formatCents(totalEditRefund)}), já descontadas do líquido desta conferência. Bruto e líquido usam conceitos distintos.</p>}
         {summary.integrityIssues>0&&<p role="alert" className="day-conference-error">Há divergências entre movimentos, recibos e alocações. A conclusão está bloqueada; solicite revisão financeira. Nenhum pagamento foi alterado.</p>}
         {rows.some(row=>row.method==='Não informado')&&<p className="day-conference-notice">Há lançamentos sem forma identificável. Confira-os separadamente; estornos sem evidência não são atribuídos à forma original.</p>}
-        <article className="surface-card day-conference-main">
+        <article className={'surface-card day-conference-main'+(sameVersion?' day-conference-completed':'')}>
           <div className="day-conference-panel-heading">
-            <div><h2>Conferir por forma de pagamento</h2><p>Informe quanto encontrou externamente e confirme cada forma individualmente.</p></div>
-            <span>{rows.reduce((sum,row)=>sum+row.count,0)} lançamentos</span>
+            <div><h2>{sameVersion?'Conferência por forma de pagamento':'Conferir por forma de pagamento'}</h2>
+              <p>{sameVersion?'Valores registrados na conferência de '+readableDate(date)+'.':'Informe quanto encontrou externamente e confirme cada forma individualmente.'}</p>
+              {sameVersion&&<small className="day-conference-completed-meta">Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>}
+            </div>
+            <div className="day-conference-panel-status">
+              {sameVersion&&<span className={latest.status==='com_ressalva'?'day-conference-pending':'day-conference-good'}>{latest.status==='com_ressalva'?'Concluída com ressalva':'Concluída'}</span>}
+              <span>{rows.reduce((sum,row)=>sum+row.count,0)} lançamentos</span>
+            </div>
           </div>
           {rows.length?<div className="day-conference-table" aria-label="Conferência por forma de pagamento">
-            <div className="day-conference-table-head" aria-hidden="true"><span>Forma de pagamento</span><span>Mesiva</span><span>Conferido</span><span>Diferença</span><span>Verificação</span><span/></div>
+            <div className="day-conference-table-head" aria-hidden="true"><span>Forma de pagamento</span><span>Mesiva</span><span>Conferido</span><span>Diferença</span>{!sameVersion&&<span>Verificação</span>}<span>{sameVersion?'Detalhes':''}</span></div>
             {rows.map((row,index)=>{
               const parsed=parseCents(amounts[row.method]??'')
               const isChecked=Boolean(verified[row.method])&&parsed!==null
               const diff=parsed!==null?parsed-row.netCents:null
               const presentation=methodPresentation(row.method)
-              const state=sameVersion?'Encerrado':isChecked?(diff===0?'Conferido':'Divergente'):parsed===null?'Aguardando valor':'Não conferido'
+              const state=isChecked?(diff===0?'Conferido':'Divergente'):parsed===null?'Aguardando valor':'Não conferido'
               return <div className="day-conference-table-row" key={row.method}>
                 <div className="day-conference-method-name">
                   <span className="day-conference-method-icon"><Icon name={presentation.icon} size={19}/></span>
-                  <div><strong>{row.method}</strong><small>{presentation.description}</small></div>
+                  <div><strong>{row.method}</strong>{!sameVersion&&<small>{presentation.description}</small>}</div>
                 </div>
                 <div className="day-conference-cell day-conference-cell-mesiva">
                   <small className="day-conference-value-label">Mesiva</small>
@@ -423,6 +456,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                   {(row.refundCents>0||row.grossCents!==row.netCents)&&<small>Bruto {formatCents(row.grossCents)} · Estornos {formatCents(row.refundCents)}</small>}
                 </div>
                 <div className="day-conference-cell day-conference-cell-input">
+                  {sameVersion?<><small className="day-conference-value-label">Conferido</small><strong>{parsed===null?'—':formatCents(parsed)}</strong></>:<>
                   <label htmlFor={'day-conference-amount-'+index} className="day-conference-value-label">Conferido</label>
                   <input id={'day-conference-amount-'+index} inputMode="decimal" autoComplete="off" placeholder="R$ 0,00"
                     aria-label={'Valor conferido de '+row.method} value={amounts[row.method]??''} disabled={fieldsDisabled}
@@ -430,32 +464,38 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                     aria-describedby={Boolean(amounts[row.method])&&parsed===null?'conference-amount-error-'+index:undefined}
                     onChange={event=>{setAmounts(prev=>({...prev,[row.method]:maskCents(event.target.value)}));setVerified(prev=>({...prev,[row.method]:false}))}}/>
                   {Boolean(amounts[row.method])&&parsed===null&&<small id={'conference-amount-error-'+index}>Informe um valor válido (ex.: -R$ 10,50).</small>}
+                  </>}
                 </div>
                 <div className="day-conference-cell day-conference-cell-diff">
                   <small className="day-conference-value-label">Diferença</small>
-                  <strong className={diff===null?'day-conference-muted':diff===0?'day-conference-positive':'day-conference-text-danger'}>{diff===null?'—':formatCents(diff)}</strong>
+                  <strong className={diff===null||(sameVersion&&diff===0)?'day-conference-muted':diff===0?'day-conference-positive':'day-conference-text-danger'}>{diff===null?'—':formatCents(diff)}</strong>
                 </div>
-                <div className="day-conference-cell day-conference-cell-status">
+                {!sameVersion&&<div className="day-conference-cell day-conference-cell-status">
                   <small className="day-conference-value-label">Verificação</small>
-                  <span className={sameVersion?'day-conference-closed':isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{!sameVersion&&!isChecked&&<Icon name="clock" size={12}/>} {state}</span>
-                </div>
+                  <span className={isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{!isChecked&&<Icon name="clock" size={12}/>} {state}</span>
+                </div>}
                 <div className="day-conference-cell day-conference-row-actions">
                   <button type="button" className="day-conference-detail" aria-label={'Ver lançamentos de '+row.method} onClick={event=>openDetail(row.method,event.currentTarget)}>
-                    <Icon name="eye" size={16}/>{row.count} {row.count===1?'lançamento':'lançamentos'}
+                    <Icon name="eye" size={16}/>{sameVersion?'Ver ':''}{row.count} {row.count===1?'lançamento':'lançamentos'}
                   </button>
-                  <label className="day-conference-check"><input type="checkbox" aria-label={'Conferir '+row.method} checked={isChecked}
+                  {!sameVersion&&<label className="day-conference-check"><input type="checkbox" aria-label={'Conferir '+row.method} checked={isChecked}
                     disabled={fieldsDisabled||parsed===null} onChange={event=>setVerified(prev=>({...prev,[row.method]:event.target.checked}))}/>
                     <span>{isChecked?'Revisar':'Conferir'}</span>
-                  </label>
+                  </label>}
                 </div>
               </div>
             })}
           </div>:<div className="day-conference-empty">Nenhum recebimento registrado nesta data. Não há valores para conferir.</div>}
-          <details className="day-conference-help">
-            <summary><Icon name="info" size={16}/>O que exatamente estou conferindo?<Icon name="arrow-down" size={15}/></summary>
-            <p><strong>Esta é a conferência de recebimentos, não do saldo físico da gaveta.</strong> Dinheiro: compare as entradas registradas; Pix: confira o extrato bancário; cartões: compare as transações da operadora, não repasses futuros. O valor Mesiva considera <strong>bruto {formatCents(totalGross)}</strong> e <strong>estornos {formatCents(totalRefund)}</strong> nesta data.</p>
-          </details>
-          {rows.length>0&&<div className="day-conference-footer">
+          {rows.length>0&&<>
+          <section className="day-conference-totals" aria-label="Totais da conferência">
+            <div><small>Total no Mesiva</small><strong>{formatCents(totalNet)}</strong></div>
+            <div><small>{sameVersion?'Total conferido':'Valor informado'}</small><strong>{totalEntered===null?'—':formatCents(totalEntered)}</strong></div>
+            <div><small>Diferença total</small><strong className={totalDifference!==null&&totalDifference!==0?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong></div>
+          </section>
+          {totalEntered===null&&<p className="day-conference-note">Preencha todas as formas para calcular o total.</p>}
+          {differences.length>0&&totalDifference===0&&<p className="day-conference-note">Existem diferenças que se compensam entre formas. A conferência permanece com ressalva.</p>}
+          {sameVersion?<div className="day-conference-recorded-notes"><h3>Observações</h3><p>{note.trim()||'Sem observações.'}</p></div>
+            :<div className="day-conference-footer">
             <div className="day-conference-notes">
               <label htmlFor="day-conference-notes">Observações da conferência</label>
               <textarea id="day-conference-notes" rows={3} value={note} maxLength={1000}
@@ -463,16 +503,18 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 onChange={event=>setNote(event.target.value)} disabled={fieldsDisabled}/>
               <small>{differences.length?'Justifique cada divergência, mesmo que a diferença geral seja zero.':'Observações opcionais quando todas as formas coincidem.'}</small>
             </div>
-            <div className="day-conference-footer-total">
-              <small>Diferença total informada</small>
-              <strong className={totalDifference!==null&&differences.length?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
-              {differences.length>0&&totalDifference===0&&<small>Existem diferenças que se compensam entre formas.</small>}
-              {!sameVersion&&<Button icon="check" onClick={()=>setDialog(true)} disabled={!canSubmit}>Concluir conferência</Button>}
-              {!sameVersion&&!canSubmit&&canComplete&&!writesBlocked&&!summary?.integrityIssues&&
+            <div className="day-conference-footer-actions">
+              <Button icon="check" onClick={()=>setDialog(true)} disabled={!canSubmit}>Concluir conferência</Button>
+              {!canSubmit&&canComplete&&!writesBlocked&&!summary?.integrityIssues&&
                 <small role="status">{!allComplete?'Informe e marque como conferidas todas as formas de pagamento.':differences.length&&!note.trim()?'Justifique as divergências antes de concluir.':''}</small>}
               {!canComplete&&<small>Seu perfil pode consultar, mas não concluir conferências.</small>}
             </div>
           </div>}
+          </>}
+          <details className="day-conference-help">
+            <summary><Icon name="info" size={16}/>O que exatamente estou conferindo?<Icon name="arrow-down" size={15}/></summary>
+            <p><strong>Esta é a conferência de recebimentos, não do saldo físico da gaveta.</strong> Dinheiro: compare as entradas registradas; Pix: confira o extrato bancário; cartões: compare as transações da operadora, não repasses futuros. O valor Mesiva considera <strong>bruto {formatCents(totalGross)}</strong> e <strong>estornos {formatCents(totalRefund)}</strong> nesta data.</p>
+          </details>
         </article>
         <section ref={historyPanel} tabIndex={-1} className="surface-card day-conference-history" aria-label="Histórico de conferências">
           <div className="day-conference-panel-heading day-conference-history-heading">
@@ -513,6 +555,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             </>}
         </section>
       </>}
+      </div>
       {detail&&<Modal
         title={detailView.level==='receipts'?'Recebimentos · '+detail.method:detailView.level==='orders'?'Pedidos do recebimento':'Detalhes do pedido'}
         onClose={closeDetail} className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
@@ -520,13 +563,13 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           {detailView.level==='receipts'&&<>
             <div className="day-conference-drawer-summary">
               <div className="day-conference-drawer-total">
-                <div><small>Valor líquido registrado</small><strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
-                <p>{readableDate(date)} · Confira os valores individuais com seus comprovantes externos.</p>
+                <div><small>Valor líquido registrado</small><strong>{formatCents(detail.netCents||0)}</strong></div>
+                <p>{readableDate(detail.date)} · Confira os valores individuais com seus comprovantes externos.</p>
               </div>
             </div>
             <div className="day-conference-receipt-list-heading">
               <strong className="day-conference-navigation-title" tabIndex={-1}>Lançamentos</strong>
-              <small>Exibindo {detail.entries.length} de {rows.find(row=>row.method===detail.method)?.count??detail.entries.length}</small>
+              <small>Exibindo {detail.entries.length} de {detail.count??detail.entries.length}</small>
             </div>
             {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
             <div className="day-conference-receipt-list">
@@ -573,8 +616,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 <p>Valor da transação, não o total individual dos pedidos.</p>
               </div>
               <div className="day-conference-relevant-dates">
-                <span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>
-                <span>Registrado em: <strong>{entry.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+                <span>Data do recebimento: <strong>{readableDate(entry.date)}</strong></span>
+                <span>Registrado no sistema em: <strong>{entry.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
               </div>
               <div className="day-conference-order-list">
                 {linked.map(order=><button key={order.id} type="button"
@@ -620,8 +663,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 </div>
                 <div className="day-conference-relevant-dates">
                   {order.orderDate&&<span>Data do pedido: <strong>{readableDate(order.orderDate)}</strong></span>}
-                  {entry?.date&&<span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>}
-                  <span>Pagamento registrado em: <strong>{entry?.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+                  {entry?.date&&<span>Data do recebimento: <strong>{readableDate(entry.date)}</strong></span>}
+                  <span>Registrado no sistema em: <strong>{entry?.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
                 </div>
                 <p className="day-conference-order-disclaimer">Os dados acima são os atuais do pedido e podem ter sido editados após o pagamento. O valor do recebimento não é atribuído integralmente a cada pedido vinculado.</p>
               </>}
@@ -629,9 +672,48 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           })()}
         </div>
       </Modal>}
-    {dialog&&<ConfirmationDialog title="Confirmar conferência"
-      message={differences.length?'Existem divergências. A conferência será registrada com ressalva, sem alterar pagamentos.':'Registrar esta conferência? Nenhum pagamento será alterado.'}
-      details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}
+    {discardChange&&<ConfirmationDialog title="Descartar preenchimento?"
+      message="Os valores e as observações ainda não registrados serão descartados. As conferências já concluídas serão preservadas."
+      cancelLabel="Continuar conferindo"
+      confirmLabel={discardChange.date===undefined?'Descartar e atualizar':'Descartar e trocar data'}
+      onClose={()=>setDiscardChange(null)} onConfirm={()=>{
+        const nextDate=discardChange.date
+        setDiscardChange(null)
+        return applyChange(nextDate)
+      }}/>}
+    {dialog&&<ConfirmationDialog title="Confirmar conferência" className="day-conference-confirmation-dialog"
+      details={<section className="day-conference-confirmation" aria-label="Resumo da conferência a registrar">
+        <div className="day-conference-confirmation-heading">
+          <span className={'day-conference-confirmation-status'+(differences.length?' has-differences':'')}>{differences.length?'Com ressalva':'Sem divergências'}</span>
+          <span>{readableDate(date)}</span>
+        </div>
+        <p className="day-conference-confirmation-intro">{differences.length
+          ?`${differences.length} de ${rows.length} formas com divergência. Confira os valores antes de registrar.`
+          :'Os valores informados conferem com os recebimentos registrados.'}</p>
+        <table className="day-conference-confirmation-table">
+          <caption>Comparação dos valores por forma de pagamento</caption>
+          <thead><tr><th scope="col">Forma de pagamento</th><th scope="col">Mesiva</th><th scope="col">Conferido</th><th scope="col">Diferença</th></tr></thead>
+          <tbody>{rows.map(row=>{
+            const checked=parseCents(amounts[row.method])||0,difference=checked-row.netCents
+            return <tr key={row.method} className={difference!==0?'has-differences':''}>
+              <th scope="row">{row.method}</th>
+              <td><span aria-hidden="true">Mesiva</span><strong>{formatCents(row.netCents)}</strong></td>
+              <td><span aria-hidden="true">Conferido</span><strong>{formatCents(checked)}</strong></td>
+              <td className="day-conference-confirmation-difference"><span aria-hidden="true">Diferença</span><strong>{formatCents(difference)}</strong></td>
+            </tr>
+          })}</tbody>
+          <tfoot><tr><th scope="row">Total</th>
+            <td><span aria-hidden="true">Mesiva</span><strong>{formatCents(totalNet)}</strong></td>
+            <td><span aria-hidden="true">Conferido</span><strong>{formatCents(totalEntered??0)}</strong></td>
+            <td className={totalDifference!==0?'day-conference-confirmation-total-difference':''}><span aria-hidden="true">Diferença</span><strong>{formatCents(totalDifference??0)}</strong></td>
+          </tr></tfoot>
+        </table>
+        {differences.length>0&&totalDifference===0&&<p className="day-conference-confirmation-warning">As diferenças entre formas se compensam no total. A conferência continua com ressalva.</p>}
+        {note.trim()&&<div className="day-conference-confirmation-note"><h3>{differences.length?'Justificativa das divergências':'Observações'}</h3><p>{note.trim()}</p></div>}
+        <p className="day-conference-confirmation-footnote">{differences.length
+          ?'O registro preserva esta conferência e cria as pendências para acompanhamento. Nenhum pagamento será alterado.'
+          :'O registro preserva os valores desta conferência. Nenhum pagamento será alterado.'}</p>
+      </section>}
       confirmLabel="Registrar conferência" confirmVariant="primary" submitting={submitting}
       onClose={()=>setDialog(false)} onConfirm={finish}/>}
     </div>

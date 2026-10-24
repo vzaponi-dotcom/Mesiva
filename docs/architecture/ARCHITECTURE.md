@@ -198,6 +198,7 @@ sequenceDiagram
 - Uma reserva local `reserved` é um fluxo diferente da comanda `open`: a confirmação de chegada faz a conversão e vincula o pedido mediante verificação de data, revisão, mesa e status.
 - O pagamento da comanda quita os pedidos pendentes vinculados e fecha a comanda conforme regras vigentes. Uma composição pode gerar **um recibo e vários movimentos** por alocação, preservando rastreabilidade.
 - Financeiro/relatórios consomem projeções autorizadas. A área de relatórios possui serviço/queries próprios no Worker e suporte de exportação no frontend; não é correto inferir que exportações são gravadas permanentemente no R2.
+- A Conferência do Dia preserva snapshots financeiros e acompanha diferenças por revisão/forma em `daily_receipt_discrepancies` (migration `0056`). Trigger/backfill derivados dos snapshots alimentam pendências indexadas por empresa/situação/data; a solução usa atualização condicional e registra autoria, sem alterar movimentos. Listas paginadas são solicitadas nas abas, sem polling; o drawer oficial revisa lançamentos atuais com data/versão próprias. Ver [operação](../operations/day-conference.md).
 
 Fontes: [`tableRepository.js`](../../worker/tableRepository.js), [`tableReservationArrival.js`](../../worker/tableReservationArrival.js), [`paymentRepository.js`](../../worker/paymentRepository.js), [`worker/reporting/`](../../worker/reporting/), [`src/domains/reporting/`](../../src/domains/reporting/).
 

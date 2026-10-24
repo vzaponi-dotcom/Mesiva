@@ -6,7 +6,8 @@ import { join } from 'node:path'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { createSettingsDb } from '../../worker/test-support/settingsDb.js'
-import { readDayConferenceState,readDayConferenceEntries,readDayConferenceHistory,completeDayConference } from '../../worker/dayConferenceRepository.js'
+import { readDayConferenceState,readDayConferenceEntries,readDayConferenceHistory,completeDayConference,
+  readDayConferenceDiscrepancies,readDayConferenceDiscrepancy,resolveDayConferenceDiscrepancy } from '../../worker/dayConferenceRepository.js'
 
 const cache=process.env.npm_config_cache ?? (process.platform==='win32'?join(process.env.LOCALAPPDATA,'npm-cache'):join(homedir(),'.npm'))
 const packagePath=readdirSync(join(cache,'_npx')).map(n=>join(cache,'_npx',n,'node_modules/wrangler/package.json'))
@@ -78,6 +79,39 @@ try{
   assert.equal(complete.value.id,replay.value.id);assert.equal(replay.sample.rows_written,0)
   const history=await measure(d=>readDayConferenceHistory(d,biz))
   assert.equal(history.value.length,1);assert.equal(history.sample.rows_written,0)
+  const discrepancySnapshot=JSON.stringify([{method:'Pix',netCents:7700,checkedCents:6000,differenceCents:-1700}])
+  const seedConferences=async(prefix,count,offset)=>db.prepare(`WITH RECURSIVE seq(n) AS(SELECT 0 UNION ALL SELECT n+1 FROM seq WHERE n+1<?)
+    INSERT INTO daily_receipt_conferences(id,business_id,business_date,revision,source_version,snapshot_json,note,status,request_key,created_at,actor_name)
+    SELECT ?||n,?,'2020-01-01',?+n,?||n,?,'Fictitious discrepancy','com_ressalva',?||n,'2020-01-01T15:00:00Z','Gate operator' FROM seq`)
+    .bind(count,prefix,biz,offset,prefix,discrepancySnapshot,prefix).run()
+  await seedConferences('pending-small-',40,1)
+  const pendingSmall=await measure(d=>readDayConferenceDiscrepancies(d,biz,'pending'))
+  const discrepancyId=pendingSmall.value.items[0].id
+  const discrepancyDetail=await measure(d=>readDayConferenceDiscrepancy(d,biz,discrepancyId))
+  const resolutionBody={reason:'conference_error',note:'Fictitious evidence checked.',confirmed:true}
+  const resolve=await measure(d=>resolveDayConferenceDiscrepancy(d,biz,'gate-operator',discrepancyId,resolutionBody))
+  const resolutionReplay=await measure(d=>resolveDayConferenceDiscrepancy(d,biz,'gate-operator',discrepancyId,resolutionBody))
+  assert.equal(resolve.value.status,'resolved');assert.equal(resolutionReplay.sample.rows_written,0)
+  const pendingPage=await measure(d=>readDayConferenceDiscrepancies(d,biz,'pending',pendingSmall.value.nextCursor))
+  const seedWithTrigger=await seedConferences('pending-large-',9960,41)
+  const pendingLarge=await measure(d=>readDayConferenceDiscrepancies(d,biz,'pending'))
+  const resolvedList=await measure(d=>readDayConferenceDiscrepancies(d,biz,'resolved'))
+  assert.equal(pendingSmall.value.items.length,20);assert.equal(pendingLarge.value.items.length,20)
+  assert.ok(pendingLarge.sample.rows_read<=pendingSmall.sample.rows_read+20,'pending list must use the status/date index under large history')
+  for(const reading of [pendingSmall,pendingLarge,pendingPage,discrepancyDetail,resolvedList])assert.equal(reading.sample.rows_written,0)
+  assert.equal(resolvedList.value.items.length,1)
+  const discrepancyPlan=(await db.prepare(`EXPLAIN QUERY PLAN SELECT d.id FROM daily_receipt_discrepancies d
+    JOIN daily_receipt_conferences c ON c.id=d.conference_id AND c.business_id=d.business_id
+    WHERE d.business_id=? AND d.status='pending' ORDER BY d.business_date DESC,d.id DESC LIMIT 21`).bind(biz).all()).results.map(r=>r.detail)
+  assert.ok(discrepancyPlan.some(line=>line.includes('daily_receipt_discrepancies_status_idx')))
+  assert.ok(discrepancyPlan.every(line=>!/^SCAN /.test(line)))
+  const syntheticInsert=async(d,id,snapshot)=>d.prepare(`INSERT INTO daily_receipt_conferences
+    (id,business_id,business_date,revision,source_version,snapshot_json,status,request_key,created_at)
+    VALUES(?,?,'2019-01-01',?,?,?,'com_ressalva',?,'2019-01-01T15:00:00Z')`)
+    .bind(id,biz,id==='trigger-matching'?1:2,id,JSON.stringify(snapshot),id).run()
+  const triggerMatching=await measure(d=>syntheticInsert(d,'trigger-matching',[{method:'Pix',netCents:100,checkedCents:100,differenceCents:0}]))
+  const triggerDivergent=await measure(d=>syntheticInsert(d,'trigger-divergent',JSON.parse(discrepancySnapshot)))
+  assert.ok(triggerDivergent.sample.rows_written>triggerMatching.sample.rows_written)
   const firstQueries=new Map(metrics.map(q=>[q.sql,q]))
   // Obtain bound plans from the real repository by intercepting a second read.
   const explainDb={prepare(sql){return {bind(...args){return {sql,args}}}},async batch(statements){
@@ -101,5 +135,9 @@ try{
     open:{small:small.sample,large:large.sample},details:{small:smallDetails.sample,large:details.sample},complete:complete.sample,replay:replay.sample,history:history.sample,
     receiptInsertMeta:dayWrites.receipts,movementInsertWithRevisionMeta:dayWrites.movements,historicalMovementInsertMeta:historyWrites.movements,
     plans,distinctQueries:firstQueries.size,passed:true}
+  report.discrepancies={candidates:{small:40,large:10000,pageSize:20},pendingSmall:pendingSmall.sample,pendingLarge:pendingLarge.sample,
+    pendingPage:pendingPage.sample,detail:discrepancyDetail.sample,resolve:resolve.sample,replay:resolutionReplay.sample,
+    resolved:resolvedList.sample,triggerMatching:triggerMatching.sample,triggerDivergent:triggerDivergent.sample,
+    bulkSeedMeta:seedWithTrigger.meta,plan:discrepancyPlan}
   console.log(JSON.stringify(report))
 }finally{fixture.close();await mf.dispose()}

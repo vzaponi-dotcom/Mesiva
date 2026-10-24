@@ -3,6 +3,35 @@ import assert from 'node:assert/strict'
 import { createSettingsDb } from './test-support/settingsDb.js'
 import { readDayConferenceState } from './dayConferenceRepository.js'
 
+test('discrepancy migration exists and derives pending lines without changing conference snapshots',t=>{
+  const f=createSettingsDb();t.after(f.close)
+  assert.ok(f.sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='daily_receipt_discrepancies'").get())
+  const snapshot=JSON.stringify([{method:'Pix',netCents:7700,checkedCents:6000,differenceCents:-1700},
+    {method:'Dinheiro',netCents:1000,checkedCents:2700,differenceCents:1700},
+    {method:'Cartão',netCents:100,checkedCents:100,differenceCents:0}])
+  f.sqlite.prepare(`INSERT INTO daily_receipt_conferences(id,business_id,business_date,revision,source_version,snapshot_json,note,status,request_key,created_at)
+    VALUES('discrepant','amor-e-sabor','2026-10-15',1,'version',?,'Motivo original','com_ressalva','test-discrepancy','2026-10-15')`).run(snapshot)
+  const rows=f.sqlite.prepare('SELECT method,difference_cents,status FROM daily_receipt_discrepancies ORDER BY line_index').all()
+  assert.deepEqual(rows.map(x=>[x.method,x.difference_cents,x.status]),[['Pix',-1700,'pending'],['Dinheiro',1700,'pending']])
+  assert.equal(f.sqlite.prepare("SELECT snapshot_json FROM daily_receipt_conferences WHERE id='discrepant'").get().snapshot_json,snapshot)
+  assert.deepEqual(f.sqlite.prepare('PRAGMA foreign_key_check').all(),[])
+})
+
+test('0056 backfills every divergent historical revision and preserves financial data',t=>{
+  let original,financial
+  const f=createSettingsDb({beforeMigration(name,sqlite){
+    if(!name.startsWith('0056_'))return
+    original=JSON.stringify([{method:'Pix',netCents:100,checkedCents:90,differenceCents:-10}])
+    sqlite.prepare(`INSERT INTO daily_receipt_conferences(id,business_id,business_date,revision,source_version,snapshot_json,note,status,request_key,created_at)
+      VALUES('old-discrepancy','amor-e-sabor','2020-01-01',1,'old-version',?,'Nota antiga','com_ressalva','old-discrepancy','2020-01-01')`).run(original)
+    financial=JSON.stringify(sqlite.prepare('SELECT * FROM movements ORDER BY id').all())
+  }})
+  t.after(f.close)
+  assert.equal(f.sqlite.prepare("SELECT status FROM daily_receipt_discrepancies WHERE conference_id='old-discrepancy'").get().status,'pending')
+  assert.equal(f.sqlite.prepare("SELECT snapshot_json FROM daily_receipt_conferences WHERE id='old-discrepancy'").get().snapshot_json,original)
+  assert.equal(JSON.stringify(f.sqlite.prepare('SELECT * FROM movements ORDER BY id').all()),financial)
+})
+
 test('0053/0054 populated upgrade preserves every financial row and historical snapshot',async t=>{
   let before
   const financial=sqlite=>JSON.stringify(['payments','payment_receipts','payment_allocations','movements']

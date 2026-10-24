@@ -30,6 +30,110 @@ const amounts = screen => screen.root.findAllByType('input').filter(n=>n.props.i
 const verify = screen => screen.root.findAllByType('input').filter(n=>n.props.type==='checkbox')
 const firstDetail = screen => screen.root.findAll(n=>n.type==='button'&&n.props.className==='day-conference-detail')[0]
 
+test('a completed conference is a readable snapshot, while source changes restore the editable workflow',async t=>{
+  const data=summary()
+  data.latest={id:'saved',date:data.date,revision:1,sourceVersion:data.sourceVersion,status:'conferida',
+    createdAt:'2026-10-15T15:00:00Z',actorName:'Gestora',note:'',
+    lines:data.methods.map(row=>({...row,checkedCents:row.netCents,differenceCents:0}))}
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(path.includes('/entries?')?{entries:[],nextPage:null}:data)})
+  assert.equal(amounts(screen).length,0,'saved values should be text, not disabled editing controls')
+  assert.equal(verify(screen).length,0)
+  assert.equal(screen.root.findAllByType('textarea').length,0)
+  assert.match(text(screen),/Sem observações/)
+  assert.doesNotMatch(text(screen),/Encerrado/)
+  const totals=screen.root.find(n=>n.props?.['aria-label']==='Totais da conferência')
+  assert.match(nodeText(totals),/250,00/)
+  assert.ok(totals.findAllByType('strong').some(n=>nodeText(n).includes('0,00')))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
+  assert.equal(calls.length,2,'saved receipts remain available through the official drawer')
+  await act(async()=>buttonNamed(screen.root,'Fechar').props.onClick())
+  data.sourceVersion='b'.repeat(64)
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(amounts(screen).length,2)
+  assert.equal(verify(screen).length,2)
+  assert.match(text(screen),/Revisão necessária/)
+})
+
+test('completed compensated differences and the original justification remain visible without edit controls',async t=>{
+  const data=summary()
+  data.latest={id:'saved-differences',date:data.date,revision:1,sourceVersion:data.sourceVersion,status:'com_ressalva',
+    createdAt:'2026-10-15T15:00:00Z',actorName:'Gestora',note:'Pix -R$ 1,00 e dinheiro +R$ 1,00.',
+    lines:data.methods.map((row,index)=>({...row,checkedCents:row.netCents+(index===0?-100:100),differenceCents:index===0?-100:100}))}
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(data)},{canComplete:false})
+  assert.match(text(screen),/Concluída com ressalva/)
+  assert.match(text(screen),/Pix -R\$ 1,00 e dinheiro \+R\$ 1,00/)
+  assert.match(text(screen),/diferenças que se compensam/)
+  assert.equal(amounts(screen).length,0)
+  assert.equal(verify(screen).length,0)
+  assert.equal(screen.root.findAllByType('textarea').length,0)
+  assert.equal(buttonNamed(screen.root,'Concluir conferência'),undefined)
+  assert.equal(calls.length,1)
+})
+
+test('discrepancies load only on demand and returning preserves the conference draft',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(path.includes('/discrepancies')?{items:[],nextCursor:null}:summary())})
+  await act(async()=>amounts(screen)[0].props.onChange({target:{value:'10000'}}))
+  assert.equal(calls.length,1)
+  assert.ok(buttonNamed(screen.root,'Divergências pendentes'),'pending treatment must be available on this screen')
+  await act(async()=>buttonNamed(screen.root,'Divergências pendentes').props.onClick())
+  assert.equal(calls.length,2);assert.match(calls[1],/discrepancies\?status=pending/)
+  assert.match(text(screen),/Nenhuma divergência pendente/)
+  await act(async()=>buttonNamed(screen.root,'Conferência').props.onClick())
+  assert.equal(amounts(screen)[0].props.value,'R$ 100,00')
+  assert.equal(calls.length,2,'returning to a valid draft does not query again')
+})
+
+test('reviewing an old discrepancy keeps its own date and source on every drawer page',async t=>{
+  const calls=[],old={id:'old:0',date:'2020-01-01',method:'Pix',netCents:100,checkedCents:90,differenceCents:-10,
+    status:'pending',revision:1,actorName:'Marina',createdAt:'2020-01-01T15:00:00Z',conferenceNote:'Revisar extrato antigo.'}
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    if(path.includes('/discrepancies/'))return response({discrepancy:old})
+    if(path.includes('/discrepancies?'))return response({items:[old],nextCursor:null})
+    if(path.includes('/entries?'))return response({entries:[],nextPage:path.includes('page=1')?2:null})
+    return response({...summary(path.includes('2020-01-01')?'2020-01-01':'2026-10-15'),sourceVersion:'b'.repeat(64)})
+  })
+  await act(async()=>buttonNamed(screen.root,'Divergências pendentes').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Analisar').props.onClick({currentTarget:{}}))
+  await act(async()=>buttonNamed(screen.root,'Revisar lançamentos atuais').props.onClick({currentTarget:{focus(){}}}))
+  const more=screen.root.findAll(n=>n.type==='button'&&nodeText(n).includes('Carregar mais'))[0]
+  assert.ok(more)
+  await act(async()=>more.props.onClick())
+  const pages=calls.filter(path=>path.includes('/entries?'))
+  assert.equal(pages.length,2)
+  assert.ok(pages.every(path=>path.includes('date=2020-01-01')&&path.includes('sourceVersion='+'b'.repeat(64))))
+  assert.match(pages[1],/page=2/)
+})
+
+test('resolving a discrepancy acquires and releases only its global navigation/write lock',async t=>{
+  let key=null,release
+  const item={id:'pending:0',date:'2026-10-15',method:'Pix',netCents:100,checkedCents:90,differenceCents:-10,status:'pending',
+    revision:1,createdAt:'2026-10-15T15:00:00Z',conferenceNote:'Nota'}
+  const {screen}=await mount(t,async(path,o)=>{
+    if(o.method==='POST')return new Promise(resolve=>{release=()=>resolve(response({discrepancy:{...item,status:'resolved',
+      resolutionReason:'conference_error',resolutionNote:'Conferido',resolvedAt:'2026-10-24T15:00:00Z',resolvedActorName:'Gestora'}}))})
+    if(path.includes('/discrepancies/'))return response({discrepancy:item})
+    if(path.includes('/discrepancies?'))return response({items:[item],nextCursor:null})
+    return response(summary())
+  },{setRequestKey:value=>{key=typeof value==='function'?value(key):value}})
+  await act(async()=>buttonNamed(screen.root,'Divergências pendentes').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Analisar').props.onClick({currentTarget:{}}))
+  const select=screen.root.find(n=>typeof n.type==='function'&&n.type.name==='SystemSelect')
+  await act(async()=>select.props.onChange('conference_error'))
+  await act(async()=>screen.root.findByType('form').findByType('textarea').props.onChange({target:{value:'Conferido'}}))
+  await act(async()=>screen.root.findByType('form').findByProps({type:'checkbox'}).props.onChange({target:{checked:true}}))
+  let pending
+  await act(async()=>{pending=screen.root.findByType('form').props.onSubmit({preventDefault(){}})})
+  assert.equal(key,'day-conference:discrepancy')
+  assert.equal(buttonNamed(screen.root,'Conferência').props.disabled,true)
+  key='other-operation'
+  await act(async()=>{release();await pending})
+  assert.equal(key,'other-operation','resolution cleanup must not clear another operation')
+})
+
 test('conference uses the authenticated company HTTP client and loads no details until requested',async t=>{
   const calls=[]
   const {screen}=await mount(t,async(path,options)=>{
@@ -122,21 +226,110 @@ test('CSV downloads the complete selected date through the company client and hi
 test('approved comparison layout keeps Pix first and updates informed and difference indicators without extra reads',async t=>{
   const calls=[]
   const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
-  const statCards=screen.root.findAll(n=>n.props?.className?.includes('day-conference-stat surface-card') ||
-    n.props?.className?.includes('surface-card day-conference-stat'))
-  assert.equal(statCards.length,3)
+  const totals=screen.root.find(n=>n.props?.['aria-label']==='Totais da conferência')
+  assert.equal(totals.findAllByType('strong').length,3)
   const methodRows=screen.root.findAll(n=>n.props?.className==='day-conference-table-row')
   assert.equal(methodRows.length,2)
   assert.match(nodeText(methodRows[0]),/Pix/)
   assert.match(nodeText(methodRows[1]),/Dinheiro/)
   assert.match(text(screen),/Valor informado/)
-  assert.match(text(screen),/Campos em branco não entram na soma/)
+  assert.match(text(screen),/Preencha todas as formas para calcular o total/)
   await act(async()=>{
     amounts(screen)[0].props.onChange({target:{value:'200,00'}})
     amounts(screen)[1].props.onChange({target:{value:'50,00'}})
   })
-  assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
+  assert.match(nodeText(totals),/250,00/)
+  assert.doesNotMatch(text(screen),/Preencha todas as formas para calcular o total/)
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
+})
+
+for(const action of ['refresh','date'])test(`discard confirmation preserves an unfinished conference when cancelling ${action}`,async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    return response(summary(new URL(path,'http://local').searchParams.get('date')))
+  })
+  const dateInput=()=>screen.root.findAllByType('input').find(n=>n.props.type==='date')
+  const initialDate=dateInput().props.value
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'0'}})
+    screen.root.findByType('textarea').props.onChange({target:{value:'Rascunho da conferência'}})
+  })
+  await act(async()=>verify(screen)[0].props.onChange({target:{checked:true}}))
+  const change=()=>action==='refresh'?buttonNamed(screen.root,'Atualizar').props.onClick()
+    :dateInput().props.onChange({target:{value:'2026-10-14'}})
+  await act(async()=>change())
+  assert.match(text(screen),/Descartar preenchimento/)
+  assert.equal(calls.length,1,'opening the confirmation must not read or write data')
+  assert.equal(dateInput().props.value,initialDate)
+  await act(async()=>buttonNamed(screen.root,'Continuar conferindo').props.onClick())
+  assert.equal(amounts(screen)[0].props.value,'R$ 0,00')
+  assert.equal(verify(screen)[0].props.checked,true)
+  assert.equal(screen.root.findByType('textarea').props.value,'Rascunho da conferência')
+  assert.equal(calls.length,1)
+  await act(async()=>change())
+  await act(async()=>buttonNamed(screen.root,action==='refresh'?'Descartar e atualizar':'Descartar e trocar data').props.onClick())
+  assert.equal(calls.length,2,'confirming performs only the requested read')
+  assert.equal(dateInput().props.value,action==='refresh'?initialDate:'2026-10-14')
+  assert.ok(amounts(screen).every(n=>n.props.value===''))
+  assert.equal(screen.root.findByType('textarea').props.value,'')
+})
+
+test('notes alone are protected while an empty conference refreshes without confirmation',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(calls.length,2)
+  assert.doesNotMatch(text(screen),/Descartar preenchimento/)
+  await act(async()=>screen.root.findByType('textarea').props.onChange({target:{value:'Comprovante ainda em análise'}}))
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.match(text(screen),/Descartar preenchimento/)
+  assert.equal(calls.length,2)
+  await act(async()=>buttonNamed(screen.root,'Continuar conferindo').props.onClick())
+  assert.equal(screen.root.findByType('textarea').props.value,'Comprovante ainda em análise')
+})
+
+test('manual refresh clears prior success and does not ask to discard a completed snapshot',async t=>{
+  let conference,changed=false
+  const {screen}=await mount(t,async(path,options)=>{
+    if(options.method==='POST'){
+      const payload=JSON.parse(options.body)
+      conference={id:'completed',...payload,revision:1,status:'conferida',createdAt:'2026-10-23T15:00:00Z'}
+      return response({conference})
+    }
+    return response({...summary(),sourceVersion:(changed?'b':'a').repeat(64),latest:conference??null})
+  })
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'200,00'}})
+    amounts(screen)[1].props.onChange({target:{value:'50,00'}})
+  })
+  await act(async()=>{for(const field of verify(screen))field.props.onChange({target:{checked:true}})})
+  await act(async()=>buttonNamed(screen.root,'Concluir conferência').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Registrar conferência').props.onClick())
+  assert.match(text(screen),/Conferência registrada com sucesso/)
+  changed=true
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.match(text(screen),/Revisão necessária/)
+  assert.doesNotMatch(text(screen),/Conferência registrada com sucesso|Descartar preenchimento/)
+})
+
+test('refresh can reconcile an uncertain submission without a discard prompt',async t=>{
+  let reads=0
+  const {screen}=await mount(t,async(path,options)=>{
+    if(options.method==='POST')throw new TypeError('Resposta perdida')
+    reads++;return response(summary())
+  })
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'200,00'}})
+    amounts(screen)[1].props.onChange({target:{value:'50,00'}})
+  })
+  await act(async()=>{for(const field of verify(screen))field.props.onChange({target:{checked:true}})})
+  await act(async()=>buttonNamed(screen.root,'Concluir conferência').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Registrar conferência').props.onClick())
+  assert.match(text(screen),/A resposta não foi confirmada/)
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(reads,2)
+  assert.doesNotMatch(text(screen),/Descartar preenchimento/)
 })
 
 test('receipt drawer shows pertinent dates, hides technical IDs and pages on demand',async t=>{
@@ -224,8 +417,8 @@ test('shared PIX is progressive: receipt, orders, order detail, back, without du
   assert.match(text(screen),/Pizza/)
   assert.match(text(screen),/Total atual do pedido/)
   assert.match(text(screen),/Dados acima são os atuais|dados acima são os atuais/i)
-  assert.match(text(screen),/Data financeira/)
-  assert.match(text(screen),/Pagamento registrado em/)
+  assert.match(text(screen),/Data do recebimento/)
+  assert.match(text(screen),/Registrado no sistema em/)
   assert.doesNotMatch(text(screen),/Pedido #38|movement-1|shared-1/)
   assert.equal(calls.filter(path=>path.includes('/orders/by-ids')).length,1)
   await act(async()=>buttonNamed(screen.root,'Voltar aos pedidos').props.onClick())
@@ -282,6 +475,7 @@ test('receipt list never exposes customer or drill action when order-read grant 
 })
 
 test('revision history presents newest snapshot first with real variation and preserves older records',async t=>{
+  t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-10-23T23:10:00Z')})
   const calls=[]
   const current=summary('2026-10-23')
   const sourceVersion=current.sourceVersion
@@ -325,7 +519,7 @@ test('revision history presents newest snapshot first with real variation and pr
   assert.equal(calls.length,2,'open history issues one bounded request')
   await act(async()=>buttonNamed(screen.root,'Ver valores desta revisão').props.onClick())
   assert.match(text(screen),/Nota preservada da revisão 1\./)
-  assert.doesNotMatch(text(screen),/Caixa e extratos conferidos\./,
+  assert.doesNotMatch(nodeText(cards()[0]),/Caixa e extratos conferidos\./,
     'only selected revision expands')
   assert.match(text(screen),/217,00/)
   assert.equal(calls.length,2,'switching revisions never refetches D1')

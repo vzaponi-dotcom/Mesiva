@@ -45,7 +45,7 @@ Esses são **contextos funcionais**, não uma matriz de cargos/perfis ou permiss
 | **Mesas, comandas e reservas** | Gestão de mesas, consumo por comanda, reservas e fluxos associados a pagamentos/transferências, conforme permissões | `src/domains/table-service/`, `src/app/workflows/payments/table-tab/` |
 | **Clientes** | Cadastro, consulta e relacionamento; histórico e recebimento elegível de pedidos de clientes | `src/domains/customers/`, `src/app/workflows/payments/client-orders/` |
 | **Produtos e preços** | Catálogo de produtos, apresentação e manutenção autorizada dos itens utilizados em pedidos | `src/domains/catalog/` |
-| **Financeiro** | Visão geral, contas a receber, movimentações e formas de pagamento; fluxos de recebimento e composição de pagamentos | `src/domains/finance/`, `src/app/workflows/payments/` |
+| **Financeiro** | Visão geral, contas a receber, movimentações e formas de pagamento; recebimentos, conferência por dia/forma e acompanhamento de divergências com histórico de solução | `src/domains/finance/`, `src/app/workflows/payments/` |
 | **Relatórios** | Consultas filtradas do desempenho/da operação, visualizações analíticas e exportação em CSV, PDF e XLSX | `src/domains/reporting/` |
 | **Impressão** | Fila de jobs, configuração e execução centralizada na estação Windows com QZ Tray, controle de cópias, atenção e recuperação operacional | `src/domains/printing/`, `src/infrastructure/qz/`, `worker/orderPrintingApi.js` |
 | **Configurações e preferências** | Políticas da operação, modalidades, pagamentos, cancelamentos, categorias, impressão, identidade da operação, preferências locais e aparência | `src/app/surfaces/settings/`, `docs/operations/spec-b-settings.md` |
