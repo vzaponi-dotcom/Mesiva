@@ -2,6 +2,8 @@
 
 Implementação da PR #124, independente do Caixa Operacional da PR #123. A homologação e a publicação seguem o [runbook de release](../release-and-migration-runbook.md). O [relatório técnico](../superpowers/qa/2026-10-23-day-conference-final-review.md) guarda a evidência desta entrega.
 
+O acompanhamento de divergências da PR #125 tem [desenho aprovado](../superpowers/specs/2026-10-24-conference-discrepancies-design.md) e [QA/custo medido](../superpowers/qa/2026-10-24-conference-discrepancies.md), com base de código e limites próprios. Não confundir esses registros com comprovação de publicação ou homologação em outro SHA.
+
 ## Valores e datas
 
 - Acessar **Financeiro → Conferência do dia** pela navegação da área financeira. O botão duplicado na Visão geral foi removido.
