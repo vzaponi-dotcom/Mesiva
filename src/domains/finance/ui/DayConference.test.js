@@ -371,6 +371,7 @@ test('receipt list never exposes customer or drill action when order-read grant 
 })
 
 test('revision history presents newest snapshot first with real variation and preserves older records',async t=>{
+  t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-10-23T23:10:00Z')})
   const calls=[]
   const current=summary('2026-10-23')
   const sourceVersion=current.sourceVersion
