@@ -235,3 +235,66 @@
 .day-conference-relevant-dates span{display:grid;gap:2px}
 .day-conference-relevant-dates strong{text-align:left}
 }
+
+
+/* Evolução aprovada: menos ruído no resumo, progresso explícito e ajuda sob demanda.
+   Reutiliza os tokens Mesiva/Clássico e os componentes operacionais existentes. */
+.day-conference-page .page-header{margin-bottom:20px}
+.day-conference-progress{padding:16px 18px;margin-bottom:12px}
+.day-conference-progress-meter{display:grid;justify-items:end;gap:9px;flex:0 0 185px;min-width:0}
+.day-conference-progress-meter strong{font-size:.75rem;font-weight:750;color:var(--text);white-space:nowrap}
+.day-conference-progress-meter .day-conference-progress-track{width:100%;height:5px;flex:none}
+.day-conference-stats{gap:12px;margin-bottom:14px}
+.day-conference-stat.surface-card{min-height:112px;padding:16px 18px;gap:4px}
+.day-conference-stat strong{font-variant-numeric:tabular-nums}
+.day-conference-stat p{font-size:.72rem}
+.day-conference-main.surface-card{padding:18px 19px}
+.day-conference-table-row{padding-top:13px;padding-bottom:13px}
+.day-conference-cell-mesiva strong{font-size:.86rem;font-variant-numeric:tabular-nums}
+.day-conference-cell-status>span{display:inline-flex;align-items:center;gap:5px;border-radius:0;padding:0;background:transparent;font-size:.73rem;white-space:nowrap}
+.day-conference-cell-status>span::before{content:'';width:6px;height:6px;border-radius:50%;flex:none;background:currentColor}
+.day-conference-cell-status .day-conference-closed::before{background:var(--muted)}
+.day-conference-cell-status .day-conference-pending svg{display:none}
+.day-conference-help{padding:12px 0 0;margin-top:5px;border-top:1px solid var(--border);font-size:.77rem}
+.day-conference-help summary{display:flex;align-items:center;gap:9px;width:max-content;max-width:100%;min-height:36px;list-style:none;cursor:pointer;font-weight:750;color:var(--text)}
+.day-conference-help summary::-webkit-details-marker{display:none}
+.day-conference-help summary svg:first-child{color:var(--primary);flex:none}
+.day-conference-help summary svg:last-child{margin-left:3px;transition:transform .16s ease;flex:none;color:var(--muted)}
+.day-conference-help[open] summary svg:last-child{transform:rotate(180deg)}
+.day-conference-help summary:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:5px}
+.day-conference-help p{max-width:950px;margin:3px 0 8px;padding-left:25px;color:var(--text-soft);font-size:.75rem;line-height:1.6}
+.day-conference-help p strong{color:var(--text)}
+.day-conference-footer{padding-top:15px;gap:20px}
+.day-conference-notes textarea{min-height:76px}
+.day-conference-date-label{display:none}
+@media(max-width:820px){
+  .day-conference-stats{grid-template-columns:1fr;gap:0}
+  .day-conference-stat.surface-card,.day-conference-stat.surface-card:last-child{grid-column:auto;min-height:100px;padding:14px 16px}
+  .day-conference-stats{gap:9px}
+}
+@media(max-width:550px){
+  .day-conference-actions{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:stretch}
+  .day-conference-date,.day-conference-actions>.button:nth-child(2){grid-column:auto}
+  .day-conference-actions>.button:last-child{grid-column:1/-1;justify-self:start;width:auto}
+  .day-conference-date{padding:0 8px}
+  .day-conference-date input{min-width:0;width:100%}
+  .day-conference-actions>.button:nth-child(2){padding-inline:8px}
+  .day-conference-progress{display:block;padding:14px}
+  .day-conference-progress-meter{display:grid;justify-items:stretch;gap:8px;margin-top:13px}
+  .day-conference-progress-meter .day-conference-progress-track{margin-top:0;width:100%}
+  .day-conference-stat.surface-card{min-height:94px;padding:13px}
+  .day-conference-stat strong{font-size:1.5rem}
+  .day-conference-main.surface-card{padding:14px}
+  .day-conference-table-row{gap:11px}
+  .day-conference-table-row .day-conference-cell-diff{grid-column:1/-1}
+  .day-conference-cell-status{grid-column:1/-1}
+  .day-conference-row-actions{grid-column:1/-1}
+  .day-conference-help{margin-top:8px}
+}
+@media(max-width:380px){
+  .day-conference-actions{grid-template-columns:1fr 1fr}
+  .day-conference-actions>.button:nth-child(2){font-size:.71rem}
+  .day-conference-date input{font-size:14px}
+  .day-conference-progress-meter strong{white-space:normal}
+}
+@media(prefers-reduced-motion:reduce){.day-conference-help summary svg:last-child{transition:none}}
