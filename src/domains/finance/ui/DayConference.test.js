@@ -28,6 +28,7 @@ const response = data => Response.json(data)
 const text = screen => [screen.toJSON()].flat().filter(Boolean).map(nodeText).join('')
 const amounts = screen => screen.root.findAllByType('input').filter(n=>n.props.inputMode==='decimal')
 const verify = screen => screen.root.findAllByType('input').filter(n=>n.props.type==='checkbox')
+const firstDetail = screen => screen.root.findAll(n=>n.type==='button'&&n.props.className==='day-conference-detail')[0]
 
 test('conference uses the authenticated company HTTP client and loads no details until requested',async t=>{
   const calls=[]
@@ -109,7 +110,7 @@ test('CSV downloads the complete selected date through the company client and hi
     return response(summary())
   })
   h.document.createElement=()=>({click(){downloads.push(this.download)}})
-  await act(async()=>buttonNamed(screen.root,'CSV de lançamentos').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Exportar CSV').props.onClick())
   const date=screen.root.findAllByType('input').find(n=>n.props.type==='date').props.value
   assert.deepEqual(downloads,['mesiva-recebimentos-'+date+'.csv'])
   assert.equal(calls.filter(path=>path.includes('/entries?')).length,2)
@@ -160,7 +161,7 @@ test('receipt drawer shows pertinent dates, hides technical IDs and pages on dem
     return response(data)
   })
   assert.equal(calls.length,1)
-  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
   const receiptCards=()=>screen.root.findAll(n=>n.props.className==='day-conference-receipt')
   assert.equal(receiptCards().length,2)
   assert.match(nodeText(receiptCards()[0]),/PIX recebido/)
@@ -207,7 +208,7 @@ test('shared PIX is progressive: receipt, orders, order detail, back, without du
     }]})
     return response(summary())
   },{canViewOrders:true})
-  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
   assert.match(text(screen),/Maria/)
   assert.match(text(screen),/2 pedidos vinculados/)
   assert.equal((text(screen).match(/Maria/g)||[]).length,1,'common customer should not repeat across a receipt')
@@ -251,7 +252,7 @@ test('single-order receipt opens detail directly and protects order data without
     return response(summary())
   }
   const {screen}=await mount(t,fetchImpl,{canViewOrders:true})
-  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
   assert.match(text(screen),/Luana/)
   assert.match(text(screen),/Pedido #331/)
   await act(async()=>buttonNamed(screen.root,'Ver pedido').props.onClick())
@@ -274,7 +275,7 @@ test('receipt list never exposes customer or drill action when order-read grant 
     }],nextPage:null})
     return response(summary())
   },{canViewOrders:false})
-  await act(async()=>buttonNamed(screen.root,'Ver lançamentos').props.onClick({currentTarget:{focus(){}}}))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
   assert.doesNotMatch(text(screen),/Luana|Ver pedido|Ver 1 pedido|private-receipt|movement-private/)
   assert.equal(screen.root.findAllByType('button').filter(n=>nodeText(n)==='Ver pedido').length,0)
   assert.equal(calls.length,2,'unauthorized users cannot request order details')
@@ -347,4 +348,28 @@ test('revision history does not invent totals when no previous revision exists',
   assert.match(text(screen),/Diferença/)
   assert.match(text(screen),/-R\$\s*1,00/)
   assert.doesNotMatch(text(screen),/Variação do valor conferido desde a revisão anterior/)
+})
+
+
+test('Evolucao mostra progresso e orientacoes recolhiveis sem alterar leituras, calculos ou confirmacao',async t=>{
+  const calls=[]
+  const data=summary()
+  data.methods[0].count=3
+  data.methods[1].count=4
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(data)})
+  assert.match(text(screen),/0 de 2 formas verificadas/)
+  const guide=screen.root.findByType('details')
+  assert.equal(guide.props.className,'day-conference-help')
+  assert.match(nodeText(guide),/não do saldo físico da gaveta/)
+  assert.equal(guide.props.open,undefined,'orientacao inicia recolhida')
+  assert.match(nodeText(firstDetail(screen)),/3 lançamentos/)
+  assert.equal(firstDetail(screen).props['aria-label'],'Ver lançamentos de Pix')
+  assert.equal(screen.root.findAll(n=>n.props?.className==='day-conference-stat-icon').length,0)
+  assert.equal(calls.length,1)
+  await act(async()=>amounts(screen)[0].props.onChange({target:{value:'200,00'}}))
+  assert.match(text(screen),/0 de 2 formas verificadas/)
+  await act(async()=>verify(screen)[0].props.onChange({target:{checked:true}}))
+  assert.match(text(screen),/1 de 2 formas verificadas/)
+  assert.equal(buttonNamed(screen.root,'Concluir conferência').props.disabled,true)
+  assert.equal(calls.length,1,'digitar e confirmar nao disparam consulta extra')
 })
