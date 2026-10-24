@@ -54,3 +54,16 @@ A leitura compara movimentos com recibos/alocações oficiais, detectando ausên
 - A revisão da fonte acrescenta metadados escritos pelos fluxos financeiros. Isso preserva a integridade sem carregar todos os lançamentos para calcular um hash no Worker. Os índices financeiros existentes são reaproveitados; a tabela de revisões possui sua chave empresa/dia.
 
 Reproduzir com `node scripts/infra/day-conference-d1-gate.mjs`, após disponibilizar o Wrangler **4.128.0** no cache. O script usa D1/workerd local, fixtures fictícias e `EXPLAIN QUERY PLAN`; não possui binding remoto. O CI executa esse gate além dos gates existentes. Números medidos, limites e oportunidades ficam no relatório técnico; tempo de IPC local e `meta.duration` de SQL não são CPU/duração do Worker em produção.
+
+
+## Apresentação: Evolução da conferência (23/10/2026)
+
+Referência visual: mockup HTML **Mesiva_Conferencia_Evolucao.html**, opção Evolução aprovada pelo proprietário. Fonte editorial: **Mesiva — Guia oficial de identidade visual v1.1**, Design System e componentes vigentes da aplicação. A tela mantém os tokens de tema do produto (Mesiva/Clássico, claro/escuro), sem importar estilos do mockup nem alterar a marca.
+
+- A faixa de progresso exibe texto **X de Y formas verificadas** junto da barra, inclusive após revisão necessária. Cada linha mantém sua confirmação independente.
+- Os indicadores de total permanecem **Registrado no Mesiva, Valor informado e Diferença**, sem ícones decorativos. Campo de valor vazio não equivale a zero; diferenças por forma, mesmo que se compensem, exigem justificativa.
+- A orientação operacional sobre gaveta, Pix, cartões, bruto e estornos fica em **O que exatamente estou conferindo?**, seção de ajuda recolhida por padrão e acessível por teclado. Alertas de integridade, estorno após edição e método não identificado continuam visíveis.
+- Cada ação de detalhe apresenta a contagem de lançamentos daquela forma; o drawer oficial de lançamentos/pedidos e as permissões permanecem idênticos.
+- Ações de data/CSV/atualização, confirmação, histórico, estados de rede e acessibilidade reutilizam a infraestrutura existente. As melhorias são de apresentação, sem endpoints, migrations ou escrita financeira nova.
+
+Homologar em staging no **mesmo SHA** validado por CI: desktop e 320/375px, tema claro/escuro, campos vazios e negativos, confirmação das duas formas, divergências compensadas, abertura/retorno do drawer, CSV e histórico. Conferir contadores e se a ajuda recolhida não acrescenta leituras D1. A publicação em produção e o merge dependem de autorização separada.
