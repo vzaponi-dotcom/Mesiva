@@ -145,6 +145,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const [verified,setVerified]=useState({})
   const [note,setNote]=useState('')
   const [dialog,setDialog]=useState(false)
+  const [discardChange,setDiscardChange]=useState(null)
   const [submitting,setSubmitting]=useState(false)
   const [detail,setDetail]=useState(null)
   const [detailLoading,setDetailLoading]=useState(false)
@@ -172,7 +173,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     detailGeneration.current++;orderGeneration.current++;historyGeneration.current++
     setLoading(true);setSummary(null);setError('');setAmounts({});setVerified({});setNote('')
     setDetail(null);setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'});setOrderPreview(null);setHistory(null);setExpandedHistoryId(null);setHistoryError('');setDetailLoading(false);setHistoryLoading(false);setSuccess('');setUncertain(false);setDialog(false)
-    submission.current=null;setExporting(false)
+    submission.current=null;setExporting(false);setDiscardChange(null)
     request('/api/finance/day-conference?date='+encodeURIComponent(date),{signal:controller.signal})
       .then(data=>{
         if(controller.signal.aborted)return
@@ -219,6 +220,20 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const canSubmit=canComplete && allComplete && (!differences.length||Boolean(note.trim()))
     && !sameVersion && !loading && !submitting && !writesBlocked && !summary?.integrityIssues
   const fieldsDisabled=!canComplete||sameVersion||writesBlocked||submitting||uncertain
+  const hasDraft=!sameVersion&&(Object.values(amounts).some(Boolean)||Boolean(note.trim()))
+  const applyChange=nextDate=>{
+    if(nextDate!==undefined){setDate(nextDate);return}
+    setSuccess('')
+    return reload()
+  }
+  const requestChange=nextDate=>{
+    if(nextDate===date)return
+    // Atualizar reconcilia um envio sem resposta, sem abandonar a tentativa.
+    if(hasDraft&&(nextDate!==undefined||!uncertain)){
+      setDiscardChange({date:nextDate});return
+    }
+    return applyChange(nextDate)
+  }
 
   const exportCsv=async()=>{
     if(exportOperation.current||!summary||loading)return
@@ -352,11 +367,11 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
         description="Compare os recebimentos registrados no Mesiva com os valores dos seus comprovantes e controles externos."
         actions={<div className="day-conference-actions">
           <label className="day-conference-date"><Icon name="calendar" size={17}/><span className="day-conference-date-label">Data</span>
-            <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)}/>
+            <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>requestChange(event.target.value)}/>
           </label>
           <Button variant="secondary" icon="download" onClick={exportCsv}
             disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…' :'Exportar CSV'}</Button>
-          <Button variant="secondary" icon="history" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
+          <Button variant="secondary" icon="history" onClick={()=>requestChange()} disabled={loading||submitting}>Atualizar</Button>
         </div>}/>
       {error&&<p role="alert" className="day-conference-error">{error}</p>}
       {success&&<p role="status" className="day-conference-notice">{success}</p>}
@@ -388,7 +403,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           <div className="surface-card day-conference-stat">
             <div className="day-conference-stat-title"><small>Valor informado</small></div>
             <strong>{totalEntered===null?'—':formatCents(totalEntered)}</strong>
-            <p>{totalEntered===null?'Campos em branco não entram na soma':'Conferido no banco, caixa e maquininhas'}</p>
+            <p>{totalEntered===null?'Preencha todas as formas para calcular o total':'Conferido no banco, caixa e maquininhas'}</p>
           </div>
           <div className="surface-card day-conference-stat">
             <div className="day-conference-stat-title"><small>Diferença</small></div>
@@ -629,6 +644,15 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           })()}
         </div>
       </Modal>}
+    {discardChange&&<ConfirmationDialog title="Descartar preenchimento?"
+      message="Os valores e as observações ainda não registrados serão descartados. As conferências já concluídas serão preservadas."
+      cancelLabel="Continuar conferindo"
+      confirmLabel={discardChange.date===undefined?'Descartar e atualizar':'Descartar e trocar data'}
+      onClose={()=>setDiscardChange(null)} onConfirm={()=>{
+        const nextDate=discardChange.date
+        setDiscardChange(null)
+        return applyChange(nextDate)
+      }}/>}
     {dialog&&<ConfirmationDialog title="Confirmar conferência"
       message={differences.length?'Existem divergências. A conferência será registrada com ressalva, sem alterar pagamentos.':'Registrar esta conferência? Nenhum pagamento será alterado.'}
       details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}

@@ -130,13 +130,102 @@ test('approved comparison layout keeps Pix first and updates informed and differ
   assert.match(nodeText(methodRows[0]),/Pix/)
   assert.match(nodeText(methodRows[1]),/Dinheiro/)
   assert.match(text(screen),/Valor informado/)
-  assert.match(text(screen),/Campos em branco não entram na soma/)
+  assert.match(text(screen),/Preencha todas as formas para calcular o total/)
   await act(async()=>{
     amounts(screen)[0].props.onChange({target:{value:'200,00'}})
     amounts(screen)[1].props.onChange({target:{value:'50,00'}})
   })
   assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
+})
+
+for(const action of ['refresh','date'])test(`discard confirmation preserves an unfinished conference when cancelling ${action}`,async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{
+    calls.push(path)
+    return response(summary(new URL(path,'http://local').searchParams.get('date')))
+  })
+  const dateInput=()=>screen.root.findAllByType('input').find(n=>n.props.type==='date')
+  const initialDate=dateInput().props.value
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'0'}})
+    screen.root.findByType('textarea').props.onChange({target:{value:'Rascunho da conferência'}})
+  })
+  await act(async()=>verify(screen)[0].props.onChange({target:{checked:true}}))
+  const change=()=>action==='refresh'?buttonNamed(screen.root,'Atualizar').props.onClick()
+    :dateInput().props.onChange({target:{value:'2026-10-14'}})
+  await act(async()=>change())
+  assert.match(text(screen),/Descartar preenchimento/)
+  assert.equal(calls.length,1,'opening the confirmation must not read or write data')
+  assert.equal(dateInput().props.value,initialDate)
+  await act(async()=>buttonNamed(screen.root,'Continuar conferindo').props.onClick())
+  assert.equal(amounts(screen)[0].props.value,'R$ 0,00')
+  assert.equal(verify(screen)[0].props.checked,true)
+  assert.equal(screen.root.findByType('textarea').props.value,'Rascunho da conferência')
+  assert.equal(calls.length,1)
+  await act(async()=>change())
+  await act(async()=>buttonNamed(screen.root,action==='refresh'?'Descartar e atualizar':'Descartar e trocar data').props.onClick())
+  assert.equal(calls.length,2,'confirming performs only the requested read')
+  assert.equal(dateInput().props.value,action==='refresh'?initialDate:'2026-10-14')
+  assert.ok(amounts(screen).every(n=>n.props.value===''))
+  assert.equal(screen.root.findByType('textarea').props.value,'')
+})
+
+test('notes alone are protected while an empty conference refreshes without confirmation',async t=>{
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(calls.length,2)
+  assert.doesNotMatch(text(screen),/Descartar preenchimento/)
+  await act(async()=>screen.root.findByType('textarea').props.onChange({target:{value:'Comprovante ainda em análise'}}))
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.match(text(screen),/Descartar preenchimento/)
+  assert.equal(calls.length,2)
+  await act(async()=>buttonNamed(screen.root,'Continuar conferindo').props.onClick())
+  assert.equal(screen.root.findByType('textarea').props.value,'Comprovante ainda em análise')
+})
+
+test('manual refresh clears prior success and does not ask to discard a completed snapshot',async t=>{
+  let conference,changed=false
+  const {screen}=await mount(t,async(path,options)=>{
+    if(options.method==='POST'){
+      const payload=JSON.parse(options.body)
+      conference={id:'completed',...payload,revision:1,status:'conferida',createdAt:'2026-10-23T15:00:00Z'}
+      return response({conference})
+    }
+    return response({...summary(),sourceVersion:(changed?'b':'a').repeat(64),latest:conference??null})
+  })
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'200,00'}})
+    amounts(screen)[1].props.onChange({target:{value:'50,00'}})
+  })
+  await act(async()=>{for(const field of verify(screen))field.props.onChange({target:{checked:true}})})
+  await act(async()=>buttonNamed(screen.root,'Concluir conferência').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Registrar conferência').props.onClick())
+  assert.match(text(screen),/Conferência registrada com sucesso/)
+  changed=true
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.match(text(screen),/Revisão necessária/)
+  assert.doesNotMatch(text(screen),/Conferência registrada com sucesso|Descartar preenchimento/)
+})
+
+test('refresh can reconcile an uncertain submission without a discard prompt',async t=>{
+  let reads=0
+  const {screen}=await mount(t,async(path,options)=>{
+    if(options.method==='POST')throw new TypeError('Resposta perdida')
+    reads++;return response(summary())
+  })
+  await act(async()=>{
+    amounts(screen)[0].props.onChange({target:{value:'200,00'}})
+    amounts(screen)[1].props.onChange({target:{value:'50,00'}})
+  })
+  await act(async()=>{for(const field of verify(screen))field.props.onChange({target:{checked:true}})})
+  await act(async()=>buttonNamed(screen.root,'Concluir conferência').props.onClick())
+  await act(async()=>buttonNamed(screen.root,'Registrar conferência').props.onClick())
+  assert.match(text(screen),/A resposta não foi confirmada/)
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(reads,2)
+  assert.doesNotMatch(text(screen),/Descartar preenchimento/)
 })
 
 test('receipt drawer shows pertinent dates, hides technical IDs and pages on demand',async t=>{
