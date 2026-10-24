@@ -25,6 +25,34 @@ async function setup(t){
   return {...f,sessions,env:{DB:f.db,AUTH_MULTI_COMPANY_ENABLED:'true'}}
 }
 
+test('discrepancy API derives company and actor, enforces capabilities/origin and preserves receipt data',async t=>{
+  const f=await setup(t),s=f.sessions.A
+  const summary=await (await handleRequest(request(s,'?date='+day),f.env)).json()
+  await handleRequest(request(s,'',{method:'POST',body:JSON.stringify({
+    date:day,sourceVersion:summary.sourceVersion,requestKey:'discrepancy-api-request',note:'Valor não localizado.',
+    lines:[{method:'Pix',checkedCents:900,verified:true}],
+  })}),f.env)
+  const listResponse=await handleRequest(request(s,'/discrepancies?status=pending'),f.env)
+  assert.equal(listResponse.status,200)
+  const list=await listResponse.json(),id=list.items[0].id
+  assert.equal(list.items.length,1);assert.equal(list.items[0].differenceCents,-100)
+  assert.equal((await handleRequest(request(f.sessions.B,'/discrepancies/'+id),f.env)).status,404)
+  const suffix='/discrepancies/'+id+'/resolve',body=JSON.stringify({reason:'conference_error',note:'Extrato correto conferido.',confirmed:true,businessId:f.businesses.B,resolvedActorName:'Impostor'})
+  assert.equal((await handleRequest(request(s,suffix,{method:'POST',body,headers:{origin:'https://foreign.test'}}),f.env)).status,403)
+  assert.equal((await handleRequest(request(s,suffix,{method:'POST',body:'null'}),f.env)).status,400)
+  const done=await handleRequest(request(s,suffix,{method:'POST',body}),f.env)
+  assert.equal(done.status,200)
+  const data=(await done.json()).discrepancy
+  assert.equal(data.status,'resolved');assert.notEqual(data.resolvedActorName,'Impostor')
+  assert.equal(data.resolvedBy,'member-alice-A')
+  assert.equal(f.sqlite.prepare('SELECT value_cents FROM movements WHERE id=?').get('m-A').value_cents,1000)
+  f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability='finance.movements.manage'").run(f.businesses.A,f.businesses.A+':manager')
+  assert.equal((await handleRequest(request(s,'/discrepancies?status=resolved'),f.env)).status,200)
+  assert.equal((await handleRequest(request(s,suffix,{method:'POST',body}),f.env)).status,403)
+  f.sqlite.prepare("DELETE FROM role_capabilities WHERE business_id=? AND role_id=? AND capability='finance.movements'").run(f.businesses.A,f.businesses.A+':manager')
+  assert.equal((await handleRequest(request(s,'/discrepancies?status=resolved'),f.env)).status,403)
+})
+
 test('authenticated API isolates totals, entries, immutable snapshots and actor across companies',async t=>{
   const f=await setup(t)
   const a=await handleRequest(request(f.sessions.A,'?date='+day),f.env)

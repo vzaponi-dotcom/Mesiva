@@ -3,12 +3,28 @@ import { requireCapability } from './access/authorization.js'
 import {
   readConferenceDate, readDayConferenceState, readDayConferenceEntries,
   readDayConferenceHistory, completeDayConference,
+  readDayConferenceDiscrepancies, readDayConferenceDiscrepancy, resolveDayConferenceDiscrepancy,
 } from './dayConferenceRepository.js'
 
 export async function handleDayConferenceApi(request,env,context,url=new URL(request.url)){
   if(!url.pathname.startsWith('/api/finance/day-conference'))return null
   requireCapability(context,'finance.movements')
   const path=url.pathname,method=request.method,businessId=context.businessId
+  if(method==='GET' && path==='/api/finance/day-conference/discrepancies'){
+    return json(await readDayConferenceDiscrepancies(env.DB,businessId,
+      url.searchParams.get('status')||'pending',url.searchParams.get('cursor')))
+  }
+  const discrepancy=/^\/api\/finance\/day-conference\/discrepancies\/([^/]+)(\/resolve)?$/.exec(path)
+  if(discrepancy){
+    let id
+    try{id=decodeURIComponent(discrepancy[1])}catch{throw apiError(400,'INVALID_DISCREPANCY_ID','Divergência inválida.')}
+    if(method==='GET'&&!discrepancy[2])return json({discrepancy:await readDayConferenceDiscrepancy(env.DB,businessId,id)})
+    if(method==='POST'&&discrepancy[2]){
+      requireCapability(context,'finance.movements.manage')
+      assertSameOriginMutation(request)
+      return json({discrepancy:await resolveDayConferenceDiscrepancy(env.DB,businessId,context.userId,id,await readJson(request))})
+    }
+  }
   if(method==='GET' && path==='/api/finance/day-conference'){
     const date=readConferenceDate(url.searchParams.get('date'))
     return json(await readDayConferenceState(env.DB,businessId,date))

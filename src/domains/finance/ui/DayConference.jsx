@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import AreaNavigation from '../../../app/navigation/AreaNavigation.jsx'
 import { apiRequest } from '../../../infrastructure/api/httpClient.js'
 import { ContextApi } from '../../../infrastructure/api/ContextApi.js'
@@ -9,10 +9,12 @@ import Icon from '../../../shared/ui/Icon.jsx'
 import Modal from '../../../shared/ui/Modal.jsx'
 import Button from '../../../shared/ui/Button.jsx'
 import ConfirmationDialog from '../../../shared/ui/ConfirmationDialog.jsx'
+import DayConferenceDiscrepancies from './DayConferenceDiscrepancies.jsx'
 import { buildDayConferenceCsv } from '../application/dayConferenceCsv.js'
 import './day-conference.css'
 
 const formatCents = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
+const noop=()=>{}
 const parseCents = value => {
   const text=String(value??''),digits=text.replace(/\D/g,'')
   if(!digits||digits.length>12)return null
@@ -125,7 +127,7 @@ function ConferenceRevisionCard({revision,mostRecent=false,previous=null,sourceV
   </article>
 }
 
-export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=()=>{} }){
+export default function DayConference({ canComplete=false, canViewOrders=false, writesBlocked=false, setRequestKey=noop }){
   const client=useContext(ContextApi)
   const request=client?.request || apiRequest
   const reads=useRef(null)
@@ -138,6 +140,16 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   const exportOperation=useRef(null)
   const detailPanel=useRef(null),detailOpener=useRef(null),historyPanel=useRef(null),historyOpener=useRef(null)
   const [date,setDate]=useState(today)
+  const [tab,setTab]=useState('conference'),[discrepancyBusy,setDiscrepancyBusy]=useState(false)
+  const discrepancyLock=useRef(false)
+  const onDiscrepancyBusy=useCallback(value=>{
+    setDiscrepancyBusy(value)
+    if(value){discrepancyLock.current=true;setRequestKey('day-conference:discrepancy')}
+    else if(discrepancyLock.current){
+      discrepancyLock.current=false
+      setRequestKey(current=>current==='day-conference:discrepancy'?null:current)
+    }
+  },[setRequestKey])
   const [summary,setSummary]=useState(null)
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
@@ -252,18 +264,25 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     finally{if(exportOperation.current===operation){exportOperation.current=null;setExporting(false)}}
   }
 
-  const openDetail=async (method,opener)=>{
+  const openDetail=async (method,opener,review=null)=>{
     detailOpener.current=opener;orderGeneration.current++;setOrderPreview(null)
     drawerScrollPositions.current={receipts:0,orders:0}
     setDetailView({level:'receipts',entryId:null,orderId:null,previous:'receipts'})
     const generation=++detailGeneration.current,signal=reads.current.signal
-    setDetail({method,entries:[],nextPage:1,error:''});setDetailLoading(true)
+    const detailDate=review?.date||date
+    let detailContext={method,date:detailDate,entries:[],nextPage:null,error:''}
+    setDetail(detailContext);setDetailLoading(true)
     try{
-      const params=new URLSearchParams({date,method,page:'1',sourceVersion:summary.sourceVersion})
+      const state=review?await request('/api/finance/day-conference?'+new URLSearchParams({date:detailDate}),{signal}):summary
+      if(signal.aborted||generation!==detailGeneration.current)return
+      if(!state?.sourceVersion||!Array.isArray(state.methods))throw new Error('Recebimentos indisponíveis. Atualize e tente novamente.')
+      const row=state.methods.find(item=>item.method===method)
+      detailContext={...detailContext,sourceVersion:state.sourceVersion,netCents:row?.netCents||0,count:row?.count||0}
+      const params=new URLSearchParams({date:detailDate,method,page:'1',sourceVersion:state.sourceVersion})
       const result=await request('/api/finance/day-conference/entries?'+params,{signal})
       if(signal.aborted||generation!==detailGeneration.current)return
-      setDetail({method,...result,error:''})
-    }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({method,entries:[],nextPage:null,error:err.message})}
+      setDetail({...detailContext,...result,error:''})
+    }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail({...detailContext,error:err.message})}
     finally{if(!signal.aborted&&generation===detailGeneration.current)setDetailLoading(false)}
   }
   const rememberDrawerScroll=level=>{
@@ -313,7 +332,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     if(!detail?.nextPage||detailLoading)return
     const method=detail.method,page=detail.nextPage,signal=reads.current.signal,generation=detailGeneration.current;setDetailLoading(true)
     try{
-      const result=await request('/api/finance/day-conference/entries?'+new URLSearchParams({date,method,page:String(page),sourceVersion:summary.sourceVersion}),{signal})
+      const result=await request('/api/finance/day-conference/entries?'+new URLSearchParams({date:detail.date,method,page:String(page),sourceVersion:detail.sourceVersion}),{signal})
       if(signal.aborted||generation!==detailGeneration.current)return
       setDetail(current=>current?.method===method?{...current,entries:[...current.entries,...result.entries],nextPage:result.nextPage,error:''}:current)
     }catch(err){if(!signal.aborted&&generation===detailGeneration.current)setDetail(current=>current?{...current,error:err.message}:current)}
@@ -365,14 +384,23 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
     <div className="day-conference-page">
       <PageHeader eyebrow="Financeiro / Recebimentos" title="Conferência do dia"
         description="Compare os recebimentos registrados no Mesiva com os valores dos seus comprovantes e controles externos."
-        actions={<div className="day-conference-actions">
+        actions={tab==='conference'?<div className="day-conference-actions">
           <label className="day-conference-date"><Icon name="calendar" size={17}/><span className="day-conference-date-label">Data</span>
             <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>requestChange(event.target.value)}/>
           </label>
           <Button variant="secondary" icon="download" onClick={exportCsv}
             disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…' :'Exportar CSV'}</Button>
           <Button variant="secondary" icon="history" onClick={()=>requestChange()} disabled={loading||submitting}>Atualizar</Button>
-        </div>}/>
+        </div>:null}/>
+      <nav className="day-conference-tabs" aria-label="Conferência e divergências">
+        {[['conference','Conferência'],['pending','Divergências pendentes'],['resolved','Resolvidas']].map(([value,label])=><button
+          key={value} type="button" aria-current={tab===value?'page':undefined} disabled={submitting||discrepancyBusy}
+          onClick={()=>setTab(value)}>{label}</button>)}
+      </nav>
+      <DayConferenceDiscrepancies key={client?.contextId||'legacy'} request={request} visible={tab!=='conference'}
+        status={tab==='resolved'?'resolved':'pending'} canResolve={canComplete} writesBlocked={writesBlocked}
+        onBusyChange={onDiscrepancyBusy} onReview={(item,opener)=>openDetail(item.method,opener,{date:item.date})}/>
+      <div hidden={tab!=='conference'}>
       {error&&<p role="alert" className="day-conference-error">{error}</p>}
       {success&&<p role="status" className="day-conference-notice">{success}</p>}
       {uncertain&&<p role="status" className="day-conference-notice">A resposta não foi confirmada. Atualize para verificar o registro ou reenvie a mesma conferência com segurança.</p>}
@@ -528,6 +556,7 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
             </>}
         </section>
       </>}
+      </div>
       {detail&&<Modal
         title={detailView.level==='receipts'?'Recebimentos · '+detail.method:detailView.level==='orders'?'Pedidos do recebimento':'Detalhes do pedido'}
         onClose={closeDetail} className="day-conference-drawer" backdropClassName="day-conference-drawer-backdrop">
@@ -535,13 +564,13 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
           {detailView.level==='receipts'&&<>
             <div className="day-conference-drawer-summary">
               <div className="day-conference-drawer-total">
-                <div><small>Valor líquido registrado</small><strong>{formatCents(rows.find(row=>row.method===detail.method)?.netCents||0)}</strong></div>
-                <p>{readableDate(date)} · Confira os valores individuais com seus comprovantes externos.</p>
+                <div><small>Valor líquido registrado</small><strong>{formatCents(detail.netCents||0)}</strong></div>
+                <p>{readableDate(detail.date)} · Confira os valores individuais com seus comprovantes externos.</p>
               </div>
             </div>
             <div className="day-conference-receipt-list-heading">
               <strong className="day-conference-navigation-title" tabIndex={-1}>Lançamentos</strong>
-              <small>Exibindo {detail.entries.length} de {rows.find(row=>row.method===detail.method)?.count??detail.entries.length}</small>
+              <small>Exibindo {detail.entries.length} de {detail.count??detail.entries.length}</small>
             </div>
             {detail.error&&<p role="alert" className="day-conference-error">{detail.error}</p>}
             <div className="day-conference-receipt-list">
@@ -588,8 +617,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 <p>Valor da transação, não o total individual dos pedidos.</p>
               </div>
               <div className="day-conference-relevant-dates">
-                <span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>
-                <span>Registrado em: <strong>{entry.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+                <span>Data do recebimento: <strong>{readableDate(entry.date)}</strong></span>
+                <span>Registrado no sistema em: <strong>{entry.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
               </div>
               <div className="day-conference-order-list">
                 {linked.map(order=><button key={order.id} type="button"
@@ -635,8 +664,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 </div>
                 <div className="day-conference-relevant-dates">
                   {order.orderDate&&<span>Data do pedido: <strong>{readableDate(order.orderDate)}</strong></span>}
-                  {entry?.date&&<span>Data financeira: <strong>{readableDate(entry.date)}</strong></span>}
-                  <span>Pagamento registrado em: <strong>{entry?.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
+                  {entry?.date&&<span>Data do recebimento: <strong>{readableDate(entry.date)}</strong></span>}
+                  <span>Registrado no sistema em: <strong>{entry?.createdAt?formatTimestamp(entry.createdAt):'Não informado'}</strong></span>
                 </div>
                 <p className="day-conference-order-disclaimer">Os dados acima são os atuais do pedido e podem ter sido editados após o pagamento. O valor do recebimento não é atribuído integralmente a cada pedido vinculado.</p>
               </>}
