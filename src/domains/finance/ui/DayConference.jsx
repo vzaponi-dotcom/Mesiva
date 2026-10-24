@@ -682,9 +682,39 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
         setDiscardChange(null)
         return applyChange(nextDate)
       }}/>}
-    {dialog&&<ConfirmationDialog title="Confirmar conferência"
-      message={differences.length?'Existem divergências. A conferência será registrada com ressalva, sem alterar pagamentos.':'Registrar esta conferência? Nenhum pagamento será alterado.'}
-      details={<div>{rows.map(row=><p key={row.method}>{row.method}: Mesiva {formatCents(row.netCents)} · Conferido {formatCents(parseCents(amounts[row.method])||0)} · Diferença {formatCents((parseCents(amounts[row.method])||0)-row.netCents)}</p>)}</div>}
+    {dialog&&<ConfirmationDialog title="Confirmar conferência" className="day-conference-confirmation-dialog"
+      details={<section className="day-conference-confirmation" aria-label="Resumo da conferência a registrar">
+        <div className="day-conference-confirmation-heading">
+          <span className={'day-conference-confirmation-status'+(differences.length?' has-differences':'')}>{differences.length?'Com ressalva':'Sem divergências'}</span>
+          <span>{readableDate(date)}</span>
+        </div>
+        <p className="day-conference-confirmation-intro">{differences.length
+          ?`${differences.length} de ${rows.length} formas com divergência. Confira os valores antes de registrar.`
+          :'Os valores informados conferem com os recebimentos registrados.'}</p>
+        <table className="day-conference-confirmation-table">
+          <caption>Comparação dos valores por forma de pagamento</caption>
+          <thead><tr><th scope="col">Forma de pagamento</th><th scope="col">Mesiva</th><th scope="col">Conferido</th><th scope="col">Diferença</th></tr></thead>
+          <tbody>{rows.map(row=>{
+            const checked=parseCents(amounts[row.method])||0,difference=checked-row.netCents
+            return <tr key={row.method} className={difference!==0?'has-differences':''}>
+              <th scope="row">{row.method}</th>
+              <td><span aria-hidden="true">Mesiva</span><strong>{formatCents(row.netCents)}</strong></td>
+              <td><span aria-hidden="true">Conferido</span><strong>{formatCents(checked)}</strong></td>
+              <td className="day-conference-confirmation-difference"><span aria-hidden="true">Diferença</span><strong>{formatCents(difference)}</strong></td>
+            </tr>
+          })}</tbody>
+          <tfoot><tr><th scope="row">Total</th>
+            <td><span aria-hidden="true">Mesiva</span><strong>{formatCents(totalNet)}</strong></td>
+            <td><span aria-hidden="true">Conferido</span><strong>{formatCents(totalEntered??0)}</strong></td>
+            <td className={totalDifference!==0?'day-conference-confirmation-total-difference':''}><span aria-hidden="true">Diferença</span><strong>{formatCents(totalDifference??0)}</strong></td>
+          </tr></tfoot>
+        </table>
+        {differences.length>0&&totalDifference===0&&<p className="day-conference-confirmation-warning">As diferenças entre formas se compensam no total. A conferência continua com ressalva.</p>}
+        {note.trim()&&<div className="day-conference-confirmation-note"><h3>{differences.length?'Justificativa das divergências':'Observações'}</h3><p>{note.trim()}</p></div>}
+        <p className="day-conference-confirmation-footnote">{differences.length
+          ?'O registro preserva esta conferência e cria as pendências para acompanhamento. Nenhum pagamento será alterado.'
+          :'O registro preserva os valores desta conferência. Nenhum pagamento será alterado.'}</p>
+      </section>}
       confirmLabel="Registrar conferência" confirmVariant="primary" submitting={submitting}
       onClose={()=>setDialog(false)} onConfirm={finish}/>}
     </div>

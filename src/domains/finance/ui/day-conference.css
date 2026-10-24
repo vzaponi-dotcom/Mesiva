@@ -344,3 +344,43 @@
   .day-discrepancy-values>div{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .day-discrepancy-values strong{margin:0}
 }
+
+.day-conference-confirmation-dialog.modal-card{width:min(680px,100%)}
+.day-conference-confirmation-dialog .payment-summary-card{padding:0;border:0;background:none;border-radius:0}
+.day-conference-confirmation{min-width:0}
+.day-conference-confirmation strong{font-size:inherit;letter-spacing:normal}
+.day-conference-confirmation-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:.8rem}
+.day-conference-confirmation .day-conference-confirmation-status{padding:5px 9px;border-radius:var(--badge-radius);font-weight:var(--badge-font-weight);background:var(--success-soft);color:var(--success)}
+.day-conference-confirmation .day-conference-confirmation-status.has-differences{background:var(--warning-soft);color:var(--warning)}
+.day-conference-confirmation-intro{margin:14px 0 18px;font-size:.88rem;line-height:1.55;color:var(--text-soft)}
+.day-conference-confirmation-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.day-conference-confirmation-table caption{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.day-conference-confirmation-table th,.day-conference-confirmation-table td{padding:13px 8px;text-align:right;vertical-align:middle;border-bottom:1px solid var(--border)}
+.day-conference-confirmation-table th:first-child{text-align:left;padding-left:0}
+.day-conference-confirmation-table td:last-child,.day-conference-confirmation-table thead th:last-child{padding-right:0}
+.day-conference-confirmation-table thead th{font-size:.72rem;color:var(--muted);font-weight:600;padding-top:0;padding-bottom:10px}
+.day-conference-confirmation-table tbody th{font-weight:650;max-width:155px}
+.day-conference-confirmation-table td{font-variant-numeric:tabular-nums;white-space:nowrap}
+.day-conference-confirmation-table td>span{display:none}
+.day-conference-confirmation-table td strong{font-size:inherit;font-weight:600}
+.day-conference-confirmation-table .day-conference-confirmation-difference strong{color:var(--muted);font-weight:400}
+.day-conference-confirmation-table .has-differences .day-conference-confirmation-difference strong,.day-conference-confirmation-table .day-conference-confirmation-total-difference strong{color:var(--danger);font-weight:750}
+.day-conference-confirmation-table tfoot th,.day-conference-confirmation-table tfoot td{padding-top:17px;border-bottom:0;font-weight:750}
+.day-conference-confirmation-table tfoot td strong{font-size:1.02rem;font-weight:750}
+.day-conference-confirmation-note{margin-top:20px;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface-soft)}
+.day-conference-confirmation-note h3{margin:0 0 7px;font-size:.8rem;color:var(--text-soft);font-weight:650}
+.day-conference-confirmation-note p{margin:0;font-size:.87rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.day-conference-confirmation-footnote{margin:16px 0 0;color:var(--muted);font-size:.76rem;line-height:1.6}
+.day-conference-confirmation-warning{margin:14px 0 0;font-size:.8rem;line-height:1.55;color:var(--warning)}
+@media(max-width:540px){
+  .day-conference-confirmation-dialog .modal-body{padding:18px 16px}
+  .day-conference-confirmation-table thead{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+  .day-conference-confirmation-table tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:14px 0;border-bottom:1px solid var(--border)}
+  .day-conference-confirmation-table th,.day-conference-confirmation-table td{padding:0;border:0;text-align:left;white-space:normal;min-width:0}
+  .day-conference-confirmation-table th:first-child{grid-column:1/-1;max-width:none;margin-bottom:2px}
+  .day-conference-confirmation-table td>span{display:block;font-size:.68rem;margin-bottom:5px}
+  .day-conference-confirmation-table td strong{font-size:.8rem;overflow-wrap:anywhere}
+  .day-conference-confirmation-table tfoot tr{border-bottom:0}
+  .day-conference-confirmation-table tfoot th,.day-conference-confirmation-table tfoot td{padding:0}
+  .day-conference-confirmation-table tfoot td strong{font-size:.9rem}
+}
