@@ -47,7 +47,7 @@ test('late detail responses cannot reopen a closed panel or leak into a differen
   const {screen}=await mount(t,async path=>path.includes('/entries?')
     ?new Promise(resolve=>{resolveDetail=resolve}):response(summary(new URL(path,'http://local').searchParams.get('date'))))
   let pending
-  await act(async()=>{pending=screen.root.findAllByType('button').find(n=>nodeText(n)==='Ver lançamentos').props.onClick({currentTarget:{focus(){restored++}}})})
+  await act(async()=>{pending=firstDetail(screen).props.onClick({currentTarget:{focus(){restored++}}})})
   await act(async()=>buttonNamed(screen.root,'Fechar').props.onClick())
   assert.equal(restored,1)
   await act(async()=>{resolveDetail(response({entries:[{id:'old',receiptId:'OLD-DAY',amountCents:20000,type:'entrada',source:'order-payment'}],nextPage:null}));await pending})
