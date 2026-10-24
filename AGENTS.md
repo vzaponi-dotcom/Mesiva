@@ -36,7 +36,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 | Relatórios / drawer | `src/domains/reporting/ui/ReportingWorkspace.jsx`; `src/domains/reporting/ui/detail/ReportingOrderDrawer.jsx` |
 | Produtos e preços | `src/domains/catalog/ui/CatalogWorkspace.jsx` |
 | Mesas e comandas | `src/domains/table-service/ui/` |
-| Financeiro / a receber | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx` |
+| Financeiro / a receber / conferência diária | `src/domains/finance/ui/FinanceWorkspace.jsx`; `src/domains/finance/ui/Receivables.jsx`; `src/domains/finance/ui/DayConference.jsx`; [regras da conferência](docs/operations/day-conference.md) |
 | Recebimentos: pedido, comanda, lote de clientes | `src/app/workflows/payments/` |
 | Sincronização / WebSocket e fallback | `src/infrastructure/realtime/`; `src/app/runtime/data/useOperationalDataRuntime.js`; `worker/realtime/`; [operação](docs/operations/realtime-sync.md) |
 | Snapshots / histórico e financeiro paginados | `worker/readModels/`; `shared/scopedReads.js`; `src/infrastructure/realtime/useScopedQuery.js`; `src/infrastructure/api/scopedReadsApi.js` |
@@ -80,6 +80,12 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 - Não apague/recrie D1 local para resolver login ou gravação: investigue API, sessão, migrations e permissões. Use contas/dados fictícios; não há credencial universal nem cópia automática das contas remotas.
 - Preserve servidores/bancos existentes. Ao encerrar testes, termine somente processos criados pela tarefa.
 
+### Conta fictícia desta instalação
+- E-mail: `teste@mesiva.local`.
+- Senha: `MesivaLocal!2026Teste`.
+- Conta de teste preparada no D1 local em `.wrangler/local-orders-state`, empresa `amor-e-sabor`. Migrations não criam essa conta automaticamente; uma worktree/banco vazio exige preparação própria.
+- Estes dados são exclusivamente de teste local e foram documentados por autorização do usuário. Não reutilize em staging/produção ou contas reais; a proibição de expor credenciais reais permanece.
+
 ## Interface, permissões e operação
 - Reutilize `src/shared/ui/` e os componentes dos domínios. Para alterações visuais, consulte o [Design System](docs/design/DESIGN_SYSTEM.md) e as referências da marca; use tokens/temas existentes; badges seguem `--badge-radius`/`--badge-font-weight`. Preserve peso de títulos/valores e hierarquia aprovada; sem glow nos botões, com foco visível.
 - Confira desktop/mobile, teclado, foco/scroll de modais e estados vazios/loading/erro. Seleções devem ficar acessíveis; menus fecham ao clicar fora e por Escape. Atalhos executam a ação anunciada.
@@ -89,7 +95,7 @@ Pontos de entrada, não lista completa. Depois, siga imports, regras, adaptadore
 - Recebimentos exigem `payments.receive` e permissões da superfície; esconder botão não substitui autorização no Worker. Derive a empresa do contexto autenticado e preserve isolamento entre empresas em dados, relatórios e ações.
 - Receber não finaliza preparo. Reutilize os workflows e saldos oficiais; quitados/cancelados não entram em recebimento. Pedido já recebido com saldo de edição usa complemento, preservando o payment original; lotes de cliente cobram somente os saldos, com recibo único. Comanda aberta usa seu fluxo; ajuste após comanda quitada não reabre ocupação. Preserve efeitos oficiais e regras de valores/datas/fuso em `shared/finance.js`.
 - Impressão: fila central → estação principal Windows → QZ/spooler → USB. `qz.print()` não confirma saída física; preserve histórico de vias, confirmação do spooler e decisão humana para resultado desconhecido, sem reenvio automático. Mudanças de hardware exigem validação física pelo runbook.
-- Nunca exponha senhas, cookies, tokens, links de ativação/recuperação ou valores de secrets em Git, documentos, logs ou mensagens.
+- Nunca exponha credenciais reais, cookies, tokens, links de ativação/recuperação ou valores de secrets em Git, documentos, logs ou mensagens. A conta fictícia local acima é a única exceção documental autorizada.
 
 ## Verificação e entrega
 - Reproduza bugs e cubra comportamentos/casos relevantes, sem testes que apenas copiam a implementação. Use `node --test <arquivo.test.js>` durante o desenvolvimento.

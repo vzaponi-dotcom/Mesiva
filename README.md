@@ -20,6 +20,8 @@ D1 é a fonte oficial de clientes, produtos, pedidos, pagamentos e movimentos. O
 
 A edição de pedidos ativos preserva preços históricos, identidade e recebimentos anteriores. Diferenças são conciliadas por saldo complementar ou devolução manual, inclusive em lotes de clientes; Cozinha/TV identificam o pedido editado e a reimpressão é opcional. Consulte [edição de pedidos e saldo](docs/operations/order-editing.md) para regras e estado de homologação da PR #108.
 
+**Financeiro → Conferência do Dia** compara recebimentos por data efetiva e forma, separa bruto, estorno e líquido e registra revisões com responsável e ressalvas. Consulte [operação e limites](docs/operations/day-conference.md). A implementação da PR #124 permanece em Draft, sujeita à homologação; não representa abertura ou fechamento de gaveta.
+
 ## Requisitos
 
 - Node.js 22 e npm.
@@ -75,7 +77,7 @@ Antes de criar novos processos, confira se as portas já estão em uso. Para tes
 - Use uma conta fictícia previamente preparada **nesse banco local**.
 - Contas de staging/produção não são automaticamente copiadas para o ambiente local.
 - Migrations criam/evoluem o schema; não fornecem uma conta demo universal. Um banco novo exige preparação de contas fictícias.
-- Não existe senha padrão no projeto. Não grave credenciais no README, em fixtures públicas ou no Git.
+- Não existe senha padrão universal. As credenciais fictícias desta instalação estão na seção de conta local do [AGENTS.md](AGENTS.md); só funcionam no banco onde a conta foi preparada. Não grave credenciais reais no README, em fixtures públicas ou no Git.
 - O cadastro e a ativação de novas empresas em operação são feitos pelo painel Mesiva e pelo fluxo de convites. Os procedimentos administrativos remotos não são scripts de seed local.
 
 Se o login ou a gravação falhar, verifique os dois servidores, a resposta de `/api/*`, o banco/persistência selecionado, as migrations e as permissões da conta. Não reative PIN como contorno.

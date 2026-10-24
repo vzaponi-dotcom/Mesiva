@@ -89,6 +89,7 @@ function DashboardSurface({ orders, movements, readContext, currency, queryState
           title="Visão geral financeira"
           description="Acompanhe os resultados de hoje e a evolução recente do negócio."
           actions={(
+            <>
             <button
               type="button"
               className="icon-button icon-button-neutral dashboard-privacy-toggle"
@@ -98,6 +99,7 @@ function DashboardSurface({ orders, movements, readContext, currency, queryState
             >
               <Icon name={valuesVisible ? 'eye' : 'eye-off'} size={17} />
             </button>
+            </>
           )}
         />
       </div>

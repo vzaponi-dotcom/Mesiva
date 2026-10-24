@@ -7,7 +7,11 @@ test('order history candidate can deploy manually to staging without admitting o
   const workflow = readFileSync(new URL('../../.github/workflows/deploy-staging.yml', import.meta.url), 'utf8')
   const condition = /^    if: (.+)$/m.exec(workflow)?.[1]
   assert.ok(condition, 'staging job must have an explicit branch gate')
-  const allowed = (ref, event_name) => runInNewContext(condition, { github: { ref: `refs/heads/${ref}`, event_name } })
+  const allowed = (ref, event_name, message = '') => runInNewContext(condition, {
+    github: { ref: `refs/heads/${ref}`, event_name, event: { head_commit: { message } } },
+    startsWith: (value, prefix) => String(value).startsWith(prefix),
+    contains: (value, fragment) => String(value).includes(fragment),
+  })
   assert.equal(allowed('feature/orders-history-ui-polish', 'workflow_dispatch'), true)
   assert.equal(allowed('feature/orders-history-ui-polish', 'push'), false)
   assert.equal(allowed('feature/clients-relationship', 'workflow_dispatch'), true)
@@ -25,7 +29,12 @@ test('order history candidate can deploy manually to staging without admitting o
   assert.equal(allowed('codex/melhorias-visuais-2026-10-20', 'workflow_dispatch'), false)
   assert.equal(allowed('codex/another-unapproved-candidate', 'workflow_dispatch'), false)
   assert.equal(allowed('feature/unapproved-candidate', 'workflow_dispatch'), false)
+  assert.equal(allowed('feature/finance-daily-reconciliation-mvp', 'workflow_dispatch'), false)
+  assert.equal(allowed('feature/finance-daily-reconciliation-mvp', 'push'), false)
+  assert.equal(allowed('feature/finance-daily-reconciliation-mvp', 'push', 'ci(staging): authorize PR124 QA deploy (staging only)'), false)
+  assert.equal(allowed('feature/finance-daily-reconciliation-mvp', 'push', 'ci(staging): another task'), false)
   assert.equal(allowed('master', 'push'), true)
+  assert.doesNotMatch(workflow.split('workflow_dispatch:')[0], /feature\/finance-daily-reconciliation-mvp/)
   assert.match(workflow, /Feature staging is allowed only while its pull request is open/)
   assert.match(workflow, /latest.*GITHUB_SHA/s)
 })
@@ -67,10 +76,11 @@ test('staging smoke requests SPA deep links/assets from the canonical staging re
   })
   const paths = requested.map((value) => new URL(value, baseUrl).pathname)
   assert.ok(requested.every((value) => new URL(value).origin === baseUrl), 'SPA and assets must use the configured staging domain')
-  assert.equal(new Set(paths.filter((path) => !path.startsWith('/assets/'))).size, 21)
+  assert.equal(new Set(paths.filter((path) => !path.startsWith('/assets/'))).size, 22)
   for (const path of ['/aceitar-convite', '/empresas', '/mesiva', '/mesiva/empresas']) assert.ok(paths.includes(path))
   assert.match(workflow.split('workflow_dispatch:')[0], /feature\/account-menu-company-context/)
   assert.ok(paths.includes('/relatorios'))
+  assert.ok(paths.includes('/financeiro/conferencia-do-dia'))
   assert.ok(paths.includes('/clientes'))
   assert.ok(paths.includes('/pedidos/controle-da-tv'))
   for (const path of ['/minha-conta', '/configuracoes/equipe', '/configuracoes/atividades', '/ativar-conta', '/recuperar-senha', '/redefinir-senha']) {

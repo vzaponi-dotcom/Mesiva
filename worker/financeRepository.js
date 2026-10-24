@@ -9,6 +9,11 @@ const repositoryError = (status, code, message) => Object.assign(new Error(messa
 const policyChanged = () => repositoryError(409, 'POLICY_CHANGED', 'As categorias financeiras foram alteradas. Atualize e tente novamente.')
 const movementChanged = () => repositoryError(409, 'MOVEMENT_CHANGED', 'O movimento foi alterado. Atualize e tente novamente.')
 
+// Aliases m/p/a: allocation labels are receipt evidence, never evidence of a refund method.
+export const MOVEMENT_PAYMENT_METHOD_SQL = `CASE WHEN m.source='order-payment'
+  THEN COALESCE(NULLIF(m.payment_method,''),NULLIF(a.method_label,''),NULLIF(p.method,''))
+  ELSE NULLIF(m.payment_method,'') END`
+
 export const mapMovementRow = (row) => ({
   id: row.id,
   type: row.type,

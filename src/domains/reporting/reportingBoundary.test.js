@@ -26,10 +26,10 @@ test('reporting capabilities and destination are canonical', () => {
     mobileEntry: null,
     capability: 'reports.view',
   })
-  assert.deepEqual(AREA_DESTINATION_IDS.finance, ['dashboard', 'reports', 'receivables', 'finance'])
+  assert.deepEqual(AREA_DESTINATION_IDS.finance, ['dashboard', 'reports', 'receivables', 'finance', 'day-conference'])
   assert.deepEqual(
     DESKTOP_NAV_GROUPS.find(({ label }) => label === 'FINANCEIRO').items.map((item) => item.id || item.area),
-    ['dashboard', 'reports', 'receivables', 'finance'],
+    ['dashboard', 'day-conference', 'reports', 'receivables', 'finance'],
   )
   assert.deepEqual(MOBILE_DIRECT_ENTRIES.map((item) => item.area || item.id), ['orders', 'comandas', 'finance'])
 })

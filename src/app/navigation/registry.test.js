@@ -16,13 +16,13 @@ test('C2 preserva IDs, fallbacks e menus atuais', () => {
     'settings-payments', 'settings-cancellations', 'settings-finance-categories',
     'settings-kitchen-tv',
     'orders', 'history', 'kitchen-tv-control', 'new-order', 'comandas', 'print-queue',
-    'dashboard', 'reports', 'receivables', 'finance', 'clients', 'products', 'tables',
+    'dashboard', 'day-conference', 'reports', 'receivables', 'finance', 'clients', 'products', 'tables',
     'settings-printing', 'settings-device',
   ])
   assert.deepEqual(AREA_DESTINATION_IDS, {
     access: ['access-team', 'access-activity'],
     orders: ['orders', 'history', 'kitchen-tv-control'],
-    finance: ['dashboard', 'reports', 'receivables', 'finance'],
+    finance: ['dashboard', 'reports', 'receivables', 'finance', 'day-conference'],
     settings: [
       'settings-home', 'settings-business-profile', 'settings-operations', 'settings-modalities',
       'settings-payments', 'settings-cancellations',
@@ -34,7 +34,7 @@ test('C2 preserva IDs, fallbacks e menus atuais', () => {
   assert.deepEqual(MOBILE_DIRECT_ENTRIES.map((item) => item.area || item.id), ['orders', 'comandas', 'finance'])
   assert.deepEqual(MOBILE_MORE_ENTRIES.map((item) => item.area || item.id), ['print-queue', 'clients', 'products', 'tables', 'settings'])
   assert.deepEqual(MOBILE_SECTION_IDS, [
-    'orders', 'history', 'kitchen-tv-control', 'comandas', 'dashboard', 'receivables', 'finance',
+    'orders', 'history', 'kitchen-tv-control', 'comandas', 'dashboard', 'day-conference', 'receivables', 'finance',
     'print-queue', 'clients', 'products', 'tables', 'settings-kitchen-tv',
     'settings-printing', 'settings-device',
   ])
@@ -83,10 +83,10 @@ test('reporting is a Financeiro destination without adding a new mobile bottom e
     mobileEntry: null,
     capability: 'reports.view',
   })
-  assert.deepEqual(AREA_DESTINATION_IDS.finance, ['dashboard', 'reports', 'receivables', 'finance'])
+  assert.deepEqual(AREA_DESTINATION_IDS.finance, ['dashboard', 'reports', 'receivables', 'finance', 'day-conference'])
   assert.deepEqual(
     DESKTOP_NAV_GROUPS.find(({ label }) => label === 'FINANCEIRO').items.map((item) => item.id || item.area),
-    ['dashboard', 'reports', 'receivables', 'finance'],
+    ['dashboard', 'day-conference', 'reports', 'receivables', 'finance'],
   )
   assert.deepEqual(MOBILE_DIRECT_ENTRIES.map((item) => item.area || item.id), ['orders', 'comandas', 'finance'])
   assert.equal(MOBILE_MORE_ENTRIES.some((item) => item.id === 'reports'), false)

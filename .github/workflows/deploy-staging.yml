@@ -168,6 +168,7 @@ jobs:
             '/comandas',
             '/financeiro/a-receber',
             '/financeiro/movimentacoes',
+                '/financeiro/conferencia-do-dia',
             '/relatorios',
             '/clientes',
             '/configuracoes/impressao',

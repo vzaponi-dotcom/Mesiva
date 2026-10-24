@@ -26,7 +26,7 @@ export {
   paymentSearchText,
 } from './domain/paymentPresentation.js'
 
-export { FinanceWorkspace, Receivables } from './ui/financeSurfaces.js'
+export { FinanceWorkspace, Receivables, DayConference } from './ui/financeSurfaces.js'
 
 export { createFinanceApi } from './infrastructure/financeApi.js'
 

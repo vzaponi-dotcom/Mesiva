@@ -7,7 +7,7 @@ export function parseReadSurface(value){
 }
 const capabilities={
   orders:'orders.view',history:'orders.history','kitchen-tv-control':'orders.view','new-order':'orders.create',
-  comandas:'comandas.view','print-queue':'printing.queue',dashboard:'finance.overview',reports:'reports.view',
+  comandas:'comandas.view','print-queue':'printing.queue',dashboard:'finance.overview','day-conference':'finance.movements',reports:'reports.view',
   receivables:'finance.receivables',finance:'finance.movements',clients:'clients.view',products:'products.view',tables:'tables.view',
   'access-team':'access.users.view','access-activity':'access.audit.view','settings-business-profile':'business.profile.view',
   'settings-operations':'operations.settings.view','settings-modalities':'operations.settings.view',

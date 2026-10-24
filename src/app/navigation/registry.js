@@ -17,6 +17,7 @@ export const NAVIGATION_DESTINATIONS = Object.freeze([
   Object.freeze({ id: 'comandas', path: '/comandas', area: 'comandas', label: 'Comandas', mobileEntry: 'comandas', capability: 'comandas.view' }),
   Object.freeze({ id: 'print-queue', path: '/fila-de-impressao', area: 'print-queue', label: 'Fila de impressão', mobileEntry: 'more', capability: 'printing.queue' }),
   Object.freeze({ id: 'dashboard', path: '/financeiro', area: 'finance', label: 'Visão geral', mobileEntry: 'finance', capability: 'finance.overview' }),
+  Object.freeze({ id: 'day-conference', path: '/financeiro/conferencia-do-dia', area: 'finance', label: 'Conferência do dia', mobileEntry: 'finance', capability: 'finance.movements' }),
   Object.freeze({ id: 'reports', path: '/relatorios', area: 'finance', label: 'Relatórios', mobileEntry: null, capability: 'reports.view' }),
   Object.freeze({ id: 'receivables', path: '/financeiro/a-receber', area: 'finance', label: 'A receber', mobileEntry: 'finance', capability: 'finance.receivables' }),
   Object.freeze({ id: 'finance', path: '/financeiro/movimentacoes', area: 'finance', label: 'Movimentações', mobileEntry: 'finance', capability: 'finance.movements' }),
@@ -32,7 +33,7 @@ export const destinationById = new Map(NAVIGATION_DESTINATIONS.map((item) => [it
 export const AREA_DESTINATION_IDS = Object.freeze({
   access: Object.freeze(['access-team', 'access-activity']),
   orders: Object.freeze(['orders', 'history', 'kitchen-tv-control']),
-  finance: Object.freeze(['dashboard', 'reports', 'receivables', 'finance']),
+  finance: Object.freeze(['dashboard', 'reports', 'receivables', 'finance', 'day-conference']),
   settings: Object.freeze(['settings-home', 'settings-business-profile', 'settings-operations', 'settings-modalities', 'settings-payments', 'settings-cancellations', 'settings-finance-categories', 'settings-kitchen-tv', 'settings-printing', 'settings-device', 'access-team', 'access-activity']),
 })
 
@@ -41,7 +42,7 @@ export const AREA_LABELS = Object.freeze({ orders: 'Pedidos', finance: 'Financei
 
 export const DESKTOP_NAV_GROUPS = Object.freeze([
   Object.freeze({ label: 'OPERAÇÃO', items: Object.freeze([{ area: 'orders', label: 'Pedidos', icon: 'orders' }, { id: 'comandas', label: 'Comandas', icon: 'clipboard' }, { id: 'print-queue', label: 'Fila de impressão', icon: 'printer' }]) }),
-  Object.freeze({ label: 'FINANCEIRO', items: Object.freeze([{ id: 'dashboard', label: 'Visão geral', icon: 'dashboard' }, { id: 'reports', label: 'Relatórios', icon: 'chart' }, { id: 'receivables', label: 'A receber', icon: 'wallet' }, { id: 'finance', label: 'Movimentações', icon: 'finance' }]) }),
+  Object.freeze({ label: 'FINANCEIRO', items: Object.freeze([{ id: 'dashboard', label: 'Visão geral', icon: 'dashboard' }, { id: 'day-conference', label: 'Conferência do dia', icon: 'clipboard' }, { id: 'reports', label: 'Relatórios', icon: 'chart' }, { id: 'receivables', label: 'A receber', icon: 'wallet' }, { id: 'finance', label: 'Movimentações', icon: 'finance' }]) }),
   Object.freeze({ label: 'CADASTROS', items: Object.freeze([{ id: 'clients', label: 'Clientes', icon: 'clients' }, { id: 'products', label: 'Produtos e preços', icon: 'products' }, { id: 'tables', label: 'Mesas', icon: 'table' }]) }),
 ])
 
@@ -60,6 +61,6 @@ export const MOBILE_MORE_ENTRIES = Object.freeze([
 ])
 
 export const MOBILE_SECTION_IDS = Object.freeze([
-  'orders', 'history', 'kitchen-tv-control', 'comandas', 'dashboard', 'receivables', 'finance',
+  'orders', 'history', 'kitchen-tv-control', 'comandas', 'dashboard', 'day-conference', 'receivables', 'finance',
   'print-queue', 'clients', 'products', 'tables', 'settings-kitchen-tv', 'settings-printing', 'settings-device',
 ])

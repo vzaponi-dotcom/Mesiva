@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import { createSettingsDb } from './test-support/settingsDb.js'
 import { createReportingRepository } from './reporting/repository.js'
 import { createReportingService } from './reporting/service.js'
-import { readReceivedToday, readFinanceTotals } from './readModels/movementReads.js'
+import { readReceivedToday, readFinanceTotals,readPeriodMovements } from './readModels/movementReads.js'
+import { getPaymentMix } from '../shared/dashboardReadRules.js'
+import { readDayConferenceSummary,readDayConferenceEntries } from './dayConferenceRepository.js'
 
 const at = '2026-10-17T15:00:00.000Z'
 const period = day => ({ from: day, to: day, period: 'custom' })
@@ -71,6 +73,20 @@ test('Task 10: shared/split and supplemental receipts reconcile reporting, movem
   const report15=await service.overview('task10-a',period('2026-10-15'))
   assert.equal(report15.data.metrics.receivedCents,8000)
   assert.equal(report15.data.metrics.refundsCents,1000)
+  const conference15=await readDayConferenceSummary(db,'task10-a','2026-10-15')
+  assert.equal(conference15.integrityIssues,0)
+  assert.deepEqual(conference15.methods.map(m=>[m.method,m.grossCents,m.refundCents,m.netCents]),[
+    ['Dinheiro',3000,0,3000],['Não informado',0,1000,-1000],['Pix',5000,0,5000],
+  ])
+  assert.equal(conference15.methods.reduce((sum,m)=>sum+m.netCents,0),7000)
+  const overviewMovements=await readPeriodMovements(db,'task10-a',granted,{startDate:'2026-10-15',endDate:'2026-10-15'})
+  assert.deepEqual(getPaymentMix(overviewMovements,'today',new Date('2026-10-15T12:00:00')).map(m=>[m.method,m.amount]),[
+    ['Pix',50],['Dinheiro',30],
+  ],'overview uses official allocation labels when the movement has no historical label')
+  assert.equal((await readDayConferenceEntries(db,'task10-a','2026-10-15','Pix',1)).entries.length,1)
+  assert.equal((await readDayConferenceSummary(db,'task10-a','2026-10-17')).methods[0].grossCents,1500)
+  assert.ok((await readDayConferenceSummary(db,'task10-b','2026-10-15')).integrityIssues>0,
+    'a foreign receipt without its movement is flagged only in its own company')
 })
 
 test('Task 10: real-D1 budget contract requires fixed query count, tenant isolation, zero writes and bounded history growth', async()=>{

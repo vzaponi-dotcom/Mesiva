@@ -1,0 +1,175 @@
+{
+  "runtime": "Miniflare D1/workerd local, Wrangler 4.128.0",
+  "scope": "Repository SQL only; excludes authentication/context guard and network. Wall time is local IPC, not Worker CPU.",
+  "fixture": {
+    "dailyReceipts": 120,
+    "smallHistory": 1000,
+    "largeHistory": 10000
+  },
+  "open": {
+    "small": {
+      "queries": 3,
+      "requests": 1,
+      "rows_read": 2166,
+      "rows_written": 0,
+      "sqlDurationMs": 2,
+      "wallMs": 307.32,
+      "payloadBytes": 251
+    },
+    "large": {
+      "queries": 3,
+      "requests": 1,
+      "rows_read": 2166,
+      "rows_written": 0,
+      "sqlDurationMs": 1,
+      "wallMs": 263.59,
+      "payloadBytes": 251
+    }
+  },
+  "details": {
+    "small": {
+      "queries": 2,
+      "requests": 1,
+      "rows_read": 482,
+      "rows_written": 0,
+      "sqlDurationMs": 0,
+      "wallMs": 187.32,
+      "payloadBytes": 10168
+    },
+    "large": {
+      "queries": 2,
+      "requests": 1,
+      "rows_read": 482,
+      "rows_written": 0,
+      "sqlDurationMs": 2,
+      "wallMs": 178.48,
+      "payloadBytes": 10168
+    }
+  },
+  "complete": {
+    "queries": 5,
+    "requests": 3,
+    "rows_read": 5056,
+    "rows_written": 6,
+    "sqlDurationMs": 1,
+    "wallMs": 508.3,
+    "payloadBytes": 442
+  },
+  "replay": {
+    "queries": 1,
+    "requests": 1,
+    "rows_read": 1,
+    "rows_written": 0,
+    "sqlDurationMs": 0,
+    "wallMs": 124.22,
+    "payloadBytes": 442
+  },
+  "history": {
+    "queries": 1,
+    "requests": 1,
+    "rows_read": 1,
+    "rows_written": 0,
+    "sqlDurationMs": 0,
+    "wallMs": 123.53,
+    "payloadBytes": 444
+  },
+  "receiptInsertMeta": {
+    "served_by": "miniflare.db",
+    "duration": 1,
+    "changes": 120,
+    "last_row_id": 120,
+    "changed_db": true,
+    "size_after": 1417216,
+    "rows_read": 241,
+    "rows_written": 600
+  },
+  "movementInsertWithRevisionMeta": {
+    "served_by": "miniflare.db",
+    "duration": 3,
+    "changes": 240,
+    "last_row_id": 120,
+    "changed_db": true,
+    "size_after": 1474560,
+    "rows_read": 359,
+    "rows_written": 1081
+  },
+  "historicalMovementInsertMeta": {
+    "served_by": "miniflare.db",
+    "duration": 10,
+    "changes": 2000,
+    "last_row_id": 1120,
+    "changed_db": true,
+    "size_after": 2584576,
+    "rows_read": 3119,
+    "rows_written": 9001
+  },
+  "plans": [
+    {
+      "query": "SELECT COALESCE(CASE WHEN m.source='order-payment'",
+      "plan": [
+        "SEARCH m USING INDEX movements_business_date_active_idx (business_id=? AND movement_date=?)",
+        "SEARCH p USING INDEX sqlite_autoindex_payments_1 (id=?) LEFT-JOIN",
+        "SEARCH a USING INDEX sqlite_autoindex_payment_allocations_2 (business_id=? AND id=?) LEFT-JOIN",
+        "SEARCH r USING INDEX sqlite_autoindex_payment_receipts_2 (business_id=? AND id=?) LEFT-JOIN",
+        "USE TEMP B-TREE FOR GROUP BY",
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    },
+    {
+      "query": "SELECT COALESCE((SELECT revision FROM daily_receipt_source_revisions",
+      "plan": [
+        "SCAN CONSTANT ROW",
+        "SCALAR SUBQUERY 1",
+        "SEARCH daily_receipt_source_revisions USING INDEX sqlite_autoindex_daily_receipt_source_revisions_1 (business_id=? AND business_date=?)",
+        "SCALAR SUBQUERY 8",
+        "CO-ROUTINE r",
+        "MERGE (UNION)",
+        "LEFT",
+        "MERGE (UNION)",
+        "LEFT",
+        "SEARCH payment_receipts USING INDEX payment_receipts_business_received_date_idx (business_id=? AND received_date=?)",
+        "USE TEMP B-TREE FOR LAST TERM OF ORDER BY",
+        "RIGHT",
+        "SEARCH payment_receipts USING INDEX payment_receipts_business_paid_idx (business_id=? AND paid_at>? AND paid_at<?)",
+        "USE TEMP B-TREE FOR ORDER BY",
+        "RIGHT",
+        "SEARCH m USING INDEX movements_business_date_active_idx (business_id=? AND movement_date=?)",
+        "SEARCH r USING INDEX sqlite_autoindex_payment_receipts_2 (business_id=? AND id=?)",
+        "USE TEMP B-TREE FOR ORDER BY",
+        "SCAN r",
+        "CORRELATED SCALAR SUBQUERY 5",
+        "SEARCH a USING INDEX payment_allocations_receipt_idx (business_id=? AND receipt_id=?)",
+        "CORRELATED SCALAR SUBQUERY 7",
+        "SEARCH a USING INDEX payment_allocations_receipt_idx (business_id=? AND receipt_id=?)",
+        "CORRELATED SCALAR SUBQUERY 6",
+        "SEARCH m USING INDEX movements_business_receipt_created_read_idx (business_id=? AND receipt_id=?)"
+      ]
+    },
+    {
+      "query": "SELECT * FROM daily_receipt_conferences WHERE business_id=? AND business_date=?",
+      "plan": [
+        "SEARCH daily_receipt_conferences USING INDEX daily_receipt_conferences_history_idx (business_id=? AND business_date=?)"
+      ]
+    },
+    {
+      "query": "SELECT COALESCE((SELECT revision FROM daily_receipt_source_revisions",
+      "plan": [
+        "SCAN CONSTANT ROW",
+        "SCALAR SUBQUERY 1",
+        "SEARCH daily_receipt_source_revisions USING INDEX sqlite_autoindex_daily_receipt_source_revisions_1 (business_id=? AND business_date=?)"
+      ]
+    },
+    {
+      "query": "SELECT m.id,m.receipt_id,m.order_id,",
+      "plan": [
+        "SEARCH m USING INDEX movements_business_date_active_idx (business_id=? AND movement_date=?)",
+        "SEARCH o USING INDEX orders_business_id_identity_idx (business_id=? AND id=?) LEFT-JOIN",
+        "SEARCH p USING INDEX sqlite_autoindex_payments_1 (id=?) LEFT-JOIN",
+        "SEARCH a USING INDEX sqlite_autoindex_payment_allocations_2 (business_id=? AND id=?) LEFT-JOIN",
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    }
+  ],
+  "distinctQueries": 9,
+  "passed": true
+}
