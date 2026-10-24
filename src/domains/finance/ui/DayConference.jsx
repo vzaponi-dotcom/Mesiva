@@ -348,14 +348,14 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
   return <>
     <AreaNavigation area="finance"/>
     <div className="day-conference-page">
-      <PageHeader eyebrow="Financeiro" title="Conferência do dia"
-        description="Compare cada forma de recebimento registrada no Mesiva com seus comprovantes e controles externos."
+      <PageHeader eyebrow="Financeiro / Recebimentos" title="Conferência do dia"
+        description="Compare os recebimentos registrados no Mesiva com os valores dos seus comprovantes e controles externos."
         actions={<div className="day-conference-actions">
-          <label className="day-conference-date"><Icon name="calendar" size={17}/><span>Data</span>
+          <label className="day-conference-date"><Icon name="calendar" size={17}/><span className="day-conference-date-label">Data</span>
             <input type="date" aria-label="Data do recebimento" value={date} max={today()} disabled={submitting} onChange={event=>setDate(event.target.value)}/>
           </label>
           <Button variant="secondary" icon="download" onClick={exportCsv}
-            disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…':'CSV de lançamentos'}</Button>
+            disabled={!summary||!summary.methods.length||loading||exporting||submitting}>{exporting?'Exportando…' :'Exportar CSV'}</Button>
           <Button variant="secondary" icon="history" onClick={reload} disabled={loading||submitting}>Atualizar</Button>
         </div>}/>
       {error&&<p role="alert" className="day-conference-error">{error}</p>}
@@ -370,25 +370,28 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                 {stale?'Revisão necessária':sameVersion?statusLabel(latest.status):allComplete?(differences.length?'Com divergências':'Pronta para concluir'):'Conferência em andamento'}
               </span>
             </div>
-            <p>{sameVersion?'Conferência registrada para estes recebimentos.':stale?'Os recebimentos mudaram desde a última conferência. Confira novamente.':count+' de '+rows.length+' formas de pagamento verificadas.'}</p>
+            <p>{sameVersion?'Conferência registrada para estes recebimentos.':stale?'Os recebimentos mudaram desde a última conferência. Confira novamente.':'Preencha e confirme cada forma de pagamento.'}</p>
             {latest&&<small>Revisão {latest.revision} · {latest.actorName||latest.userId||'Usuário legado'} · {formatTimestamp(latest.createdAt)}</small>}
           </div>
-          <div className="day-conference-progress-track" role="progressbar" aria-label="Formas verificadas" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={sameVersion?rows.length:count}>
-            <span style={{width:(rows.length?(sameVersion?100:count/rows.length*100):0)+'%'}}/>
+          <div className="day-conference-progress-meter">
+            <strong>{sameVersion?rows.length:count} de {rows.length} formas verificadas</strong>
+            <div className="day-conference-progress-track" role="progressbar" aria-label="Formas verificadas" aria-valuemin={0} aria-valuemax={rows.length} aria-valuenow={sameVersion?rows.length:count}>
+              <span style={{width:(rows.length?(sameVersion?100:count/rows.length*100):0)+'%'}}/>
+            </div>
           </div>
         </section>
         <section className="day-conference-stats" aria-label="Resumo da conferência">
           <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Registrado no Mesiva</small><span className="day-conference-stat-icon"><Icon name="receipt" size={18}/></span></div>
+            <div className="day-conference-stat-title"><small>Registrado no Mesiva</small></div>
             <strong>{formatCents(totalNet)}</strong><p>Recebimentos líquidos da data</p>
           </div>
           <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Valor informado</small><span className="day-conference-stat-icon is-success"><Icon name="check" size={18}/></span></div>
+            <div className="day-conference-stat-title"><small>Valor informado</small></div>
             <strong>{totalEntered===null?'—':formatCents(totalEntered)}</strong>
             <p>{totalEntered===null?'Campos em branco não entram na soma':'Conferido no banco, caixa e maquininhas'}</p>
           </div>
           <div className="surface-card day-conference-stat">
-            <div className="day-conference-stat-title"><small>Diferença</small><span className={'day-conference-stat-icon'+(totalDifference!==null&&totalDifference!==0?' is-danger':'')}><Icon name="info" size={18}/></span></div>
+            <div className="day-conference-stat-title"><small>Diferença</small></div>
             <strong className={totalDifference!==null&&totalDifference!==0?'day-conference-text-danger':''}>{totalDifference===null?'—':formatCents(totalDifference)}</strong>
             <p>{totalDifference===null?'Informe os valores de todas as formas':differences.length?'Verifique diferenças individuais':'Valores totais informados'}</p>
           </div>
@@ -398,10 +401,9 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
         {rows.some(row=>row.method==='Não informado')&&<p className="day-conference-notice">Há lançamentos sem forma identificável. Confira-os separadamente; estornos sem evidência não são atribuídos à forma original.</p>}
         <article className="surface-card day-conference-main">
           <div className="day-conference-panel-heading">
-            <div><h2>Conferir por forma de pagamento</h2><p>Informe o valor encontrado externamente. Clique em “Ver lançamentos” para auditar cada total.</p></div>
+            <div><h2>Conferir por forma de pagamento</h2><p>Informe quanto encontrou externamente e confirme cada forma individualmente.</p></div>
             <span>{rows.reduce((sum,row)=>sum+row.count,0)} lançamentos</span>
           </div>
-          <div className="day-conference-hint"><Icon name="info" size={18}/><p><strong>Conferência de recebimentos, não de gaveta.</strong> Dinheiro: compare as entradas registradas, não o saldo físico. Pix: verifique o extrato. Cartões: confira as transações da operadora, não os repasses futuros. <strong>Bruto {formatCents(totalGross)} · Estornos {formatCents(totalRefund)}.</strong></p></div>
           {rows.length?<div className="day-conference-table" aria-label="Conferência por forma de pagamento">
             <div className="day-conference-table-head" aria-hidden="true"><span>Forma de pagamento</span><span>Mesiva</span><span>Conferido</span><span>Diferença</span><span>Verificação</span><span/></div>
             {rows.map((row,index)=>{
@@ -438,8 +440,8 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
                   <span className={sameVersion?'day-conference-closed':isChecked?(diff===0?'day-conference-good':'day-conference-bad'):'day-conference-pending'}>{!sameVersion&&!isChecked&&<Icon name="clock" size={12}/>} {state}</span>
                 </div>
                 <div className="day-conference-cell day-conference-row-actions">
-                  <button type="button" className="day-conference-detail" onClick={event=>openDetail(row.method,event.currentTarget)}>
-                    <Icon name="eye" size={16}/>Ver lançamentos
+                  <button type="button" className="day-conference-detail" aria-label={'Ver lançamentos de '+row.method} onClick={event=>openDetail(row.method,event.currentTarget)}>
+                    <Icon name="eye" size={16}/>{row.count} {row.count===1?'lançamento':'lançamentos'}
                   </button>
                   <label className="day-conference-check"><input type="checkbox" aria-label={'Conferir '+row.method} checked={isChecked}
                     disabled={fieldsDisabled||parsed===null} onChange={event=>setVerified(prev=>({...prev,[row.method]:event.target.checked}))}/>
@@ -449,13 +451,17 @@ export default function DayConference({ canComplete=false, canViewOrders=false, 
               </div>
             })}
           </div>:<div className="day-conference-empty">Nenhum recebimento registrado nesta data. Não há valores para conferir.</div>}
+          <details className="day-conference-help">
+            <summary><Icon name="info" size={16}/>O que exatamente estou conferindo?<Icon name="arrow-down" size={15}/></summary>
+            <p><strong>Esta é a conferência de recebimentos, não do saldo físico da gaveta.</strong> Dinheiro: compare as entradas registradas; Pix: confira o extrato bancário; cartões: compare as transações da operadora, não repasses futuros. O valor Mesiva considera <strong>bruto {formatCents(totalGross)}</strong> e <strong>estornos {formatCents(totalRefund)}</strong> nesta data.</p>
+          </details>
           {rows.length>0&&<div className="day-conference-footer">
             <div className="day-conference-notes">
               <label htmlFor="day-conference-notes">Observações da conferência</label>
               <textarea id="day-conference-notes" rows={3} value={note} maxLength={1000}
                 placeholder="Explique diferenças, lançamentos não encontrados ou providências necessárias…"
                 onChange={event=>setNote(event.target.value)} disabled={fieldsDisabled}/>
-              <small>Se qualquer forma divergir, mesmo que a soma geral seja igual, informe uma justificativa.</small>
+              <small>{differences.length?'Justifique cada divergência, mesmo que a diferença geral seja zero.':'Observações opcionais quando todas as formas coincidem.'}</small>
             </div>
             <div className="day-conference-footer-total">
               <small>Diferença total informada</small>
