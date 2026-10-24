@@ -77,7 +77,7 @@ Antes de criar novos processos, confira se as portas já estão em uso. Para tes
 - Use uma conta fictícia previamente preparada **nesse banco local**.
 - Contas de staging/produção não são automaticamente copiadas para o ambiente local.
 - Migrations criam/evoluem o schema; não fornecem uma conta demo universal. Um banco novo exige preparação de contas fictícias.
-- Não existe senha padrão no projeto. Não grave credenciais no README, em fixtures públicas ou no Git.
+- Não existe senha padrão universal. As credenciais fictícias desta instalação estão na seção de conta local do [AGENTS.md](AGENTS.md); só funcionam no banco onde a conta foi preparada. Não grave credenciais reais no README, em fixtures públicas ou no Git.
 - O cadastro e a ativação de novas empresas em operação são feitos pelo painel Mesiva e pelo fluxo de convites. Os procedimentos administrativos remotos não são scripts de seed local.
 
 Se o login ou a gravação falhar, verifique os dois servidores, a resposta de `/api/*`, o banco/persistência selecionado, as migrations e as permissões da conta. Não reative PIN como contorno.
