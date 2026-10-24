@@ -30,6 +30,48 @@ const amounts = screen => screen.root.findAllByType('input').filter(n=>n.props.i
 const verify = screen => screen.root.findAllByType('input').filter(n=>n.props.type==='checkbox')
 const firstDetail = screen => screen.root.findAll(n=>n.type==='button'&&n.props.className==='day-conference-detail')[0]
 
+test('a completed conference is a readable snapshot, while source changes restore the editable workflow',async t=>{
+  const data=summary()
+  data.latest={id:'saved',date:data.date,revision:1,sourceVersion:data.sourceVersion,status:'conferida',
+    createdAt:'2026-10-15T15:00:00Z',actorName:'Gestora',note:'',
+    lines:data.methods.map(row=>({...row,checkedCents:row.netCents,differenceCents:0}))}
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(path.includes('/entries?')?{entries:[],nextPage:null}:data)})
+  assert.equal(amounts(screen).length,0,'saved values should be text, not disabled editing controls')
+  assert.equal(verify(screen).length,0)
+  assert.equal(screen.root.findAllByType('textarea').length,0)
+  assert.match(text(screen),/Sem observações/)
+  assert.doesNotMatch(text(screen),/Encerrado/)
+  const totals=screen.root.find(n=>n.props?.['aria-label']==='Totais da conferência')
+  assert.match(nodeText(totals),/250,00/)
+  assert.ok(totals.findAllByType('strong').some(n=>nodeText(n).includes('0,00')))
+  await act(async()=>firstDetail(screen).props.onClick({currentTarget:{focus(){}}}))
+  assert.equal(calls.length,2,'saved receipts remain available through the official drawer')
+  await act(async()=>buttonNamed(screen.root,'Fechar').props.onClick())
+  data.sourceVersion='b'.repeat(64)
+  await act(async()=>buttonNamed(screen.root,'Atualizar').props.onClick())
+  assert.equal(amounts(screen).length,2)
+  assert.equal(verify(screen).length,2)
+  assert.match(text(screen),/Revisão necessária/)
+})
+
+test('completed compensated differences and the original justification remain visible without edit controls',async t=>{
+  const data=summary()
+  data.latest={id:'saved-differences',date:data.date,revision:1,sourceVersion:data.sourceVersion,status:'com_ressalva',
+    createdAt:'2026-10-15T15:00:00Z',actorName:'Gestora',note:'Pix -R$ 1,00 e dinheiro +R$ 1,00.',
+    lines:data.methods.map((row,index)=>({...row,checkedCents:row.netCents+(index===0?-100:100),differenceCents:index===0?-100:100}))}
+  const calls=[]
+  const {screen}=await mount(t,async path=>{calls.push(path);return response(data)},{canComplete:false})
+  assert.match(text(screen),/Concluída com ressalva/)
+  assert.match(text(screen),/Pix -R\$ 1,00 e dinheiro \+R\$ 1,00/)
+  assert.match(text(screen),/diferenças que se compensam/)
+  assert.equal(amounts(screen).length,0)
+  assert.equal(verify(screen).length,0)
+  assert.equal(screen.root.findAllByType('textarea').length,0)
+  assert.equal(buttonNamed(screen.root,'Concluir conferência'),undefined)
+  assert.equal(calls.length,1)
+})
+
 test('discrepancies load only on demand and returning preserves the conference draft',async t=>{
   const calls=[]
   const {screen}=await mount(t,async path=>{calls.push(path);return response(path.includes('/discrepancies')?{items:[],nextCursor:null}:summary())})
@@ -184,9 +226,8 @@ test('CSV downloads the complete selected date through the company client and hi
 test('approved comparison layout keeps Pix first and updates informed and difference indicators without extra reads',async t=>{
   const calls=[]
   const {screen}=await mount(t,async path=>{calls.push(path);return response(summary())})
-  const statCards=screen.root.findAll(n=>n.props?.className?.includes('day-conference-stat surface-card') ||
-    n.props?.className?.includes('surface-card day-conference-stat'))
-  assert.equal(statCards.length,3)
+  const totals=screen.root.find(n=>n.props?.['aria-label']==='Totais da conferência')
+  assert.equal(totals.findAllByType('strong').length,3)
   const methodRows=screen.root.findAll(n=>n.props?.className==='day-conference-table-row')
   assert.equal(methodRows.length,2)
   assert.match(nodeText(methodRows[0]),/Pix/)
@@ -197,7 +238,8 @@ test('approved comparison layout keeps Pix first and updates informed and differ
     amounts(screen)[0].props.onChange({target:{value:'200,00'}})
     amounts(screen)[1].props.onChange({target:{value:'50,00'}})
   })
-  assert.match(text(screen),/Conferido no banco, caixa e maquininhas/)
+  assert.match(nodeText(totals),/250,00/)
+  assert.doesNotMatch(text(screen),/Preencha todas as formas para calcular o total/)
   assert.equal(calls.length,1,'editing must not trigger additional D1 requests')
 })
 
@@ -477,7 +519,7 @@ test('revision history presents newest snapshot first with real variation and pr
   assert.equal(calls.length,2,'open history issues one bounded request')
   await act(async()=>buttonNamed(screen.root,'Ver valores desta revisão').props.onClick())
   assert.match(text(screen),/Nota preservada da revisão 1\./)
-  assert.doesNotMatch(text(screen),/Caixa e extratos conferidos\./,
+  assert.doesNotMatch(nodeText(cards()[0]),/Caixa e extratos conferidos\./,
     'only selected revision expands')
   assert.match(text(screen),/217,00/)
   assert.equal(calls.length,2,'switching revisions never refetches D1')
