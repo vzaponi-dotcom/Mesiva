@@ -1,4 +1,7 @@
+import { useState } from 'react'
+import Button from '../../../../shared/ui/Button.jsx'
 import Icon from '../../../../shared/ui/Icon.jsx'
+import SystemSelect from '../../../../shared/ui/SystemSelect.jsx'
 import { ReportingMetricCard } from '../ReportingMetricCard.jsx'
 import { ReportingState } from '../ReportingState.jsx'
 import { ReportingInfoTip } from '../ReportingInfoTip.jsx'
@@ -41,10 +44,25 @@ function PanelHeading({ icon, title, badge }) {
   </div>
 }
 
-export function ProductsReport({ state, onDrilldown = () => {} }) {
-  const data = state.data
-  if (!data) return <ReportingState state={state}>{null}</ReportingState>
+function ProductPresentations({ presentations }) {
+  return <section className="surface-card reporting-panel reporting-products-presentations-panel">
+    <PanelHeading icon="package" title="Apresentações / tamanhos" badge={presentations.length ? `${presentations.length} itens` : null} />
+    {presentations.length ? <div className="reporting-products-presentation-scroll">
+      <table className="reporting-products-presentation-table">
+        <thead><tr><th>Produto</th><th>Apresentação</th><th>Qtd.</th><th>Receita</th></tr></thead>
+        <tbody>{presentations.map((item) => <tr key={`${item.productId}|${item.size}`}>
+          <td>{item.name}</td>
+          <td>{item.size || 'Padrão'}</td>
+          <td>{number(item.quantity)}</td>
+          <td><strong>{money(item.revenueCents)}</strong></td>
+        </tr>)}</tbody>
+      </table>
+    </div> : <div className="reporting-products-empty">Nenhuma apresentação vendida no período.</div>}
+  </section>
+}
 
+function ProductsOverview({ state, onDrilldown }) {
+  const data = state.data
   const ranking = data.ranking || []
   const top10 = data.top10 || []
   const categories = data.categories || []
@@ -74,7 +92,7 @@ export function ProductsReport({ state, onDrilldown = () => {} }) {
     ? `conic-gradient(${categoryMix.map((item) => `${item.color} ${item.start}% ${item.end}%`).join(', ')})`
     : 'var(--surface-strong)'
 
-  return <ReportingState state={state}><div className="reporting-view-stack reporting-products-view">
+  return <>
     <section className="reporting-metric-grid reporting-products-metrics" aria-label="Indicadores de produtos">
       <ReportingMetricCard label="Unidades vendidas" value={data.unitsSold} kind="number" comparison={state.comparison?.metrics?.unitsSold} />
       <ReportingMetricCard label="Receita de mercadoria" value={data.merchandiseRevenueCents} comparison={state.comparison?.metrics?.merchandiseRevenueCents} />
@@ -158,20 +176,7 @@ export function ProductsReport({ state, onDrilldown = () => {} }) {
         </div> : <div className="reporting-products-empty reporting-products-growth-empty">Comparação de crescimento indisponível para este período.</div>}
       </section>
 
-      <section className="surface-card reporting-panel reporting-products-presentations-panel">
-        <PanelHeading icon="package" title="Apresentações / tamanhos" badge={presentations.length ? `${presentations.length} itens` : null} />
-        {presentations.length ? <div className="reporting-products-presentation-scroll">
-          <table className="reporting-products-presentation-table">
-            <thead><tr><th>Produto</th><th>Apresentação</th><th>Qtd.</th><th>Receita</th></tr></thead>
-            <tbody>{presentations.map((item) => <tr key={`${item.productId}|${item.size}`}>
-              <td>{item.name}</td>
-              <td>{item.size || 'Padrão'}</td>
-              <td>{number(item.quantity)}</td>
-              <td><strong>{money(item.revenueCents)}</strong></td>
-            </tr>)}</tbody>
-          </table>
-        </div> : <div className="reporting-products-empty">Nenhuma apresentação vendida no período.</div>}
-      </section>
+      <ProductPresentations presentations={presentations} />
 
       <section className="surface-card reporting-panel reporting-products-insight-panel">
         <PanelHeading icon="details" title="Destaques do período" />
@@ -233,6 +238,42 @@ export function ProductsReport({ state, onDrilldown = () => {} }) {
       </div> : <div className="reporting-products-empty">Nenhum produto vendido no período.</div>}
     </section>
 
+  </>
+}
+
+export function ProductsReport({ state, onDrilldown = () => {} }) {
+  const [selection, setSelection] = useState(null)
+  const data = state.data
+  if (!data) return <ReportingState state={state}>{null}</ReportingState>
+
+  const ranking = data.ranking || []
+  const selected = ranking.find((item) => item.id === selection?.value)
+  const productOptions = ranking.map((item) => ({
+    value: item.id,
+    label: [item.name, item.category, item.productId ? null : item.size].filter(Boolean).join(' · '),
+  }))
+  if (selection && !selected) productOptions.push(selection)
+  productOptions.sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'))
+
+  return <ReportingState state={state}><div className="reporting-view-stack reporting-products-view">
+    <div className="reporting-products-picker">
+      <div className="reporting-filter-control">
+        <span>Produto</span>
+        <SystemSelect label="Produto" value={selection?.value || ''}
+          options={[{ value: '', label: 'Todos os produtos' }, ...productOptions]}
+          onChange={(value) => setSelection(productOptions.find((option) => option.value === value) || null)}
+          disabled={!productOptions.length}
+        />
+      </div>
+      {selected ? <Button type="button" variant="secondary" onClick={() => onDrilldown(selected.id)}>Ver pedidos</Button> : null}
+    </div>
+    {selection ? <>
+      <section className="reporting-metric-grid reporting-products-metrics reporting-selected-product-metrics" aria-label="Indicadores do produto" aria-live="polite">
+        <ReportingMetricCard label="Unidades vendidas" value={selected?.quantity ?? 0} kind="number" />
+        <ReportingMetricCard label="Receita de mercadoria" value={selected?.revenueCents ?? 0} />
+      </section>
+      <ProductPresentations presentations={(data.presentations || []).filter((item) => item.productId === selection.value)} />
+    </> : <ProductsOverview state={state} onDrilldown={onDrilldown} />}
     {state.warnings?.map((warning) => <p className="reporting-warning" role="status" key={warning}>{warning}</p>)}
   </div></ReportingState>
 }

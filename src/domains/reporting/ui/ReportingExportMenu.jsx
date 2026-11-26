@@ -93,7 +93,9 @@ export function ReportingExportMenu({ query, granted, api: suppliedApi = reporti
       <div className="reporting-export-options">
         <div className="reporting-export-options-heading">
           <strong>Exportar dados</strong>
-          <small>O período e os filtros ativos serão respeitados.</small>
+          <small>{query.view === 'products'
+            ? 'A exportação usa o período e os filtros da barra de relatórios.'
+            : 'O período e os filtros ativos serão respeitados.'}</small>
         </div>
         {EXPORT_OPTIONS.map((option) => <button
           key={option.format}

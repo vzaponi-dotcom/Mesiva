@@ -73,6 +73,16 @@ test('switching reporting view preserves active filters', () => {
   assert.equal(next.category, 'Refeições')
 })
 
+test('returning from a product drill-down restores the product list for the same period', () => {
+  const current = normalize('view=detail&from=2026-09-01&to=2026-09-20&type=Entrega&product=juice')
+  const next = patchReportingQuery(current, { view: 'products' })
+  assert.equal(next.product, null)
+  assert.equal(next.from, '2026-09-01')
+  assert.equal(next.to, '2026-09-20')
+  assert.equal(next.type, 'Entrega')
+  assert.equal(patchReportingQuery(normalize('view=detail&productName=Suco'), { view: 'products' }).productName, null)
+})
+
 test('historical product name uses a separate round-trippable filter and resets the detail page', () => {
   const current = normalize('view=detail&productName=X-Bacon&page=4')
   assert.equal(current.productName, 'X-Bacon')

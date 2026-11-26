@@ -30,6 +30,8 @@ test('order history candidate can deploy manually to staging without admitting o
   assert.equal(allowed('codex/proximas-melhorias-2026-10-23', 'workflow_dispatch'), true)
   assert.equal(allowed('codex/proximas-melhorias-2026-10-23', 'push'), false)
   assert.equal(allowed('codex/proximas-melhorias-2026-10-24', 'workflow_dispatch'), false)
+  assert.equal(allowed('codex/filtro-produto-relatorios', 'workflow_dispatch'), true)
+  assert.equal(allowed('codex/filtro-produto-relatorios', 'push'), false)
   assert.equal(allowed('codex/another-unapproved-candidate', 'workflow_dispatch'), false)
   assert.equal(allowed('feature/unapproved-candidate', 'workflow_dispatch'), false)
   assert.equal(allowed('feature/finance-daily-reconciliation-mvp', 'workflow_dispatch'), false)
@@ -92,5 +94,6 @@ test('staging smoke requests SPA deep links/assets from the canonical staging re
   assert.ok(paths.includes('/assets/app.js'))
   const pushSection = workflow.split('workflow_dispatch:')[0]
   assert.match(pushSection, /- master/)
+  assert.doesNotMatch(pushSection, /codex\/filtro-produto-relatorios/)
   assert.doesNotMatch(pushSection, /feature\/issue-34-reporting-center|feature\/kitchen-tv-control-center/)
 })
