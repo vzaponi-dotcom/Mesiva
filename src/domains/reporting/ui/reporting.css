@@ -5023,7 +5023,6 @@
 
 .reporting-info-tip {
   position: relative;
-  z-index: 80;
   display: inline-flex;
   flex: 0 0 auto;
   border-radius: 999px;
