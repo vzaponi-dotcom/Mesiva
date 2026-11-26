@@ -1875,6 +1875,21 @@
   gap: 16px;
 }
 
+.reporting-products-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.reporting-products-picker .reporting-filter-control {
+  width: min(100%, 340px);
+}
+
+.reporting-products-metrics.reporting-selected-product-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .reporting-products-metrics .reporting-metric-card {
   min-height: 112px;
   padding-block: 13px 12px;
@@ -5008,7 +5023,6 @@
 
 .reporting-info-tip {
   position: relative;
-  z-index: 80;
   display: inline-flex;
   flex: 0 0 auto;
   border-radius: 999px;

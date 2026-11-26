@@ -119,6 +119,10 @@ export function patchReportingQuery(current, patch) {
     }
     if (allowed.view !== 'detail') next.receivable = null
     if (!['overview', 'sales', 'detail'].includes(allowed.view)) next.status = null
+    if (allowed.view === 'products') {
+      next.product = allowed.product ?? null
+      next.productName = allowed.productName ?? null
+    }
     if (allowed.view !== 'detail') {
       next.search = ''
       next.sort = 'date-desc'
